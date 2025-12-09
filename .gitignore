@@ -1,0 +1,33 @@
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Elixir/Mix
+/_build/
+/deps/
+*.ez
+*.beam
+erl_crash.dump
+
+# Generated files
+/cover/
+/doc/
+/.fetch
+erl_crash.dump
+*.plt
+*.plt.hash
+
+# IDE
+.elixir_ls/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker volumes (if using local bind mounts)
+/docker/postgres/data/
