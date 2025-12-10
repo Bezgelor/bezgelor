@@ -30,6 +30,7 @@ defmodule BezgelorWorld.Application do
     base_children = [
       BezgelorWorld.WorldManager,
       BezgelorWorld.CreatureManager,
+      BezgelorWorld.BuffManager,
       # Dynamic supervisor for zone instances
       BezgelorWorld.Zone.InstanceSupervisor
     ]
