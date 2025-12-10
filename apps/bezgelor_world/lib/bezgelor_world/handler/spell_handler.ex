@@ -221,6 +221,8 @@ defmodule BezgelorWorld.Handler.SpellHandler do
     case BuffManager.apply_buff(target_guid, buff, caster_guid) do
       {:ok, _timer_ref} ->
         Logger.debug("Applied #{if is_debuff, do: "debuff", else: "buff"} #{spell.id} to #{target_guid}")
+        # Broadcast buff apply to the target
+        CombatBroadcaster.send_buff_apply(target_guid, caster_guid, buff)
         :ok
 
       {:error, reason} ->
@@ -243,6 +245,8 @@ defmodule BezgelorWorld.Handler.SpellHandler do
     case BuffManager.apply_buff(target_guid, buff, caster_guid) do
       {:ok, _timer_ref} ->
         Logger.debug("Applied periodic effect #{spell.id} to #{target_guid}")
+        # Broadcast buff apply to the target
+        CombatBroadcaster.send_buff_apply(target_guid, caster_guid, buff)
         :ok
 
       {:error, reason} ->

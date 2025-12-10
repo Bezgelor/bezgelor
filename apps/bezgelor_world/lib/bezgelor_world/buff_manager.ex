@@ -28,6 +28,7 @@ defmodule BezgelorWorld.BuffManager do
   use GenServer
 
   alias BezgelorCore.{BuffDebuff, ActiveEffect}
+  alias BezgelorWorld.CombatBroadcaster
 
   require Logger
 
@@ -160,6 +161,8 @@ defmodule BezgelorWorld.BuffManager do
       state = put_entity_state(state, entity_guid, entity)
 
       Logger.debug("Removed buff #{buff_id} from entity #{entity_guid}")
+      # Broadcast buff removal to the target (dispel = manual removal)
+      CombatBroadcaster.send_buff_remove(entity_guid, buff_id, :dispel)
       {:reply, :ok, state}
     else
       {:reply, {:error, :not_found}, state}
@@ -238,7 +241,8 @@ defmodule BezgelorWorld.BuffManager do
       state = put_entity_state(state, entity_guid, entity)
 
       Logger.debug("Buff #{buff_id} expired on entity #{entity_guid}")
-      # TODO: Broadcast buff removal packet
+      # Broadcast buff removal to the target
+      CombatBroadcaster.send_buff_remove(entity_guid, buff_id, :expired)
       {:noreply, state}
     else
       {:noreply, state}

@@ -12,6 +12,8 @@ defmodule BezgelorWorld.CombatBroadcaster do
   require Logger
 
   alias BezgelorProtocol.Packets.World.{
+    ServerBuffApply,
+    ServerBuffRemove,
     ServerEntityDeath,
     ServerRespawn,
     ServerSpellEffect,
@@ -127,6 +129,59 @@ defmodule BezgelorWorld.CombatBroadcaster do
     packet_data = PacketWriter.to_binary(writer)
 
     send_to_players(recipient_guids, :server_respawn, packet_data)
+  end
+
+  @doc """
+  Broadcast buff application to a list of player GUIDs.
+  """
+  @spec broadcast_buff_apply(non_neg_integer(), non_neg_integer(), BezgelorCore.BuffDebuff.t(), [non_neg_integer()]) :: :ok
+  def broadcast_buff_apply(target_guid, caster_guid, buff, recipient_guids) do
+    packet = ServerBuffApply.new(
+      target_guid,
+      caster_guid,
+      buff.id,
+      buff.spell_id,
+      buff.buff_type,
+      buff.amount,
+      buff.duration,
+      buff.is_debuff
+    )
+
+    writer = PacketWriter.new()
+    {:ok, writer} = ServerBuffApply.write(packet, writer)
+    packet_data = PacketWriter.to_binary(writer)
+
+    send_to_players(recipient_guids, :server_buff_apply, packet_data)
+  end
+
+  @doc """
+  Broadcast buff removal to a list of player GUIDs.
+  """
+  @spec broadcast_buff_remove(non_neg_integer(), non_neg_integer(), atom(), [non_neg_integer()]) :: :ok
+  def broadcast_buff_remove(target_guid, buff_id, reason, recipient_guids) do
+    packet = ServerBuffRemove.new(target_guid, buff_id, reason)
+
+    writer = PacketWriter.new()
+    {:ok, writer} = ServerBuffRemove.write(packet, writer)
+    packet_data = PacketWriter.to_binary(writer)
+
+    send_to_players(recipient_guids, :server_buff_remove, packet_data)
+  end
+
+  @doc """
+  Send buff apply notification to target player.
+  """
+  @spec send_buff_apply(non_neg_integer(), non_neg_integer(), BezgelorCore.BuffDebuff.t()) :: :ok
+  def send_buff_apply(target_guid, caster_guid, buff) do
+    broadcast_buff_apply(target_guid, caster_guid, buff, [target_guid])
+  end
+
+  @doc """
+  Send buff removal notification to target player.
+  """
+  @spec send_buff_remove(non_neg_integer(), non_neg_integer(), atom()) :: :ok
+  def send_buff_remove(target_guid, buff_id, reason) do
+    broadcast_buff_remove(target_guid, buff_id, reason, [target_guid])
   end
 
   # Private helpers
