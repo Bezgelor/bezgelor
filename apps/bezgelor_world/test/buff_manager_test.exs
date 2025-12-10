@@ -5,8 +5,15 @@ defmodule BezgelorWorld.BuffManagerTest do
   alias BezgelorCore.BuffDebuff
 
   setup do
-    # Start BuffManager for test
-    start_supervised!(BuffManager)
+    # Start BuffManager if not already running (may be started by application)
+    case GenServer.whereis(BuffManager) do
+      nil -> start_supervised!(BuffManager)
+      _pid -> :already_running
+    end
+    # Clear any existing state from previous tests
+    BuffManager.clear_entity(12345)
+    BuffManager.clear_entity(67890)
+    BuffManager.clear_entity(99999)
     :ok
   end
 

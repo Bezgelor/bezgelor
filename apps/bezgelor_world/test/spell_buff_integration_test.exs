@@ -5,9 +5,19 @@ defmodule BezgelorWorld.SpellBuffIntegrationTest do
   alias BezgelorCore.Spell
 
   setup do
-    start_supervised!(SpellManager)
-    start_supervised!(BuffManager)
+    # Start managers if not already running (may be started by application)
+    ensure_started(SpellManager)
+    ensure_started(BuffManager)
+    # Clear any existing state from previous tests
+    BuffManager.clear_entity(12345)
     :ok
+  end
+
+  defp ensure_started(module) do
+    case GenServer.whereis(module) do
+      nil -> start_supervised!(module)
+      _pid -> :already_running
+    end
   end
 
   describe "casting Shield spell applies buff" do
