@@ -44,7 +44,8 @@ defmodule BezgelorCore.Entity do
           flags: non_neg_integer(),
           target_guid: non_neg_integer() | nil,
           experience: non_neg_integer(),
-          is_dead: boolean()
+          is_dead: boolean(),
+          active_effects: map()
         }
 
   defstruct [
@@ -65,7 +66,8 @@ defmodule BezgelorCore.Entity do
     flags: 0,
     target_guid: nil,
     experience: 0,
-    is_dead: false
+    is_dead: false,
+    active_effects: %{}
   ]
 
   # Entity type constants for GUID encoding
@@ -102,7 +104,8 @@ defmodule BezgelorCore.Entity do
       character_id: character.id,
       health: 100,
       max_health: 100,
-      flags: 0
+      flags: 0,
+      active_effects: %{}
     }
   end
 
@@ -124,7 +127,8 @@ defmodule BezgelorCore.Entity do
       rotation: Map.get(attrs, :rotation, {0.0, 0.0, 0.0}),
       health: Map.get(attrs, :health, 100),
       max_health: Map.get(attrs, :max_health, 100),
-      flags: Map.get(attrs, :flags, 0)
+      flags: Map.get(attrs, :flags, 0),
+      active_effects: %{}
     }
   end
 
@@ -339,5 +343,90 @@ defmodule BezgelorCore.Entity do
   @spec respawn_at(t(), position()) :: t()
   def respawn_at(%__MODULE__{max_health: max_health} = entity, position) do
     %{entity | is_dead: false, health: max_health, position: position}
+  end
+
+  # Buff/Debuff functions
+
+  alias BezgelorCore.{BuffDebuff, ActiveEffect}
+
+  @doc """
+  Apply a buff or debuff to the entity.
+  """
+  @spec apply_buff(t(), BuffDebuff.t(), non_neg_integer(), integer()) :: t()
+  def apply_buff(%__MODULE__{} = entity, %BuffDebuff{} = buff, caster_guid, now_ms) do
+    effects = ActiveEffect.apply(entity.active_effects, buff, caster_guid, now_ms)
+    %{entity | active_effects: effects}
+  end
+
+  @doc """
+  Remove a buff or debuff from the entity.
+  """
+  @spec remove_buff(t(), non_neg_integer()) :: t()
+  def remove_buff(%__MODULE__{} = entity, buff_id) do
+    effects = ActiveEffect.remove(entity.active_effects, buff_id)
+    %{entity | active_effects: effects}
+  end
+
+  @doc """
+  Check if entity has an active buff/debuff.
+  """
+  @spec has_buff?(t(), non_neg_integer(), integer()) :: boolean()
+  def has_buff?(%__MODULE__{} = entity, buff_id, now_ms) do
+    ActiveEffect.active?(entity.active_effects, buff_id, now_ms)
+  end
+
+  @doc """
+  Get a stat value with all active modifiers applied.
+  """
+  @spec get_modified_stat(t(), BuffDebuff.stat(), map(), integer()) :: number()
+  def get_modified_stat(%__MODULE__{} = entity, stat, base_stats, now_ms) do
+    base_value = Map.get(base_stats, stat, 0)
+    modifier = ActiveEffect.get_stat_modifier(entity.active_effects, stat, now_ms)
+    base_value + modifier
+  end
+
+  @doc """
+  Apply damage with absorb shield processing.
+
+  Returns `{updated_entity, absorbed_amount}`.
+  """
+  @spec apply_damage_with_absorb(t(), non_neg_integer(), integer()) :: {t(), non_neg_integer()}
+  def apply_damage_with_absorb(%__MODULE__{} = entity, damage, now_ms) do
+    {effects, absorbed, remaining_damage} =
+      ActiveEffect.consume_absorb(entity.active_effects, damage, now_ms)
+
+    entity = %{entity | active_effects: effects}
+    entity = apply_damage(entity, remaining_damage)
+
+    {entity, absorbed}
+  end
+
+  @doc """
+  Clean up expired effects from the entity.
+  """
+  @spec cleanup_effects(t(), integer()) :: t()
+  def cleanup_effects(%__MODULE__{} = entity, now_ms) do
+    effects = ActiveEffect.cleanup(entity.active_effects, now_ms)
+    %{entity | active_effects: effects}
+  end
+
+  @doc """
+  List all active buffs (non-debuffs).
+  """
+  @spec list_buffs(t(), integer()) :: [map()]
+  def list_buffs(%__MODULE__{} = entity, now_ms) do
+    entity.active_effects
+    |> ActiveEffect.list_active(now_ms)
+    |> Enum.filter(fn %{buff: buff} -> BuffDebuff.buff?(buff) end)
+  end
+
+  @doc """
+  List all active debuffs.
+  """
+  @spec list_debuffs(t(), integer()) :: [map()]
+  def list_debuffs(%__MODULE__{} = entity, now_ms) do
+    entity.active_effects
+    |> ActiveEffect.list_active(now_ms)
+    |> Enum.filter(fn %{buff: buff} -> BuffDebuff.debuff?(buff) end)
   end
 end
