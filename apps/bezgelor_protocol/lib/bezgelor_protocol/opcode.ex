@@ -86,6 +86,13 @@ defmodule BezgelorProtocol.Opcode do
   @client_mount_customize 0x0603
   @server_mount_customization 0x0604
 
+  # Pet opcodes
+  @client_pet_summon 0x0610
+  @client_pet_dismiss 0x0611
+  @server_pet_update 0x0612
+  @client_pet_rename 0x0613
+  @server_pet_xp 0x0614
+
   # Mapping from atom to integer
   @opcode_map %{
     # Auth (STS Server - port 6600)
@@ -144,7 +151,13 @@ defmodule BezgelorProtocol.Opcode do
     client_mount_dismiss: @client_mount_dismiss,
     server_mount_update: @server_mount_update,
     client_mount_customize: @client_mount_customize,
-    server_mount_customization: @server_mount_customization
+    server_mount_customization: @server_mount_customization,
+    # Pets
+    client_pet_summon: @client_pet_summon,
+    client_pet_dismiss: @client_pet_dismiss,
+    server_pet_update: @server_pet_update,
+    client_pet_rename: @client_pet_rename,
+    server_pet_xp: @server_pet_xp
   }
 
   # Reverse mapping from integer to atom
@@ -198,7 +211,12 @@ defmodule BezgelorProtocol.Opcode do
     client_mount_dismiss: "ClientMountDismiss",
     server_mount_update: "ServerMountUpdate",
     client_mount_customize: "ClientMountCustomize",
-    server_mount_customization: "ServerMountCustomization"
+    server_mount_customization: "ServerMountCustomization",
+    client_pet_summon: "ClientPetSummon",
+    client_pet_dismiss: "ClientPetDismiss",
+    server_pet_update: "ServerPetUpdate",
+    client_pet_rename: "ClientPetRename",
+    server_pet_xp: "ServerPetXP"
   }
 
   @type t :: atom()
