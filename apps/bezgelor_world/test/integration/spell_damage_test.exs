@@ -4,7 +4,7 @@ defmodule BezgelorWorld.Integration.SpellDamageTest do
   """
   use ExUnit.Case, async: false
 
-  alias BezgelorWorld.{CreatureManager, WorldManager}
+  alias BezgelorWorld.{CombatBroadcaster, CreatureManager, WorldManager}
   alias BezgelorCore.{AI, CreatureTemplate}
 
   @moduletag :integration
@@ -70,6 +70,31 @@ defmodule BezgelorWorld.Integration.SpellDamageTest do
       creature = CreatureManager.get_creature(creature_guid)
       assert AI.in_combat?(creature.ai)
       assert creature.ai.target_guid == player_guid
+    end
+
+    test "kill broadcasts death and XP packets to player" do
+      # Spawn creature
+      {:ok, creature_guid} = CreatureManager.spawn_creature(1, {8400.0, 8000.0, 0.0})
+
+      # Register player session with self() as connection
+      player_guid = WorldManager.generate_guid(:player)
+      account_id = 99999
+      WorldManager.register_session(account_id, 1, "TestKiller", self())
+      WorldManager.set_entity_guid(account_id, player_guid)
+
+      # Kill creature
+      {:ok, :killed, result} = CreatureManager.damage_creature(creature_guid, player_guid, 200)
+
+      # Broadcast death and XP using CombatBroadcaster
+      CombatBroadcaster.broadcast_entity_death(result.creature_guid, player_guid, [player_guid])
+      CombatBroadcaster.send_kill_rewards(player_guid, result.creature_guid, result)
+
+      # Should receive death packet
+      assert_receive {:send_packet, :server_entity_death, death_data}, 1000
+      assert byte_size(death_data) == 16
+
+      # Should receive XP packet
+      assert_receive {:send_packet, :server_xp_gain, _xp_data}, 1000
     end
   end
 end

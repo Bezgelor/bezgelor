@@ -32,7 +32,7 @@ defmodule BezgelorWorld.Handler.SpellHandler do
 
   alias BezgelorProtocol.{PacketReader, PacketWriter}
   alias BezgelorCore.Spell
-  alias BezgelorWorld.{CreatureManager, SpellManager}
+  alias BezgelorWorld.{CombatBroadcaster, CreatureManager, SpellManager}
 
   import Bitwise
 
@@ -135,10 +135,23 @@ defmodule BezgelorWorld.Handler.SpellHandler do
 
     Logger.info("Instant cast: player #{player_guid} spell #{spell.name} on #{actual_target}")
 
-    # Log kill info for now (Task 3-4 will handle broadcasting)
+    # Broadcast kill rewards if creature was killed
     if kill_info do
+      # For now, broadcast only to the killer (future: nearby players)
+      CombatBroadcaster.broadcast_entity_death(
+        kill_info.creature_guid,
+        player_guid,
+        [player_guid]
+      )
+
+      CombatBroadcaster.send_kill_rewards(
+        player_guid,
+        kill_info.creature_guid,
+        kill_info.rewards
+      )
+
       Logger.info(
-        "Creature #{kill_info.creature_guid} killed! XP: #{kill_info.rewards.xp_reward}"
+        "Creature #{kill_info.creature_guid} killed by #{player_guid}! XP: #{kill_info.rewards.xp_reward}"
       )
     end
 
