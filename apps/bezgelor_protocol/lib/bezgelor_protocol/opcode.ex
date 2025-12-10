@@ -79,6 +79,13 @@ defmodule BezgelorProtocol.Opcode do
   # Loot opcodes
   @server_loot_drop 0x0530
 
+  # Mount opcodes
+  @client_mount_summon 0x0600
+  @client_mount_dismiss 0x0601
+  @server_mount_update 0x0602
+  @client_mount_customize 0x0603
+  @server_mount_customization 0x0604
+
   # Mapping from atom to integer
   @opcode_map %{
     # Auth (STS Server - port 6600)
@@ -131,7 +138,13 @@ defmodule BezgelorProtocol.Opcode do
     server_xp_gain: @server_xp_gain,
     server_level_up: @server_level_up,
     # Loot
-    server_loot_drop: @server_loot_drop
+    server_loot_drop: @server_loot_drop,
+    # Mounts
+    client_mount_summon: @client_mount_summon,
+    client_mount_dismiss: @client_mount_dismiss,
+    server_mount_update: @server_mount_update,
+    client_mount_customize: @client_mount_customize,
+    server_mount_customization: @server_mount_customization
   }
 
   # Reverse mapping from integer to atom
@@ -180,7 +193,12 @@ defmodule BezgelorProtocol.Opcode do
     server_respawn: "ServerRespawn",
     server_xp_gain: "ServerXPGain",
     server_level_up: "ServerLevelUp",
-    server_loot_drop: "ServerLootDrop"
+    server_loot_drop: "ServerLootDrop",
+    client_mount_summon: "ClientMountSummon",
+    client_mount_dismiss: "ClientMountDismiss",
+    server_mount_update: "ServerMountUpdate",
+    client_mount_customize: "ClientMountCustomize",
+    server_mount_customization: "ServerMountCustomization"
   }
 
   @type t :: atom()
