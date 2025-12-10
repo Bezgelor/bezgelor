@@ -36,4 +36,18 @@ defmodule BezgelorDb.Schema.AccountCurrency do
       {:error, :insufficient_funds}
     end
   end
+
+  def add_bonus_changeset(currency, amount) do
+    new_amount = currency.bonus_currency + amount
+    change(currency, bonus_currency: new_amount)
+  end
+
+  def deduct_bonus_changeset(currency, amount) do
+    new_amount = currency.bonus_currency - amount
+    if new_amount >= 0 do
+      {:ok, change(currency, bonus_currency: new_amount)}
+    else
+      {:error, :insufficient_funds}
+    end
+  end
 end
