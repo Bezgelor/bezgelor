@@ -75,6 +75,14 @@ defmodule BezgelorProtocol.PacketWriter do
     |> append_bytes(<<value::little-64>>)
   end
 
+  @doc "Write a little-endian float32."
+  @spec write_float32(t(), float()) :: t()
+  def write_float32(%__MODULE__{} = writer, value) do
+    writer
+    |> flush_bits()
+    |> append_bytes(<<value::little-float-32>>)
+  end
+
   @doc "Write raw bytes."
   @spec write_bytes(t(), binary()) :: t()
   def write_bytes(%__MODULE__{} = writer, bytes) when is_binary(bytes) do

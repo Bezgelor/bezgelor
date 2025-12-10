@@ -80,6 +80,17 @@ defmodule BezgelorProtocol.PacketReader do
     end
   end
 
+  @doc "Read a little-endian float32."
+  @spec read_float32(t()) :: {:ok, float(), t()} | {:error, :eof}
+  def read_float32(%__MODULE__{} = reader) do
+    reader = flush_bits(reader)
+
+    case read_raw_bytes(reader, 4) do
+      {:ok, <<value::little-float-32>>, reader} -> {:ok, value, reader}
+      error -> error
+    end
+  end
+
   @doc "Read specified number of bytes."
   @spec read_bytes(t(), non_neg_integer()) :: {:ok, binary(), t()} | {:error, :eof}
   def read_bytes(%__MODULE__{} = reader, count) when count >= 0 do

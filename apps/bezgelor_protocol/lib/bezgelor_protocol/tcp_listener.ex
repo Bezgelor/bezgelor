@@ -23,6 +23,22 @@ defmodule BezgelorProtocol.TcpListener do
   require Logger
 
   @doc """
+  Returns a child specification for supervision.
+  """
+  @spec child_spec(keyword()) :: Supervisor.child_spec()
+  def child_spec(opts) do
+    name = Keyword.fetch!(opts, :name)
+
+    %{
+      id: {__MODULE__, name},
+      start: {__MODULE__, :start_link, [opts]},
+      type: :worker,
+      restart: :permanent,
+      shutdown: 5000
+    }
+  end
+
+  @doc """
   Start a TCP listener.
 
   ## Options

@@ -36,7 +36,7 @@ defmodule BezgelorDb.Schema.Character do
   use Ecto.Schema
   import Ecto.Changeset
 
-  alias BezgelorDb.Schema.Account
+  alias BezgelorDb.Schema.{Account, CharacterAppearance}
 
   @type t :: %__MODULE__{
           id: integer() | nil,
@@ -69,12 +69,14 @@ defmodule BezgelorDb.Schema.Character do
           last_online: DateTime.t() | nil,
           deleted_at: DateTime.t() | nil,
           original_name: String.t() | nil,
+          appearance: CharacterAppearance.t() | Ecto.Association.NotLoaded.t() | nil,
           inserted_at: DateTime.t() | nil,
           updated_at: DateTime.t() | nil
         }
 
   schema "characters" do
     belongs_to :account, Account
+    has_one :appearance, CharacterAppearance
 
     field :name, :string
     field :sex, :integer

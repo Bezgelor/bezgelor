@@ -76,9 +76,26 @@ defmodule BezgelorProtocol.PacketRegistry do
 
   defp default_handlers do
     %{
+      # STS Server handlers (port 6600)
       client_hello_auth: Handler.AuthHandler,
       client_encrypted: Handler.EncryptedHandler,
-      client_hello_realm: Handler.RealmHandler
+      # Realm Server handlers (port 23115)
+      client_hello_auth_realm: Handler.RealmAuthHandler,
+      # World Server handlers (port 24000)
+      client_hello_realm: Handler.WorldAuthHandler,
+      client_character_create: Handler.CharacterCreateHandler,
+      client_character_select: Handler.CharacterSelectHandler,
+      client_character_delete: Handler.CharacterDeleteHandler,
+      client_entered_world: Handler.WorldEntryHandler,
+      client_movement: Handler.MovementHandler,
+      # ChatHandler is in bezgelor_world due to WorldManager dependency
+      client_chat: BezgelorWorld.Handler.ChatHandler,
+      # SpellHandler is in bezgelor_world due to SpellManager dependency
+      client_cast_spell: BezgelorWorld.Handler.SpellHandler,
+      client_cancel_cast: BezgelorWorld.Handler.SpellHandler,
+      # CombatHandler for targeting and respawn
+      client_set_target: BezgelorWorld.Handler.CombatHandler,
+      client_respawn: BezgelorWorld.Handler.CombatHandler
     }
   end
 end

@@ -10,4 +10,9 @@ config :bezgelor_db, BezgelorDb.Repo,
   pool: Ecto.Adapters.SQL.Sandbox,
   pool_size: 10
 
+# Don't start servers during tests
+config :bezgelor_auth, start_server: false
+config :bezgelor_realm, start_server: false
+config :bezgelor_world, start_server: false
+
 config :logger, level: :warning

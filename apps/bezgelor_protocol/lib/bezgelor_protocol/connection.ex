@@ -62,12 +62,16 @@ defmodule BezgelorProtocol.Connection do
   # Ranch protocol callback
   @impl :ranch_protocol
   def start_link(ref, transport, opts) do
-    pid = :proc_lib.spawn_link(__MODULE__, :init, [{ref, transport, opts}])
+    pid = :proc_lib.spawn_link(__MODULE__, :ranch_init, [{ref, transport, opts}])
     {:ok, pid}
   end
 
+  # GenServer init - not used since we use Ranch's spawn_link pattern
+  @impl GenServer
+  def init(_), do: {:stop, :not_used}
+
   @doc false
-  def init({ref, transport, opts}) do
+  def ranch_init({ref, transport, opts}) do
     {:ok, socket} = :ranch.handshake(ref)
     :ok = transport.setopts(socket, [{:active, :once}])
 
@@ -221,6 +225,14 @@ defmodule BezgelorProtocol.Connection do
 
           {:reply, reply_opcode, reply_payload, new_state} ->
             do_send_packet(%{state | session_data: new_state.session_data}, reply_opcode, reply_payload)
+            {:ok, new_state}
+
+          {:reply_multi, responses, new_state} ->
+            # Send multiple packets in sequence
+            updated_state = %{state | session_data: new_state.session_data}
+            Enum.each(responses, fn {opcode, payload} ->
+              do_send_packet(updated_state, opcode, payload)
+            end)
             {:ok, new_state}
 
           {:error, reason} ->

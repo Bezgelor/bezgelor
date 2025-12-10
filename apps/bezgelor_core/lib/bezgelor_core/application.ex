@@ -8,8 +8,8 @@ defmodule BezgelorCore.Application do
   @impl true
   def start(_type, _args) do
     children = [
-      # Starts a worker by calling: BezgelorCore.Worker.start_link(arg)
-      # {BezgelorCore.Worker, arg}
+      # Process registry for looking up processes by type and ID
+      BezgelorCore.ProcessRegistry
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

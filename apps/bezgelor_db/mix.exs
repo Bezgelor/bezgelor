@@ -26,7 +26,8 @@ defmodule BezgelorDb.MixProject do
   defp deps do
     [
       {:ecto_sql, "~> 3.11"},
-      {:postgrex, "~> 0.18"}
+      {:postgrex, "~> 0.18"},
+      {:bezgelor_crypto, in_umbrella: true}
     ]
   end
 

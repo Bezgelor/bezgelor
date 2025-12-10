@@ -47,6 +47,8 @@ defmodule BezgelorDb.Schema.Account do
     field :game_token, :string
     field :session_key, :string
 
+    has_many :suspensions, BezgelorDb.Schema.AccountSuspension
+
     timestamps(type: :utc_datetime)
   end
 

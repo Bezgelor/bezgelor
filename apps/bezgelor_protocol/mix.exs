@@ -28,7 +28,8 @@ defmodule BezgelorProtocol.MixProject do
     [
       {:ranch, "~> 2.1"},
       {:bezgelor_core, in_umbrella: true},
-      {:bezgelor_crypto, in_umbrella: true}
+      {:bezgelor_crypto, in_umbrella: true},
+      {:bezgelor_db, in_umbrella: true}
     ]
   end
 end
