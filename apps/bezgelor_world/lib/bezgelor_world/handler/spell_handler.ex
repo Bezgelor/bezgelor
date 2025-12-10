@@ -31,8 +31,8 @@ defmodule BezgelorWorld.Handler.SpellHandler do
   }
 
   alias BezgelorProtocol.{PacketReader, PacketWriter}
-  alias BezgelorCore.Spell
-  alias BezgelorWorld.{CombatBroadcaster, CreatureManager, SpellManager}
+  alias BezgelorCore.{Spell, BuffDebuff}
+  alias BezgelorWorld.{BuffManager, CombatBroadcaster, CreatureManager, SpellManager}
 
   import Bitwise
 
@@ -159,6 +159,7 @@ defmodule BezgelorWorld.Handler.SpellHandler do
   end
 
   # Apply spell effects to targets, calling CreatureManager for damage to creatures
+  # and BuffManager for buff/debuff effects
   defp apply_spell_effects(caster_guid, target_guid, spell, effects) do
     Enum.reduce(effects, {[], nil}, fn effect, {packets, kill_info} ->
       target = if spell.target_type == :self, do: caster_guid, else: target_guid
@@ -172,9 +173,82 @@ defmodule BezgelorWorld.Handler.SpellHandler do
           nil
         end
 
+      # Apply buff/debuff effects via BuffManager
+      apply_buff_effect(caster_guid, target, spell, effect)
+
       {[packet | packets], new_kill_info || kill_info}
     end)
     |> then(fn {packets, kill_info} -> {Enum.reverse(packets), kill_info} end)
+  end
+
+  # Apply buff or debuff effect via BuffManager
+  defp apply_buff_effect(caster_guid, target_guid, spell, effect) do
+    case effect.type do
+      :buff ->
+        apply_buff(caster_guid, target_guid, spell, effect, false)
+
+      :debuff ->
+        apply_buff(caster_guid, target_guid, spell, effect, true)
+
+      :hot ->
+        # HoT is a beneficial periodic effect
+        apply_periodic_buff(caster_guid, target_guid, spell, effect, false)
+
+      :dot ->
+        # DoT is a harmful periodic effect
+        apply_periodic_buff(caster_guid, target_guid, spell, effect, true)
+
+      _ ->
+        :ok
+    end
+  end
+
+  defp apply_buff(caster_guid, target_guid, spell, effect, is_debuff) do
+    # Get buff_type and duration from original spell effect (result effect doesn't have these)
+    original_effect = Enum.find(spell.effects, fn e -> e.type == effect.type end)
+    buff_type = (original_effect && original_effect.buff_type) || :absorb
+    duration = (original_effect && original_effect.duration) || effect.duration || 10_000
+
+    buff = BuffDebuff.new(%{
+      id: spell.id,
+      spell_id: spell.id,
+      buff_type: buff_type,
+      amount: effect.amount,
+      duration: duration,
+      is_debuff: is_debuff
+    })
+
+    case BuffManager.apply_buff(target_guid, buff, caster_guid) do
+      {:ok, _timer_ref} ->
+        Logger.debug("Applied #{if is_debuff, do: "debuff", else: "buff"} #{spell.id} to #{target_guid}")
+        :ok
+
+      {:error, reason} ->
+        Logger.warning("Failed to apply buff #{spell.id}: #{inspect(reason)}")
+        :error
+    end
+  end
+
+  defp apply_periodic_buff(caster_guid, target_guid, spell, effect, is_debuff) do
+    # For periodic effects, we use :periodic buff type
+    buff = BuffDebuff.new(%{
+      id: spell.id,
+      spell_id: spell.id,
+      buff_type: :periodic,
+      amount: effect.amount,
+      duration: effect.duration || 10_000,
+      is_debuff: is_debuff
+    })
+
+    case BuffManager.apply_buff(target_guid, buff, caster_guid) do
+      {:ok, _timer_ref} ->
+        Logger.debug("Applied periodic effect #{spell.id} to #{target_guid}")
+        :ok
+
+      {:error, reason} ->
+        Logger.warning("Failed to apply periodic effect #{spell.id}: #{inspect(reason)}")
+        :error
+    end
   end
 
   defp apply_damage_to_creature(creature_guid, attacker_guid, damage) do
