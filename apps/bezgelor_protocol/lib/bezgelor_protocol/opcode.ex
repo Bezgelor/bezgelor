@@ -93,6 +93,12 @@ defmodule BezgelorProtocol.Opcode do
   @client_pet_rename 0x0613
   @server_pet_xp 0x0614
 
+  # Buff/debuff opcodes
+  @server_buff_apply 0x0620
+  @server_buff_remove 0x0621
+  @server_buff_update 0x0622
+  @server_buff_list 0x0623
+
   # Mapping from atom to integer
   @opcode_map %{
     # Auth (STS Server - port 6600)
@@ -157,7 +163,12 @@ defmodule BezgelorProtocol.Opcode do
     client_pet_dismiss: @client_pet_dismiss,
     server_pet_update: @server_pet_update,
     client_pet_rename: @client_pet_rename,
-    server_pet_xp: @server_pet_xp
+    server_pet_xp: @server_pet_xp,
+    # Buffs/Debuffs
+    server_buff_apply: @server_buff_apply,
+    server_buff_remove: @server_buff_remove,
+    server_buff_update: @server_buff_update,
+    server_buff_list: @server_buff_list
   }
 
   # Reverse mapping from integer to atom
@@ -216,7 +227,11 @@ defmodule BezgelorProtocol.Opcode do
     client_pet_dismiss: "ClientPetDismiss",
     server_pet_update: "ServerPetUpdate",
     client_pet_rename: "ClientPetRename",
-    server_pet_xp: "ServerPetXP"
+    server_pet_xp: "ServerPetXP",
+    server_buff_apply: "ServerBuffApply",
+    server_buff_remove: "ServerBuffRemove",
+    server_buff_update: "ServerBuffUpdate",
+    server_buff_list: "ServerBuffList"
   }
 
   @type t :: atom()
