@@ -31,7 +31,10 @@ defmodule BezgelorWorld.CreatureManager do
   require Logger
 
   alias BezgelorCore.{AI, CreatureTemplate, Entity, Loot}
-  alias BezgelorWorld.WorldManager
+  alias BezgelorWorld.{CombatBroadcaster, WorldManager}
+  alias BezgelorWorld.Zone.Instance, as: ZoneInstance
+
+  import Bitwise
 
   @type creature_state :: %{
           entity: Entity.t(),
@@ -405,10 +408,12 @@ defmodule BezgelorWorld.CreatureManager do
         end
 
       {:attack, target_guid} ->
-        # Record attack (actual damage would be sent to target)
+        # Record attack time
         new_ai = AI.record_attack(ai)
-        # In a full implementation, we would send damage to the player here
-        Logger.debug("Creature #{entity.name} attacks target #{target_guid}")
+
+        # Apply damage to target (if player)
+        apply_creature_attack(entity, template, target_guid)
+
         {:updated, %{creature_state | ai: new_ai}}
 
       {:move_to, _position} ->
@@ -421,4 +426,75 @@ defmodule BezgelorWorld.CreatureManager do
   defp faction_to_int(:neutral), do: 1
   defp faction_to_int(:friendly), do: 2
   defp faction_to_int(_), do: 0
+
+  # Apply creature attack damage to a target
+  defp apply_creature_attack(creature_entity, template, target_guid) do
+    # Only attack players for now
+    if is_player_guid?(target_guid) do
+      # Roll damage from template
+      damage = CreatureTemplate.roll_damage(template)
+
+      # Try to apply damage to player in zone instance
+      # For simplicity, assume zone 1 instance 1 (would need player tracking in real impl)
+      # Use try/catch to handle zone instance not existing (e.g., during tests)
+      try do
+        case ZoneInstance.update_entity({1, 1}, target_guid, fn player_entity ->
+               Entity.apply_damage(player_entity, damage)
+             end) do
+          :ok ->
+            # Send damage effect to player
+            send_creature_attack_effect(creature_entity.guid, target_guid, damage)
+
+            # Check if player died
+            case ZoneInstance.get_entity({1, 1}, target_guid) do
+              {:ok, player_entity} when player_entity.health == 0 ->
+                handle_player_death(player_entity, creature_entity.guid)
+
+              _ ->
+                :ok
+            end
+
+            Logger.debug(
+              "Creature #{creature_entity.name} dealt #{damage} damage to player #{target_guid}"
+            )
+
+          :error ->
+            Logger.debug("Failed to apply damage to player #{target_guid} (not in zone)")
+        end
+      catch
+        :exit, _ ->
+          Logger.debug("Zone instance not available for creature attack")
+      end
+    end
+
+    :ok
+  end
+
+  defp send_creature_attack_effect(creature_guid, player_guid, damage) do
+    # Send damage effect packet to player
+    effect = %{type: :damage, amount: damage, is_crit: false}
+
+    # Use CombatBroadcaster to send spell effect
+    # Creature attacks use spell_id 0 (auto-attack)
+    CombatBroadcaster.send_spell_effect(creature_guid, player_guid, 0, effect, [player_guid])
+  end
+
+  defp handle_player_death(player_entity, killer_guid) do
+    Logger.info(
+      "Player #{player_entity.name} (#{player_entity.guid}) killed by creature #{killer_guid}"
+    )
+
+    # Broadcast death to the player
+    CombatBroadcaster.broadcast_entity_death(player_entity.guid, killer_guid, [player_entity.guid])
+
+    :ok
+  end
+
+  # Check if GUID is a player (type bits = 1 in bits 60-63)
+  defp is_player_guid?(guid) when is_integer(guid) and guid > 0 do
+    type_bits = bsr(guid, 60) &&& 0xF
+    type_bits == 1
+  end
+
+  defp is_player_guid?(_), do: false
 end

@@ -13,6 +13,8 @@ defmodule BezgelorWorld.CombatBroadcaster do
 
   alias BezgelorProtocol.Packets.World.{
     ServerEntityDeath,
+    ServerRespawn,
+    ServerSpellEffect,
     ServerXPGain
   }
 
@@ -61,6 +63,32 @@ defmodule BezgelorWorld.CombatBroadcaster do
   end
 
   @doc """
+  Send spell effect (damage/heal) to recipient players.
+  """
+  @spec send_spell_effect(non_neg_integer(), non_neg_integer(), non_neg_integer(), map(), [non_neg_integer()]) :: :ok
+  def send_spell_effect(caster_guid, target_guid, spell_id, effect, recipient_guids) do
+    packet = case effect.type do
+      :damage ->
+        ServerSpellEffect.damage(caster_guid, target_guid, spell_id, effect.amount, Map.get(effect, :is_crit, false))
+
+      :heal ->
+        ServerSpellEffect.heal(caster_guid, target_guid, spell_id, effect.amount, Map.get(effect, :is_crit, false))
+
+      :buff ->
+        ServerSpellEffect.buff(caster_guid, target_guid, spell_id, effect.amount)
+
+      _ ->
+        ServerSpellEffect.damage(caster_guid, target_guid, spell_id, effect.amount, false)
+    end
+
+    writer = PacketWriter.new()
+    {:ok, writer} = ServerSpellEffect.write(packet, writer)
+    packet_data = PacketWriter.to_binary(writer)
+
+    send_to_players(recipient_guids, :server_spell_effect, packet_data)
+  end
+
+  @doc """
   Notify player of creature kill rewards (XP and loot).
   """
   @spec send_kill_rewards(non_neg_integer(), non_neg_integer(), map()) :: :ok
@@ -78,6 +106,27 @@ defmodule BezgelorWorld.CombatBroadcaster do
     end
 
     :ok
+  end
+
+  @doc """
+  Send respawn notification to a player.
+  """
+  @spec send_respawn(non_neg_integer(), {float(), float(), float()}, non_neg_integer(), non_neg_integer(), [non_neg_integer()]) :: :ok
+  def send_respawn(entity_guid, {x, y, z}, health, max_health, recipient_guids) do
+    packet = %ServerRespawn{
+      entity_guid: entity_guid,
+      position_x: x,
+      position_y: y,
+      position_z: z,
+      health: health,
+      max_health: max_health
+    }
+
+    writer = PacketWriter.new()
+    {:ok, writer} = ServerRespawn.write(packet, writer)
+    packet_data = PacketWriter.to_binary(writer)
+
+    send_to_players(recipient_guids, :server_respawn, packet_data)
   end
 
   # Private helpers

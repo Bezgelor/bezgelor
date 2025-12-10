@@ -122,6 +122,12 @@ defmodule BezgelorWorld.WorldManager do
     GenServer.call(__MODULE__, {:find_session_by_name, character_name})
   end
 
+  @doc "Get session info by character ID."
+  @spec get_session_by_character(non_neg_integer()) :: session() | nil
+  def get_session_by_character(character_id) do
+    GenServer.call(__MODULE__, {:get_session_by_character, character_id})
+  end
+
   ## Server Callbacks
 
   @impl true
@@ -185,6 +191,19 @@ defmodule BezgelorWorld.WorldManager do
         session.character_name != nil and
           String.downcase(session.character_name) == String.downcase(character_name)
       end)
+
+    {:reply, result, state}
+  end
+
+  @impl true
+  def handle_call({:get_session_by_character, character_id}, _from, state) do
+    result =
+      state.sessions
+      |> Enum.find(fn {_account_id, session} -> session.character_id == character_id end)
+      |> case do
+        {_account_id, session} -> session
+        nil -> nil
+      end
 
     {:reply, result, state}
   end

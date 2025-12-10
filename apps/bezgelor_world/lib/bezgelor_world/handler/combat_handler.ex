@@ -24,7 +24,9 @@ defmodule BezgelorWorld.Handler.CombatHandler do
   }
 
   alias BezgelorProtocol.{PacketReader, PacketWriter}
-  alias BezgelorWorld.CreatureManager
+  alias BezgelorCore.Entity
+  alias BezgelorWorld.{CombatBroadcaster, CreatureManager}
+  alias BezgelorWorld.Zone.Instance, as: ZoneInstance
 
   require Logger
 
@@ -92,29 +94,42 @@ defmodule BezgelorWorld.Handler.CombatHandler do
       Logger.warning("Respawn received before player entered world")
       {:error, :not_in_world}
     else
-      entity = state.session_data[:entity]
       entity_guid = state.session_data[:entity_guid]
+      zone_id = state.session_data[:zone_id] || 1
+      instance_id = 1
 
-      # Check if player is actually dead
-      if entity && entity.is_dead do
-        Logger.info("Player #{entity_guid} respawning (type: #{packet.respawn_type})")
+      # Get current player entity from zone
+      case ZoneInstance.get_entity({zone_id, instance_id}, entity_guid) do
+        {:ok, entity} when entity.health == 0 ->
+          Logger.info("Player #{entity_guid} respawning (type: #{packet.respawn_type})")
 
-        # For now, respawn at same location
-        {x, y, z} = entity.position
+          # Restore health in zone instance
+          :ok = ZoneInstance.update_entity({zone_id, instance_id}, entity_guid, fn e ->
+            Entity.respawn(e)
+          end)
 
-        respawn_packet = %ServerRespawn{
-          entity_guid: entity_guid,
-          position_x: x,
-          position_y: y,
-          position_z: z,
-          health: entity.max_health,
-          max_health: entity.max_health
-        }
+          # Get updated entity for position
+          {:ok, respawned_entity} = ZoneInstance.get_entity({zone_id, instance_id}, entity_guid)
+          {x, y, z} = respawned_entity.position
 
-        send_packet(:server_respawn, respawn_packet, state)
-      else
-        Logger.warning("Respawn requested but player not dead")
-        {:error, :not_dead}
+          # Broadcast respawn to player (and nearby players in future)
+          CombatBroadcaster.send_respawn(
+            entity_guid,
+            {x, y, z},
+            respawned_entity.health,
+            respawned_entity.max_health,
+            [entity_guid]
+          )
+
+          {:ok, state}
+
+        {:ok, _entity} ->
+          Logger.warning("Respawn requested but player not dead")
+          {:error, :not_dead}
+
+        :error ->
+          Logger.warning("Respawn requested but player not in zone")
+          {:error, :not_in_zone}
       end
     end
   end

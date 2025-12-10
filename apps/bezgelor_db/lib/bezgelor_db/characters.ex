@@ -81,6 +81,20 @@ defmodule BezgelorDb.Characters do
   end
 
   @doc """
+  Get a character by name (case-insensitive).
+
+  Used for social features like friend/ignore lookups.
+  """
+  @spec get_character_by_name(String.t()) :: Character.t() | nil
+  def get_character_by_name(name) when is_binary(name) do
+    Character
+    |> where([c], fragment("lower(?)", c.name) == ^String.downcase(name))
+    |> where([c], is_nil(c.deleted_at))
+    |> preload(:appearance)
+    |> Repo.one()
+  end
+
+  @doc """
   Create a new character with appearance.
 
   ## Options

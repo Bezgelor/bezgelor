@@ -1,0 +1,15 @@
+{
+  "factions": [
+    {"id": 1, "name": "Exiles", "description": "The rebel alliance fighting for freedom"},
+    {"id": 2, "name": "Dominion", "description": "The galactic empire of the Cassians"},
+    {"id": 100, "name": "Protostar", "description": "Corporate entity providing goods and services"},
+    {"id": 101, "name": "Lopp", "description": "Friendly fur traders"},
+    {"id": 102, "name": "Marauders", "description": "Space pirates and raiders"},
+    {"id": 103, "name": "Ikthia", "description": "Ancient protectors of Nexus"},
+    {"id": 104, "name": "Pell", "description": "Mysterious bird-like creatures"},
+    {"id": 200, "name": "Algoroc Settlers", "description": "Exile settlers in Algoroc"},
+    {"id": 201, "name": "Galeras Defense", "description": "Exile military in Galeras"},
+    {"id": 300, "name": "Crimson Legion", "description": "Dominion military forces"},
+    {"id": 301, "name": "Imperial Corps", "description": "Elite Dominion soldiers"}
+  ]
+}

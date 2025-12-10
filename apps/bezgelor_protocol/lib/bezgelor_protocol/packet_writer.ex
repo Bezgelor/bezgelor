@@ -67,6 +67,14 @@ defmodule BezgelorProtocol.PacketWriter do
     |> append_bytes(<<value::little-32>>)
   end
 
+  @doc "Write a little-endian signed int32."
+  @spec write_int32(t(), integer()) :: t()
+  def write_int32(%__MODULE__{} = writer, value) do
+    writer
+    |> flush_bits()
+    |> append_bytes(<<value::little-signed-32>>)
+  end
+
   @doc "Write a little-endian uint64."
   @spec write_uint64(t(), non_neg_integer()) :: t()
   def write_uint64(%__MODULE__{} = writer, value) do
