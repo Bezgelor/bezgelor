@@ -35,6 +35,7 @@ defmodule BezgelorCore.BuffDebuff do
     :stat,
     amount: 0,
     duration: 0,
+    tick_interval: 0,
     is_debuff: false,
     stacks: 1,
     max_stacks: 1
@@ -47,6 +48,7 @@ defmodule BezgelorCore.BuffDebuff do
           stat: stat(),
           amount: integer(),
           duration: non_neg_integer(),
+          tick_interval: non_neg_integer(),
           is_debuff: boolean(),
           stacks: non_neg_integer(),
           max_stacks: non_neg_integer()
@@ -71,11 +73,19 @@ defmodule BezgelorCore.BuffDebuff do
       stat: Map.get(attrs, :stat),
       amount: Map.fetch!(attrs, :amount),
       duration: Map.fetch!(attrs, :duration),
+      tick_interval: Map.get(attrs, :tick_interval, 0),
       is_debuff: Map.get(attrs, :is_debuff, false),
       stacks: Map.get(attrs, :stacks, 1),
       max_stacks: Map.get(attrs, :max_stacks, 1)
     }
   end
+
+  @doc """
+  Check if this is a periodic effect (DoT/HoT).
+  """
+  @spec periodic?(t()) :: boolean()
+  def periodic?(%__MODULE__{tick_interval: interval}) when interval > 0, do: true
+  def periodic?(%__MODULE__{}), do: false
 
   @doc """
   Check if this is a buff (not a debuff).

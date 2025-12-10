@@ -232,13 +232,19 @@ defmodule BezgelorWorld.Handler.SpellHandler do
   end
 
   defp apply_periodic_buff(caster_guid, target_guid, spell, effect, is_debuff) do
+    # Get tick_interval from original spell effect
+    original_effect = Enum.find(spell.effects, fn e -> e.type == effect.type end)
+    tick_interval = (original_effect && original_effect.tick_interval) || 1000
+    duration = (original_effect && original_effect.duration) || effect.duration || 10_000
+
     # For periodic effects, we use :periodic buff type
     buff = BuffDebuff.new(%{
       id: spell.id,
       spell_id: spell.id,
       buff_type: :periodic,
       amount: effect.amount,
-      duration: effect.duration || 10_000,
+      duration: duration,
+      tick_interval: tick_interval,
       is_debuff: is_debuff
     })
 

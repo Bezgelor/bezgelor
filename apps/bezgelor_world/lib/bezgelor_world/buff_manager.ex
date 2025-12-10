@@ -34,7 +34,8 @@ defmodule BezgelorWorld.BuffManager do
 
   @type entity_state :: %{
           effects: ActiveEffect.state(),
-          timers: %{non_neg_integer() => reference()}
+          timers: %{non_neg_integer() => reference()},
+          tick_timers: %{non_neg_integer() => reference()}
         }
 
   @type state :: %{
@@ -129,15 +130,29 @@ defmodule BezgelorWorld.BuffManager do
       Process.cancel_timer(timer_ref)
     end
 
+    # Cancel existing tick timer if present
+    if tick_ref = Map.get(entity.tick_timers, buff.id) do
+      Process.cancel_timer(tick_ref)
+    end
+
     # Apply the buff
     effects = ActiveEffect.apply(entity.effects, buff, caster_guid, now)
 
     # Schedule expiration
     timer_ref = Process.send_after(self(), {:buff_expired, entity_guid, buff.id}, buff.duration)
+    timers = Map.put(entity.timers, buff.id, timer_ref)
+
+    # Schedule first tick if this is a periodic effect
+    tick_timers =
+      if BuffDebuff.periodic?(buff) do
+        tick_ref = Process.send_after(self(), {:buff_tick, entity_guid, buff.id}, buff.tick_interval)
+        Map.put(entity.tick_timers, buff.id, tick_ref)
+      else
+        entity.tick_timers
+      end
 
     # Update state
-    timers = Map.put(entity.timers, buff.id, timer_ref)
-    entity = %{entity | effects: effects, timers: timers}
+    entity = %{entity | effects: effects, timers: timers, tick_timers: tick_timers}
     state = put_entity_state(state, entity_guid, entity)
 
     Logger.debug("Applied buff #{buff.id} to entity #{entity_guid}")
@@ -149,15 +164,21 @@ defmodule BezgelorWorld.BuffManager do
     entity = get_entity_state(state, entity_guid)
 
     if Map.has_key?(entity.effects, buff_id) do
-      # Cancel timer
+      # Cancel expiration timer
       if timer_ref = Map.get(entity.timers, buff_id) do
         Process.cancel_timer(timer_ref)
+      end
+
+      # Cancel tick timer
+      if tick_ref = Map.get(entity.tick_timers, buff_id) do
+        Process.cancel_timer(tick_ref)
       end
 
       # Remove buff
       effects = ActiveEffect.remove(entity.effects, buff_id)
       timers = Map.delete(entity.timers, buff_id)
-      entity = %{entity | effects: effects, timers: timers}
+      tick_timers = Map.delete(entity.tick_timers, buff_id)
+      entity = %{entity | effects: effects, timers: timers, tick_timers: tick_timers}
       state = put_entity_state(state, entity_guid, entity)
 
       Logger.debug("Removed buff #{buff_id} from entity #{entity_guid}")
@@ -220,8 +241,13 @@ defmodule BezgelorWorld.BuffManager do
   def handle_call({:clear_entity, entity_guid}, _from, state) do
     entity = get_entity_state(state, entity_guid)
 
-    # Cancel all timers
+    # Cancel all expiration timers
     Enum.each(entity.timers, fn {_id, ref} ->
+      Process.cancel_timer(ref)
+    end)
+
+    # Cancel all tick timers
+    Enum.each(entity.tick_timers, fn {_id, ref} ->
       Process.cancel_timer(ref)
     end)
 
@@ -235,9 +261,15 @@ defmodule BezgelorWorld.BuffManager do
     entity = get_entity_state(state, entity_guid)
 
     if Map.has_key?(entity.effects, buff_id) do
+      # Cancel tick timer if present
+      if tick_ref = Map.get(entity.tick_timers, buff_id) do
+        Process.cancel_timer(tick_ref)
+      end
+
       effects = ActiveEffect.remove(entity.effects, buff_id)
       timers = Map.delete(entity.timers, buff_id)
-      entity = %{entity | effects: effects, timers: timers}
+      tick_timers = Map.delete(entity.tick_timers, buff_id)
+      entity = %{entity | effects: effects, timers: timers, tick_timers: tick_timers}
       state = put_entity_state(state, entity_guid, entity)
 
       Logger.debug("Buff #{buff_id} expired on entity #{entity_guid}")
@@ -249,10 +281,56 @@ defmodule BezgelorWorld.BuffManager do
     end
   end
 
+  @impl true
+  def handle_info({:buff_tick, entity_guid, buff_id}, state) do
+    now = System.monotonic_time(:millisecond)
+    entity = get_entity_state(state, entity_guid)
+
+    # Check if effect is still active
+    if Map.has_key?(entity.effects, buff_id) and ActiveEffect.active?(entity.effects, buff_id, now) do
+      effect_data = Map.get(entity.effects, buff_id)
+      buff = effect_data.buff
+      caster_guid = effect_data.caster_guid
+
+      # Process the tick effect
+      process_periodic_tick(entity_guid, caster_guid, buff)
+
+      # Schedule next tick
+      tick_ref = Process.send_after(self(), {:buff_tick, entity_guid, buff_id}, buff.tick_interval)
+      tick_timers = Map.put(entity.tick_timers, buff_id, tick_ref)
+      entity = %{entity | tick_timers: tick_timers}
+      state = put_entity_state(state, entity_guid, entity)
+
+      {:noreply, state}
+    else
+      # Effect no longer active, remove tick timer
+      tick_timers = Map.delete(entity.tick_timers, buff_id)
+      entity = %{entity | tick_timers: tick_timers}
+      state = put_entity_state(state, entity_guid, entity)
+      {:noreply, state}
+    end
+  end
+
   # Private helpers
 
+  defp process_periodic_tick(entity_guid, caster_guid, buff) do
+    if buff.is_debuff do
+      # DoT - damage over time
+      Logger.debug("Periodic damage tick: #{buff.amount} to entity #{entity_guid} from buff #{buff.id}")
+      # Broadcast damage effect to target
+      effect = %{type: :damage, amount: buff.amount, is_crit: false}
+      CombatBroadcaster.send_spell_effect(caster_guid, entity_guid, buff.spell_id, effect, [entity_guid])
+    else
+      # HoT - heal over time
+      Logger.debug("Periodic heal tick: #{buff.amount} to entity #{entity_guid} from buff #{buff.id}")
+      # Broadcast heal effect to target
+      effect = %{type: :heal, amount: buff.amount, is_crit: false}
+      CombatBroadcaster.send_spell_effect(caster_guid, entity_guid, buff.spell_id, effect, [entity_guid])
+    end
+  end
+
   defp get_entity_state(state, entity_guid) do
-    Map.get(state.entities, entity_guid, %{effects: ActiveEffect.new(), timers: %{}})
+    Map.get(state.entities, entity_guid, %{effects: ActiveEffect.new(), timers: %{}, tick_timers: %{}})
   end
 
   defp put_entity_state(state, entity_guid, entity) do
