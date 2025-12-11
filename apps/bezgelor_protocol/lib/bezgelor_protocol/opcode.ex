@@ -99,6 +99,26 @@ defmodule BezgelorProtocol.Opcode do
   @server_buff_update 0x0622
   @server_buff_list 0x0623
 
+  # Housing opcodes
+  @client_housing_enter 0x0700
+  @server_housing_enter 0x0701
+  @client_housing_exit 0x0702
+  @server_housing_data 0x0703
+  @client_housing_decor_place 0x0710
+  @client_housing_decor_move 0x0711
+  @client_housing_decor_remove 0x0712
+  @server_housing_decor_update 0x0713
+  @server_housing_decor_list 0x0714
+  @client_housing_fabkit_install 0x0720
+  @client_housing_fabkit_remove 0x0721
+  @server_housing_fabkit_update 0x0722
+  @server_housing_fabkit_list 0x0723
+  @client_housing_neighbor_add 0x0730
+  @client_housing_neighbor_remove 0x0731
+  @client_housing_roommate_promote 0x0732
+  @client_housing_roommate_demote 0x0733
+  @server_housing_neighbor_list 0x0734
+
   # Mapping from atom to integer
   @opcode_map %{
     # Auth (STS Server - port 6600)
@@ -168,7 +188,26 @@ defmodule BezgelorProtocol.Opcode do
     server_buff_apply: @server_buff_apply,
     server_buff_remove: @server_buff_remove,
     server_buff_update: @server_buff_update,
-    server_buff_list: @server_buff_list
+    server_buff_list: @server_buff_list,
+    # Housing
+    client_housing_enter: @client_housing_enter,
+    server_housing_enter: @server_housing_enter,
+    client_housing_exit: @client_housing_exit,
+    server_housing_data: @server_housing_data,
+    client_housing_decor_place: @client_housing_decor_place,
+    client_housing_decor_move: @client_housing_decor_move,
+    client_housing_decor_remove: @client_housing_decor_remove,
+    server_housing_decor_update: @server_housing_decor_update,
+    server_housing_decor_list: @server_housing_decor_list,
+    client_housing_fabkit_install: @client_housing_fabkit_install,
+    client_housing_fabkit_remove: @client_housing_fabkit_remove,
+    server_housing_fabkit_update: @server_housing_fabkit_update,
+    server_housing_fabkit_list: @server_housing_fabkit_list,
+    client_housing_neighbor_add: @client_housing_neighbor_add,
+    client_housing_neighbor_remove: @client_housing_neighbor_remove,
+    client_housing_roommate_promote: @client_housing_roommate_promote,
+    client_housing_roommate_demote: @client_housing_roommate_demote,
+    server_housing_neighbor_list: @server_housing_neighbor_list
   }
 
   # Reverse mapping from integer to atom
@@ -231,7 +270,26 @@ defmodule BezgelorProtocol.Opcode do
     server_buff_apply: "ServerBuffApply",
     server_buff_remove: "ServerBuffRemove",
     server_buff_update: "ServerBuffUpdate",
-    server_buff_list: "ServerBuffList"
+    server_buff_list: "ServerBuffList",
+    # Housing
+    client_housing_enter: "ClientHousingEnter",
+    server_housing_enter: "ServerHousingEnter",
+    client_housing_exit: "ClientHousingExit",
+    server_housing_data: "ServerHousingData",
+    client_housing_decor_place: "ClientHousingDecorPlace",
+    client_housing_decor_move: "ClientHousingDecorMove",
+    client_housing_decor_remove: "ClientHousingDecorRemove",
+    server_housing_decor_update: "ServerHousingDecorUpdate",
+    server_housing_decor_list: "ServerHousingDecorList",
+    client_housing_fabkit_install: "ClientHousingFabkitInstall",
+    client_housing_fabkit_remove: "ClientHousingFabkitRemove",
+    server_housing_fabkit_update: "ServerHousingFabkitUpdate",
+    server_housing_fabkit_list: "ServerHousingFabkitList",
+    client_housing_neighbor_add: "ClientHousingNeighborAdd",
+    client_housing_neighbor_remove: "ClientHousingNeighborRemove",
+    client_housing_roommate_promote: "ClientHousingRoommatePromote",
+    client_housing_roommate_demote: "ClientHousingRoommateDemote",
+    server_housing_neighbor_list: "ServerHousingNeighborList"
   }
 
   @type t :: atom()
