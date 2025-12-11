@@ -153,4 +153,124 @@ defmodule BezgelorDb.HousingTest do
       assert Housing.can_decorate?(plot.id, neighbor.id)
     end
   end
+
+  describe "decor management" do
+    setup %{character: character} do
+      {:ok, plot} = Housing.create_plot(character.id)
+      {:ok, plot: plot}
+    end
+
+    test "place_decor adds item to plot", %{plot: plot} do
+      assert {:ok, decor} = Housing.place_decor(plot.id, %{
+        decor_id: 1001,
+        pos_x: 10.5, pos_y: 0.0, pos_z: 5.0,
+        is_exterior: true
+      })
+      assert decor.plot_id == plot.id
+      assert decor.decor_id == 1001
+      assert decor.pos_x == 10.5
+    end
+
+    test "move_decor updates position and rotation", %{plot: plot} do
+      {:ok, decor} = Housing.place_decor(plot.id, %{decor_id: 1001})
+
+      assert {:ok, moved} = Housing.move_decor(decor.id, %{
+        pos_x: 20.0, pos_y: 5.0, pos_z: 10.0,
+        rot_yaw: 90.0, scale: 1.5
+      })
+      assert moved.pos_x == 20.0
+      assert moved.rot_yaw == 90.0
+      assert moved.scale == 1.5
+    end
+
+    test "remove_decor deletes item", %{plot: plot} do
+      {:ok, decor} = Housing.place_decor(plot.id, %{decor_id: 1001})
+      assert :ok = Housing.remove_decor(decor.id)
+      assert :error = Housing.get_decor(decor.id)
+    end
+
+    test "list_decor returns all decor for plot", %{plot: plot} do
+      {:ok, _} = Housing.place_decor(plot.id, %{decor_id: 1001, is_exterior: true})
+      {:ok, _} = Housing.place_decor(plot.id, %{decor_id: 1002, is_exterior: false})
+
+      decor = Housing.list_decor(plot.id)
+      assert length(decor) == 2
+    end
+
+    test "list_decor filters by interior/exterior", %{plot: plot} do
+      {:ok, _} = Housing.place_decor(plot.id, %{decor_id: 1001, is_exterior: true})
+      {:ok, _} = Housing.place_decor(plot.id, %{decor_id: 1002, is_exterior: false})
+
+      exterior = Housing.list_decor(plot.id, :exterior)
+      interior = Housing.list_decor(plot.id, :interior)
+
+      assert length(exterior) == 1
+      assert length(interior) == 1
+    end
+
+    test "count_decor returns count", %{plot: plot} do
+      {:ok, _} = Housing.place_decor(plot.id, %{decor_id: 1001})
+      {:ok, _} = Housing.place_decor(plot.id, %{decor_id: 1002})
+
+      assert Housing.count_decor(plot.id) == 2
+    end
+  end
+
+  describe "fabkit management" do
+    setup %{character: character} do
+      {:ok, plot} = Housing.create_plot(character.id)
+      {:ok, plot: plot}
+    end
+
+    test "install_fabkit adds to socket", %{plot: plot} do
+      assert {:ok, fabkit} = Housing.install_fabkit(plot.id, %{
+        socket_index: 0,
+        fabkit_id: 2001
+      })
+      assert fabkit.plot_id == plot.id
+      assert fabkit.socket_index == 0
+      assert fabkit.fabkit_id == 2001
+    end
+
+    test "install_fabkit fails for occupied socket", %{plot: plot} do
+      {:ok, _} = Housing.install_fabkit(plot.id, %{socket_index: 0, fabkit_id: 2001})
+      assert {:error, _} = Housing.install_fabkit(plot.id, %{socket_index: 0, fabkit_id: 2002})
+    end
+
+    test "install_fabkit validates socket range", %{plot: plot} do
+      assert {:error, _} = Housing.install_fabkit(plot.id, %{socket_index: 6, fabkit_id: 2001})
+      assert {:error, _} = Housing.install_fabkit(plot.id, %{socket_index: -1, fabkit_id: 2001})
+    end
+
+    test "remove_fabkit clears socket", %{plot: plot} do
+      {:ok, fabkit} = Housing.install_fabkit(plot.id, %{socket_index: 0, fabkit_id: 2001})
+      assert :ok = Housing.remove_fabkit(fabkit.id)
+      assert :error = Housing.get_fabkit(fabkit.id)
+    end
+
+    test "update_fabkit_state modifies state map", %{plot: plot} do
+      {:ok, fabkit} = Housing.install_fabkit(plot.id, %{socket_index: 0, fabkit_id: 2001})
+
+      assert {:ok, updated} = Housing.update_fabkit_state(fabkit.id, %{
+        "last_harvest" => DateTime.utc_now() |> DateTime.to_iso8601(),
+        "harvest_count" => 5
+      })
+      assert updated.state["harvest_count"] == 5
+    end
+
+    test "get_fabkit_at_socket returns fabkit or nil", %{plot: plot} do
+      {:ok, _} = Housing.install_fabkit(plot.id, %{socket_index: 2, fabkit_id: 2001})
+
+      assert {:ok, _} = Housing.get_fabkit_at_socket(plot.id, 2)
+      assert :error = Housing.get_fabkit_at_socket(plot.id, 0)
+    end
+
+    test "list_fabkits returns all fabkits for plot", %{plot: plot} do
+      {:ok, _} = Housing.install_fabkit(plot.id, %{socket_index: 0, fabkit_id: 2001})
+      {:ok, _} = Housing.install_fabkit(plot.id, %{socket_index: 4, fabkit_id: 2002})
+
+      fabkits = Housing.list_fabkits(plot.id)
+      assert length(fabkits) == 2
+    end
+  end
 end

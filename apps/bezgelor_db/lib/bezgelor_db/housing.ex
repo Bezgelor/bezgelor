@@ -196,4 +196,125 @@ defmodule BezgelorDb.Housing do
       neighbor -> {:ok, neighbor}
     end
   end
+
+  # Decor Management
+
+  @spec place_decor(integer(), map()) :: {:ok, HousingDecor.t()} | {:error, term()}
+  def place_decor(plot_id, attrs) do
+    %HousingDecor{}
+    |> HousingDecor.changeset(Map.put(attrs, :plot_id, plot_id))
+    |> Repo.insert()
+  end
+
+  @spec get_decor(integer()) :: {:ok, HousingDecor.t()} | :error
+  def get_decor(decor_id) do
+    case Repo.get(HousingDecor, decor_id) do
+      nil -> :error
+      decor -> {:ok, decor}
+    end
+  end
+
+  @spec move_decor(integer(), map()) :: {:ok, HousingDecor.t()} | {:error, term()}
+  def move_decor(decor_id, attrs) do
+    case get_decor(decor_id) do
+      {:ok, decor} ->
+        decor
+        |> HousingDecor.move_changeset(attrs)
+        |> Repo.update()
+
+      :error ->
+        {:error, :not_found}
+    end
+  end
+
+  @spec remove_decor(integer()) :: :ok | {:error, :not_found}
+  def remove_decor(decor_id) do
+    case Repo.get(HousingDecor, decor_id) do
+      nil -> {:error, :not_found}
+      decor ->
+        Repo.delete(decor)
+        :ok
+    end
+  end
+
+  @spec list_decor(integer()) :: [HousingDecor.t()]
+  def list_decor(plot_id) do
+    from(d in HousingDecor, where: d.plot_id == ^plot_id)
+    |> Repo.all()
+  end
+
+  @spec list_decor(integer(), :interior | :exterior) :: [HousingDecor.t()]
+  def list_decor(plot_id, :interior) do
+    from(d in HousingDecor, where: d.plot_id == ^plot_id and d.is_exterior == false)
+    |> Repo.all()
+  end
+
+  def list_decor(plot_id, :exterior) do
+    from(d in HousingDecor, where: d.plot_id == ^plot_id and d.is_exterior == true)
+    |> Repo.all()
+  end
+
+  @spec count_decor(integer()) :: non_neg_integer()
+  def count_decor(plot_id) do
+    from(d in HousingDecor, where: d.plot_id == ^plot_id, select: count(d.id))
+    |> Repo.one()
+  end
+
+  # FABkit Management
+
+  @spec install_fabkit(integer(), map()) :: {:ok, HousingFabkit.t()} | {:error, term()}
+  def install_fabkit(plot_id, attrs) do
+    %HousingFabkit{}
+    |> HousingFabkit.changeset(Map.put(attrs, :plot_id, plot_id))
+    |> Repo.insert()
+  end
+
+  @spec get_fabkit(integer()) :: {:ok, HousingFabkit.t()} | :error
+  def get_fabkit(fabkit_id) do
+    case Repo.get(HousingFabkit, fabkit_id) do
+      nil -> :error
+      fabkit -> {:ok, fabkit}
+    end
+  end
+
+  @spec get_fabkit_at_socket(integer(), integer()) :: {:ok, HousingFabkit.t()} | :error
+  def get_fabkit_at_socket(plot_id, socket_index) do
+    query =
+      from f in HousingFabkit,
+        where: f.plot_id == ^plot_id and f.socket_index == ^socket_index
+
+    case Repo.one(query) do
+      nil -> :error
+      fabkit -> {:ok, fabkit}
+    end
+  end
+
+  @spec remove_fabkit(integer()) :: :ok | {:error, :not_found}
+  def remove_fabkit(fabkit_id) do
+    case Repo.get(HousingFabkit, fabkit_id) do
+      nil -> {:error, :not_found}
+      fabkit ->
+        Repo.delete(fabkit)
+        :ok
+    end
+  end
+
+  @spec update_fabkit_state(integer(), map()) :: {:ok, HousingFabkit.t()} | {:error, term()}
+  def update_fabkit_state(fabkit_id, state) do
+    case get_fabkit(fabkit_id) do
+      {:ok, fabkit} ->
+        fabkit
+        |> HousingFabkit.state_changeset(%{state: state})
+        |> Repo.update()
+
+      :error ->
+        {:error, :not_found}
+    end
+  end
+
+  @spec list_fabkits(integer()) :: [HousingFabkit.t()]
+  def list_fabkits(plot_id) do
+    from(f in HousingFabkit, where: f.plot_id == ^plot_id, order_by: f.socket_index)
+    |> Repo.all()
+  end
 end
