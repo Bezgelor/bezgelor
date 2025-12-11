@@ -344,6 +344,107 @@ defmodule BezgelorData do
     end
   end
 
+  # Housing Data
+
+  @doc """
+  Get a house type definition by ID.
+  """
+  @spec get_house_type(non_neg_integer()) :: {:ok, map()} | :error
+  def get_house_type(id) do
+    Store.get(:house_types, id)
+  end
+
+  @doc """
+  Get a house type by ID, raising if not found.
+  """
+  @spec get_house_type!(non_neg_integer()) :: map()
+  def get_house_type!(id) do
+    case get_house_type(id) do
+      {:ok, house_type} -> house_type
+      :error -> raise "House type #{id} not found"
+    end
+  end
+
+  @doc """
+  List all house types.
+  """
+  @spec list_house_types() :: [map()]
+  def list_house_types do
+    Store.list(:house_types)
+  end
+
+  @doc """
+  Get housing decor definition by ID.
+  """
+  @spec get_decor(non_neg_integer()) :: {:ok, map()} | :error
+  def get_decor(id) do
+    Store.get(:housing_decor, id)
+  end
+
+  @doc """
+  Get decor by ID, raising if not found.
+  """
+  @spec get_decor!(non_neg_integer()) :: map()
+  def get_decor!(id) do
+    case get_decor(id) do
+      {:ok, decor} -> decor
+      :error -> raise "Decor #{id} not found"
+    end
+  end
+
+  @doc """
+  List all housing decor items.
+  """
+  @spec list_decor() :: [map()]
+  def list_decor do
+    Store.list(:housing_decor)
+  end
+
+  @doc """
+  List decor items by category.
+  """
+  @spec decor_by_category(String.t()) :: [map()]
+  def decor_by_category(category) do
+    list_decor()
+    |> Enum.filter(fn d -> d.category == category end)
+  end
+
+  @doc """
+  Get housing FABkit definition by ID.
+  """
+  @spec get_fabkit(non_neg_integer()) :: {:ok, map()} | :error
+  def get_fabkit(id) do
+    Store.get(:housing_fabkits, id)
+  end
+
+  @doc """
+  Get FABkit by ID, raising if not found.
+  """
+  @spec get_fabkit!(non_neg_integer()) :: map()
+  def get_fabkit!(id) do
+    case get_fabkit(id) do
+      {:ok, fabkit} -> fabkit
+      :error -> raise "FABkit #{id} not found"
+    end
+  end
+
+  @doc """
+  List all housing FABkits.
+  """
+  @spec list_fabkits() :: [map()]
+  def list_fabkits do
+    Store.list(:housing_fabkits)
+  end
+
+  @doc """
+  List FABkits by type.
+  """
+  @spec fabkits_by_type(String.t()) :: [map()]
+  def fabkits_by_type(type) do
+    list_fabkits()
+    |> Enum.filter(fn f -> f.type == type end)
+  end
+
   # Stats
 
   @doc """
@@ -356,7 +457,10 @@ defmodule BezgelorData do
       zones: Store.count(:zones),
       spells: Store.count(:spells),
       items: Store.count(:items),
-      texts: Store.count(:texts)
+      texts: Store.count(:texts),
+      house_types: Store.count(:house_types),
+      housing_decor: Store.count(:housing_decor),
+      housing_fabkits: Store.count(:housing_fabkits)
     }
   end
 end

@@ -1,0 +1,26 @@
+{
+  "decor": [
+    {"id": 1, "name": "Wooden Chair", "category": "furniture", "interior": true, "exterior": false},
+    {"id": 2, "name": "Wooden Table", "category": "furniture", "interior": true, "exterior": false},
+    {"id": 3, "name": "Basic Bed", "category": "furniture", "interior": true, "exterior": false},
+    {"id": 4, "name": "Bookshelf", "category": "furniture", "interior": true, "exterior": false},
+    {"id": 5, "name": "Couch", "category": "furniture", "interior": true, "exterior": false},
+    {"id": 100, "name": "Wall Torch", "category": "lighting", "interior": true, "exterior": true},
+    {"id": 101, "name": "Chandelier", "category": "lighting", "interior": true, "exterior": false},
+    {"id": 102, "name": "Floor Lamp", "category": "lighting", "interior": true, "exterior": false},
+    {"id": 103, "name": "Garden Lantern", "category": "lighting", "interior": false, "exterior": true},
+    {"id": 200, "name": "Potted Plant", "category": "plants", "interior": true, "exterior": true},
+    {"id": 201, "name": "Flower Bed", "category": "plants", "interior": false, "exterior": true},
+    {"id": 202, "name": "Hedge", "category": "plants", "interior": false, "exterior": true},
+    {"id": 203, "name": "Tree", "category": "plants", "interior": false, "exterior": true},
+    {"id": 300, "name": "Stone Path", "category": "landscaping", "interior": false, "exterior": true},
+    {"id": 301, "name": "Fence", "category": "landscaping", "interior": false, "exterior": true},
+    {"id": 302, "name": "Stone Wall", "category": "landscaping", "interior": false, "exterior": true},
+    {"id": 400, "name": "Painting", "category": "wall_decor", "interior": true, "exterior": false},
+    {"id": 401, "name": "Mounted Trophy", "category": "wall_decor", "interior": true, "exterior": false},
+    {"id": 402, "name": "Banner", "category": "wall_decor", "interior": true, "exterior": true},
+    {"id": 500, "name": "Rug", "category": "floor_decor", "interior": true, "exterior": false},
+    {"id": 501, "name": "Statue", "category": "floor_decor", "interior": true, "exterior": true},
+    {"id": 502, "name": "Fountain", "category": "floor_decor", "interior": false, "exterior": true}
+  ]
+}

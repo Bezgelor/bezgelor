@@ -1,0 +1,21 @@
+{
+  "fabkits": [
+    {"id": 1, "name": "Mining Node", "type": "harvest", "socket_size": "small", "cooldown_hours": 12, "description": "Mine ore deposits"},
+    {"id": 2, "name": "Garden Patch", "type": "harvest", "socket_size": "small", "cooldown_hours": 6, "description": "Grow vegetables and herbs"},
+    {"id": 3, "name": "Relic Dig Site", "type": "harvest", "socket_size": "small", "cooldown_hours": 24, "description": "Excavate ancient relics"},
+    {"id": 4, "name": "Tree Farm", "type": "harvest", "socket_size": "small", "cooldown_hours": 8, "description": "Harvest lumber"},
+    {"id": 100, "name": "Expedition Board", "type": "challenge", "socket_size": "large", "description": "Spawns expedition challenges"},
+    {"id": 101, "name": "Combat Arena", "type": "challenge", "socket_size": "large", "description": "Fight waves of enemies"},
+    {"id": 102, "name": "Jumping Puzzle", "type": "challenge", "socket_size": "large", "description": "Platforming challenge"},
+    {"id": 200, "name": "Crafting Station", "type": "utility", "socket_size": "small", "description": "Basic crafting workbench"},
+    {"id": 201, "name": "Mailbox", "type": "utility", "socket_size": "small", "description": "Access mail anywhere"},
+    {"id": 202, "name": "Bank Terminal", "type": "utility", "socket_size": "small", "description": "Access bank storage"},
+    {"id": 203, "name": "Auction Terminal", "type": "utility", "socket_size": "small", "description": "Access commodity exchange"},
+    {"id": 300, "name": "Festival Stage", "type": "entertainment", "socket_size": "large", "description": "Performance area with effects"},
+    {"id": 301, "name": "Racing Track", "type": "entertainment", "socket_size": "large", "description": "Mount racing circuit"},
+    {"id": 302, "name": "Target Range", "type": "entertainment", "socket_size": "small", "description": "Shooting gallery"},
+    {"id": 400, "name": "Biome: Forest", "type": "biome", "socket_size": "large", "description": "Transforms plot into forest theme"},
+    {"id": 401, "name": "Biome: Desert", "type": "biome", "socket_size": "large", "description": "Transforms plot into desert theme"},
+    {"id": 402, "name": "Biome: Arctic", "type": "biome", "socket_size": "large", "description": "Transforms plot into arctic theme"}
+  ]
+}

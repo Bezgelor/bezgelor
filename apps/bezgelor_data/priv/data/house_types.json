@@ -1,0 +1,10 @@
+{
+  "house_types": [
+    {"id": 1, "name": "Cozy Cottage", "tier": 1, "interior_size": "small", "decor_limit": 300, "fabkit_sockets": 6},
+    {"id": 2, "name": "Spacious Home", "tier": 2, "interior_size": "large", "decor_limit": 500, "fabkit_sockets": 6},
+    {"id": 10, "name": "Exile Homestead", "tier": 1, "interior_size": "small", "decor_limit": 300, "fabkit_sockets": 6, "faction": "exile"},
+    {"id": 11, "name": "Exile Manor", "tier": 2, "interior_size": "large", "decor_limit": 500, "fabkit_sockets": 6, "faction": "exile"},
+    {"id": 20, "name": "Dominion Villa", "tier": 1, "interior_size": "small", "decor_limit": 300, "fabkit_sockets": 6, "faction": "dominion"},
+    {"id": 21, "name": "Dominion Estate", "tier": 2, "interior_size": "large", "decor_limit": 500, "fabkit_sockets": 6, "faction": "dominion"}
+  ]
+}
