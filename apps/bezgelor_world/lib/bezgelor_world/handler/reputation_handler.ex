@@ -9,6 +9,7 @@ defmodule BezgelorWorld.Handler.ReputationHandler do
   alias BezgelorDb.Reputation
   alias BezgelorCore.Reputation, as: RepCore
   alias BezgelorProtocol.Packets.World.{ServerReputationList, ServerReputationUpdate}
+  alias BezgelorWorld.Handler.TitleHandler
 
   require Logger
 
@@ -36,29 +37,41 @@ defmodule BezgelorWorld.Handler.ReputationHandler do
 
   @doc """
   Modify reputation and send update to client.
+
+  If account_id is provided, title unlocks will be checked when reputation
+  level changes (titles are account-wide).
   """
-  @spec modify_reputation(pid(), integer(), integer(), integer()) ::
+  @spec modify_reputation(pid(), integer(), integer(), integer(), integer() | nil) ::
           {:ok, map()} | {:error, term()}
-  def modify_reputation(connection_pid, character_id, faction_id, delta) do
+  def modify_reputation(connection_pid, character_id, faction_id, delta, account_id \\ nil) do
+    # Get old standing to detect level changes
+    old_standing = Reputation.get_standing(character_id, faction_id)
+    old_level = RepCore.standing_to_level(old_standing)
+
     case Reputation.modify_reputation(character_id, faction_id, delta) do
       {:ok, rep} ->
-        level = RepCore.standing_to_level(rep.standing)
+        new_level = RepCore.standing_to_level(rep.standing)
 
         packet = %ServerReputationUpdate{
           faction_id: faction_id,
           standing: rep.standing,
           delta: delta,
-          level: level
+          level: new_level
         }
 
         send(connection_pid, {:send_packet, packet})
 
         Logger.debug(
           "Reputation updated for character #{character_id}: " <>
-            "faction #{faction_id}, delta #{delta}, new standing #{rep.standing} (#{level})"
+            "faction #{faction_id}, delta #{delta}, new standing #{rep.standing} (#{new_level})"
         )
 
-        {:ok, %{standing: rep.standing, level: level}}
+        # Check for title unlocks if level increased and account_id provided
+        if account_id && level_increased?(old_level, new_level) do
+          TitleHandler.check_reputation_titles(connection_pid, account_id, faction_id, new_level)
+        end
+
+        {:ok, %{standing: rep.standing, level: new_level, level_changed: old_level != new_level}}
 
       {:error, reason} ->
         Logger.warning(
@@ -67,6 +80,14 @@ defmodule BezgelorWorld.Handler.ReputationHandler do
 
         {:error, reason}
     end
+  end
+
+  # Check if reputation level increased (for title unlocks)
+  defp level_increased?(old_level, new_level) do
+    level_order = [:hated, :hostile, :unfriendly, :neutral, :friendly, :honored, :revered, :exalted]
+    old_idx = Enum.find_index(level_order, &(&1 == old_level)) || 0
+    new_idx = Enum.find_index(level_order, &(&1 == new_level)) || 0
+    new_idx > old_idx
   end
 
   @doc """
