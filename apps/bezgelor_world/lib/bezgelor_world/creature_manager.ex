@@ -360,7 +360,8 @@ defmodule BezgelorWorld.CreatureManager do
       loot_drops: loot_drops,
       gold: Loot.gold_from_drops(loot_drops),
       items: Loot.items_from_drops(loot_drops),
-      killer_guid: killer_guid
+      killer_guid: killer_guid,
+      reputation_rewards: template.reputation_rewards || []
     }
 
     Logger.debug("Creature #{entity.name} (#{entity.guid}) killed by #{killer_guid}")

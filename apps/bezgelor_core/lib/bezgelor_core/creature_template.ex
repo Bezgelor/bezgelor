@@ -22,6 +22,8 @@ defmodule BezgelorCore.CreatureTemplate do
   @type ai_type :: :passive | :aggressive | :defensive
   @type faction :: :hostile | :neutral | :friendly
 
+  @type reputation_reward :: {faction_id :: non_neg_integer(), amount :: integer()}
+
   @type t :: %__MODULE__{
           id: non_neg_integer(),
           name: String.t(),
@@ -37,7 +39,8 @@ defmodule BezgelorCore.CreatureTemplate do
           loot_table_id: non_neg_integer() | nil,
           damage_min: non_neg_integer(),
           damage_max: non_neg_integer(),
-          attack_speed: non_neg_integer()
+          attack_speed: non_neg_integer(),
+          reputation_rewards: [reputation_reward()]
         }
 
   defstruct [
@@ -55,7 +58,8 @@ defmodule BezgelorCore.CreatureTemplate do
     loot_table_id: nil,
     damage_min: 5,
     damage_max: 10,
-    attack_speed: 2000
+    attack_speed: 2000,
+    reputation_rewards: []
   ]
 
   @doc """
@@ -142,7 +146,9 @@ defmodule BezgelorCore.CreatureTemplate do
         loot_table_id: 1,
         damage_min: 8,
         damage_max: 15,
-        attack_speed: 2000
+        attack_speed: 2000,
+        # Grants 10 reputation with Exiles (faction 166)
+        reputation_rewards: [{166, 10}]
       },
       3 => %__MODULE__{
         id: 3,
