@@ -18,6 +18,10 @@ erl_crash.dump
 *.plt
 *.plt.hash
 
+# Extracted files
+/extracted_tbl/
+/json_output/
+
 # IDE
 .elixir_ls/
 .idea/
