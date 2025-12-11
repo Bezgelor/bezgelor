@@ -26,13 +26,17 @@ defmodule BezgelorWorld.Handler.AchievementHandler do
     ServerAchievementEarned
   }
 
+  alias BezgelorWorld.Handler.TitleHandler
+
   require Logger
 
-  defstruct [:connection_pid, :character_id, :achievement_defs]
+  defstruct [:connection_pid, :character_id, :account_id, :achievement_defs]
 
   @doc "Start achievement handler for a character."
-  def start_link(connection_pid, character_id, achievement_defs \\ %{}) do
-    GenServer.start_link(__MODULE__, {connection_pid, character_id, achievement_defs})
+  def start_link(connection_pid, character_id, opts \\ []) do
+    account_id = Keyword.get(opts, :account_id)
+    achievement_defs = Keyword.get(opts, :achievement_defs, %{})
+    GenServer.start_link(__MODULE__, {connection_pid, character_id, account_id, achievement_defs})
   end
 
   @doc "Send full achievement list to client."
@@ -58,13 +62,14 @@ defmodule BezgelorWorld.Handler.AchievementHandler do
   # GenServer Callbacks
 
   @impl true
-  def init({connection_pid, character_id, achievement_defs}) do
+  def init({connection_pid, character_id, account_id, achievement_defs}) do
     # Subscribe to achievement events
     :ok = Achievements.subscribe(character_id)
 
     state = %__MODULE__{
       connection_pid: connection_pid,
       character_id: character_id,
+      account_id: account_id,
       achievement_defs: achievement_defs
     }
 
@@ -146,7 +151,7 @@ defmodule BezgelorWorld.Handler.AchievementHandler do
              points
            ) do
         {:ok, ach, :completed} ->
-          send_earned(state.connection_pid, ach)
+          send_earned(state, ach)
 
         {:ok, ach, :progress} ->
           send_update(state.connection_pid, ach)
@@ -167,7 +172,7 @@ defmodule BezgelorWorld.Handler.AchievementHandler do
 
       case Achievements.complete(state.character_id, achievement_id, points) do
         {:ok, ach, :completed} ->
-          send_earned(state.connection_pid, ach)
+          send_earned(state, ach)
 
         _ ->
           :ok
@@ -192,7 +197,7 @@ defmodule BezgelorWorld.Handler.AchievementHandler do
              points
            ) do
         {:ok, ach, :completed} ->
-          send_earned(state.connection_pid, ach)
+          send_earned(state, ach)
 
         {:ok, ach, :progress} ->
           send_update(state.connection_pid, ach)
@@ -213,7 +218,7 @@ defmodule BezgelorWorld.Handler.AchievementHandler do
 
       case Achievements.complete(state.character_id, achievement_id, points) do
         {:ok, ach, :completed} ->
-          send_earned(state.connection_pid, ach)
+          send_earned(state, ach)
 
         _ ->
           :ok
@@ -238,7 +243,7 @@ defmodule BezgelorWorld.Handler.AchievementHandler do
       if all_complete do
         case Achievements.complete(state.character_id, achievement_id, points) do
           {:ok, ach, :completed} ->
-            send_earned(state.connection_pid, ach)
+            send_earned(state, ach)
 
           _ ->
             :ok
@@ -259,7 +264,7 @@ defmodule BezgelorWorld.Handler.AchievementHandler do
         if not ach.completed and ach.progress >= target do
           case Achievements.complete(state.character_id, achievement_id, points) do
             {:ok, updated, :completed} ->
-              send_earned(state.connection_pid, updated)
+              send_earned(state, updated)
 
             _ ->
               :ok
@@ -279,15 +284,24 @@ defmodule BezgelorWorld.Handler.AchievementHandler do
     send(connection_pid, {:send_packet, packet})
   end
 
-  defp send_earned(connection_pid, achievement) do
+  defp send_earned(state, achievement) do
     packet = %ServerAchievementEarned{
       achievement_id: achievement.achievement_id,
       points: achievement.points_awarded,
       completed_at: achievement.completed_at
     }
 
-    send(connection_pid, {:send_packet, packet})
+    send(state.connection_pid, {:send_packet, packet})
 
     Logger.info("Achievement #{achievement.achievement_id} earned! (#{achievement.points_awarded} points)")
+
+    # Check for title unlocks (titles are account-wide)
+    if state.account_id do
+      TitleHandler.check_achievement_titles(
+        state.connection_pid,
+        state.account_id,
+        achievement.achievement_id
+      )
+    end
   end
 end
