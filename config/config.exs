@@ -24,4 +24,26 @@ config :bezgelor_realm,
 config :bezgelor_world,
   port: String.to_integer(System.get_env("WORLD_PORT", "24000"))
 
+# Tradeskill configuration
+config :bezgelor_world, :tradeskills,
+  # Profession limits (0 = unlimited)
+  max_crafting_professions: 2,
+  max_gathering_professions: 3,
+  preserve_progress_on_swap: false,
+
+  # Discovery scope - :character or :account
+  discovery_scope: :character,
+
+  # Node competition mode - :first_tap, :shared, or :instanced
+  node_competition: :first_tap,
+  shared_tap_window_seconds: 5,
+
+  # Tech tree respec policy - :free, :gold_cost, :item_required, or :disabled
+  respec_policy: :gold_cost,
+  respec_gold_cost: 10_00,
+  respec_item_id: nil,
+
+  # Crafting station mode - :strict, :universal, or :housing_bypass
+  station_mode: :strict
+
 import_config "#{config_env()}.exs"
