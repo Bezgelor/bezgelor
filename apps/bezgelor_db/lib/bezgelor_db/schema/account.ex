@@ -36,6 +36,7 @@ defmodule BezgelorDb.Schema.Account do
           verifier: String.t() | nil,
           game_token: String.t() | nil,
           session_key: String.t() | nil,
+          active_title_id: integer() | nil,
           inserted_at: DateTime.t() | nil,
           updated_at: DateTime.t() | nil
         }
@@ -46,6 +47,7 @@ defmodule BezgelorDb.Schema.Account do
     field :verifier, :string
     field :game_token, :string
     field :session_key, :string
+    field :active_title_id, :integer
 
     has_many :suspensions, BezgelorDb.Schema.AccountSuspension
 
@@ -64,7 +66,7 @@ defmodule BezgelorDb.Schema.Account do
   @spec changeset(t(), map()) :: Ecto.Changeset.t()
   def changeset(account, attrs) do
     account
-    |> cast(attrs, [:email, :salt, :verifier, :game_token, :session_key])
+    |> cast(attrs, [:email, :salt, :verifier, :game_token, :session_key, :active_title_id])
     |> validate_required([:email, :salt, :verifier])
     |> validate_format(:email, ~r/^[^\s]+@[^\s]+\.[^\s]+$/, message: "has invalid format")
     |> update_change(:email, &String.downcase/1)
