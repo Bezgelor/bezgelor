@@ -201,4 +201,208 @@ defmodule BezgelorDb.PublicEvents do
   defp calculate_difficulty_multiplier(count) when count <= 25, do: 1.5
   defp calculate_difficulty_multiplier(count) when count <= 50, do: 2.0
   defp calculate_difficulty_multiplier(_count), do: 2.5
+
+  # ============================================================================
+  # Participation Management
+  # ============================================================================
+
+  @doc "Get participation record."
+  def get_participation(instance_id, character_id) do
+    Repo.get_by(EventParticipation, event_instance_id: instance_id, character_id: character_id)
+  end
+
+  @doc "Get all participations for an event, ordered by contribution."
+  def get_participations(instance_id) do
+    EventParticipation
+    |> where([p], p.event_instance_id == ^instance_id)
+    |> order_by([p], desc: p.contribution_score)
+    |> Repo.all()
+  end
+
+  @doc "Get top N contributors."
+  def get_top_contributors(instance_id, limit \\ 10) do
+    EventParticipation
+    |> where([p], p.event_instance_id == ^instance_id)
+    |> order_by([p], desc: p.contribution_score)
+    |> limit(^limit)
+    |> Repo.all()
+  end
+
+  @doc "Join an event."
+  def join_event(instance_id, character_id) do
+    if get_participation(instance_id, character_id) do
+      {:error, :already_joined}
+    else
+      now = DateTime.utc_now() |> DateTime.truncate(:second)
+
+      result =
+        %EventParticipation{}
+        |> EventParticipation.changeset(%{
+          event_instance_id: instance_id,
+          character_id: character_id,
+          joined_at: now,
+          last_activity_at: now
+        })
+        |> Repo.insert()
+
+      case result do
+        {:ok, participation} ->
+          update_participant_count(instance_id)
+          {:ok, participation}
+
+        error ->
+          error
+      end
+    end
+  end
+
+  @doc "Add contribution points. Auto-joins if not participating."
+  def add_contribution(instance_id, character_id, points) do
+    case get_or_create_participation(instance_id, character_id) do
+      {:ok, participation} ->
+        participation
+        |> EventParticipation.contribute_changeset(points)
+        |> Repo.update()
+
+      error ->
+        error
+    end
+  end
+
+  @doc "Record a kill."
+  def record_kill(instance_id, character_id, contribution_points) do
+    case get_or_create_participation(instance_id, character_id) do
+      {:ok, participation} ->
+        participation
+        |> EventParticipation.kill_changeset(contribution_points)
+        |> Repo.update()
+
+      error ->
+        error
+    end
+  end
+
+  @doc "Record damage dealt."
+  def record_damage(instance_id, character_id, damage, contribution_points) do
+    case get_or_create_participation(instance_id, character_id) do
+      {:ok, participation} ->
+        participation
+        |> EventParticipation.damage_changeset(damage, contribution_points)
+        |> Repo.update()
+
+      error ->
+        error
+    end
+  end
+
+  @doc "Record healing done."
+  def record_healing(instance_id, character_id, healing, contribution_points) do
+    case get_or_create_participation(instance_id, character_id) do
+      {:ok, participation} ->
+        participation
+        |> EventParticipation.healing_changeset(healing, contribution_points)
+        |> Repo.update()
+
+      error ->
+        error
+    end
+  end
+
+  @doc "Complete an objective for a participant."
+  def complete_objective(instance_id, character_id, objective_index, contribution_points) do
+    case get_participation(instance_id, character_id) do
+      nil ->
+        {:error, :not_participating}
+
+      participation ->
+        participation
+        |> EventParticipation.complete_objective_changeset(objective_index, contribution_points)
+        |> Repo.update()
+    end
+  end
+
+  @doc "Calculate and assign reward tiers for all participants."
+  def calculate_reward_tiers(instance_id) do
+    participations = get_participations(instance_id)
+    total = length(participations)
+
+    if total == 0 do
+      {:ok, []}
+    else
+      # Calculate tier thresholds
+      gold_threshold = max(1, ceil(total * 0.1))
+      silver_threshold = max(1, ceil(total * 0.25))
+      bronze_threshold = max(1, ceil(total * 0.5))
+
+      updated =
+        participations
+        |> Enum.with_index(1)
+        |> Enum.map(fn {p, rank} ->
+          tier = determine_tier(rank, p.contribution_score, gold_threshold, silver_threshold, bronze_threshold)
+
+          {:ok, updated} =
+            p
+            |> EventParticipation.set_tier_changeset(tier)
+            |> Repo.update()
+
+          updated
+        end)
+
+      {:ok, updated}
+    end
+  end
+
+  defp determine_tier(rank, score, gold_t, silver_t, bronze_t) do
+    cond do
+      rank <= gold_t or score >= 500 -> :gold
+      rank <= silver_t or score >= 300 -> :silver
+      rank <= bronze_t or score >= 100 -> :bronze
+      true -> :participation
+    end
+  end
+
+  @doc "Claim rewards for a participant."
+  def claim_rewards(instance_id, character_id) do
+    case get_participation(instance_id, character_id) do
+      nil ->
+        {:error, :not_participating}
+
+      %{rewards_claimed: true} ->
+        {:error, :already_claimed}
+
+      participation ->
+        participation
+        |> EventParticipation.claim_rewards_changeset()
+        |> Repo.update()
+    end
+  end
+
+  defp get_or_create_participation(instance_id, character_id) do
+    case get_participation(instance_id, character_id) do
+      nil ->
+        now = DateTime.utc_now() |> DateTime.truncate(:second)
+
+        result =
+          %EventParticipation{}
+          |> EventParticipation.changeset(%{
+            event_instance_id: instance_id,
+            character_id: character_id,
+            joined_at: now,
+            last_activity_at: now
+          })
+          |> Repo.insert()
+
+        case result do
+          {:ok, participation} ->
+            update_participant_count(instance_id)
+            {:ok, participation}
+
+          error ->
+            error
+        end
+
+      participation ->
+        {:ok, participation}
+    end
+  end
 end

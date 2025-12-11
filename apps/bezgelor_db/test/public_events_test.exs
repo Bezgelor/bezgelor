@@ -113,4 +113,96 @@ defmodule BezgelorDb.PublicEventsTest do
       assert updated.phase_progress == progress
     end
   end
+
+  describe "join_event/2" do
+    test "player joins an active event", %{character: char} do
+      {:ok, instance} = PublicEvents.create_event_instance(1, 100, 1)
+      {:ok, _} = PublicEvents.start_event(instance.id, 300_000)
+
+      assert {:ok, participation} = PublicEvents.join_event(instance.id, char.id)
+      assert participation.character_id == char.id
+      assert participation.contribution_score == 0
+      assert participation.joined_at != nil
+    end
+
+    test "cannot join same event twice", %{character: char} do
+      {:ok, instance} = PublicEvents.create_event_instance(1, 100, 1)
+      {:ok, _} = PublicEvents.start_event(instance.id, 300_000)
+      {:ok, _} = PublicEvents.join_event(instance.id, char.id)
+
+      assert {:error, :already_joined} = PublicEvents.join_event(instance.id, char.id)
+    end
+  end
+
+  describe "add_contribution/3" do
+    test "adds contribution points", %{character: char} do
+      {:ok, instance} = PublicEvents.create_event_instance(1, 100, 1)
+      {:ok, _} = PublicEvents.start_event(instance.id, 300_000)
+      {:ok, _} = PublicEvents.join_event(instance.id, char.id)
+
+      assert {:ok, updated} = PublicEvents.add_contribution(instance.id, char.id, 50)
+      assert updated.contribution_score == 50
+
+      assert {:ok, again} = PublicEvents.add_contribution(instance.id, char.id, 30)
+      assert again.contribution_score == 80
+    end
+
+    test "auto-joins player if not participating", %{character: char} do
+      {:ok, instance} = PublicEvents.create_event_instance(1, 100, 1)
+      {:ok, _} = PublicEvents.start_event(instance.id, 300_000)
+
+      assert {:ok, participation} = PublicEvents.add_contribution(instance.id, char.id, 50)
+      assert participation.contribution_score == 50
+    end
+  end
+
+  describe "record_kill/3" do
+    test "records kill and adds contribution", %{character: char} do
+      {:ok, instance} = PublicEvents.create_event_instance(1, 100, 1)
+      {:ok, _} = PublicEvents.start_event(instance.id, 300_000)
+      {:ok, _} = PublicEvents.join_event(instance.id, char.id)
+
+      assert {:ok, updated} = PublicEvents.record_kill(instance.id, char.id, 10)
+      assert updated.kills == 1
+      assert updated.contribution_score == 10
+    end
+  end
+
+  describe "record_damage/3" do
+    test "records damage dealt", %{character: char} do
+      {:ok, instance} = PublicEvents.create_event_instance(1, 100, 1)
+      {:ok, _} = PublicEvents.start_event(instance.id, 300_000)
+      {:ok, _} = PublicEvents.join_event(instance.id, char.id)
+
+      assert {:ok, updated} = PublicEvents.record_damage(instance.id, char.id, 1000, 5)
+      assert updated.damage_dealt == 1000
+      assert updated.contribution_score == 5
+    end
+  end
+
+  describe "calculate_reward_tiers/1" do
+    test "assigns tiers based on contribution", %{character: char} do
+      {:ok, instance} = PublicEvents.create_event_instance(1, 100, 1)
+      {:ok, _} = PublicEvents.start_event(instance.id, 300_000)
+      {:ok, _} = PublicEvents.join_event(instance.id, char.id)
+      {:ok, _} = PublicEvents.add_contribution(instance.id, char.id, 500)
+
+      assert {:ok, participations} = PublicEvents.calculate_reward_tiers(instance.id)
+      assert length(participations) == 1
+      assert hd(participations).reward_tier == :gold
+    end
+  end
+
+  describe "get_participations/1" do
+    test "returns participations ordered by contribution", %{character: char} do
+      {:ok, instance} = PublicEvents.create_event_instance(1, 100, 1)
+      {:ok, _} = PublicEvents.start_event(instance.id, 300_000)
+      {:ok, _} = PublicEvents.join_event(instance.id, char.id)
+      {:ok, _} = PublicEvents.add_contribution(instance.id, char.id, 100)
+
+      participations = PublicEvents.get_participations(instance.id)
+      assert length(participations) == 1
+      assert hd(participations).contribution_score == 100
+    end
+  end
 end
