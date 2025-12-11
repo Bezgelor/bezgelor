@@ -12,7 +12,7 @@ defmodule BezgelorData.Store do
 
   alias BezgelorData.Compiler
 
-  @tables [:creatures, :zones, :spells, :items, :texts, :house_types, :housing_decor, :housing_fabkits]
+  @tables [:creatures, :zones, :spells, :items, :texts, :house_types, :housing_decor, :housing_fabkits, :titles]
 
   # Client API
 
@@ -99,6 +99,7 @@ defmodule BezgelorData.Store do
     load_table(:house_types, "house_types.json", "house_types")
     load_table(:housing_decor, "housing_decor.json", "decor")
     load_table(:housing_fabkits, "housing_fabkits.json", "fabkits")
+    load_table(:titles, "titles.json", "titles")
 
     Logger.info("Game data loaded: #{inspect(stats())}")
   end

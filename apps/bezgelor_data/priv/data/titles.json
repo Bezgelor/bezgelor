@@ -1,0 +1,85 @@
+{
+  "titles": [
+    {
+      "id": 1001,
+      "name": "Exile's Champion",
+      "description": "Reached Exalted standing with the Exiles",
+      "category": "reputation",
+      "rarity": "epic",
+      "unlock_type": "reputation",
+      "unlock_requirements": {"faction_id": 166, "level": "exalted"}
+    },
+    {
+      "id": 1002,
+      "name": "Dominion's Bane",
+      "description": "Reached Hated standing with the Dominion",
+      "category": "reputation",
+      "rarity": "rare",
+      "unlock_type": "reputation",
+      "unlock_requirements": {"faction_id": 167, "level": "hated"}
+    },
+    {
+      "id": 1003,
+      "name": "Friend of the Exiles",
+      "description": "Reached Friendly standing with the Exiles",
+      "category": "reputation",
+      "rarity": "uncommon",
+      "unlock_type": "reputation",
+      "unlock_requirements": {"faction_id": 166, "level": "friendly"}
+    },
+    {
+      "id": 2001,
+      "name": "Lore Seeker",
+      "description": "Discovered 100 datacubes",
+      "category": "achievement",
+      "rarity": "rare",
+      "unlock_type": "achievement",
+      "unlock_requirements": {"achievement_id": 500}
+    },
+    {
+      "id": 3001,
+      "name": "Savior of Thayd",
+      "description": "Completed the defense of Thayd",
+      "category": "quest",
+      "rarity": "epic",
+      "unlock_type": "quest",
+      "unlock_requirements": {"quest_id": 7500}
+    },
+    {
+      "id": 4001,
+      "name": "Master Explorer",
+      "description": "Reached max Explorer path level",
+      "category": "path",
+      "rarity": "legendary",
+      "unlock_type": "path",
+      "unlock_requirements": {"path": "explorer", "level": 30}
+    },
+    {
+      "id": 4002,
+      "name": "Master Soldier",
+      "description": "Reached max Soldier path level",
+      "category": "path",
+      "rarity": "legendary",
+      "unlock_type": "path",
+      "unlock_requirements": {"path": "soldier", "level": 30}
+    },
+    {
+      "id": 4003,
+      "name": "Master Settler",
+      "description": "Reached max Settler path level",
+      "category": "path",
+      "rarity": "legendary",
+      "unlock_type": "path",
+      "unlock_requirements": {"path": "settler", "level": 30}
+    },
+    {
+      "id": 4004,
+      "name": "Master Scientist",
+      "description": "Reached max Scientist path level",
+      "category": "path",
+      "rarity": "legendary",
+      "unlock_type": "path",
+      "unlock_requirements": {"path": "scientist", "level": 30}
+    }
+  ]
+}

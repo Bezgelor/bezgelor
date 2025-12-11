@@ -445,6 +445,105 @@ defmodule BezgelorData do
     |> Enum.filter(fn f -> f.type == type end)
   end
 
+  # Titles
+
+  @doc """
+  Get a title definition by ID.
+  """
+  @spec get_title(non_neg_integer()) :: {:ok, map()} | :error
+  def get_title(id) do
+    Store.get(:titles, id)
+  end
+
+  @doc """
+  Get a title by ID, raising if not found.
+  """
+  @spec get_title!(non_neg_integer()) :: map()
+  def get_title!(id) do
+    case get_title(id) do
+      {:ok, title} -> title
+      :error -> raise "Title #{id} not found"
+    end
+  end
+
+  @doc """
+  List all titles.
+  """
+  @spec list_titles() :: [map()]
+  def list_titles do
+    Store.list(:titles)
+  end
+
+  @doc """
+  List titles by category.
+  """
+  @spec titles_by_category(String.t()) :: [map()]
+  def titles_by_category(category) do
+    list_titles()
+    |> Enum.filter(fn t -> t.category == category end)
+  end
+
+  @doc """
+  List titles by unlock type.
+  """
+  @spec titles_by_unlock_type(String.t()) :: [map()]
+  def titles_by_unlock_type(unlock_type) do
+    list_titles()
+    |> Enum.filter(fn t -> t.unlock_type == unlock_type end)
+  end
+
+  @doc """
+  Get all titles that unlock for a specific reputation level.
+  """
+  @spec titles_for_reputation(integer(), atom()) :: [map()]
+  def titles_for_reputation(faction_id, level) do
+    level_str = Atom.to_string(level)
+
+    list_titles()
+    |> Enum.filter(fn t ->
+      t.unlock_type == "reputation" and
+        get_in(t, [:unlock_requirements, :faction_id]) == faction_id and
+        get_in(t, [:unlock_requirements, :level]) == level_str
+    end)
+  end
+
+  @doc """
+  Get all titles that unlock for a specific achievement.
+  """
+  @spec titles_for_achievement(integer()) :: [map()]
+  def titles_for_achievement(achievement_id) do
+    list_titles()
+    |> Enum.filter(fn t ->
+      t.unlock_type == "achievement" and
+        get_in(t, [:unlock_requirements, :achievement_id]) == achievement_id
+    end)
+  end
+
+  @doc """
+  Get all titles that unlock for a specific quest.
+  """
+  @spec titles_for_quest(integer()) :: [map()]
+  def titles_for_quest(quest_id) do
+    list_titles()
+    |> Enum.filter(fn t ->
+      t.unlock_type == "quest" and
+        get_in(t, [:unlock_requirements, :quest_id]) == quest_id
+    end)
+  end
+
+  @doc """
+  Get all titles that unlock for path progress.
+  """
+  @spec titles_for_path(String.t(), integer()) :: [map()]
+  def titles_for_path(path, level) do
+    list_titles()
+    |> Enum.filter(fn t ->
+      t.unlock_type == "path" and
+        get_in(t, [:unlock_requirements, :path]) == path and
+        get_in(t, [:unlock_requirements, :level]) <= level
+    end)
+  end
+
   # Stats
 
   @doc """
@@ -460,7 +559,8 @@ defmodule BezgelorData do
       texts: Store.count(:texts),
       house_types: Store.count(:house_types),
       housing_decor: Store.count(:housing_decor),
-      housing_fabkits: Store.count(:housing_fabkits)
+      housing_fabkits: Store.count(:housing_fabkits),
+      titles: Store.count(:titles)
     }
   end
 end
