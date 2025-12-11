@@ -128,6 +128,13 @@ defmodule BezgelorWorld.WorldManager do
     GenServer.call(__MODULE__, {:get_session_by_character, character_id})
   end
 
+  @doc "Send a packet to a specific connection process."
+  @spec send_packet(pid(), atom(), binary()) :: :ok
+  def send_packet(connection_pid, opcode, packet_data) do
+    send(connection_pid, {:send_packet, opcode, packet_data})
+    :ok
+  end
+
   ## Server Callbacks
 
   @impl true

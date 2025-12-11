@@ -53,6 +53,12 @@ defmodule BezgelorWorld.CreatureManager do
   # AI tick interval in milliseconds
   @default_ai_tick_interval 1000
 
+  # Maximum creatures to process per tick (for batching)
+  @max_creatures_per_tick 100
+
+  # Combat timeout - creatures exit combat after this many ms without activity
+  @combat_timeout_ms 30_000
+
   ## Client API
 
   @doc "Start the CreatureManager."
@@ -363,10 +369,21 @@ defmodule BezgelorWorld.CreatureManager do
   end
 
   defp process_ai_tick(state) do
-    # Process each creature's AI
+    now = System.monotonic_time(:millisecond)
+
+    # Filter to only creatures that need AI processing (in combat, evading, or have threat)
+    # This optimization skips idle creatures with no targets
+    creatures_needing_update =
+      state.creatures
+      |> Enum.filter(fn {_guid, creature_state} ->
+        needs_ai_processing?(creature_state, now)
+      end)
+      |> Enum.take(@max_creatures_per_tick)
+
+    # Process the filtered creatures
     creatures =
-      Enum.reduce(state.creatures, state.creatures, fn {guid, creature_state}, creatures ->
-        case process_creature_ai(creature_state) do
+      Enum.reduce(creatures_needing_update, state.creatures, fn {guid, creature_state}, creatures ->
+        case process_creature_ai(creature_state, now) do
           {:no_change, _} ->
             creatures
 
@@ -378,7 +395,32 @@ defmodule BezgelorWorld.CreatureManager do
     %{state | creatures: creatures}
   end
 
-  defp process_creature_ai(%{ai: ai, template: template, entity: entity} = creature_state) do
+  # Determine if a creature needs AI processing this tick
+  defp needs_ai_processing?(%{ai: ai}, _now) do
+    # Process if:
+    # - In combat (needs to attack/check threat)
+    # - Evading (needs to return to spawn)
+    # - Has targets in threat table (should be in combat)
+    ai.state == :combat or
+      ai.state == :evade or
+      map_size(ai.threat_table) > 0
+  end
+
+  defp process_creature_ai(%{ai: ai, template: template, entity: entity} = creature_state, now) do
+    # Check for combat timeout - exit combat if no activity for too long
+    ai =
+      if ai.state == :combat and ai.combat_start_time do
+        combat_duration = now - ai.combat_start_time
+
+        if combat_duration > @combat_timeout_ms and map_size(ai.threat_table) == 0 do
+          AI.exit_combat(ai)
+        else
+          ai
+        end
+      else
+        ai
+      end
+
     context = %{
       attack_speed: template.attack_speed
     }

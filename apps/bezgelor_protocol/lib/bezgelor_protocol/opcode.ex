@@ -119,6 +119,33 @@ defmodule BezgelorProtocol.Opcode do
   @client_housing_roommate_demote 0x0733
   @server_housing_neighbor_list 0x0734
 
+  # Guild opcodes
+  @server_guild_data 0x0800
+  @server_guild_member_update 0x0801
+  @server_guild_result 0x0802
+  @client_guild_create 0x0810
+  @client_guild_invite 0x0811
+  @client_guild_accept_invite 0x0812
+  @client_guild_decline_invite 0x0813
+  @client_guild_leave 0x0814
+  @client_guild_kick 0x0815
+  @client_guild_promote 0x0816
+  @client_guild_demote 0x0817
+  @client_guild_set_motd 0x0818
+  @client_guild_disband 0x0819
+
+  # Mail opcodes
+  @server_mail_list 0x0900
+  @server_mail_result 0x0901
+  @server_mail_notification 0x0902
+  @client_mail_send 0x0910
+  @client_mail_get_inbox 0x0911
+  @client_mail_read 0x0912
+  @client_mail_take_attachments 0x0913
+  @client_mail_take_gold 0x0914
+  @client_mail_delete 0x0915
+  @client_mail_return 0x0916
+
   # Mapping from atom to integer
   @opcode_map %{
     # Auth (STS Server - port 6600)
@@ -207,7 +234,32 @@ defmodule BezgelorProtocol.Opcode do
     client_housing_neighbor_remove: @client_housing_neighbor_remove,
     client_housing_roommate_promote: @client_housing_roommate_promote,
     client_housing_roommate_demote: @client_housing_roommate_demote,
-    server_housing_neighbor_list: @server_housing_neighbor_list
+    server_housing_neighbor_list: @server_housing_neighbor_list,
+    # Guilds
+    server_guild_data: @server_guild_data,
+    server_guild_member_update: @server_guild_member_update,
+    server_guild_result: @server_guild_result,
+    client_guild_create: @client_guild_create,
+    client_guild_invite: @client_guild_invite,
+    client_guild_accept_invite: @client_guild_accept_invite,
+    client_guild_decline_invite: @client_guild_decline_invite,
+    client_guild_leave: @client_guild_leave,
+    client_guild_kick: @client_guild_kick,
+    client_guild_promote: @client_guild_promote,
+    client_guild_demote: @client_guild_demote,
+    client_guild_set_motd: @client_guild_set_motd,
+    client_guild_disband: @client_guild_disband,
+    # Mail
+    server_mail_list: @server_mail_list,
+    server_mail_result: @server_mail_result,
+    server_mail_notification: @server_mail_notification,
+    client_mail_send: @client_mail_send,
+    client_mail_get_inbox: @client_mail_get_inbox,
+    client_mail_read: @client_mail_read,
+    client_mail_take_attachments: @client_mail_take_attachments,
+    client_mail_take_gold: @client_mail_take_gold,
+    client_mail_delete: @client_mail_delete,
+    client_mail_return: @client_mail_return
   }
 
   # Reverse mapping from integer to atom
@@ -289,7 +341,32 @@ defmodule BezgelorProtocol.Opcode do
     client_housing_neighbor_remove: "ClientHousingNeighborRemove",
     client_housing_roommate_promote: "ClientHousingRoommatePromote",
     client_housing_roommate_demote: "ClientHousingRoommateDemote",
-    server_housing_neighbor_list: "ServerHousingNeighborList"
+    server_housing_neighbor_list: "ServerHousingNeighborList",
+    # Guilds
+    server_guild_data: "ServerGuildData",
+    server_guild_member_update: "ServerGuildMemberUpdate",
+    server_guild_result: "ServerGuildResult",
+    client_guild_create: "ClientGuildCreate",
+    client_guild_invite: "ClientGuildInvite",
+    client_guild_accept_invite: "ClientGuildAcceptInvite",
+    client_guild_decline_invite: "ClientGuildDeclineInvite",
+    client_guild_leave: "ClientGuildLeave",
+    client_guild_kick: "ClientGuildKick",
+    client_guild_promote: "ClientGuildPromote",
+    client_guild_demote: "ClientGuildDemote",
+    client_guild_set_motd: "ClientGuildSetMotd",
+    client_guild_disband: "ClientGuildDisband",
+    # Mail
+    server_mail_list: "ServerMailList",
+    server_mail_result: "ServerMailResult",
+    server_mail_notification: "ServerMailNotification",
+    client_mail_send: "ClientMailSend",
+    client_mail_get_inbox: "ClientMailGetInbox",
+    client_mail_read: "ClientMailRead",
+    client_mail_take_attachments: "ClientMailTakeAttachments",
+    client_mail_take_gold: "ClientMailTakeGold",
+    client_mail_delete: "ClientMailDelete",
+    client_mail_return: "ClientMailReturn"
   }
 
   @type t :: atom()

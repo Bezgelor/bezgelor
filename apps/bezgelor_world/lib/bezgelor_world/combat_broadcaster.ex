@@ -15,6 +15,7 @@ defmodule BezgelorWorld.CombatBroadcaster do
     ServerBuffApply,
     ServerBuffRemove,
     ServerEntityDeath,
+    ServerLootDrop,
     ServerRespawn,
     ServerSpellEffect,
     ServerXPGain
@@ -100,14 +101,35 @@ defmodule BezgelorWorld.CombatBroadcaster do
       send_xp_gain(player_guid, rewards.xp_reward, :kill, creature_guid)
     end
 
-    # TODO: Send loot notification when loot system is implemented
+    # Send loot notification
+    gold = Map.get(rewards, :gold, 0)
     items = Map.get(rewards, :items, [])
 
-    if length(items) > 0 do
-      Logger.debug("Loot dropped for player #{player_guid}: #{inspect(items)}")
+    if gold > 0 or length(items) > 0 do
+      send_loot_drop(player_guid, creature_guid, gold, items)
     end
 
     :ok
+  end
+
+  @doc """
+  Send loot drop notification to a player.
+  """
+  @spec send_loot_drop(non_neg_integer(), non_neg_integer(), non_neg_integer(), [{non_neg_integer(), non_neg_integer()}]) :: :ok
+  def send_loot_drop(player_guid, source_guid, gold, items) do
+    packet = %ServerLootDrop{
+      source_guid: source_guid,
+      gold: gold,
+      items: items
+    }
+
+    writer = PacketWriter.new()
+    {:ok, writer} = ServerLootDrop.write(packet, writer)
+    packet_data = PacketWriter.to_binary(writer)
+
+    send_to_player(player_guid, :server_loot_drop, packet_data)
+
+    Logger.debug("Sent loot drop to player #{player_guid}: #{gold} gold, #{length(items)} items")
   end
 
   @doc """
