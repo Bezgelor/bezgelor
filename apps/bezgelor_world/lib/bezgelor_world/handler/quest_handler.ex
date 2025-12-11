@@ -16,6 +16,8 @@ defmodule BezgelorWorld.Handler.QuestHandler do
     ServerQuestRemove
   }
 
+  alias BezgelorWorld.Handler.ReputationHandler
+
   require Logger
 
   @doc """
@@ -90,9 +92,14 @@ defmodule BezgelorWorld.Handler.QuestHandler do
 
   @doc """
   Handle quest turn-in request.
+
+  The quest_data map should include:
+  - :reputation_rewards - list of {faction_id, amount} tuples
+  - :xp_reward - XP to grant
+  - :gold_reward - gold to grant
   """
-  @spec handle_turn_in_quest(pid(), integer(), ClientTurnInQuest.t()) :: :ok
-  def handle_turn_in_quest(connection_pid, character_id, %ClientTurnInQuest{} = packet) do
+  @spec handle_turn_in_quest(pid(), integer(), ClientTurnInQuest.t(), map()) :: :ok
+  def handle_turn_in_quest(connection_pid, character_id, %ClientTurnInQuest{} = packet, quest_data \\ %{}) do
     case Quests.turn_in_quest(character_id, packet.quest_id) do
       {:ok, _history} ->
         remove_packet = %ServerQuestRemove{
@@ -103,7 +110,9 @@ defmodule BezgelorWorld.Handler.QuestHandler do
         send(connection_pid, {:send_packet, remove_packet})
         Logger.debug("Character #{character_id} turned in quest #{packet.quest_id}")
 
-        # TODO: Grant rewards based on quest_data and packet.reward_choice
+        # Grant rewards
+        grant_quest_rewards(connection_pid, character_id, quest_data)
+
         :ok
 
       {:error, :not_found} ->
@@ -115,6 +124,22 @@ defmodule BezgelorWorld.Handler.QuestHandler do
       {:error, reason} ->
         Logger.error("Failed to turn in quest: #{inspect(reason)}")
     end
+
+    :ok
+  end
+
+  # Grant all quest rewards
+  defp grant_quest_rewards(connection_pid, character_id, quest_data) do
+    # Grant reputation rewards
+    reputation_rewards = Map.get(quest_data, :reputation_rewards, [])
+
+    Enum.each(reputation_rewards, fn {faction_id, amount} ->
+      ReputationHandler.modify_reputation(connection_pid, character_id, faction_id, amount)
+    end)
+
+    # TODO: Grant XP and gold when those systems are integrated
+    # xp_reward = Map.get(quest_data, :xp_reward, 0)
+    # gold_reward = Map.get(quest_data, :gold_reward, 0)
 
     :ok
   end
