@@ -44,7 +44,16 @@ defmodule BezgelorWorld.EventManager do
           objectives: [objective_state()],
           started_at: DateTime.t(),
           time_limit_timer: reference() | nil,
-          participants: MapSet.t(non_neg_integer())
+          participants: MapSet.t(non_neg_integer()),
+          wave_state: wave_state() | nil
+        }
+
+  @type wave_state :: %{
+          current_wave: non_neg_integer(),
+          total_waves: non_neg_integer(),
+          enemies_spawned: non_neg_integer(),
+          enemies_killed: non_neg_integer(),
+          wave_timer: reference() | nil
         }
 
   @type objective_state :: %{
@@ -209,6 +218,29 @@ defmodule BezgelorWorld.EventManager do
   @spec list_world_bosses(pid() | tuple()) :: [map()]
   def list_world_bosses(manager) do
     GenServer.call(manager, :list_world_bosses)
+  end
+
+  # Wave System Functions
+
+  @doc "Start a wave for an invasion event."
+  @spec start_wave(pid() | tuple(), non_neg_integer(), non_neg_integer()) ::
+          {:ok, map()} | {:error, term()}
+  def start_wave(manager, instance_id, wave_number) do
+    GenServer.call(manager, {:start_wave, instance_id, wave_number})
+  end
+
+  @doc "Report wave enemies killed."
+  @spec wave_enemy_killed(pid() | tuple(), non_neg_integer(), non_neg_integer(), non_neg_integer()) ::
+          {:ok, map()} | {:error, term()}
+  def wave_enemy_killed(manager, instance_id, character_id, creature_id) do
+    GenServer.call(manager, {:wave_enemy_killed, instance_id, character_id, creature_id})
+  end
+
+  @doc "Get current wave state for an event."
+  @spec get_wave_state(pid() | tuple(), non_neg_integer()) ::
+          {:ok, map()} | {:error, term()}
+  def get_wave_state(manager, instance_id) do
+    GenServer.call(manager, {:get_wave_state, instance_id})
   end
 
   ## Server Callbacks
@@ -646,6 +678,139 @@ defmodule BezgelorWorld.EventManager do
     {:reply, bosses, state}
   end
 
+  # Wave System Handlers
+
+  @impl true
+  def handle_call({:start_wave, instance_id, wave_number}, _from, state) do
+    case Map.get(state.events, instance_id) do
+      nil ->
+        {:reply, {:error, :event_not_found}, state}
+
+      event_state ->
+        waves = event_state.event_def["waves"] || []
+
+        if wave_number <= length(waves) do
+          wave_def = Enum.at(waves, wave_number - 1)
+          enemy_count = wave_def["enemy_count"] || 10
+
+          wave_state = %{
+            current_wave: wave_number,
+            total_waves: length(waves),
+            enemies_spawned: enemy_count,
+            enemies_killed: 0,
+            wave_timer: nil
+          }
+
+          # Start wave timer if defined
+          wave_state =
+            if wave_time = wave_def["time_limit_ms"] do
+              timer_ref = Process.send_after(self(), {:wave_timeout, instance_id}, wave_time)
+              %{wave_state | wave_timer: timer_ref}
+            else
+              wave_state
+            end
+
+          event_state = %{event_state | wave_state: wave_state}
+          events = Map.put(state.events, instance_id, event_state)
+
+          Logger.info("Started wave #{wave_number}/#{length(waves)} for event #{instance_id}")
+          {:reply, {:ok, wave_state}, %{state | events: events}}
+        else
+          {:reply, {:error, :invalid_wave}, state}
+        end
+    end
+  end
+
+  @impl true
+  def handle_call({:wave_enemy_killed, instance_id, character_id, _creature_id}, _from, state) do
+    case Map.get(state.events, instance_id) do
+      nil ->
+        {:reply, {:error, :event_not_found}, state}
+
+      %{wave_state: nil} ->
+        {:reply, {:error, :no_wave_active}, state}
+
+      event_state ->
+        wave_state = event_state.wave_state
+        wave_state = %{wave_state | enemies_killed: wave_state.enemies_killed + 1}
+
+        # Track contribution
+        state = track_participant_contribution(state, character_id, 10)
+
+        # Check if wave complete
+        if wave_state.enemies_killed >= wave_state.enemies_spawned do
+          # Cancel wave timer
+          if wave_state.wave_timer do
+            Process.cancel_timer(wave_state.wave_timer)
+          end
+
+          Logger.info("Wave #{wave_state.current_wave} completed for event #{instance_id}")
+
+          # Check if more waves
+          if wave_state.current_wave < wave_state.total_waves do
+            # Auto-start next wave after delay
+            Process.send_after(self(), {:start_next_wave, instance_id}, 5_000)
+          else
+            # All waves complete - advance phase or complete event
+            state = maybe_advance_phase(state, instance_id)
+          end
+
+          event_state = %{event_state | wave_state: nil}
+          events = Map.put(state.events, instance_id, event_state)
+          {:reply, {:ok, %{wave_complete: true}}, %{state | events: events}}
+        else
+          event_state = %{event_state | wave_state: wave_state}
+          events = Map.put(state.events, instance_id, event_state)
+          {:reply, {:ok, %{wave_complete: false, remaining: wave_state.enemies_spawned - wave_state.enemies_killed}}, %{state | events: events}}
+        end
+    end
+  end
+
+  @impl true
+  def handle_call({:get_wave_state, instance_id}, _from, state) do
+    case Map.get(state.events, instance_id) do
+      nil ->
+        {:reply, {:error, :event_not_found}, state}
+
+      event_state ->
+        {:reply, {:ok, event_state.wave_state}, state}
+    end
+  end
+
+  @impl true
+  def handle_info({:wave_timeout, instance_id}, state) do
+    case Map.get(state.events, instance_id) do
+      nil ->
+        {:noreply, state}
+
+      %{wave_state: nil} ->
+        {:noreply, state}
+
+      event_state ->
+        Logger.info("Wave timeout for event #{instance_id}")
+        # Wave failed - could fail event or just advance
+        event_state = %{event_state | wave_state: nil}
+        events = Map.put(state.events, instance_id, event_state)
+        {:noreply, %{state | events: events}}
+    end
+  end
+
+  @impl true
+  def handle_info({:start_next_wave, instance_id}, state) do
+    case Map.get(state.events, instance_id) do
+      nil ->
+        {:noreply, state}
+
+      event_state ->
+        next_wave = (event_state.wave_state && event_state.wave_state.current_wave + 1) || 1
+
+        case do_start_wave(state, instance_id, next_wave) do
+          {:ok, new_state} -> {:noreply, new_state}
+          {:error, _} -> {:noreply, state}
+        end
+    end
+  end
+
   @impl true
   def handle_info({:event_time_limit, instance_id}, state) do
     case Map.get(state.events, instance_id) do
@@ -662,6 +827,40 @@ defmodule BezgelorWorld.EventManager do
 
   ## Private Helpers
 
+  defp do_start_wave(state, instance_id, wave_number) do
+    event_state = Map.get(state.events, instance_id)
+    waves = event_state.event_def["waves"] || []
+
+    if wave_number <= length(waves) do
+      wave_def = Enum.at(waves, wave_number - 1)
+      enemy_count = wave_def["enemy_count"] || 10
+
+      wave_state = %{
+        current_wave: wave_number,
+        total_waves: length(waves),
+        enemies_spawned: enemy_count,
+        enemies_killed: 0,
+        wave_timer: nil
+      }
+
+      wave_state =
+        if wave_time = wave_def["time_limit_ms"] do
+          timer_ref = Process.send_after(self(), {:wave_timeout, instance_id}, wave_time)
+          %{wave_state | wave_timer: timer_ref}
+        else
+          wave_state
+        end
+
+      event_state = %{event_state | wave_state: wave_state}
+      events = Map.put(state.events, instance_id, event_state)
+
+      Logger.info("Auto-started wave #{wave_number} for event #{instance_id}")
+      {:ok, %{state | events: events}}
+    else
+      {:error, :no_more_waves}
+    end
+  end
+
   defp create_event_state(event_id, event_def) do
     phases = event_def["phases"] || []
     first_phase = List.first(phases) || %{}
@@ -674,7 +873,8 @@ defmodule BezgelorWorld.EventManager do
       objectives: objectives,
       started_at: DateTime.utc_now(),
       time_limit_timer: nil,
-      participants: MapSet.new()
+      participants: MapSet.new(),
+      wave_state: nil
     }
   end
 
