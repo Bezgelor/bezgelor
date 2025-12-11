@@ -16,7 +16,7 @@ Bezgelor is an Elixir port of NexusForever, a WildStar server emulator. The proj
 | 4 | Realm Server | ✅ Complete | 100% |
 | 5 | Character Management | ✅ Complete | 100% |
 | 6 | Core Gameplay (Combat) | ✅ Complete | 100% |
-| 7 | Game Systems | 🔄 In Progress | ~30% |
+| 7 | Game Systems | 🔄 In Progress | ~83% |
 
 ---
 
@@ -82,8 +82,8 @@ Bezgelor is an Elixir port of NexusForever, a WildStar server emulator. The proj
 | 7.6 Paths | ✅ Complete | Soldier, Settler, Scientist, Explorer missions |
 | 7.7 Guilds | ✅ Complete | Create, invite, ranks, permissions, bank, MOTD |
 | 7.8 Mail | ✅ Complete | Send, receive, attachments, gold, COD, return to sender |
-| 7.9 Mounts & Pets | ⏳ Pending | Summoning, customization, collections |
-| 7.10 Housing | ⏳ Pending | Plots, decor, fabkits, neighbors |
+| 7.9 Mounts & Pets | ✅ Complete | Summon, dismiss, customize, pet XP from combat |
+| 7.10 Housing | ✅ Complete | Plots, decor placement, fabkits, neighbors, roommates |
 | 7.11 Storefront | ⏳ Pending | Purchases, account currency, unlocks |
 | 7.12 Reputation | ⏳ Pending | Faction standing, thresholds, rewards |
 
@@ -99,7 +99,7 @@ Bezgelor is an Elixir port of NexusForever, a WildStar server emulator. The proj
 | bezgelor_protocol | Packets | ✅ Complete | 70+ packets, handlers, framing |
 | bezgelor_auth | Auth server | ✅ Complete | Login flow, session management |
 | bezgelor_realm | Realm server | ✅ Complete | Character list, realm selection |
-| bezgelor_world | World server | 🔄 85% | Core gameplay done, some systems pending |
+| bezgelor_world | World server | 🔄 95% | Core gameplay + most systems done, storefront/reputation pending |
 | bezgelor_api | REST API | ✅ Complete | Status, player, zone endpoints |
 | bezgelor_data | Static data | 🔄 60% | ETS store, ETF compilation, text extraction |
 
@@ -169,26 +169,13 @@ Bezgelor is an Elixir port of NexusForever, a WildStar server emulator. The proj
 
 ### Phase 7 Pending Systems
 
-1. **Mounts & Pets** (~500 LOC)
-   - Mount summoning/dismissal
-   - Pet summoning/renaming
-   - Customization options
-   - Collection integration
-
-2. **Housing** (~1,500 LOC)
-   - Plot acquisition and management
-   - Decor placement and removal
-   - Fabkit installation
-   - Neighbor/visitor permissions
-   - Public/private settings
-
-3. **Storefront** (~800 LOC)
+1. **Storefront** (~800 LOC)
    - Item catalog display
    - Purchase flow
    - Account currency handling
    - Account-wide unlocks
 
-4. **Reputation** (~400 LOC)
+2. **Reputation** (~400 LOC)
    - Faction gains from kills/quests
    - Standing thresholds
    - Reputation-gated vendors
@@ -240,6 +227,7 @@ tools/
 
 ## Recent Completions
 
+- **2025-12-10:** Phase 7 Systems 9-10 (Mounts & Pets handlers, Housing complete)
 - **2025-12-10:** Phase 6 polish (edge case tests, AI optimization, loot broadcasting)
 - **2025-12-09:** Phase 7 Systems 7 (Guilds) and 8 (Mail)
 - **2025-12-08:** Phase 7 Systems 1-6 (Chat, Inventory, Quests, Social, Achievements, Paths)
