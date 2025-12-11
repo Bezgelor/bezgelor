@@ -1,6 +1,6 @@
 # Bezgelor Project Status
 
-**Last Updated:** 2025-12-10
+**Last Updated:** 2025-12-11
 
 ## Overview
 
@@ -17,7 +17,7 @@ Bezgelor is an Elixir port of NexusForever, a WildStar server emulator. The proj
 | 5 | Character Management | ✅ Complete | 100% |
 | 6 | Core Gameplay (Combat) | ✅ Complete | 100% |
 | 7 | Game Systems | ✅ Complete | 100% |
-| 8 | Tradeskills | ⏳ Not Started | 0% |
+| 8 | Tradeskills | 🔄 In Progress | 60% |
 | 9 | Public Events | ⏳ Not Started | 0% |
 | 10 | Dungeons & Instances | ⏳ Not Started | 0% |
 | 11 | PvP | ⏳ Not Started | 0% |
@@ -186,27 +186,38 @@ Phase 7 (Game Systems) is complete. Next phases:
 
 ---
 
-## Phase 8: Tradeskills ⏳ Not Started
+## Phase 8: Tradeskills 🔄 In Progress (60%)
 
 | System | Status | Description |
 |--------|--------|-------------|
-| 8.1 Gathering | ⏳ Pending | Mining, Relic Hunter, Survivalist nodes and collection |
-| 8.2 Crafting Core | ⏳ Pending | Armorer, Weaponsmith, Outfitter, Tailor, Technologist, Architect |
-| 8.3 Schematics | ⏳ Pending | Recipe discovery, knowledge tree, variants |
-| 8.4 Crafting UI | ⏳ Pending | Material requirements, crafting queue, success/failure |
-| 8.5 Additives | ⏳ Pending | Power cores, catalysts, quality modifiers |
-| 8.6 Tech Trees | ⏳ Pending | Tradeskill talent progression |
+| 8.1 Database Schemas | ✅ Complete | CharacterTradeskill, SchematicDiscovery, TradeskillTalent, WorkOrder |
+| 8.2 Context Module | ✅ Complete | Profession management, discovery, talents, work orders |
+| 8.3 Coordinate System | ✅ Complete | Rectangle hit detection, overcharge mechanics |
+| 8.4 Crafting Session | ✅ Complete | In-memory session state, additive tracking |
+| 8.5 Gathering Nodes | ✅ Complete | Tap/respawn mechanics, availability checks |
+| 8.6 Configuration | ✅ Complete | Server-configurable profession limits, node competition, respec policy |
+| 8.7 Client Packets | ✅ Complete | 11 packets (learn, craft, gather, talents, work orders) |
+| 8.8 Server Packets | ✅ Complete | 11 packets (lists, updates, results, discoveries) |
+| 8.9 Handlers | ✅ Complete | TradeskillHandler, CraftingHandler, GatheringHandler |
+| 8.10 Static Data | ⏳ Pending | Extract .tbl files for schematics, materials, tech trees |
+| 8.11 ETS Integration | ⏳ Pending | Load tradeskill data into ETS store |
+| 8.12 Zone Integration | ⏳ Pending | Node spawning in zones, NodeManager |
 
-**Implementation Steps:**
-1. Create `tradeskill` schema (character tradeskill levels, XP)
-2. Create `schematic` schema (known recipes, discovery state)
-3. Create `crafting_session` schema (in-progress crafts)
-4. Add tradeskill static data loading (schematics, materials, tech trees)
-5. Implement gathering node interaction (spawn, collect, respawn timers)
-6. Implement crafting logic (material consumption, success rolls, quality)
-7. Add crafting packets (start craft, add materials, finalize)
-8. Implement tradeskill XP and leveling
-9. Add tech tree unlocks and bonuses
+**Completed:**
+- Database migration for 4 tradeskill tables
+- Full CRUD operations via Tradeskills context
+- Coordinate-based crafting with quality zones (rectangle hit detection)
+- Overcharge risk/reward system
+- Gathering node tap/respawn lifecycle
+- Configurable: profession limits, discovery scope, node competition, respec policy, station requirements
+- Complete packet protocol (client + server)
+- Handler implementations with XP tracking
+
+**Remaining:**
+- Extract tradeskill static data from game archive
+- Add tradeskill tables to ETS store
+- Integrate gathering nodes with zone instances
+- Work order daily generation system
 
 ---
 
@@ -323,6 +334,7 @@ tools/
 
 ## Recent Completions
 
+- **2025-12-11:** Phase 8 Tradeskills 60% - Core systems complete (schemas, handlers, packets, coordinate crafting)
 - **2025-12-10:** Phase 7 Complete! System 12 (Reputation - title system, kill/quest rewards, level tracking)
 - **2025-12-10:** Phase 7 System 11 (Storefront - categories, promotions, promo codes, daily deals)
 - **2025-12-10:** Phase 7 Systems 9-10 (Mounts & Pets handlers, Housing complete)
