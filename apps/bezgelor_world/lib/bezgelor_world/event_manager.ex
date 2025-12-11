@@ -45,7 +45,8 @@ defmodule BezgelorWorld.EventManager do
           started_at: DateTime.t(),
           time_limit_timer: reference() | nil,
           participants: MapSet.t(non_neg_integer()),
-          wave_state: wave_state() | nil
+          wave_state: wave_state() | nil,
+          territory_state: territory_state() | nil
         }
 
   @type wave_state :: %{
@@ -54,6 +55,19 @@ defmodule BezgelorWorld.EventManager do
           enemies_spawned: non_neg_integer(),
           enemies_killed: non_neg_integer(),
           wave_timer: reference() | nil
+        }
+
+  @type territory_state :: %{
+          territories: [territory_point()],
+          capture_tick_timer: reference() | nil
+        }
+
+  @type territory_point :: %{
+          index: non_neg_integer(),
+          name: String.t(),
+          capture_progress: integer(),
+          players_in_zone: MapSet.t(non_neg_integer()),
+          captured: boolean()
         }
 
   @type objective_state :: %{
@@ -243,6 +257,29 @@ defmodule BezgelorWorld.EventManager do
     GenServer.call(manager, {:get_wave_state, instance_id})
   end
 
+  # Territory Control Functions
+
+  @doc "Enter a territory capture point."
+  @spec enter_territory(pid() | tuple(), non_neg_integer(), non_neg_integer(), non_neg_integer()) ::
+          {:ok, map()} | {:error, term()}
+  def enter_territory(manager, instance_id, territory_index, character_id) do
+    GenServer.call(manager, {:enter_territory, instance_id, territory_index, character_id})
+  end
+
+  @doc "Leave a territory capture point."
+  @spec leave_territory(pid() | tuple(), non_neg_integer(), non_neg_integer(), non_neg_integer()) ::
+          :ok | {:error, term()}
+  def leave_territory(manager, instance_id, territory_index, character_id) do
+    GenServer.call(manager, {:leave_territory, instance_id, territory_index, character_id})
+  end
+
+  @doc "Get territory state for an event."
+  @spec get_territory_state(pid() | tuple(), non_neg_integer()) ::
+          {:ok, map()} | {:error, term()}
+  def get_territory_state(manager, instance_id) do
+    GenServer.call(manager, {:get_territory_state, instance_id})
+  end
+
   ## Server Callbacks
 
   @impl true
@@ -270,8 +307,11 @@ defmodule BezgelorWorld.EventManager do
         instance_id = state.next_instance_id
 
         # Create DB record
-        case PublicEvents.start_event(event_id, state.zone_id, instance_id) do
-          {:ok, _db_event} ->
+        case PublicEvents.create_event_instance(event_id, state.zone_id, instance_id) do
+          {:ok, db_instance} ->
+            # Start the event with a default duration
+            duration_ms = event_def["time_limit_ms"] || 3_600_000
+            PublicEvents.start_event(db_instance.id, duration_ms)
             event_state = create_event_state(event_id, event_def)
 
             # Start time limit timer if applicable
@@ -362,7 +402,7 @@ defmodule BezgelorWorld.EventManager do
         participants_map = Map.put(state.participants, character_id, participant)
 
         # Record in DB
-        PublicEvents.add_participant(instance_id, character_id)
+        PublicEvents.join_event(instance_id, character_id)
 
         Logger.debug("Character #{character_id} joined event #{instance_id}")
         {:reply, :ok, %{state | events: events, participants: participants_map}}
@@ -391,7 +431,7 @@ defmodule BezgelorWorld.EventManager do
       nil ->
         {:reply, {:error, :event_not_found}, state}
 
-      event_state ->
+      _event_state ->
         # Update participant contribution
         participant =
           Map.get(state.participants, character_id, %{
@@ -405,7 +445,7 @@ defmodule BezgelorWorld.EventManager do
         participants_map = Map.put(state.participants, character_id, participant)
 
         # Update DB
-        PublicEvents.update_contribution(instance_id, character_id, amount)
+        PublicEvents.add_contribution(instance_id, character_id, amount)
 
         {:reply, {:ok, participant}, %{state | participants: participants_map}}
     end
@@ -747,14 +787,17 @@ defmodule BezgelorWorld.EventManager do
           Logger.info("Wave #{wave_state.current_wave} completed for event #{instance_id}")
 
           # Check if more waves
-          if wave_state.current_wave < wave_state.total_waves do
-            # Auto-start next wave after delay
-            Process.send_after(self(), {:start_next_wave, instance_id}, 5_000)
-          else
-            # All waves complete - advance phase or complete event
-            state = maybe_advance_phase(state, instance_id)
-          end
+          state =
+            if wave_state.current_wave < wave_state.total_waves do
+              # Auto-start next wave after delay
+              Process.send_after(self(), {:start_next_wave, instance_id}, 5_000)
+              state
+            else
+              # All waves complete - advance phase or complete event
+              maybe_advance_phase(state, instance_id)
+            end
 
+          event_state = Map.get(state.events, instance_id) || event_state
           event_state = %{event_state | wave_state: nil}
           events = Map.put(state.events, instance_id, event_state)
           {:reply, {:ok, %{wave_complete: true}}, %{state | events: events}}
@@ -774,6 +817,81 @@ defmodule BezgelorWorld.EventManager do
 
       event_state ->
         {:reply, {:ok, event_state.wave_state}, state}
+    end
+  end
+
+  # Territory Control Handlers
+
+  @impl true
+  def handle_call({:enter_territory, instance_id, territory_index, character_id}, _from, state) do
+    case Map.get(state.events, instance_id) do
+      nil ->
+        {:reply, {:error, :event_not_found}, state}
+
+      event_state ->
+        # Initialize territory state if needed
+        event_state = maybe_init_territory_state(event_state)
+
+        case get_territory_point(event_state.territory_state, territory_index) do
+          nil ->
+            {:reply, {:error, :territory_not_found}, state}
+
+          territory ->
+            # Add player to territory zone
+            players = MapSet.put(territory.players_in_zone, character_id)
+            territory = %{territory | players_in_zone: players}
+
+            territory_state = update_territory_point(event_state.territory_state, territory_index, territory)
+
+            # Start capture tick timer if not running and players present
+            territory_state = maybe_start_capture_tick(territory_state, instance_id)
+
+            event_state = %{event_state | territory_state: territory_state}
+            events = Map.put(state.events, instance_id, event_state)
+
+            Logger.debug("Character #{character_id} entered territory #{territory_index} in event #{instance_id}")
+            {:reply, {:ok, territory}, %{state | events: events}}
+        end
+    end
+  end
+
+  @impl true
+  def handle_call({:leave_territory, instance_id, territory_index, character_id}, _from, state) do
+    case Map.get(state.events, instance_id) do
+      nil ->
+        {:reply, {:error, :event_not_found}, state}
+
+      %{territory_state: nil} ->
+        {:reply, :ok, state}
+
+      event_state ->
+        case get_territory_point(event_state.territory_state, territory_index) do
+          nil ->
+            {:reply, :ok, state}
+
+          territory ->
+            # Remove player from territory zone
+            players = MapSet.delete(territory.players_in_zone, character_id)
+            territory = %{territory | players_in_zone: players}
+
+            territory_state = update_territory_point(event_state.territory_state, territory_index, territory)
+            event_state = %{event_state | territory_state: territory_state}
+            events = Map.put(state.events, instance_id, event_state)
+
+            Logger.debug("Character #{character_id} left territory #{territory_index} in event #{instance_id}")
+            {:reply, :ok, %{state | events: events}}
+        end
+    end
+  end
+
+  @impl true
+  def handle_call({:get_territory_state, instance_id}, _from, state) do
+    case Map.get(state.events, instance_id) do
+      nil ->
+        {:reply, {:error, :event_not_found}, state}
+
+      event_state ->
+        {:reply, {:ok, event_state.territory_state}, state}
     end
   end
 
@@ -821,6 +939,66 @@ defmodule BezgelorWorld.EventManager do
         Logger.info("Event #{instance_id} time limit reached")
         # Check if objectives are met for partial success
         state = complete_event(state, instance_id, check_objectives_met(event_state))
+        {:noreply, state}
+    end
+  end
+
+  @impl true
+  def handle_info({:territory_capture_tick, instance_id}, state) do
+    case Map.get(state.events, instance_id) do
+      nil ->
+        {:noreply, state}
+
+      %{territory_state: nil} ->
+        {:noreply, state}
+
+      event_state ->
+        territory_state = process_territory_tick(event_state.territory_state)
+
+        # Check if all territories captured (for territory objectives)
+        all_captured = all_territories_captured?(territory_state)
+
+        event_state = %{event_state | territory_state: territory_state}
+        events = Map.put(state.events, instance_id, event_state)
+        state = %{state | events: events}
+
+        # If all territories captured, advance phase
+        state =
+          if all_captured do
+            # Update territory objectives
+            state = update_territory_objectives(state, instance_id)
+            maybe_advance_phase(state, instance_id)
+          else
+            state
+          end
+
+        # Schedule next tick if there are still players in any territory
+        state =
+          if any_players_in_territories?(territory_state) do
+            event_state = Map.get(state.events, instance_id)
+
+            if event_state do
+              territory_state = schedule_capture_tick(event_state.territory_state, instance_id)
+              event_state = %{event_state | territory_state: territory_state}
+              events = Map.put(state.events, instance_id, event_state)
+              %{state | events: events}
+            else
+              state
+            end
+          else
+            # Cancel the timer reference
+            event_state = Map.get(state.events, instance_id)
+
+            if event_state && event_state.territory_state do
+              territory_state = %{event_state.territory_state | capture_tick_timer: nil}
+              event_state = %{event_state | territory_state: territory_state}
+              events = Map.put(state.events, instance_id, event_state)
+              %{state | events: events}
+            else
+              state
+            end
+          end
+
         {:noreply, state}
     end
   end
@@ -874,7 +1052,8 @@ defmodule BezgelorWorld.EventManager do
       started_at: DateTime.utc_now(),
       time_limit_timer: nil,
       participants: MapSet.new(),
-      wave_state: nil
+      wave_state: nil,
+      territory_state: nil
     }
   end
 
@@ -1065,5 +1244,136 @@ defmodule BezgelorWorld.EventManager do
   defp calculate_boss_contribution_points(damage, max_health) do
     # 1 point per 0.1% of boss health dealt
     div(damage * 1000, max_health)
+  end
+
+  # Territory Control Helpers
+
+  @capture_tick_interval_ms 1_000
+  @capture_progress_per_tick 5
+  @capture_progress_max 100
+
+  defp maybe_init_territory_state(%{territory_state: nil} = event_state) do
+    territories = event_state.event_def["territories"] || []
+
+    if length(territories) > 0 do
+      territory_points =
+        territories
+        |> Enum.with_index()
+        |> Enum.map(fn {territory_def, index} ->
+          %{
+            index: index,
+            name: territory_def["name"] || "Territory #{index + 1}",
+            capture_progress: 0,
+            players_in_zone: MapSet.new(),
+            captured: false
+          }
+        end)
+
+      territory_state = %{
+        territories: territory_points,
+        capture_tick_timer: nil
+      }
+
+      %{event_state | territory_state: territory_state}
+    else
+      event_state
+    end
+  end
+
+  defp maybe_init_territory_state(event_state), do: event_state
+
+  defp get_territory_point(nil, _index), do: nil
+
+  defp get_territory_point(territory_state, index) do
+    Enum.find(territory_state.territories, &(&1.index == index))
+  end
+
+  defp update_territory_point(territory_state, index, updated_territory) do
+    territories =
+      Enum.map(territory_state.territories, fn territory ->
+        if territory.index == index do
+          updated_territory
+        else
+          territory
+        end
+      end)
+
+    %{territory_state | territories: territories}
+  end
+
+  defp maybe_start_capture_tick(%{capture_tick_timer: nil} = territory_state, instance_id) do
+    if any_players_in_territories?(territory_state) do
+      schedule_capture_tick(territory_state, instance_id)
+    else
+      territory_state
+    end
+  end
+
+  defp maybe_start_capture_tick(territory_state, _instance_id), do: territory_state
+
+  defp schedule_capture_tick(territory_state, instance_id) do
+    timer_ref = Process.send_after(self(), {:territory_capture_tick, instance_id}, @capture_tick_interval_ms)
+    %{territory_state | capture_tick_timer: timer_ref}
+  end
+
+  defp process_territory_tick(territory_state) do
+    territories =
+      Enum.map(territory_state.territories, fn territory ->
+        player_count = MapSet.size(territory.players_in_zone)
+
+        if player_count > 0 and not territory.captured do
+          # Progress increases based on player count (diminishing returns)
+          progress_increase = @capture_progress_per_tick * min(player_count, 5)
+          new_progress = min(territory.capture_progress + progress_increase, @capture_progress_max)
+
+          captured = new_progress >= @capture_progress_max
+
+          if captured do
+            Logger.info("Territory #{territory.index} (#{territory.name}) captured!")
+          end
+
+          %{territory | capture_progress: new_progress, captured: captured}
+        else
+          territory
+        end
+      end)
+
+    %{territory_state | territories: territories}
+  end
+
+  defp any_players_in_territories?(territory_state) do
+    Enum.any?(territory_state.territories, fn territory ->
+      MapSet.size(territory.players_in_zone) > 0
+    end)
+  end
+
+  defp all_territories_captured?(territory_state) do
+    Enum.all?(territory_state.territories, & &1.captured)
+  end
+
+  defp update_territory_objectives(state, instance_id) do
+    event_state = Map.get(state.events, instance_id)
+
+    if event_state do
+      captured_count =
+        event_state.territory_state.territories
+        |> Enum.count(& &1.captured)
+
+      # Update territory-type objectives
+      objectives =
+        Enum.map(event_state.objectives, fn obj ->
+          if obj.type == :territory do
+            %{obj | current: captured_count}
+          else
+            obj
+          end
+        end)
+
+      event_state = %{event_state | objectives: objectives}
+      events = Map.put(state.events, instance_id, event_state)
+      %{state | events: events}
+    else
+      state
+    end
   end
 end

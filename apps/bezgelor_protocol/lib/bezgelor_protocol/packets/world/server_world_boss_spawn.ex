@@ -28,9 +28,9 @@ defmodule BezgelorProtocol.Packets.World.ServerWorldBossSpawn do
       writer
       |> PacketWriter.write_uint32(packet.boss_id)
       |> PacketWriter.write_uint64(packet.creature_id)
-      |> PacketWriter.write_float(packet.position.x)
-      |> PacketWriter.write_float(packet.position.y)
-      |> PacketWriter.write_float(packet.position.z)
+      |> PacketWriter.write_float32(packet.position.x)
+      |> PacketWriter.write_float32(packet.position.y)
+      |> PacketWriter.write_float32(packet.position.z)
       |> PacketWriter.write_uint32(packet.health_max)
       |> PacketWriter.write_uint32(packet.health_current)
       |> PacketWriter.write_byte(packet.phase)

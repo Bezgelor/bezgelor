@@ -38,7 +38,7 @@ defmodule BezgelorProtocol.Packets.World.ServerWorldBossKilled do
       Enum.reduce(packet.top_contributors, writer, fn contrib, w ->
         w
         |> PacketWriter.write_uint64(contrib.character_id)
-        |> PacketWriter.write_wstring(contrib.name)
+        |> PacketWriter.write_wide_string(contrib.name)
         |> PacketWriter.write_uint32(contrib.contribution)
         |> PacketWriter.write_uint32(contrib.damage_dealt)
       end)
