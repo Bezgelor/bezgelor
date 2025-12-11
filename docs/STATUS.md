@@ -16,7 +16,11 @@ Bezgelor is an Elixir port of NexusForever, a WildStar server emulator. The proj
 | 4 | Realm Server | ✅ Complete | 100% |
 | 5 | Character Management | ✅ Complete | 100% |
 | 6 | Core Gameplay (Combat) | ✅ Complete | 100% |
-| 7 | Game Systems | 🔄 In Progress | ~83% |
+| 7 | Game Systems | ✅ Complete | 100% |
+| 8 | Tradeskills | ⏳ Not Started | 0% |
+| 9 | Public Events | ⏳ Not Started | 0% |
+| 10 | Dungeons & Instances | ⏳ Not Started | 0% |
+| 11 | PvP | ⏳ Not Started | 0% |
 
 ---
 
@@ -84,8 +88,8 @@ Bezgelor is an Elixir port of NexusForever, a WildStar server emulator. The proj
 | 7.8 Mail | ✅ Complete | Send, receive, attachments, gold, COD, return to sender |
 | 7.9 Mounts & Pets | ✅ Complete | Summon, dismiss, customize, pet XP from combat |
 | 7.10 Housing | ✅ Complete | Plots, decor placement, fabkits, neighbors, roommates |
-| 7.11 Storefront | ⏳ Pending | Purchases, account currency, unlocks |
-| 7.12 Reputation | ⏳ Pending | Faction standing, thresholds, rewards |
+| 7.11 Storefront | ✅ Complete | Categories, purchases, promo codes, daily deals |
+| 7.12 Reputation | ✅ Complete | Faction standing, thresholds, title unlocks, kill/quest rewards |
 
 ---
 
@@ -95,17 +99,17 @@ Bezgelor is an Elixir port of NexusForever, a WildStar server emulator. The proj
 |-----|---------|--------|-------|
 | bezgelor_core | Game logic | ✅ Complete | Entity, spell, AI, experience, loot systems |
 | bezgelor_crypto | Security | ✅ Complete | SRP6, packet encryption, password hashing |
-| bezgelor_db | Database | ✅ Complete | 32 Ecto schemas, 10+ migrations |
+| bezgelor_db | Database | ✅ Complete | 38 Ecto schemas, 10+ migrations |
 | bezgelor_protocol | Packets | ✅ Complete | 70+ packets, handlers, framing |
 | bezgelor_auth | Auth server | ✅ Complete | Login flow, session management |
 | bezgelor_realm | Realm server | ✅ Complete | Character list, realm selection |
-| bezgelor_world | World server | 🔄 95% | Core gameplay + most systems done, storefront/reputation pending |
+| bezgelor_world | World server | ✅ Complete | All Phase 6-7 systems implemented |
 | bezgelor_api | REST API | ✅ Complete | Status, player, zone endpoints |
 | bezgelor_data | Static data | 🔄 60% | ETS store, ETF compilation, text extraction |
 
 ---
 
-## Database Schemas (32 total)
+## Database Schemas (38 total)
 
 ### Core
 - `account` - User accounts with SRP6 credentials
@@ -147,10 +151,16 @@ Bezgelor is an Elixir port of NexusForever, a WildStar server emulator. The proj
 - `account_currency` - Premium currencies
 - `account_collection` - Account unlocks
 - `account_suspension` - Bans/suspensions
+- `account_title` - Unlocked titles (account-wide)
 - `active_mount` - Summoned mount
 - `active_pet` - Summoned pet
 - `store_item` - Store catalog
 - `store_purchase` - Purchase history
+- `store_category` - Store categories (hierarchical)
+- `store_promotion` - Time-limited sales/bundles
+- `promo_code` - Promotional codes
+- `promo_redemption` - Code redemption tracking
+- `daily_deal` - Rotating daily deals
 
 ---
 
@@ -167,26 +177,112 @@ Bezgelor is an Elixir port of NexusForever, a WildStar server emulator. The proj
 
 ## What Remains
 
-### Phase 7 Pending Systems
+Phase 7 (Game Systems) is complete. Next phases:
 
-1. **Storefront** (~800 LOC)
-   - Item catalog display
-   - Purchase flow
-   - Account currency handling
-   - Account-wide unlocks
+- **Phase 8: Tradeskills** - Gathering, crafting, schematics, tech trees
+- **Phase 9: Public Events** - World bosses, zone events, participation rewards
+- **Phase 10: Dungeons & Instances** - Group finder, boss mechanics, lockouts
+- **Phase 11: PvP** - Dueling, battlegrounds, arenas, warplots
 
-2. **Reputation** (~400 LOC)
-   - Faction gains from kills/quests
-   - Standing thresholds
-   - Reputation-gated vendors
-   - Title unlocks
+---
 
-### Future Phases (Not Started)
+## Phase 8: Tradeskills ⏳ Not Started
 
-- **Phase 8: Tradeskills** - Crafting, gathering, schematics
-- **Phase 9: Public Events** - World events, group objectives
-- **Phase 10: Dungeons** - Instance management, boss mechanics
-- **Phase 11: PvP** - Battlegrounds, arenas, war plots
+| System | Status | Description |
+|--------|--------|-------------|
+| 8.1 Gathering | ⏳ Pending | Mining, Relic Hunter, Survivalist nodes and collection |
+| 8.2 Crafting Core | ⏳ Pending | Armorer, Weaponsmith, Outfitter, Tailor, Technologist, Architect |
+| 8.3 Schematics | ⏳ Pending | Recipe discovery, knowledge tree, variants |
+| 8.4 Crafting UI | ⏳ Pending | Material requirements, crafting queue, success/failure |
+| 8.5 Additives | ⏳ Pending | Power cores, catalysts, quality modifiers |
+| 8.6 Tech Trees | ⏳ Pending | Tradeskill talent progression |
+
+**Implementation Steps:**
+1. Create `tradeskill` schema (character tradeskill levels, XP)
+2. Create `schematic` schema (known recipes, discovery state)
+3. Create `crafting_session` schema (in-progress crafts)
+4. Add tradeskill static data loading (schematics, materials, tech trees)
+5. Implement gathering node interaction (spawn, collect, respawn timers)
+6. Implement crafting logic (material consumption, success rolls, quality)
+7. Add crafting packets (start craft, add materials, finalize)
+8. Implement tradeskill XP and leveling
+9. Add tech tree unlocks and bonuses
+
+---
+
+## Phase 9: Public Events ⏳ Not Started
+
+| System | Status | Description |
+|--------|--------|-------------|
+| 9.1 Event Manager | ⏳ Pending | Event scheduling, triggers, lifecycle |
+| 9.2 Objectives | ⏳ Pending | Kill counts, collection, defend/escort |
+| 9.3 Participation | ⏳ Pending | Contribution tracking, rewards distribution |
+| 9.4 World Bosses | ⏳ Pending | Spawn timers, multi-phase encounters |
+| 9.5 Zone Events | ⏳ Pending | Invasion waves, territory control |
+| 9.6 Rewards | ⏳ Pending | Loot tables, currency, titles |
+
+**Implementation Steps:**
+1. Create `public_event` schema (event state, phase, timer)
+2. Create `event_participant` schema (contribution tracking)
+3. Add event definition static data (objectives, phases, rewards)
+4. Implement EventManager GenServer (scheduling, lifecycle)
+5. Add event spawn triggers (timer-based, player-count, quest-triggered)
+6. Implement objective tracking (kill credit, collection progress)
+7. Add contribution-based reward distribution
+8. Implement event-specific creature spawns and despawns
+9. Add event broadcast packets (announce, progress, complete)
+
+---
+
+## Phase 10: Dungeons & Instances ⏳ Not Started
+
+| System | Status | Description |
+|--------|--------|-------------|
+| 10.1 Instance Manager | ⏳ Pending | Instance creation, lifecycle, cleanup |
+| 10.2 Group Finder | ⏳ Pending | Queue system, role matching, teleport |
+| 10.3 Boss Mechanics | ⏳ Pending | Phases, abilities, enrage timers |
+| 10.4 Lockouts | ⏳ Pending | Weekly/daily reset, save states |
+| 10.5 Loot Rules | ⏳ Pending | Need/greed, master loot, personal loot |
+| 10.6 Difficulty Modes | ⏳ Pending | Normal, Veteran, scaling |
+
+**Implementation Steps:**
+1. Create `instance` schema (instance ID, difficulty, state)
+2. Create `instance_lockout` schema (character lockouts, boss kills)
+3. Create `group_finder_queue` schema (queued players, roles)
+4. Implement InstanceManager supervisor (spawn/cleanup instances)
+5. Add instance zone process (isolated from world zones)
+6. Implement group finder matchmaking algorithm
+7. Add boss encounter scripts (phases, abilities, triggers)
+8. Implement lockout tracking and reset schedules
+9. Add instance-specific loot distribution systems
+10. Implement difficulty scaling (health, damage, mechanics)
+
+---
+
+## Phase 11: PvP ⏳ Not Started
+
+| System | Status | Description |
+|--------|--------|-------------|
+| 11.1 Dueling | ⏳ Pending | Challenge, accept, boundaries, victory |
+| 11.2 Battlegrounds | ⏳ Pending | Walatiki Temple, Halls of the Bloodsworn |
+| 11.3 Arenas | ⏳ Pending | 2v2, 3v3, 5v5 rated matches |
+| 11.4 Warplots | ⏳ Pending | 40v40 fortress warfare |
+| 11.5 PvP Gear | ⏳ Pending | PvP stats, conquest vendors |
+| 11.6 Rating System | ⏳ Pending | ELO/MMR, seasons, rewards |
+
+**Implementation Steps:**
+1. Create `pvp_stats` schema (kills, deaths, rating per bracket)
+2. Create `arena_team` schema (team roster, rating, history)
+3. Create `warplot` schema (warplot ownership, upgrades)
+4. Create `battleground_queue` schema (queue state, matchmaking)
+5. Implement duel system (challenge, countdown, boundaries)
+6. Add battleground instance management (maps, objectives, scoring)
+7. Implement arena matchmaking (rating-based pairing)
+8. Add PvP combat modifications (resilience, PvP power)
+9. Implement rating calculations (win/loss adjustments)
+10. Add season tracking and reward distribution
+11. Implement warplot building and plug system
+12. Add conquest currency and PvP vendor integration
 
 ---
 
@@ -227,6 +323,8 @@ tools/
 
 ## Recent Completions
 
+- **2025-12-10:** Phase 7 Complete! System 12 (Reputation - title system, kill/quest rewards, level tracking)
+- **2025-12-10:** Phase 7 System 11 (Storefront - categories, promotions, promo codes, daily deals)
 - **2025-12-10:** Phase 7 Systems 9-10 (Mounts & Pets handlers, Housing complete)
 - **2025-12-10:** Phase 6 polish (edge case tests, AI optimization, loot broadcasting)
 - **2025-12-09:** Phase 7 Systems 7 (Guilds) and 8 (Mail)
