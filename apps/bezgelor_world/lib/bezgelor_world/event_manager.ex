@@ -148,6 +148,40 @@ defmodule BezgelorWorld.EventManager do
     GenServer.call(manager, {:update_objective, instance_id, objective_index, amount})
   end
 
+  @doc "Record a kill for kill-type objectives."
+  @spec record_kill(pid() | tuple(), non_neg_integer(), non_neg_integer(), non_neg_integer()) ::
+          {:ok, map()} | {:error, term()}
+  def record_kill(manager, instance_id, character_id, creature_id) do
+    GenServer.call(manager, {:record_kill, instance_id, character_id, creature_id})
+  end
+
+  @doc "Record a collection for collect-type objectives."
+  @spec record_collection(pid() | tuple(), non_neg_integer(), non_neg_integer(), non_neg_integer(), non_neg_integer()) ::
+          {:ok, map()} | {:error, term()}
+  def record_collection(manager, instance_id, character_id, item_id, amount) do
+    GenServer.call(manager, {:record_collection, instance_id, character_id, item_id, amount})
+  end
+
+  @doc "Record an interaction for interact-type objectives."
+  @spec record_interaction(pid() | tuple(), non_neg_integer(), non_neg_integer(), non_neg_integer()) ::
+          {:ok, map()} | {:error, term()}
+  def record_interaction(manager, instance_id, character_id, object_id) do
+    GenServer.call(manager, {:record_interaction, instance_id, character_id, object_id})
+  end
+
+  @doc "Record damage dealt for damage-type objectives."
+  @spec record_damage(pid() | tuple(), non_neg_integer(), non_neg_integer(), non_neg_integer()) ::
+          {:ok, map()} | {:error, term()}
+  def record_damage(manager, instance_id, character_id, damage) do
+    GenServer.call(manager, {:record_damage, instance_id, character_id, damage})
+  end
+
+  @doc "Get objectives for an event."
+  @spec get_objectives(pid() | tuple(), non_neg_integer()) :: {:ok, [map()]} | {:error, term()}
+  def get_objectives(manager, instance_id) do
+    GenServer.call(manager, {:get_objectives, instance_id})
+  end
+
   ## Server Callbacks
 
   @impl true
@@ -346,6 +380,144 @@ defmodule BezgelorWorld.EventManager do
   end
 
   @impl true
+  def handle_call({:record_kill, instance_id, character_id, creature_id}, _from, state) do
+    case Map.get(state.events, instance_id) do
+      nil ->
+        {:reply, {:error, :event_not_found}, state}
+
+      event_state ->
+        # Find kill objectives that match this creature
+        {objectives, updated} =
+          update_matching_objectives(event_state.objectives, :kill, creature_id)
+
+        if updated do
+          event_state = %{event_state | objectives: objectives}
+          events = Map.put(state.events, instance_id, event_state)
+
+          # Track contribution (kills give 10 points)
+          state = track_participant_contribution(state, character_id, 10)
+
+          state = %{state | events: events}
+          state = maybe_advance_phase(state, instance_id)
+
+          {:reply, {:ok, %{updated: true, objectives: objectives}}, state}
+        else
+          {:reply, {:ok, %{updated: false}}, state}
+        end
+    end
+  end
+
+  @impl true
+  def handle_call({:record_collection, instance_id, character_id, item_id, amount}, _from, state) do
+    case Map.get(state.events, instance_id) do
+      nil ->
+        {:reply, {:error, :event_not_found}, state}
+
+      event_state ->
+        # Find collect objectives that match this item
+        {objectives, updated} =
+          update_matching_objectives(event_state.objectives, :collect, item_id, amount)
+
+        if updated do
+          event_state = %{event_state | objectives: objectives}
+          events = Map.put(state.events, instance_id, event_state)
+
+          # Track contribution (collections give 5 points per item)
+          state = track_participant_contribution(state, character_id, 5 * amount)
+
+          state = %{state | events: events}
+          state = maybe_advance_phase(state, instance_id)
+
+          {:reply, {:ok, %{updated: true, objectives: objectives}}, state}
+        else
+          {:reply, {:ok, %{updated: false}}, state}
+        end
+    end
+  end
+
+  @impl true
+  def handle_call({:record_interaction, instance_id, character_id, object_id}, _from, state) do
+    case Map.get(state.events, instance_id) do
+      nil ->
+        {:reply, {:error, :event_not_found}, state}
+
+      event_state ->
+        # Find interact objectives that match this object
+        {objectives, updated} =
+          update_matching_objectives(event_state.objectives, :interact, object_id)
+
+        if updated do
+          event_state = %{event_state | objectives: objectives}
+          events = Map.put(state.events, instance_id, event_state)
+
+          # Track contribution (interactions give 15 points)
+          state = track_participant_contribution(state, character_id, 15)
+
+          state = %{state | events: events}
+          state = maybe_advance_phase(state, instance_id)
+
+          {:reply, {:ok, %{updated: true, objectives: objectives}}, state}
+        else
+          {:reply, {:ok, %{updated: false}}, state}
+        end
+    end
+  end
+
+  @impl true
+  def handle_call({:record_damage, instance_id, character_id, damage}, _from, state) do
+    case Map.get(state.events, instance_id) do
+      nil ->
+        {:reply, {:error, :event_not_found}, state}
+
+      event_state ->
+        # Update damage objectives
+        objectives =
+          Enum.map(event_state.objectives, fn obj ->
+            if obj.type == :damage do
+              new_current = min(obj.current + damage, obj.target)
+              %{obj | current: new_current}
+            else
+              obj
+            end
+          end)
+
+        event_state = %{event_state | objectives: objectives}
+        events = Map.put(state.events, instance_id, event_state)
+
+        # Track contribution (1 point per 100 damage)
+        contribution = div(damage, 100)
+        state = track_participant_contribution(state, character_id, contribution)
+
+        # Track damage dealt
+        participant = Map.get(state.participants, character_id)
+
+        state =
+          if participant do
+            participant = %{participant | damage_dealt: participant.damage_dealt + damage}
+            %{state | participants: Map.put(state.participants, character_id, participant)}
+          else
+            state
+          end
+
+        state = %{state | events: events}
+        state = maybe_advance_phase(state, instance_id)
+
+        {:reply, {:ok, %{damage_recorded: damage}}, state}
+    end
+  end
+
+  @impl true
+  def handle_call({:get_objectives, instance_id}, _from, state) do
+    case Map.get(state.events, instance_id) do
+      nil ->
+        {:reply, {:error, :event_not_found}, state}
+
+      event_state ->
+        {:reply, {:ok, event_state.objectives}, state}
+    end
+  end
+
+  @impl true
   def handle_info({:event_time_limit, instance_id}, state) do
     case Map.get(state.events, instance_id) do
       nil ->
@@ -385,6 +557,7 @@ defmodule BezgelorWorld.EventManager do
         index: index,
         type: String.to_atom(obj["type"] || "kill"),
         target: obj["target"] || 0,
+        target_id: obj["target_id"],
         current: 0
       }
     end)
@@ -468,5 +641,32 @@ defmodule BezgelorWorld.EventManager do
         events = Map.delete(state.events, instance_id)
         %{state | events: events}
     end
+  end
+
+  defp update_matching_objectives(objectives, type, target_id, amount \\ 1) do
+    {updated_objectives, any_updated} =
+      Enum.map_reduce(objectives, false, fn obj, updated ->
+        if obj.type == type and (obj.target_id == nil or obj.target_id == target_id) and obj.current < obj.target do
+          new_current = min(obj.current + amount, obj.target)
+          {%{obj | current: new_current}, true}
+        else
+          {obj, updated}
+        end
+      end)
+
+    {updated_objectives, any_updated}
+  end
+
+  defp track_participant_contribution(state, character_id, amount) do
+    participant =
+      Map.get(state.participants, character_id, %{
+        character_id: character_id,
+        contribution: 0,
+        damage_dealt: 0,
+        joined_at: DateTime.utc_now()
+      })
+
+    participant = %{participant | contribution: participant.contribution + amount}
+    %{state | participants: Map.put(state.participants, character_id, participant)}
   end
 end
