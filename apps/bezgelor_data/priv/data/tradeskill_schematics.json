@@ -1,0 +1,137 @@
+{
+  "schematics": [
+    {
+      "id": 1001,
+      "profession_id": 1,
+      "name": "Basic Sword",
+      "description": "A simple iron sword",
+      "min_level": 1,
+      "output_item_id": 50001,
+      "output_quantity": 1,
+      "materials": [
+        {"item_id": 40001, "quantity": 3},
+        {"item_id": 40002, "quantity": 1}
+      ],
+      "zones": [
+        {"id": 1, "x_min": 0, "x_max": 30, "y_min": 0, "y_max": 30, "variant_id": 0, "quality": "poor"},
+        {"id": 2, "x_min": 35, "x_max": 65, "y_min": 35, "y_max": 65, "variant_id": 0, "quality": "standard"},
+        {"id": 3, "x_min": 70, "x_max": 100, "y_min": 70, "y_max": 100, "variant_id": 0, "quality": "excellent"}
+      ],
+      "xp_reward": 150
+    },
+    {
+      "id": 1002,
+      "profession_id": 1,
+      "name": "Iron Longsword",
+      "description": "A sturdy iron longsword",
+      "min_level": 10,
+      "output_item_id": 50002,
+      "output_quantity": 1,
+      "materials": [
+        {"item_id": 40001, "quantity": 5},
+        {"item_id": 40002, "quantity": 2},
+        {"item_id": 40003, "quantity": 1}
+      ],
+      "zones": [
+        {"id": 1, "x_min": 0, "x_max": 25, "y_min": 0, "y_max": 25, "variant_id": 0, "quality": "poor"},
+        {"id": 2, "x_min": 30, "x_max": 70, "y_min": 30, "y_max": 70, "variant_id": 0, "quality": "standard"},
+        {"id": 3, "x_min": 75, "x_max": 100, "y_min": 75, "y_max": 100, "variant_id": 1001, "quality": "excellent"}
+      ],
+      "xp_reward": 250
+    },
+    {
+      "id": 2001,
+      "profession_id": 2,
+      "name": "Iron Chestplate",
+      "description": "Basic iron chest armor",
+      "min_level": 1,
+      "output_item_id": 51001,
+      "output_quantity": 1,
+      "materials": [
+        {"item_id": 40001, "quantity": 4},
+        {"item_id": 40004, "quantity": 2}
+      ],
+      "zones": [
+        {"id": 1, "x_min": 0, "x_max": 30, "y_min": 0, "y_max": 30, "variant_id": 0, "quality": "poor"},
+        {"id": 2, "x_min": 35, "x_max": 65, "y_min": 35, "y_max": 65, "variant_id": 0, "quality": "standard"},
+        {"id": 3, "x_min": 70, "x_max": 100, "y_min": 70, "y_max": 100, "variant_id": 0, "quality": "excellent"}
+      ],
+      "xp_reward": 175
+    },
+    {
+      "id": 3001,
+      "profession_id": 3,
+      "name": "Leather Vest",
+      "description": "Light leather chest piece",
+      "min_level": 1,
+      "output_item_id": 52001,
+      "output_quantity": 1,
+      "materials": [
+        {"item_id": 40010, "quantity": 3},
+        {"item_id": 40011, "quantity": 1}
+      ],
+      "zones": [
+        {"id": 1, "x_min": 0, "x_max": 35, "y_min": 0, "y_max": 35, "variant_id": 0, "quality": "poor"},
+        {"id": 2, "x_min": 40, "x_max": 60, "y_min": 40, "y_max": 60, "variant_id": 0, "quality": "standard"},
+        {"id": 3, "x_min": 65, "x_max": 100, "y_min": 65, "y_max": 100, "variant_id": 0, "quality": "excellent"}
+      ],
+      "xp_reward": 150
+    },
+    {
+      "id": 4001,
+      "profession_id": 4,
+      "name": "Cloth Robe",
+      "description": "Simple cloth robe",
+      "min_level": 1,
+      "output_item_id": 53001,
+      "output_quantity": 1,
+      "materials": [
+        {"item_id": 40020, "quantity": 4},
+        {"item_id": 40021, "quantity": 1}
+      ],
+      "zones": [
+        {"id": 1, "x_min": 0, "x_max": 30, "y_min": 0, "y_max": 30, "variant_id": 0, "quality": "poor"},
+        {"id": 2, "x_min": 35, "x_max": 65, "y_min": 35, "y_max": 65, "variant_id": 0, "quality": "standard"},
+        {"id": 3, "x_min": 70, "x_max": 100, "y_min": 70, "y_max": 100, "variant_id": 0, "quality": "excellent"}
+      ],
+      "xp_reward": 150
+    },
+    {
+      "id": 5001,
+      "profession_id": 5,
+      "name": "Minor Healing Potion",
+      "description": "Restores a small amount of health",
+      "min_level": 1,
+      "output_item_id": 54001,
+      "output_quantity": 5,
+      "materials": [
+        {"item_id": 40030, "quantity": 2},
+        {"item_id": 40031, "quantity": 1}
+      ],
+      "zones": [
+        {"id": 1, "x_min": 0, "x_max": 40, "y_min": 0, "y_max": 40, "variant_id": 0, "quality": "poor"},
+        {"id": 2, "x_min": 45, "x_max": 55, "y_min": 45, "y_max": 55, "variant_id": 0, "quality": "standard"},
+        {"id": 3, "x_min": 60, "x_max": 100, "y_min": 60, "y_max": 100, "variant_id": 0, "quality": "excellent"}
+      ],
+      "xp_reward": 100
+    },
+    {
+      "id": 6001,
+      "profession_id": 6,
+      "name": "Wooden Chair",
+      "description": "A simple wooden chair for housing",
+      "min_level": 1,
+      "output_item_id": 55001,
+      "output_quantity": 1,
+      "materials": [
+        {"item_id": 40040, "quantity": 3}
+      ],
+      "zones": [
+        {"id": 1, "x_min": 0, "x_max": 30, "y_min": 0, "y_max": 30, "variant_id": 0, "quality": "poor"},
+        {"id": 2, "x_min": 35, "x_max": 65, "y_min": 35, "y_max": 65, "variant_id": 0, "quality": "standard"},
+        {"id": 3, "x_min": 70, "x_max": 100, "y_min": 70, "y_max": 100, "variant_id": 0, "quality": "excellent"}
+      ],
+      "xp_reward": 125
+    }
+  ]
+}

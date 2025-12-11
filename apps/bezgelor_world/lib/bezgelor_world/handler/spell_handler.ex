@@ -150,6 +150,15 @@ defmodule BezgelorWorld.Handler.SpellHandler do
         kill_info.rewards
       )
 
+      # Notify EventManager of the kill for event objective tracking
+      zone_id = state.session_data[:zone_id] || 1
+      instance_id = state.session_data[:zone_instance_id] || 1
+      character_id = state.session_data[:character_id]
+
+      if character_id do
+        CombatBroadcaster.notify_creature_kill(zone_id, instance_id, character_id, kill_info.creature_id)
+      end
+
       Logger.info(
         "Creature #{kill_info.creature_guid} killed by #{player_guid}! XP: #{kill_info.rewards.xp_reward}"
       )

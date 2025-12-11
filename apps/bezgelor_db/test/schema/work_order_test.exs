@@ -1,5 +1,5 @@
 defmodule BezgelorDb.Schema.WorkOrderTest do
-  use BezgelorDb.DataCase, async: true
+  use ExUnit.Case, async: true
 
   alias BezgelorDb.Schema.WorkOrder
 

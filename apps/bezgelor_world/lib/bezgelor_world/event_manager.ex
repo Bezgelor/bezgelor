@@ -257,6 +257,30 @@ defmodule BezgelorWorld.EventManager do
     GenServer.call(manager, {:get_wave_state, instance_id})
   end
 
+  # Combat Integration Functions
+
+  @doc """
+  Report a creature kill from the combat system.
+
+  Searches all active events to find any with kill objectives matching
+  the creature type and updates them. This is called automatically by
+  the CombatBroadcaster when a creature dies.
+  """
+  @spec report_creature_kill(pid() | tuple(), non_neg_integer(), non_neg_integer()) :: :ok
+  def report_creature_kill(manager, character_id, creature_id) do
+    GenServer.cast(manager, {:report_creature_kill, character_id, creature_id})
+  end
+
+  @doc """
+  Record damage dealt to a world boss from combat.
+
+  Tracks the character's contribution to the boss fight for reward calculation.
+  """
+  @spec record_boss_damage(pid() | tuple(), non_neg_integer(), non_neg_integer(), non_neg_integer()) :: :ok
+  def record_boss_damage(manager, boss_id, character_id, damage) do
+    GenServer.cast(manager, {:record_boss_damage, boss_id, character_id, damage})
+  end
+
   # Territory Control Functions
 
   @doc "Enter a territory capture point."
@@ -1003,7 +1027,189 @@ defmodule BezgelorWorld.EventManager do
     end
   end
 
+  # Combat Integration Handlers (async via cast)
+
+  @impl true
+  def handle_cast({:report_creature_kill, character_id, creature_id}, state) do
+    # Find all events with kill objectives that match this creature
+    state =
+      Enum.reduce(state.events, state, fn {instance_id, event_state}, acc ->
+        # Check if character is a participant
+        if MapSet.member?(event_state.participants, character_id) do
+          # Check for kill-type objectives
+          updated =
+            Enum.any?(event_state.objectives, fn obj ->
+              obj.type == :kill and (obj.creature_id == creature_id or obj.creature_id == nil)
+            end)
+
+          if updated do
+            # Use existing record_kill logic
+            case do_record_kill(acc, instance_id, character_id, creature_id) do
+              {:ok, new_state} -> new_state
+              {:error, _} -> acc
+            end
+          else
+            acc
+          end
+        else
+          acc
+        end
+      end)
+
+    # Also check wave events for wave enemy kills
+    state =
+      Enum.reduce(state.events, state, fn {instance_id, event_state}, acc ->
+        if event_state.wave_state && MapSet.member?(event_state.participants, character_id) do
+          case do_wave_enemy_killed(acc, instance_id, character_id, creature_id) do
+            {:ok, new_state} -> new_state
+            {:error, _} -> acc
+          end
+        else
+          acc
+        end
+      end)
+
+    {:noreply, state}
+  end
+
+  @impl true
+  def handle_cast({:record_boss_damage, boss_id, character_id, damage}, state) do
+    case Map.get(state.world_bosses, boss_id) do
+      nil ->
+        {:noreply, state}
+
+      boss_state ->
+        # Update contribution
+        current_contribution = Map.get(boss_state.contributions, character_id, 0)
+        new_contribution = current_contribution + damage
+        contributions = Map.put(boss_state.contributions, character_id, new_contribution)
+
+        # Add to participants if not already
+        participants = MapSet.put(boss_state.participants, character_id)
+
+        # Update health
+        new_health = max(0, boss_state.health_current - damage)
+
+        boss_state = %{
+          boss_state
+          | health_current: new_health,
+            contributions: contributions,
+            participants: participants
+        }
+
+        world_bosses = Map.put(state.world_bosses, boss_id, boss_state)
+        state = %{state | world_bosses: world_bosses}
+
+        # Check if boss is dead
+        state =
+          if new_health == 0 do
+            kill_world_boss(state, boss_id, boss_state)
+          else
+            state
+          end
+
+        {:noreply, state}
+    end
+  end
+
   ## Private Helpers
+
+  # Helper for record_kill that can be used internally
+  defp do_record_kill(state, instance_id, character_id, creature_id) do
+    case Map.get(state.events, instance_id) do
+      nil ->
+        {:error, :event_not_found}
+
+      event_state ->
+        # Find and update kill objectives
+        {objectives, any_updated} =
+          Enum.map_reduce(event_state.objectives, false, fn obj, updated ->
+            if obj.type == :kill and (obj.creature_id == creature_id or obj.creature_id == nil) and obj.current < obj.target do
+              {%{obj | current: obj.current + 1}, true}
+            else
+              {obj, updated}
+            end
+          end)
+
+        if any_updated do
+          # Update participant contribution
+          participant = Map.get(state.participants, character_id, %{
+            character_id: character_id,
+            contribution: 0,
+            damage_dealt: 0,
+            joined_at: DateTime.utc_now()
+          })
+          participant = %{participant | contribution: participant.contribution + 1}
+          participants = Map.put(state.participants, character_id, participant)
+
+          event_state = %{event_state | objectives: objectives}
+          events = Map.put(state.events, instance_id, event_state)
+          state = %{state | events: events, participants: participants}
+
+          # Check if we should advance phase
+          state = maybe_advance_phase(state, instance_id)
+
+          {:ok, state}
+        else
+          {:error, :no_matching_objective}
+        end
+    end
+  end
+
+  # Helper for wave enemy killed
+  defp do_wave_enemy_killed(state, instance_id, character_id, _creature_id) do
+    case Map.get(state.events, instance_id) do
+      nil ->
+        {:error, :event_not_found}
+
+      %{wave_state: nil} ->
+        {:error, :no_wave_active}
+
+      event_state ->
+        wave_state = event_state.wave_state
+        new_killed = wave_state.enemies_killed + 1
+        wave_state = %{wave_state | enemies_killed: new_killed}
+
+        # Update participant contribution
+        participant = Map.get(state.participants, character_id, %{
+          character_id: character_id,
+          contribution: 0,
+          damage_dealt: 0,
+          joined_at: DateTime.utc_now()
+        })
+        participant = %{participant | contribution: participant.contribution + 1}
+        participants = Map.put(state.participants, character_id, participant)
+
+        event_state = %{event_state | wave_state: wave_state}
+        events = Map.put(state.events, instance_id, event_state)
+        state = %{state | events: events, participants: participants}
+
+        # Check wave completion
+        state =
+          if new_killed >= wave_state.enemies_spawned do
+            # Cancel wave timer
+            if wave_state.wave_timer do
+              Process.cancel_timer(wave_state.wave_timer)
+            end
+
+            Logger.info("Wave #{wave_state.current_wave} completed for event #{instance_id}")
+
+            # Check if more waves
+            if wave_state.current_wave < wave_state.total_waves do
+              # Auto-start next wave after delay
+              Process.send_after(self(), {:start_next_wave, instance_id}, 5_000)
+              state
+            else
+              # All waves complete - event successful
+              complete_event(state, instance_id, true)
+            end
+          else
+            state
+          end
+
+        {:ok, state}
+    end
+  end
 
   defp do_start_wave(state, instance_id, wave_number) do
     event_state = Map.get(state.events, instance_id)

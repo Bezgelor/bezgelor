@@ -1,0 +1,286 @@
+{
+  "instances": [
+    {
+      "id": 1001,
+      "name": "Stormtalon's Lair",
+      "type": "dungeon",
+      "min_level": 20,
+      "max_level": 50,
+      "group_size": 5,
+      "difficulties": ["normal", "veteran"],
+      "zone_id": 1001,
+      "entrance_position": [2500.0, 1800.0, 120.0],
+      "time_limit_seconds": {
+        "normal": 0,
+        "veteran": 0,
+        "challenge": 1800,
+        "mythic_plus": 1800
+      },
+      "lockout_type": "soft",
+      "role_requirements": {
+        "tank": 1,
+        "healer": 1,
+        "dps": 3
+      },
+      "gear_score_requirement": {
+        "normal": 0,
+        "veteran": 50,
+        "challenge": 80,
+        "mythic_plus": 80
+      },
+      "boss_count": 4,
+      "loot_table_id": 10001,
+      "achievement_id": 50001
+    },
+    {
+      "id": 1002,
+      "name": "Kel Voreth",
+      "type": "dungeon",
+      "min_level": 25,
+      "max_level": 50,
+      "group_size": 5,
+      "difficulties": ["normal", "veteran"],
+      "zone_id": 1002,
+      "entrance_position": [1000.0, 2000.0, 80.0],
+      "time_limit_seconds": {
+        "normal": 0,
+        "veteran": 0,
+        "challenge": 2100,
+        "mythic_plus": 2100
+      },
+      "lockout_type": "soft",
+      "role_requirements": {
+        "tank": 1,
+        "healer": 1,
+        "dps": 3
+      },
+      "gear_score_requirement": {
+        "normal": 0,
+        "veteran": 55,
+        "challenge": 85,
+        "mythic_plus": 85
+      },
+      "boss_count": 4,
+      "loot_table_id": 10002,
+      "achievement_id": 50002
+    },
+    {
+      "id": 1003,
+      "name": "Skullcano",
+      "type": "dungeon",
+      "min_level": 30,
+      "max_level": 50,
+      "group_size": 5,
+      "difficulties": ["normal", "veteran"],
+      "zone_id": 1003,
+      "entrance_position": [3000.0, 1500.0, 200.0],
+      "time_limit_seconds": {
+        "normal": 0,
+        "veteran": 0,
+        "challenge": 2400,
+        "mythic_plus": 2400
+      },
+      "lockout_type": "soft",
+      "role_requirements": {
+        "tank": 1,
+        "healer": 1,
+        "dps": 3
+      },
+      "gear_score_requirement": {
+        "normal": 0,
+        "veteran": 60,
+        "challenge": 90,
+        "mythic_plus": 90
+      },
+      "boss_count": 3,
+      "loot_table_id": 10003,
+      "achievement_id": 50003
+    },
+    {
+      "id": 1004,
+      "name": "Sanctuary of the Swordmaiden",
+      "type": "dungeon",
+      "min_level": 50,
+      "max_level": 50,
+      "group_size": 5,
+      "difficulties": ["veteran"],
+      "zone_id": 1004,
+      "entrance_position": [500.0, 800.0, 50.0],
+      "time_limit_seconds": {
+        "veteran": 0,
+        "challenge": 2700,
+        "mythic_plus": 2700
+      },
+      "lockout_type": "soft",
+      "role_requirements": {
+        "tank": 1,
+        "healer": 1,
+        "dps": 3
+      },
+      "gear_score_requirement": {
+        "veteran": 70,
+        "challenge": 100,
+        "mythic_plus": 100
+      },
+      "boss_count": 5,
+      "loot_table_id": 10004,
+      "achievement_id": 50004
+    },
+    {
+      "id": 2001,
+      "name": "Hycrest Insurrection",
+      "type": "adventure",
+      "min_level": 15,
+      "max_level": 50,
+      "group_size": 5,
+      "difficulties": ["normal", "veteran"],
+      "zone_id": 2001,
+      "entrance_position": [1200.0, 1200.0, 100.0],
+      "time_limit_seconds": {
+        "normal": 0,
+        "veteran": 0
+      },
+      "lockout_type": "daily",
+      "role_requirements": {
+        "tank": 1,
+        "healer": 1,
+        "dps": 3
+      },
+      "gear_score_requirement": {
+        "normal": 0,
+        "veteran": 40
+      },
+      "boss_count": 1,
+      "loot_table_id": 20001,
+      "achievement_id": 52001
+    },
+    {
+      "id": 2002,
+      "name": "War of the Wilds",
+      "type": "adventure",
+      "min_level": 15,
+      "max_level": 50,
+      "group_size": 5,
+      "difficulties": ["normal", "veteran"],
+      "zone_id": 2002,
+      "entrance_position": [800.0, 1600.0, 80.0],
+      "time_limit_seconds": {
+        "normal": 0,
+        "veteran": 0
+      },
+      "lockout_type": "daily",
+      "role_requirements": {
+        "tank": 1,
+        "healer": 1,
+        "dps": 3
+      },
+      "gear_score_requirement": {
+        "normal": 0,
+        "veteran": 40
+      },
+      "boss_count": 3,
+      "loot_table_id": 20002,
+      "achievement_id": 52002
+    },
+    {
+      "id": 3001,
+      "name": "Genetic Archives",
+      "type": "raid",
+      "min_level": 50,
+      "max_level": 50,
+      "group_size": 20,
+      "difficulties": ["normal"],
+      "zone_id": 3001,
+      "entrance_position": [2000.0, 2500.0, 150.0],
+      "time_limit_seconds": {
+        "normal": 0
+      },
+      "lockout_type": "weekly",
+      "role_requirements": {
+        "tank": 2,
+        "healer": 4,
+        "dps": 14
+      },
+      "gear_score_requirement": {
+        "normal": 80
+      },
+      "boss_count": 6,
+      "loot_table_id": 30001,
+      "achievement_id": 53001
+    },
+    {
+      "id": 3002,
+      "name": "Datascape",
+      "type": "raid",
+      "min_level": 50,
+      "max_level": 50,
+      "group_size": 40,
+      "difficulties": ["normal"],
+      "zone_id": 3002,
+      "entrance_position": [3500.0, 2000.0, 200.0],
+      "time_limit_seconds": {
+        "normal": 0
+      },
+      "lockout_type": "weekly",
+      "role_requirements": {
+        "tank": 4,
+        "healer": 8,
+        "dps": 28
+      },
+      "gear_score_requirement": {
+        "normal": 100
+      },
+      "boss_count": 9,
+      "loot_table_id": 30002,
+      "achievement_id": 53002
+    },
+    {
+      "id": 4001,
+      "name": "Infestation",
+      "type": "expedition",
+      "min_level": 50,
+      "max_level": 50,
+      "group_size": 1,
+      "difficulties": ["normal", "veteran"],
+      "zone_id": 4001,
+      "entrance_position": [400.0, 400.0, 30.0],
+      "time_limit_seconds": {
+        "normal": 0,
+        "veteran": 0
+      },
+      "lockout_type": "daily",
+      "role_requirements": {},
+      "gear_score_requirement": {
+        "normal": 0,
+        "veteran": 50
+      },
+      "boss_count": 1,
+      "loot_table_id": 40001,
+      "achievement_id": 54001
+    },
+    {
+      "id": 4002,
+      "name": "Fragment Zero",
+      "type": "expedition",
+      "min_level": 50,
+      "max_level": 50,
+      "group_size": 1,
+      "difficulties": ["normal", "veteran"],
+      "zone_id": 4002,
+      "entrance_position": [600.0, 200.0, 50.0],
+      "time_limit_seconds": {
+        "normal": 0,
+        "veteran": 0
+      },
+      "lockout_type": "daily",
+      "role_requirements": {},
+      "gear_score_requirement": {
+        "normal": 0,
+        "veteran": 60
+      },
+      "boss_count": 1,
+      "loot_table_id": 40002,
+      "achievement_id": 54002
+    }
+  ]
+}

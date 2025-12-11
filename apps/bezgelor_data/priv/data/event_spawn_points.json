@@ -1,31 +1,33 @@
-[
-  {
-    "zone_id": 100,
-    "spawn_point_groups": {
-      "invasion_north": [
-        {"position": [1100.0, 1500.0, 50.0], "rotation": 180},
-        {"position": [1150.0, 1480.0, 52.0], "rotation": 180},
-        {"position": [1050.0, 1520.0, 49.0], "rotation": 180}
-      ],
-      "invasion_south": [
-        {"position": [1100.0, 900.0, 48.0], "rotation": 0},
-        {"position": [1080.0, 920.0, 49.0], "rotation": 0}
-      ],
-      "invasion_center": [
-        {"position": [1100.0, 1200.0, 55.0], "rotation": 0}
-      ]
+{
+  "event_spawn_points": [
+    {
+      "zone_id": 100,
+      "spawn_point_groups": {
+        "invasion_north": [
+          {"position": [1100.0, 1500.0, 50.0], "rotation": 180},
+          {"position": [1150.0, 1480.0, 52.0], "rotation": 180},
+          {"position": [1050.0, 1520.0, 49.0], "rotation": 180}
+        ],
+        "invasion_south": [
+          {"position": [1100.0, 900.0, 48.0], "rotation": 0},
+          {"position": [1080.0, 920.0, 49.0], "rotation": 0}
+        ],
+        "invasion_center": [
+          {"position": [1100.0, 1200.0, 55.0], "rotation": 0}
+        ]
+      }
+    },
+    {
+      "zone_id": 200,
+      "spawn_point_groups": {
+        "assault_west": [
+          {"position": [200.0, 500.0, 30.0], "rotation": 90},
+          {"position": [180.0, 520.0, 32.0], "rotation": 90}
+        ],
+        "assault_east": [
+          {"position": [800.0, 500.0, 35.0], "rotation": 270}
+        ]
+      }
     }
-  },
-  {
-    "zone_id": 200,
-    "spawn_point_groups": {
-      "assault_west": [
-        {"position": [200.0, 500.0, 30.0], "rotation": 90},
-        {"position": [180.0, 520.0, 32.0], "rotation": 90}
-      ],
-      "assault_east": [
-        {"position": [800.0, 500.0, 35.0], "rotation": 270}
-      ]
-    }
-  }
-]
+  ]
+}

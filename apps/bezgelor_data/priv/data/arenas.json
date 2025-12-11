@@ -1,0 +1,141 @@
+{
+  "arenas": [
+    {
+      "id": 1,
+      "name": "The Slaughterdome",
+      "map_id": 2001,
+      "brackets": ["2v2", "3v3"],
+      "min_level": 50,
+      "prep_time_seconds": 60,
+      "match_time_limit_seconds": 900,
+      "dampening_start_seconds": 300,
+      "dampening_percent_per_second": 0.1,
+      "spawn_points": {
+        "team_1": [
+          {"x": -30.0, "y": 0.0, "z": 0.0},
+          {"x": -25.0, "y": 5.0, "z": 0.0},
+          {"x": -25.0, "y": -5.0, "z": 0.0}
+        ],
+        "team_2": [
+          {"x": 30.0, "y": 0.0, "z": 0.0},
+          {"x": 25.0, "y": 5.0, "z": 0.0},
+          {"x": 25.0, "y": -5.0, "z": 0.0}
+        ]
+      },
+      "bounds": {
+        "center": {"x": 0.0, "y": 0.0, "z": 0.0},
+        "radius": 50.0,
+        "shape": "circle"
+      },
+      "los_pillars": [
+        {"x": -10.0, "y": -10.0, "z": 0.0, "radius": 3.0},
+        {"x": 10.0, "y": 10.0, "z": 0.0, "radius": 3.0}
+      ]
+    },
+    {
+      "id": 2,
+      "name": "The Proving Grounds",
+      "map_id": 2002,
+      "brackets": ["2v2", "3v3", "5v5"],
+      "min_level": 50,
+      "prep_time_seconds": 60,
+      "match_time_limit_seconds": 900,
+      "dampening_start_seconds": 300,
+      "dampening_percent_per_second": 0.1,
+      "spawn_points": {
+        "team_1": [
+          {"x": -40.0, "y": 0.0, "z": 0.0},
+          {"x": -35.0, "y": 8.0, "z": 0.0},
+          {"x": -35.0, "y": -8.0, "z": 0.0},
+          {"x": -30.0, "y": 12.0, "z": 0.0},
+          {"x": -30.0, "y": -12.0, "z": 0.0}
+        ],
+        "team_2": [
+          {"x": 40.0, "y": 0.0, "z": 0.0},
+          {"x": 35.0, "y": 8.0, "z": 0.0},
+          {"x": 35.0, "y": -8.0, "z": 0.0},
+          {"x": 30.0, "y": 12.0, "z": 0.0},
+          {"x": 30.0, "y": -12.0, "z": 0.0}
+        ]
+      },
+      "bounds": {
+        "center": {"x": 0.0, "y": 0.0, "z": 0.0},
+        "radius": 60.0,
+        "shape": "circle"
+      },
+      "los_pillars": [
+        {"x": 0.0, "y": 0.0, "z": 0.0, "radius": 5.0},
+        {"x": -20.0, "y": -15.0, "z": 0.0, "radius": 3.0},
+        {"x": 20.0, "y": 15.0, "z": 0.0, "radius": 3.0}
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Crimelords' Refuge",
+      "map_id": 2003,
+      "brackets": ["2v2", "3v3", "5v5"],
+      "min_level": 50,
+      "prep_time_seconds": 60,
+      "match_time_limit_seconds": 900,
+      "dampening_start_seconds": 300,
+      "dampening_percent_per_second": 0.1,
+      "spawn_points": {
+        "team_1": [
+          {"x": -35.0, "y": 0.0, "z": 0.0},
+          {"x": -30.0, "y": 10.0, "z": 0.0},
+          {"x": -30.0, "y": -10.0, "z": 0.0},
+          {"x": -25.0, "y": 15.0, "z": 0.0},
+          {"x": -25.0, "y": -15.0, "z": 0.0}
+        ],
+        "team_2": [
+          {"x": 35.0, "y": 0.0, "z": 0.0},
+          {"x": 30.0, "y": 10.0, "z": 0.0},
+          {"x": 30.0, "y": -10.0, "z": 0.0},
+          {"x": 25.0, "y": 15.0, "z": 0.0},
+          {"x": 25.0, "y": -15.0, "z": 0.0}
+        ]
+      },
+      "bounds": {
+        "center": {"x": 0.0, "y": 0.0, "z": 0.0},
+        "radius": 55.0,
+        "shape": "circle"
+      },
+      "los_pillars": [
+        {"x": -12.0, "y": 0.0, "z": 0.0, "radius": 4.0},
+        {"x": 12.0, "y": 0.0, "z": 0.0, "radius": 4.0}
+      ],
+      "hazards": [
+        {
+          "type": "periodic_damage_zone",
+          "center": {"x": 0.0, "y": 0.0, "z": 0.0},
+          "radius": 8.0,
+          "damage_percent": 5,
+          "interval_seconds": 3,
+          "activation_time_seconds": 180
+        }
+      ]
+    }
+  ],
+  "brackets": {
+    "2v2": {
+      "team_size": 2,
+      "min_rating_for_rewards": 1000,
+      "conquest_cap_contribution": 0.65
+    },
+    "3v3": {
+      "team_size": 3,
+      "min_rating_for_rewards": 1000,
+      "conquest_cap_contribution": 1.0
+    },
+    "5v5": {
+      "team_size": 5,
+      "min_rating_for_rewards": 1000,
+      "conquest_cap_contribution": 0.5
+    }
+  },
+  "rating_rewards": {
+    "base_conquest": 180,
+    "bonus_per_100_rating": 20,
+    "personal_rating_gain_percent": 0.5
+  }
+}

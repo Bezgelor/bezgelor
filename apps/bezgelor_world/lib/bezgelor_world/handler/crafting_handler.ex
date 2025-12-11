@@ -31,6 +31,7 @@ defmodule BezgelorWorld.Handler.CraftingHandler do
     ServerTradeskillDiscovery,
     ServerTradeskillUpdate
   }
+  alias BezgelorData.Store
   alias BezgelorWorld.Crafting.{CraftingSession, CoordinateSystem}
 
   @impl true
@@ -271,14 +272,30 @@ defmodule BezgelorWorld.Handler.CraftingHandler do
     end
   end
 
-  defp get_schematic_zones(_schematic_id) do
-    # TODO: Load from static data
-    # For now return placeholder zones
-    [
-      %{id: 1, x_min: 0, x_max: 30, y_min: 0, y_max: 30, variant_id: 0, quality: :poor},
-      %{id: 2, x_min: 35, x_max: 65, y_min: 35, y_max: 65, variant_id: 0, quality: :standard},
-      %{id: 3, x_min: 70, x_max: 100, y_min: 70, y_max: 100, variant_id: 0, quality: :excellent}
-    ]
+  defp get_schematic_zones(schematic_id) do
+    case Store.get_schematic(schematic_id) do
+      {:ok, schematic} ->
+        # Convert zones from static data, atomizing quality strings
+        Enum.map(schematic.zones, fn zone ->
+          %{
+            id: zone.id,
+            x_min: zone.x_min,
+            x_max: zone.x_max,
+            y_min: zone.y_min,
+            y_max: zone.y_max,
+            variant_id: zone.variant_id,
+            quality: String.to_existing_atom(zone.quality)
+          }
+        end)
+
+      :error ->
+        # Fallback zones
+        [
+          %{id: 1, x_min: 0, x_max: 30, y_min: 0, y_max: 30, variant_id: 0, quality: :poor},
+          %{id: 2, x_min: 35, x_max: 65, y_min: 35, y_max: 65, variant_id: 0, quality: :standard},
+          %{id: 3, x_min: 70, x_max: 100, y_min: 70, y_max: 100, variant_id: 0, quality: :excellent}
+        ]
+    end
   end
 
   defp send_packet(packet, opcode, state) do

@@ -1,0 +1,230 @@
+{
+  "plugs": [
+    {
+      "id": 1,
+      "name": "Guard Tower",
+      "category": "defense",
+      "max_tier": 3,
+      "base_cost": 500,
+      "energy_drain_per_minute": 5,
+      "description": "A defensive tower that attacks enemy players within range.",
+      "stats_per_tier": {
+        "1": {"health": 50000, "damage_per_second": 500, "range": 30},
+        "2": {"health": 75000, "damage_per_second": 750, "range": 35},
+        "3": {"health": 100000, "damage_per_second": 1000, "range": 40}
+      },
+      "upgrade_costs": {"2": 300, "3": 500}
+    },
+    {
+      "id": 2,
+      "name": "Healing Station",
+      "category": "support",
+      "max_tier": 3,
+      "base_cost": 400,
+      "energy_drain_per_minute": 8,
+      "description": "Heals friendly players within its radius.",
+      "stats_per_tier": {
+        "1": {"health": 30000, "healing_per_second": 200, "range": 20},
+        "2": {"health": 45000, "healing_per_second": 350, "range": 25},
+        "3": {"health": 60000, "healing_per_second": 500, "range": 30}
+      },
+      "upgrade_costs": {"2": 250, "3": 400}
+    },
+    {
+      "id": 3,
+      "name": "Spawn Beacon",
+      "category": "utility",
+      "max_tier": 3,
+      "base_cost": 600,
+      "energy_drain_per_minute": 3,
+      "description": "Provides an additional spawn point for your team.",
+      "stats_per_tier": {
+        "1": {"health": 40000, "respawn_time_reduction_percent": 10},
+        "2": {"health": 60000, "respawn_time_reduction_percent": 20},
+        "3": {"health": 80000, "respawn_time_reduction_percent": 30}
+      },
+      "upgrade_costs": {"2": 350, "3": 550}
+    },
+    {
+      "id": 4,
+      "name": "Shield Generator",
+      "category": "defense",
+      "max_tier": 3,
+      "base_cost": 700,
+      "energy_drain_per_minute": 12,
+      "description": "Projects a shield that absorbs damage for nearby structures.",
+      "stats_per_tier": {
+        "1": {"health": 25000, "shield_amount": 20000, "range": 25},
+        "2": {"health": 35000, "shield_amount": 35000, "range": 30},
+        "3": {"health": 50000, "shield_amount": 50000, "range": 35}
+      },
+      "upgrade_costs": {"2": 400, "3": 600}
+    },
+    {
+      "id": 5,
+      "name": "Siege Cannon",
+      "category": "offense",
+      "max_tier": 3,
+      "base_cost": 800,
+      "energy_drain_per_minute": 10,
+      "description": "Long-range cannon that deals massive damage to enemy structures.",
+      "stats_per_tier": {
+        "1": {"health": 35000, "damage_per_shot": 5000, "range": 60, "fire_rate_seconds": 5},
+        "2": {"health": 50000, "damage_per_shot": 7500, "range": 70, "fire_rate_seconds": 4},
+        "3": {"health": 70000, "damage_per_shot": 10000, "range": 80, "fire_rate_seconds": 3}
+      },
+      "upgrade_costs": {"2": 500, "3": 750}
+    },
+    {
+      "id": 6,
+      "name": "Teleporter Pad",
+      "category": "utility",
+      "max_tier": 2,
+      "base_cost": 450,
+      "energy_drain_per_minute": 6,
+      "description": "Allows instant travel between linked teleporter pads.",
+      "stats_per_tier": {
+        "1": {"health": 20000, "cooldown_seconds": 30},
+        "2": {"health": 35000, "cooldown_seconds": 15}
+      },
+      "upgrade_costs": {"2": 300}
+    },
+    {
+      "id": 7,
+      "name": "Resource Extractor",
+      "category": "economy",
+      "max_tier": 3,
+      "base_cost": 350,
+      "energy_drain_per_minute": 4,
+      "description": "Generates war coins over time during battle.",
+      "stats_per_tier": {
+        "1": {"health": 15000, "coins_per_minute": 10},
+        "2": {"health": 25000, "coins_per_minute": 20},
+        "3": {"health": 35000, "coins_per_minute": 35}
+      },
+      "upgrade_costs": {"2": 200, "3": 350}
+    },
+    {
+      "id": 8,
+      "name": "Minion Barracks",
+      "category": "offense",
+      "max_tier": 3,
+      "base_cost": 550,
+      "energy_drain_per_minute": 7,
+      "description": "Spawns AI-controlled minions to attack the enemy.",
+      "stats_per_tier": {
+        "1": {"health": 30000, "minions_per_wave": 3, "wave_interval_seconds": 60},
+        "2": {"health": 45000, "minions_per_wave": 5, "wave_interval_seconds": 50},
+        "3": {"health": 60000, "minions_per_wave": 8, "wave_interval_seconds": 40}
+      },
+      "upgrade_costs": {"2": 350, "3": 500}
+    },
+    {
+      "id": 9,
+      "name": "Buff Shrine",
+      "category": "support",
+      "max_tier": 3,
+      "base_cost": 500,
+      "energy_drain_per_minute": 6,
+      "description": "Grants temporary buffs to friendly players who interact with it.",
+      "stats_per_tier": {
+        "1": {"health": 25000, "buff_duration_seconds": 60, "buff_strength_percent": 5},
+        "2": {"health": 40000, "buff_duration_seconds": 90, "buff_strength_percent": 10},
+        "3": {"health": 55000, "buff_duration_seconds": 120, "buff_strength_percent": 15}
+      },
+      "upgrade_costs": {"2": 300, "3": 450}
+    },
+    {
+      "id": 10,
+      "name": "Superweapon Platform",
+      "category": "offense",
+      "max_tier": 1,
+      "base_cost": 1500,
+      "energy_drain_per_minute": 25,
+      "description": "Devastating weapon that deals massive AoE damage. Can only be used once per battle.",
+      "stats_per_tier": {
+        "1": {"health": 100000, "damage": 50000, "radius": 40, "charge_time_seconds": 120}
+      },
+      "upgrade_costs": {}
+    },
+    {
+      "id": 11,
+      "name": "Wall Section",
+      "category": "defense",
+      "max_tier": 3,
+      "base_cost": 200,
+      "energy_drain_per_minute": 1,
+      "description": "A sturdy wall section that blocks enemy movement.",
+      "stats_per_tier": {
+        "1": {"health": 30000},
+        "2": {"health": 50000},
+        "3": {"health": 75000}
+      },
+      "upgrade_costs": {"2": 100, "3": 200}
+    },
+    {
+      "id": 12,
+      "name": "Anti-Air Battery",
+      "category": "defense",
+      "max_tier": 3,
+      "base_cost": 600,
+      "energy_drain_per_minute": 8,
+      "description": "Targets and destroys enemy aerial units and vehicles.",
+      "stats_per_tier": {
+        "1": {"health": 40000, "damage_per_second": 800, "range": 50},
+        "2": {"health": 55000, "damage_per_second": 1200, "range": 60},
+        "3": {"health": 75000, "damage_per_second": 1600, "range": 70}
+      },
+      "upgrade_costs": {"2": 350, "3": 550}
+    }
+  ],
+  "categories": {
+    "defense": {
+      "description": "Structures that protect your warplot and attack enemies",
+      "color": "#4a90d9"
+    },
+    "offense": {
+      "description": "Structures that help attack the enemy warplot",
+      "color": "#d94a4a"
+    },
+    "support": {
+      "description": "Structures that heal and buff friendly players",
+      "color": "#4ad94a"
+    },
+    "utility": {
+      "description": "Structures that provide movement and respawn benefits",
+      "color": "#d9d94a"
+    },
+    "economy": {
+      "description": "Structures that generate resources during battle",
+      "color": "#d9a04a"
+    }
+  },
+  "socket_layout": {
+    "total_sockets": 8,
+    "positions": [
+      {"socket_id": 1, "name": "North Gate", "x": 0, "y": 100, "z": 0},
+      {"socket_id": 2, "name": "South Gate", "x": 0, "y": -100, "z": 0},
+      {"socket_id": 3, "name": "East Tower", "x": 100, "y": 0, "z": 0},
+      {"socket_id": 4, "name": "West Tower", "x": -100, "y": 0, "z": 0},
+      {"socket_id": 5, "name": "Inner North", "x": 0, "y": 50, "z": 0},
+      {"socket_id": 6, "name": "Inner South", "x": 0, "y": -50, "z": 0},
+      {"socket_id": 7, "name": "Core Left", "x": -30, "y": 0, "z": 0},
+      {"socket_id": 8, "name": "Core Right", "x": 30, "y": 0, "z": 0}
+    ]
+  },
+  "warplot_settings": {
+    "team_size": 40,
+    "min_players": 20,
+    "match_duration_minutes": 30,
+    "starting_energy": 500,
+    "max_energy": 1000,
+    "energy_regen_per_minute": 10,
+    "base_war_coins_per_kill": 5,
+    "base_war_coins_per_objective": 50,
+    "rating_requirements": {
+      "min_rating_to_queue": 0,
+      "placement_games": 10
+    }
+  }
+}

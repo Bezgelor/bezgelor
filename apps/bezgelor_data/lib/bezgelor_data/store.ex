@@ -30,7 +30,14 @@ defmodule BezgelorData.Store do
     :tradeskill_work_orders,
     :public_events,
     :world_bosses,
-    :event_spawn_points
+    :event_spawn_points,
+    :instances,
+    :instance_bosses,
+    :mythic_affixes,
+    # PvP data
+    :battlegrounds,
+    :arenas,
+    :warplot_plugs
   ]
 
   # Client API
@@ -254,6 +261,265 @@ defmodule BezgelorData.Store do
     end
   end
 
+  # Instance/Dungeon queries
+
+  @doc """
+  Get an instance definition by ID.
+  """
+  @spec get_instance(non_neg_integer()) :: {:ok, map()} | :error
+  def get_instance(id), do: get(:instances, id)
+
+  @doc """
+  Get all instances of a specific type.
+  """
+  @spec get_instances_by_type(String.t()) :: [map()]
+  def get_instances_by_type(type) when type in ["dungeon", "adventure", "raid", "expedition"] do
+    list(:instances)
+    |> Enum.filter(fn i -> i.type == type end)
+  end
+
+  @doc """
+  Get instances available for a player level.
+  """
+  @spec get_available_instances(non_neg_integer()) :: [map()]
+  def get_available_instances(player_level) do
+    list(:instances)
+    |> Enum.filter(fn i -> i.min_level <= player_level and i.max_level >= player_level end)
+  end
+
+  @doc """
+  Get instances with a specific difficulty.
+  """
+  @spec get_instances_with_difficulty(String.t()) :: [map()]
+  def get_instances_with_difficulty(difficulty) do
+    list(:instances)
+    |> Enum.filter(fn i -> difficulty in i.difficulties end)
+  end
+
+  @doc """
+  Get an instance boss definition by ID.
+  """
+  @spec get_instance_boss(non_neg_integer()) :: {:ok, map()} | :error
+  def get_instance_boss(id), do: get(:instance_bosses, id)
+
+  @doc """
+  Get all bosses for an instance.
+  """
+  @spec get_bosses_for_instance(non_neg_integer()) :: [map()]
+  def get_bosses_for_instance(instance_id) do
+    list(:instance_bosses)
+    |> Enum.filter(fn b -> b.instance_id == instance_id end)
+    |> Enum.sort_by(fn b -> b.order end)
+  end
+
+  @doc """
+  Get required bosses for an instance (non-optional).
+  """
+  @spec get_required_bosses(non_neg_integer()) :: [map()]
+  def get_required_bosses(instance_id) do
+    get_bosses_for_instance(instance_id)
+    |> Enum.filter(fn b -> not b.is_optional end)
+  end
+
+  @doc """
+  Get optional bosses for an instance.
+  """
+  @spec get_optional_bosses(non_neg_integer()) :: [map()]
+  def get_optional_bosses(instance_id) do
+    get_bosses_for_instance(instance_id)
+    |> Enum.filter(fn b -> b.is_optional end)
+  end
+
+  @doc """
+  Get a mythic affix by ID.
+  """
+  @spec get_mythic_affix(non_neg_integer()) :: {:ok, map()} | :error
+  def get_mythic_affix(id), do: get(:mythic_affixes, id)
+
+  @doc """
+  Get all mythic affixes.
+  """
+  @spec get_all_mythic_affixes() :: [map()]
+  def get_all_mythic_affixes, do: list(:mythic_affixes)
+
+  @doc """
+  Get affixes available at a keystone level.
+  """
+  @spec get_affixes_for_level(non_neg_integer()) :: [map()]
+  def get_affixes_for_level(keystone_level) do
+    list(:mythic_affixes)
+    |> Enum.filter(fn a -> a.min_level <= keystone_level end)
+  end
+
+  @doc """
+  Get affixes by tier.
+  """
+  @spec get_affixes_by_tier(non_neg_integer()) :: [map()]
+  def get_affixes_by_tier(tier) when tier in 1..4 do
+    list(:mythic_affixes)
+    |> Enum.filter(fn a -> a.tier == tier end)
+  end
+
+  @doc """
+  Get the weekly affix rotation for a given week.
+  Returns nil if week is out of range or data not loaded.
+  """
+  @spec get_weekly_affix_rotation(non_neg_integer()) :: [map()] | nil
+  def get_weekly_affix_rotation(week) when week >= 1 and week <= 12 do
+    # This uses a special metadata key to store rotation data
+    case :ets.lookup(table_name(:mythic_affixes), :weekly_rotation) do
+      [{:weekly_rotation, rotations}] ->
+        rotation = Enum.find(rotations, fn r -> r.week == week end)
+
+        if rotation do
+          Enum.map(rotation.affixes, fn affix_id ->
+            case get_mythic_affix(affix_id) do
+              {:ok, affix} -> affix
+              :error -> nil
+            end
+          end)
+          |> Enum.reject(&is_nil/1)
+        else
+          nil
+        end
+
+      [] ->
+        nil
+    end
+  end
+
+  def get_weekly_affix_rotation(_week), do: nil
+
+  # PvP queries
+
+  @doc """
+  Get a battleground definition by ID.
+  """
+  @spec get_battleground(non_neg_integer()) :: {:ok, map()} | :error
+  def get_battleground(id), do: get(:battlegrounds, id)
+
+  @doc """
+  Get all battlegrounds.
+  """
+  @spec get_all_battlegrounds() :: [map()]
+  def get_all_battlegrounds, do: list(:battlegrounds)
+
+  @doc """
+  Get battlegrounds available for a player level.
+  """
+  @spec get_available_battlegrounds(non_neg_integer()) :: [map()]
+  def get_available_battlegrounds(player_level) do
+    list(:battlegrounds)
+    |> Enum.filter(fn bg -> bg.min_level <= player_level and bg.max_level >= player_level end)
+  end
+
+  @doc """
+  Get battlegrounds by type.
+  """
+  @spec get_battlegrounds_by_type(String.t()) :: [map()]
+  def get_battlegrounds_by_type(type) do
+    list(:battlegrounds)
+    |> Enum.filter(fn bg -> bg.type == type end)
+  end
+
+  @doc """
+  Get an arena definition by ID.
+  """
+  @spec get_arena(non_neg_integer()) :: {:ok, map()} | :error
+  def get_arena(id), do: get(:arenas, id)
+
+  @doc """
+  Get all arenas.
+  """
+  @spec get_all_arenas() :: [map()]
+  def get_all_arenas, do: list(:arenas)
+
+  @doc """
+  Get arenas that support a specific bracket.
+  """
+  @spec get_arenas_for_bracket(String.t()) :: [map()]
+  def get_arenas_for_bracket(bracket) do
+    list(:arenas)
+    |> Enum.filter(fn arena -> bracket in arena.brackets end)
+  end
+
+  @doc """
+  Get arena bracket configuration.
+  Returns nil if bracket data not loaded or bracket not found.
+  """
+  @spec get_arena_bracket(String.t()) :: map() | nil
+  def get_arena_bracket(bracket) do
+    case :ets.lookup(table_name(:arenas), :brackets) do
+      [{:brackets, brackets}] -> Map.get(brackets, String.to_atom(bracket))
+      [] -> nil
+    end
+  end
+
+  @doc """
+  Get arena rating rewards configuration.
+  """
+  @spec get_arena_rating_rewards() :: map() | nil
+  def get_arena_rating_rewards do
+    case :ets.lookup(table_name(:arenas), :rating_rewards) do
+      [{:rating_rewards, rewards}] -> rewards
+      [] -> nil
+    end
+  end
+
+  @doc """
+  Get a warplot plug definition by ID.
+  """
+  @spec get_warplot_plug(non_neg_integer()) :: {:ok, map()} | :error
+  def get_warplot_plug(id), do: get(:warplot_plugs, id)
+
+  @doc """
+  Get all warplot plugs.
+  """
+  @spec get_all_warplot_plugs() :: [map()]
+  def get_all_warplot_plugs, do: list(:warplot_plugs)
+
+  @doc """
+  Get warplot plugs by category.
+  """
+  @spec get_warplot_plugs_by_category(String.t()) :: [map()]
+  def get_warplot_plugs_by_category(category) do
+    list(:warplot_plugs)
+    |> Enum.filter(fn plug -> plug.category == category end)
+  end
+
+  @doc """
+  Get warplot plug categories with descriptions.
+  """
+  @spec get_warplot_plug_categories() :: map() | nil
+  def get_warplot_plug_categories do
+    case :ets.lookup(table_name(:warplot_plugs), :categories) do
+      [{:categories, categories}] -> categories
+      [] -> nil
+    end
+  end
+
+  @doc """
+  Get warplot socket layout.
+  """
+  @spec get_warplot_socket_layout() :: map() | nil
+  def get_warplot_socket_layout do
+    case :ets.lookup(table_name(:warplot_plugs), :socket_layout) do
+      [{:socket_layout, layout}] -> layout
+      [] -> nil
+    end
+  end
+
+  @doc """
+  Get warplot settings.
+  """
+  @spec get_warplot_settings() :: map() | nil
+  def get_warplot_settings do
+    case :ets.lookup(table_name(:warplot_plugs), :warplot_settings) do
+      [{:warplot_settings, settings}] -> settings
+      [] -> nil
+    end
+  end
+
   # Server callbacks
 
   @impl true
@@ -312,6 +578,16 @@ defmodule BezgelorData.Store do
     load_table(:world_bosses, "world_bosses.json", "world_bosses")
     load_table_by_zone(:event_spawn_points, "event_spawn_points.json", "event_spawn_points")
 
+    # Instance/dungeon data
+    load_table(:instances, "instances.json", "instances")
+    load_table(:instance_bosses, "instance_bosses.json", "instance_bosses")
+    load_mythic_affixes()
+
+    # PvP data
+    load_battlegrounds()
+    load_arenas()
+    load_warplot_plugs()
+
     Logger.info("Game data loaded: #{inspect(stats())}")
   end
 
@@ -369,6 +645,151 @@ defmodule BezgelorData.Store do
       {:error, reason} ->
         Logger.warning("Failed to load #{key}: #{inspect(reason)}")
     end
+  end
+
+  defp load_mythic_affixes do
+    table_name = table_name(:mythic_affixes)
+
+    # Clear existing data
+    :ets.delete_all_objects(table_name)
+
+    json_path = Path.join(data_directory(), "mythic_affixes.json")
+
+    case load_json_raw(json_path) do
+      {:ok, data} ->
+        # Load individual affixes
+        affixes = Map.get(data, :mythic_affixes, [])
+
+        for affix <- affixes do
+          :ets.insert(table_name, {affix.id, affix})
+        end
+
+        # Store weekly rotation as metadata
+        if rotation_data = Map.get(data, :weekly_rotation) do
+          rotations = Map.get(rotation_data, :rotations, [])
+          :ets.insert(table_name, {:weekly_rotation, rotations})
+        end
+
+        Logger.debug("Loaded #{length(affixes)} mythic affixes")
+
+      {:error, reason} ->
+        Logger.warning("Failed to load mythic affixes: #{inspect(reason)}")
+    end
+  end
+
+  defp load_json_raw(path) do
+    with {:ok, content} <- File.read(path),
+         {:ok, data} <- Jason.decode(content, keys: :atoms) do
+      {:ok, data}
+    end
+  end
+
+  defp load_battlegrounds do
+    table_name = table_name(:battlegrounds)
+
+    # Clear existing data
+    :ets.delete_all_objects(table_name)
+
+    json_path = Path.join(data_directory(), "battlegrounds.json")
+
+    case load_json_raw(json_path) do
+      {:ok, data} ->
+        # Load regular battlegrounds
+        battlegrounds = Map.get(data, :battlegrounds, [])
+
+        for bg <- battlegrounds do
+          :ets.insert(table_name, {bg.id, bg})
+        end
+
+        # Load rated battlegrounds (with offset IDs starting at 100)
+        rated_bgs = Map.get(data, :rated_battlegrounds, [])
+
+        for rbg <- rated_bgs do
+          :ets.insert(table_name, {rbg.id, rbg})
+        end
+
+        Logger.debug("Loaded #{length(battlegrounds) + length(rated_bgs)} battlegrounds")
+
+      {:error, reason} ->
+        Logger.warning("Failed to load battlegrounds: #{inspect(reason)}")
+    end
+  end
+
+  defp load_arenas do
+    table_name = table_name(:arenas)
+
+    # Clear existing data
+    :ets.delete_all_objects(table_name)
+
+    json_path = Path.join(data_directory(), "arenas.json")
+
+    case load_json_raw(json_path) do
+      {:ok, data} ->
+        # Load arena definitions
+        arenas = Map.get(data, :arenas, [])
+
+        for arena <- arenas do
+          :ets.insert(table_name, {arena.id, arena})
+        end
+
+        # Store bracket configuration as metadata
+        if brackets = Map.get(data, :brackets) do
+          :ets.insert(table_name, {:brackets, brackets})
+        end
+
+        # Store rating rewards as metadata
+        if rating_rewards = Map.get(data, :rating_rewards) do
+          :ets.insert(table_name, {:rating_rewards, rating_rewards})
+        end
+
+        Logger.debug("Loaded #{length(arenas)} arenas")
+
+      {:error, reason} ->
+        Logger.warning("Failed to load arenas: #{inspect(reason)}")
+    end
+  end
+
+  defp load_warplot_plugs do
+    table_name = table_name(:warplot_plugs)
+
+    # Clear existing data
+    :ets.delete_all_objects(table_name)
+
+    json_path = Path.join(data_directory(), "warplot_plugs.json")
+
+    case load_json_raw(json_path) do
+      {:ok, data} ->
+        # Load plug definitions
+        plugs = Map.get(data, :plugs, [])
+
+        for plug <- plugs do
+          :ets.insert(table_name, {plug.id, plug})
+        end
+
+        # Store categories as metadata
+        if categories = Map.get(data, :categories) do
+          :ets.insert(table_name, {:categories, categories})
+        end
+
+        # Store socket layout as metadata
+        if socket_layout = Map.get(data, :socket_layout) do
+          :ets.insert(table_name, {:socket_layout, socket_layout})
+        end
+
+        # Store warplot settings as metadata
+        if warplot_settings = Map.get(data, :warplot_settings) do
+          :ets.insert(table_name, {:warplot_settings, warplot_settings})
+        end
+
+        Logger.debug("Loaded #{length(plugs)} warplot plugs")
+
+      {:error, reason} ->
+        Logger.warning("Failed to load warplot plugs: #{inspect(reason)}")
+    end
+  end
+
+  defp data_directory do
+    Application.app_dir(:bezgelor_data, "priv/data")
   end
 
   defp stats do

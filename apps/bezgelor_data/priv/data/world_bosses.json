@@ -1,61 +1,63 @@
-[
-  {
-    "id": 5001,
-    "name": "Metal Maw",
-    "creature_template_id": 10001,
-    "zone_id": 100,
-    "spawn_position": [1234.5, 567.8, 90.0],
-    "spawn_window": {"start_hour": 18, "end_hour": 22},
-    "spawn_cooldown_hours": 24,
-    "despawn_timer_ms": 1800000,
-    "phases": [
-      {
-        "health_threshold": 100,
-        "abilities": ["ground_slam", "cleave"],
-        "add_spawns": []
-      },
-      {
-        "health_threshold": 60,
-        "abilities": ["ground_slam", "cleave", "enrage"],
-        "add_spawns": [{"creature_id": 1005, "count": 4}]
-      },
-      {
-        "health_threshold": 30,
-        "abilities": ["ground_slam", "cleave", "enrage", "berserk"],
-        "add_spawns": [{"creature_id": 1005, "count": 8}]
-      }
-    ],
-    "enrage_timer_ms": 600000,
-    "loot_table_id": 9101,
-    "currency_reward": {"omnibits": 50, "glory": 100},
-    "achievement_id": 8101,
-    "title_id": 7001
-  },
-  {
-    "id": 5002,
-    "name": "Scorchwing",
-    "creature_template_id": 10002,
-    "zone_id": 200,
-    "spawn_position": [500.0, 800.0, 120.0],
-    "spawn_window": {"start_hour": 12, "end_hour": 16},
-    "spawn_cooldown_hours": 48,
-    "despawn_timer_ms": 2400000,
-    "phases": [
-      {
-        "health_threshold": 100,
-        "abilities": ["fire_breath", "wing_buffet"],
-        "add_spawns": []
-      },
-      {
-        "health_threshold": 50,
-        "abilities": ["fire_breath", "wing_buffet", "meteor_swarm"],
-        "add_spawns": [{"creature_id": 1010, "count": 6}]
-      }
-    ],
-    "enrage_timer_ms": 900000,
-    "loot_table_id": 9102,
-    "currency_reward": {"omnibits": 75, "glory": 150},
-    "achievement_id": 8102,
-    "title_id": 7002
-  }
-]
+{
+  "world_bosses": [
+    {
+      "id": 5001,
+      "name": "Metal Maw",
+      "creature_template_id": 10001,
+      "zone_id": 100,
+      "spawn_position": [1234.5, 567.8, 90.0],
+      "spawn_window": {"start_hour": 18, "end_hour": 22},
+      "spawn_cooldown_hours": 24,
+      "despawn_timer_ms": 1800000,
+      "phases": [
+        {
+          "health_threshold": 100,
+          "abilities": ["ground_slam", "cleave"],
+          "add_spawns": []
+        },
+        {
+          "health_threshold": 60,
+          "abilities": ["ground_slam", "cleave", "enrage"],
+          "add_spawns": [{"creature_id": 1005, "count": 4}]
+        },
+        {
+          "health_threshold": 30,
+          "abilities": ["ground_slam", "cleave", "enrage", "berserk"],
+          "add_spawns": [{"creature_id": 1005, "count": 8}]
+        }
+      ],
+      "enrage_timer_ms": 600000,
+      "loot_table_id": 9101,
+      "currency_reward": {"omnibits": 50, "glory": 100},
+      "achievement_id": 8101,
+      "title_id": 7001
+    },
+    {
+      "id": 5002,
+      "name": "Scorchwing",
+      "creature_template_id": 10002,
+      "zone_id": 200,
+      "spawn_position": [500.0, 800.0, 120.0],
+      "spawn_window": {"start_hour": 12, "end_hour": 16},
+      "spawn_cooldown_hours": 48,
+      "despawn_timer_ms": 2400000,
+      "phases": [
+        {
+          "health_threshold": 100,
+          "abilities": ["fire_breath", "wing_buffet"],
+          "add_spawns": []
+        },
+        {
+          "health_threshold": 50,
+          "abilities": ["fire_breath", "wing_buffet", "meteor_swarm"],
+          "add_spawns": [{"creature_id": 1010, "count": 6}]
+        }
+      ],
+      "enrage_timer_ms": 900000,
+      "loot_table_id": 9102,
+      "currency_reward": {"omnibits": 75, "glory": 150},
+      "achievement_id": 8102,
+      "title_id": 7002
+    }
+  ]
+}

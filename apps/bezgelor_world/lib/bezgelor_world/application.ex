@@ -32,7 +32,21 @@ defmodule BezgelorWorld.Application do
       BezgelorWorld.CreatureManager,
       BezgelorWorld.BuffManager,
       # Dynamic supervisor for zone instances
-      BezgelorWorld.Zone.InstanceSupervisor
+      BezgelorWorld.Zone.InstanceSupervisor,
+      # Registry for EventManager processes
+      {Registry, keys: :unique, name: BezgelorWorld.EventRegistry},
+      # Dynamic supervisor for EventManagers
+      BezgelorWorld.EventManagerSupervisor,
+      # Global event scheduler
+      BezgelorWorld.EventScheduler,
+      # PvP duel manager
+      BezgelorWorld.PvP.DuelManager,
+      # Registry for battleground instances
+      {Registry, keys: :unique, name: BezgelorWorld.PvP.BattlegroundRegistry},
+      # Dynamic supervisor for battleground instances
+      BezgelorWorld.PvP.BattlegroundSupervisor,
+      # Battleground queue manager
+      BezgelorWorld.PvP.BattlegroundQueue
     ]
 
     server_children =

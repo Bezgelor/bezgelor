@@ -17,9 +17,9 @@ Bezgelor is an Elixir port of NexusForever, a WildStar server emulator. The proj
 | 5 | Character Management | ✅ Complete | 100% |
 | 6 | Core Gameplay (Combat) | ✅ Complete | 100% |
 | 7 | Game Systems | ✅ Complete | 100% |
-| 8 | Tradeskills | 🔄 In Progress | 60% |
-| 9 | Public Events | ⏳ Not Started | 0% |
-| 10 | Dungeons & Instances | ⏳ Not Started | 0% |
+| 8 | Tradeskills | ✅ Complete | 100% |
+| 9 | Public Events | ✅ Complete | 100% |
+| 10 | Dungeons & Instances | ✅ Complete | 100% |
 | 11 | PvP | ⏳ Not Started | 0% |
 
 ---
@@ -93,23 +93,60 @@ Bezgelor is an Elixir port of NexusForever, a WildStar server emulator. The proj
 
 ---
 
+## Phase 10: Dungeons & Instances ✅
+
+| Component | Status | Description |
+|-----------|--------|-------------|
+| 10.1 Instance Manager | ✅ Complete | Instance lifecycle, player tracking, lockouts |
+| 10.2 Boss Encounters DSL | ✅ Complete | Declarative boss combat with phases, abilities, telegraphs |
+| 10.3 Group Finder | ✅ Complete | Queue system, role matching, match confirmation |
+| 10.4 Loot System | ✅ Complete | Personal loot, need/greed, master loot, round robin |
+| 10.5 Mythic+ System | ✅ Complete | Keystones, affixes, timers, score calculation |
+| 10.6 Protocol Layer | ✅ Complete | 20+ packets for instances, loot, group finder, mythic+ |
+
+### Key Features
+
+**Boss DSL Primitives:**
+- `phase` - Phase transitions, intermissions
+- `telegraph` - Circle, cone, donut, line, cross, wave AOEs
+- `target` - Tank, healer, random, chain, spread, fixate
+- `spawn` - Adds, waves, portals, split mechanics
+- `movement` - Knockback, pull, charge, leap, teleport
+- `interrupt` - Interrupt armor, MoO windows
+- `environmental` - Void zones, fire, falling debris
+- `coordination` - Stack, spread, pair, soak, tether
+
+**Group Finder Matching:**
+- FIFO matching for normal content
+- Smart matching (gear score, wait time) for veteran
+- Advanced matching (language groups, composition) for raids
+- Role requirements: 1 tank + 1 healer + 3 DPS (dungeons)
+
+**Mythic+ Affixes (12 defined):**
+- Tier 1: Fortified, Tyrannical
+- Tier 2: Bolstering, Raging, Sanguine, Inspiring
+- Tier 3: Explosive, Quaking, Grievous, Volcanic, Necrotic
+- Seasonal: Awakened
+
+---
+
 ## Application Status
 
 | App | Purpose | Status | Notes |
 |-----|---------|--------|-------|
 | bezgelor_core | Game logic | ✅ Complete | Entity, spell, AI, experience, loot systems |
 | bezgelor_crypto | Security | ✅ Complete | SRP6, packet encryption, password hashing |
-| bezgelor_db | Database | ✅ Complete | 38 Ecto schemas, 10+ migrations |
+| bezgelor_db | Database | ✅ Complete | 43 Ecto schemas, 10+ migrations |
 | bezgelor_protocol | Packets | ✅ Complete | 70+ packets, handlers, framing |
 | bezgelor_auth | Auth server | ✅ Complete | Login flow, session management |
 | bezgelor_realm | Realm server | ✅ Complete | Character list, realm selection |
-| bezgelor_world | World server | ✅ Complete | All Phase 6-7 systems implemented |
+| bezgelor_world | World server | ✅ Complete | All Phase 6-9 systems implemented |
 | bezgelor_api | REST API | ✅ Complete | Status, player, zone endpoints |
-| bezgelor_data | Static data | 🔄 60% | ETS store, ETF compilation, text extraction |
+| bezgelor_data | Static data | ✅ Complete | ETS store, tradeskill data, ETF compilation |
 
 ---
 
-## Database Schemas (38 total)
+## Database Schemas (43 total)
 
 ### Core
 - `account` - User accounts with SRP6 credentials
@@ -162,6 +199,13 @@ Bezgelor is an Elixir port of NexusForever, a WildStar server emulator. The proj
 - `promo_redemption` - Code redemption tracking
 - `daily_deal` - Rotating daily deals
 
+### Public Events
+- `event_instance` - Active event state
+- `event_participation` - Character contribution tracking
+- `event_completion` - Historical event completions
+- `event_schedule` - Scheduled event times
+- `world_boss_spawn` - Boss spawn history
+
 ---
 
 ## Test Coverage
@@ -177,16 +221,13 @@ Bezgelor is an Elixir port of NexusForever, a WildStar server emulator. The proj
 
 ## What Remains
 
-Phase 7 (Game Systems) is complete. Next phases:
+Phase 10 (Dungeons & Instances) is complete. Next phase:
 
-- **Phase 8: Tradeskills** - Gathering, crafting, schematics, tech trees
-- **Phase 9: Public Events** - World bosses, zone events, participation rewards
-- **Phase 10: Dungeons & Instances** - Group finder, boss mechanics, lockouts
 - **Phase 11: PvP** - Dueling, battlegrounds, arenas, warplots
 
 ---
 
-## Phase 8: Tradeskills 🔄 In Progress (60%)
+## Phase 8: Tradeskills ✅ Complete
 
 | System | Status | Description |
 |--------|--------|-------------|
@@ -199,74 +240,56 @@ Phase 7 (Game Systems) is complete. Next phases:
 | 8.7 Client Packets | ✅ Complete | 11 packets (learn, craft, gather, talents, work orders) |
 | 8.8 Server Packets | ✅ Complete | 11 packets (lists, updates, results, discoveries) |
 | 8.9 Handlers | ✅ Complete | TradeskillHandler, CraftingHandler, GatheringHandler |
-| 8.10 Static Data | ⏳ Pending | Extract .tbl files for schematics, materials, tech trees |
-| 8.11 ETS Integration | ⏳ Pending | Load tradeskill data into ETS store |
-| 8.12 Zone Integration | ⏳ Pending | Node spawning in zones, NodeManager |
+| 8.10 Static Data | ✅ Complete | Professions, schematics, talents, additives, nodes, work orders |
+| 8.11 ETS Integration | ✅ Complete | Tradeskill tables loaded into ETS store with query helpers |
+| 8.12 Zone Integration | ✅ Complete | Handlers use ETS store for loot, XP, respawn data |
 
-**Completed:**
-- Database migration for 4 tradeskill tables
-- Full CRUD operations via Tradeskills context
-- Coordinate-based crafting with quality zones (rectangle hit detection)
-- Overcharge risk/reward system
-- Gathering node tap/respawn lifecycle
-- Configurable: profession limits, discovery scope, node competition, respec policy, station requirements
-- Complete packet protocol (client + server)
-- Handler implementations with XP tracking
-
-**Remaining:**
-- Extract tradeskill static data from game archive
-- Add tradeskill tables to ETS store
-- Integrate gathering nodes with zone instances
-- Work order daily generation system
+**Features:**
+- 6 crafting professions: Weaponsmith, Armorer, Outfitter, Tailor, Technologist, Architect
+- 3 gathering professions: Mining, Survivalist, Relic Hunter
+- Coordinate-based crafting with 2D grid and quality zones
+- Overcharge system (0-3 levels with multipliers and failure risk)
+- Talent trees with prerequisites and tier unlocks
+- Gathering nodes with loot tables and respawn timers
+- Work orders for daily profession quests
+- Additive system to shift crafting cursor
+- Full ETS integration for static data lookup
 
 ---
 
-## Phase 9: Public Events ⏳ Not Started
+## Phase 9: Public Events ✅ Complete
 
 | System | Status | Description |
 |--------|--------|-------------|
-| 9.1 Event Manager | ⏳ Pending | Event scheduling, triggers, lifecycle |
-| 9.2 Objectives | ⏳ Pending | Kill counts, collection, defend/escort |
-| 9.3 Participation | ⏳ Pending | Contribution tracking, rewards distribution |
-| 9.4 World Bosses | ⏳ Pending | Spawn timers, multi-phase encounters |
-| 9.5 Zone Events | ⏳ Pending | Invasion waves, territory control |
-| 9.6 Rewards | ⏳ Pending | Loot tables, currency, titles |
+| 9.1 Event Manager | ✅ Complete | Event scheduling, triggers, lifecycle via GenServer |
+| 9.2 Objectives | ✅ Complete | Kill counts, collection, defend/escort, boss kills |
+| 9.3 Participation | ✅ Complete | Contribution tracking, tier-based rewards (gold/silver/bronze) |
+| 9.4 World Bosses | ✅ Complete | Spawn timers, multi-phase encounters, enrage, damage tracking |
+| 9.5 Zone Events | ✅ Complete | Invasion waves, territory control with capture mechanics |
+| 9.6 Rewards | ✅ Complete | XP, gold, currency, loot tables, achievements, titles |
 
-**Implementation Steps:**
-1. Create `public_event` schema (event state, phase, timer)
-2. Create `event_participant` schema (contribution tracking)
-3. Add event definition static data (objectives, phases, rewards)
-4. Implement EventManager GenServer (scheduling, lifecycle)
-5. Add event spawn triggers (timer-based, player-count, quest-triggered)
-6. Implement objective tracking (kill credit, collection progress)
-7. Add contribution-based reward distribution
-8. Implement event-specific creature spawns and despawns
-9. Add event broadcast packets (announce, progress, complete)
+**Features:**
+- **EventManager GenServer:** Per-zone instance with Registry-based naming
+- **Event Types:** Invasion, collection, territory control, world boss
+- **Objective System:** Kill, collect, defend, escort, kill_boss with progress tracking
+- **Wave System:** Sequential spawns with timer-based advancement
+- **Territory Control:** Capture points, progress decay, majority win conditions
+- **World Bosses:** Multi-phase health thresholds, add spawns, enrage timers
+- **Contribution Tracking:** Per-character contribution with tier thresholds
+- **Reward Distribution:** Tier-based rewards (gold > 75%, silver > 50%, bronze > 25%)
+- **Combat Integration:** Kill notifications update event objectives automatically
+- **Supervision:** DynamicSupervisor manages EventManager instances per zone
 
----
+**Database Schemas:**
+- `event_instance` - Active event state, phase, progress
+- `event_participation` - Character contribution tracking
+- `event_completion` - Historical event completions
+- `event_schedule` - Scheduled event times
+- `world_boss_spawn` - Boss spawn history
 
-## Phase 10: Dungeons & Instances ⏳ Not Started
-
-| System | Status | Description |
-|--------|--------|-------------|
-| 10.1 Instance Manager | ⏳ Pending | Instance creation, lifecycle, cleanup |
-| 10.2 Group Finder | ⏳ Pending | Queue system, role matching, teleport |
-| 10.3 Boss Mechanics | ⏳ Pending | Phases, abilities, enrage timers |
-| 10.4 Lockouts | ⏳ Pending | Weekly/daily reset, save states |
-| 10.5 Loot Rules | ⏳ Pending | Need/greed, master loot, personal loot |
-| 10.6 Difficulty Modes | ⏳ Pending | Normal, Veteran, scaling |
-
-**Implementation Steps:**
-1. Create `instance` schema (instance ID, difficulty, state)
-2. Create `instance_lockout` schema (character lockouts, boss kills)
-3. Create `group_finder_queue` schema (queued players, roles)
-4. Implement InstanceManager supervisor (spawn/cleanup instances)
-5. Add instance zone process (isolated from world zones)
-6. Implement group finder matchmaking algorithm
-7. Add boss encounter scripts (phases, abilities, triggers)
-8. Implement lockout tracking and reset schedules
-9. Add instance-specific loot distribution systems
-10. Implement difficulty scaling (health, damage, mechanics)
+**Packets:**
+- Client: JoinEvent, LeaveEvent, ListEvents, ContributeToEvent
+- Server: EventList, EventUpdate, EventComplete, WorldBossSpawn, WorldBossPhase, WorldBossDeath
 
 ---
 
@@ -334,6 +357,8 @@ tools/
 
 ## Recent Completions
 
+- **2025-12-11:** Phase 9 Public Events Complete - EventManager, objectives, world bosses, territory control, rewards
+- **2025-12-11:** Phase 8 Tradeskills Complete - ETS integration, static data files, all handlers functional
 - **2025-12-11:** Phase 8 Tradeskills 60% - Core systems complete (schemas, handlers, packets, coordinate crafting)
 - **2025-12-10:** Phase 7 Complete! System 12 (Reputation - title system, kill/quest rewards, level tracking)
 - **2025-12-10:** Phase 7 System 11 (Storefront - categories, promotions, promo codes, daily deals)

@@ -1,83 +1,85 @@
-[
-  {
-    "id": 1001,
-    "name": "Strain Invasion",
-    "type": "invasion",
-    "zone_id": 100,
-    "duration_ms": 600000,
-    "phases": [
-      {
-        "index": 0,
-        "objectives": [
-          {"index": 0, "type": "kill", "target": 30, "creature_ids": [1001, 1002], "contribution_per_unit": 10}
-        ],
-        "duration_ms": 180000
+{
+  "public_events": [
+    {
+      "id": 1001,
+      "name": "Strain Invasion",
+      "type": "invasion",
+      "zone_id": 100,
+      "duration_ms": 600000,
+      "phases": [
+        {
+          "index": 0,
+          "objectives": [
+            {"index": 0, "type": "kill", "target": 30, "creature_ids": [1001, 1002], "contribution_per_unit": 10}
+          ],
+          "duration_ms": 180000
+        },
+        {
+          "index": 1,
+          "objectives": [
+            {"index": 0, "type": "kill", "target": 50, "creature_ids": [1001, 1002, 1003], "contribution_per_unit": 10},
+            {"index": 1, "type": "defend", "target": 1, "object_ids": [2001], "duration_ms": 60000, "contribution_per_unit": 50}
+          ],
+          "duration_ms": 240000
+        },
+        {
+          "index": 2,
+          "objectives": [
+            {"index": 0, "type": "kill_boss", "target": 1, "boss_id": 1004, "contribution_per_unit": 100}
+          ],
+          "duration_ms": 180000
+        }
+      ],
+      "rewards": {
+        "xp": 500,
+        "gold": 100,
+        "currency": {"glory": 50},
+        "loot_table_id": 9001,
+        "reputation": {"faction_id": 100, "amount": 250},
+        "achievement_id": 8001
       },
-      {
-        "index": 1,
-        "objectives": [
-          {"index": 0, "type": "kill", "target": 50, "creature_ids": [1001, 1002, 1003], "contribution_per_unit": 10},
-          {"index": 1, "type": "defend", "target": 1, "object_ids": [2001], "duration_ms": 60000, "contribution_per_unit": 50}
-        ],
-        "duration_ms": 240000
+      "spawn_points": "invasion_north"
+    },
+    {
+      "id": 1002,
+      "name": "Resource Collection",
+      "type": "collection",
+      "zone_id": 100,
+      "duration_ms": 300000,
+      "phases": [
+        {
+          "index": 0,
+          "objectives": [
+            {"index": 0, "type": "collect", "target": 100, "item_id": 3001, "contribution_per_unit": 5}
+          ],
+          "duration_ms": 300000
+        }
+      ],
+      "rewards": {
+        "xp": 300,
+        "gold": 50,
+        "loot_table_id": 9002
       },
-      {
-        "index": 2,
-        "objectives": [
-          {"index": 0, "type": "kill_boss", "target": 1, "boss_id": 1004, "contribution_per_unit": 100}
-        ],
-        "duration_ms": 180000
-      }
-    ],
-    "rewards": {
-      "xp": 500,
-      "gold": 100,
-      "currency": {"glory": 50},
-      "loot_table_id": 9001,
-      "reputation": {"faction_id": 100, "amount": 250},
-      "achievement_id": 8001
+      "spawn_points": null
     },
-    "spawn_points": "invasion_north"
-  },
-  {
-    "id": 1002,
-    "name": "Resource Collection",
-    "type": "collection",
-    "zone_id": 100,
-    "duration_ms": 300000,
-    "phases": [
-      {
-        "index": 0,
-        "objectives": [
-          {"index": 0, "type": "collect", "target": 100, "item_id": 3001, "contribution_per_unit": 5}
-        ],
-        "duration_ms": 300000
+    {
+      "id": 1003,
+      "name": "Territory Control",
+      "type": "territory",
+      "zone_id": 200,
+      "duration_ms": 600000,
+      "control_points": [
+        {"id": "alpha", "name": "Northern Outpost", "position": [100.0, 200.0, 50.0], "capture_radius": 30.0, "capture_time_ms": 15000},
+        {"id": "beta", "name": "Central Tower", "position": [150.0, 150.0, 55.0], "capture_radius": 25.0, "capture_time_ms": 20000},
+        {"id": "gamma", "name": "Southern Gate", "position": [200.0, 100.0, 48.0], "capture_radius": 35.0, "capture_time_ms": 10000}
+      ],
+      "victory_condition": "hold_majority",
+      "hold_time_required_ms": 120000,
+      "rewards": {
+        "xp": 400,
+        "gold": 75,
+        "currency": {"glory": 75}
       }
-    ],
-    "rewards": {
-      "xp": 300,
-      "gold": 50,
-      "loot_table_id": 9002
-    },
-    "spawn_points": null
-  },
-  {
-    "id": 1003,
-    "name": "Territory Control",
-    "type": "territory",
-    "zone_id": 200,
-    "duration_ms": 600000,
-    "control_points": [
-      {"id": "alpha", "name": "Northern Outpost", "position": [100.0, 200.0, 50.0], "capture_radius": 30.0, "capture_time_ms": 15000},
-      {"id": "beta", "name": "Central Tower", "position": [150.0, 150.0, 55.0], "capture_radius": 25.0, "capture_time_ms": 20000},
-      {"id": "gamma", "name": "Southern Gate", "position": [200.0, 100.0, 48.0], "capture_radius": 35.0, "capture_time_ms": 10000}
-    ],
-    "victory_condition": "hold_majority",
-    "hold_time_required_ms": 120000,
-    "rewards": {
-      "xp": 400,
-      "gold": 75,
-      "currency": {"glory": 75}
     }
-  }
-]
+  ]
+}

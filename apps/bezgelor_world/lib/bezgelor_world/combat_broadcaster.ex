@@ -22,7 +22,7 @@ defmodule BezgelorWorld.CombatBroadcaster do
   }
 
   alias BezgelorProtocol.PacketWriter
-  alias BezgelorWorld.WorldManager
+  alias BezgelorWorld.{EventManager, WorldManager}
 
   @doc """
   Broadcast entity death to a list of player GUIDs.
@@ -204,6 +204,45 @@ defmodule BezgelorWorld.CombatBroadcaster do
   @spec send_buff_remove(non_neg_integer(), non_neg_integer(), atom()) :: :ok
   def send_buff_remove(target_guid, buff_id, reason) do
     broadcast_buff_remove(target_guid, buff_id, reason, [target_guid])
+  end
+
+  @doc """
+  Notify EventManager of a creature kill for event objective tracking.
+
+  Called when a creature dies in combat. The EventManager will check if
+  the creature type matches any active event objectives and update progress.
+  """
+  @spec notify_creature_kill(non_neg_integer(), non_neg_integer(), non_neg_integer(), non_neg_integer()) :: :ok
+  def notify_creature_kill(zone_id, instance_id, killer_character_id, creature_id) do
+    manager = EventManager.via_tuple(zone_id, instance_id)
+
+    case GenServer.whereis(manager) do
+      nil ->
+        # No EventManager for this zone - normal for non-event zones
+        :ok
+
+      _pid ->
+        # Notify the EventManager of the kill
+        EventManager.report_creature_kill(manager, killer_character_id, creature_id)
+    end
+  end
+
+  @doc """
+  Notify EventManager of damage dealt to a world boss.
+
+  Tracks damage contribution for boss fights.
+  """
+  @spec notify_boss_damage(non_neg_integer(), non_neg_integer(), non_neg_integer(), non_neg_integer(), non_neg_integer()) :: :ok
+  def notify_boss_damage(zone_id, instance_id, character_id, boss_id, damage_amount) do
+    manager = EventManager.via_tuple(zone_id, instance_id)
+
+    case GenServer.whereis(manager) do
+      nil ->
+        :ok
+
+      _pid ->
+        EventManager.record_boss_damage(manager, boss_id, character_id, damage_amount)
+    end
   end
 
   # Private helpers

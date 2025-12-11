@@ -1,0 +1,125 @@
+{
+  "battlegrounds": [
+    {
+      "id": 1,
+      "name": "Walatiki Temple",
+      "map_id": 1001,
+      "min_level": 6,
+      "max_level": 50,
+      "team_size": 10,
+      "min_players": 6,
+      "type": "capture_the_flag",
+      "duration_minutes": 20,
+      "objectives": [
+        {
+          "type": "capture_mask",
+          "captures_to_win": 5,
+          "respawn_time_seconds": 30
+        }
+      ],
+      "spawn_points": {
+        "team_1": {"x": -150.0, "y": 0.0, "z": 50.0},
+        "team_2": {"x": 150.0, "y": 0.0, "z": 50.0}
+      },
+      "graveyard_locations": {
+        "team_1": {"x": -130.0, "y": 0.0, "z": 45.0},
+        "team_2": {"x": 130.0, "y": 0.0, "z": 45.0}
+      },
+      "mask_locations": [
+        {"x": 0.0, "y": 0.0, "z": 0.0}
+      ],
+      "rewards": {
+        "winner": {"honor": 300, "conquest": 150, "xp_percent": 5},
+        "loser": {"honor": 100, "conquest": 0, "xp_percent": 2}
+      }
+    },
+    {
+      "id": 2,
+      "name": "Halls of the Bloodsworn",
+      "map_id": 1002,
+      "min_level": 6,
+      "max_level": 50,
+      "team_size": 15,
+      "min_players": 10,
+      "type": "control_points",
+      "duration_minutes": 25,
+      "objectives": [
+        {
+          "type": "control_point",
+          "points_to_win": 1600,
+          "capture_time_seconds": 8,
+          "points_per_tick": 1,
+          "tick_interval_seconds": 1
+        }
+      ],
+      "control_points": [
+        {"id": 1, "name": "Temple", "x": 0.0, "y": 50.0, "z": 0.0},
+        {"id": 2, "name": "Shrine", "x": -80.0, "y": 0.0, "z": 0.0},
+        {"id": 3, "name": "Altar", "x": 80.0, "y": 0.0, "z": 0.0}
+      ],
+      "spawn_points": {
+        "team_1": {"x": -120.0, "y": -80.0, "z": 0.0},
+        "team_2": {"x": 120.0, "y": -80.0, "z": 0.0}
+      },
+      "graveyard_locations": {
+        "team_1": {"x": -100.0, "y": -70.0, "z": 0.0},
+        "team_2": {"x": 100.0, "y": -70.0, "z": 0.0}
+      },
+      "rewards": {
+        "winner": {"honor": 350, "conquest": 175, "xp_percent": 6},
+        "loser": {"honor": 120, "conquest": 0, "xp_percent": 2}
+      }
+    },
+    {
+      "id": 3,
+      "name": "Daggerstone Pass",
+      "map_id": 1003,
+      "min_level": 15,
+      "max_level": 50,
+      "team_size": 15,
+      "min_players": 10,
+      "type": "capture_and_hold",
+      "duration_minutes": 20,
+      "objectives": [
+        {
+          "type": "capture_bomb",
+          "bombs_to_win": 3,
+          "bomb_arm_time_seconds": 10,
+          "bomb_defuse_time_seconds": 5
+        }
+      ],
+      "bomb_spawn_locations": [
+        {"x": 0.0, "y": 0.0, "z": 0.0}
+      ],
+      "target_locations": [
+        {"team": 1, "x": -100.0, "y": 0.0, "z": 0.0},
+        {"team": 2, "x": 100.0, "y": 0.0, "z": 0.0}
+      ],
+      "spawn_points": {
+        "team_1": {"x": -150.0, "y": 0.0, "z": 0.0},
+        "team_2": {"x": 150.0, "y": 0.0, "z": 0.0}
+      },
+      "graveyard_locations": {
+        "team_1": {"x": -130.0, "y": 0.0, "z": 0.0},
+        "team_2": {"x": 130.0, "y": 0.0, "z": 0.0}
+      },
+      "rewards": {
+        "winner": {"honor": 400, "conquest": 200, "xp_percent": 7},
+        "loser": {"honor": 150, "conquest": 0, "xp_percent": 3}
+      }
+    }
+  ],
+  "rated_battlegrounds": [
+    {
+      "id": 101,
+      "base_battleground_id": 2,
+      "name": "Rated Halls of the Bloodsworn",
+      "team_size": 10,
+      "min_rating": 0,
+      "rewards": {
+        "winner": {"conquest": 400, "rating_gain_base": 24},
+        "loser": {"conquest": 50, "rating_loss_base": 24}
+      }
+    }
+  ]
+}

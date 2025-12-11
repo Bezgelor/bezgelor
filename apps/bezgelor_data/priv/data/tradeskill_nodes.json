@@ -1,0 +1,116 @@
+{
+  "node_types": [
+    {
+      "id": 1,
+      "profession_id": 101,
+      "name": "Copper Deposit",
+      "description": "Basic copper ore node",
+      "min_level": 1,
+      "max_level": 20,
+      "respawn_seconds": 60,
+      "loot_table": [
+        {"item_id": 40001, "min_quantity": 1, "max_quantity": 3, "chance": 1.0},
+        {"item_id": 40005, "min_quantity": 1, "max_quantity": 1, "chance": 0.15}
+      ],
+      "xp_reward": 100
+    },
+    {
+      "id": 2,
+      "profession_id": 101,
+      "name": "Iron Deposit",
+      "description": "Iron ore node",
+      "min_level": 15,
+      "max_level": 35,
+      "respawn_seconds": 90,
+      "loot_table": [
+        {"item_id": 40002, "min_quantity": 1, "max_quantity": 3, "chance": 1.0},
+        {"item_id": 40005, "min_quantity": 1, "max_quantity": 2, "chance": 0.20}
+      ],
+      "xp_reward": 175
+    },
+    {
+      "id": 3,
+      "profession_id": 101,
+      "name": "Titanium Deposit",
+      "description": "Rare titanium ore node",
+      "min_level": 30,
+      "max_level": 50,
+      "respawn_seconds": 120,
+      "loot_table": [
+        {"item_id": 40003, "min_quantity": 1, "max_quantity": 2, "chance": 1.0},
+        {"item_id": 40006, "min_quantity": 1, "max_quantity": 1, "chance": 0.25}
+      ],
+      "xp_reward": 250
+    },
+    {
+      "id": 101,
+      "profession_id": 102,
+      "name": "Herb Patch",
+      "description": "Common herbs for potions",
+      "min_level": 1,
+      "max_level": 20,
+      "respawn_seconds": 45,
+      "loot_table": [
+        {"item_id": 40030, "min_quantity": 2, "max_quantity": 5, "chance": 1.0},
+        {"item_id": 40032, "min_quantity": 1, "max_quantity": 1, "chance": 0.10}
+      ],
+      "xp_reward": 80
+    },
+    {
+      "id": 102,
+      "profession_id": 102,
+      "name": "Leather Creature",
+      "description": "Skinnable creature for leather",
+      "min_level": 1,
+      "max_level": 25,
+      "respawn_seconds": 0,
+      "loot_table": [
+        {"item_id": 40010, "min_quantity": 1, "max_quantity": 3, "chance": 1.0},
+        {"item_id": 40012, "min_quantity": 1, "max_quantity": 1, "chance": 0.20}
+      ],
+      "xp_reward": 90
+    },
+    {
+      "id": 103,
+      "profession_id": 102,
+      "name": "Cloth Fiber Plant",
+      "description": "Fiber plant for cloth materials",
+      "min_level": 1,
+      "max_level": 20,
+      "respawn_seconds": 50,
+      "loot_table": [
+        {"item_id": 40020, "min_quantity": 2, "max_quantity": 4, "chance": 1.0},
+        {"item_id": 40022, "min_quantity": 1, "max_quantity": 1, "chance": 0.15}
+      ],
+      "xp_reward": 85
+    },
+    {
+      "id": 201,
+      "profession_id": 103,
+      "name": "Eldan Relic Fragment",
+      "description": "Ancient Eldan artifact fragments",
+      "min_level": 10,
+      "max_level": 50,
+      "respawn_seconds": 180,
+      "loot_table": [
+        {"item_id": 40050, "min_quantity": 1, "max_quantity": 2, "chance": 1.0},
+        {"item_id": 40051, "min_quantity": 1, "max_quantity": 1, "chance": 0.05}
+      ],
+      "xp_reward": 300
+    },
+    {
+      "id": 202,
+      "profession_id": 103,
+      "name": "Ancient Cache",
+      "description": "Hidden cache of ancient materials",
+      "min_level": 20,
+      "max_level": 50,
+      "respawn_seconds": 300,
+      "loot_table": [
+        {"item_id": 40052, "min_quantity": 1, "max_quantity": 3, "chance": 1.0},
+        {"item_id": 40053, "min_quantity": 1, "max_quantity": 1, "chance": 0.10}
+      ],
+      "xp_reward": 400
+    }
+  ]
+}

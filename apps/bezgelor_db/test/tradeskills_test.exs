@@ -1,5 +1,5 @@
 defmodule BezgelorDb.TradeskillsTest do
-  use BezgelorDb.DataCase, async: true
+  use ExUnit.Case, async: true
 
   alias BezgelorDb.Tradeskills
   alias BezgelorDb.Schema.{CharacterTradeskill, SchematicDiscovery, TradeskillTalent, WorkOrder}

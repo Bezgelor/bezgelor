@@ -1,0 +1,100 @@
+{
+  "talents": [
+    {
+      "id": 1,
+      "profession_id": 1,
+      "name": "Efficient Smithing",
+      "description": "Reduce material costs by 5% per point",
+      "max_points": 5,
+      "tier": 1,
+      "prerequisites": [],
+      "effects": [
+        {"type": "material_reduction", "value_per_point": 0.05}
+      ]
+    },
+    {
+      "id": 2,
+      "profession_id": 1,
+      "name": "Master Forger",
+      "description": "Increase chance of excellent quality by 10% per point",
+      "max_points": 3,
+      "tier": 2,
+      "prerequisites": [1],
+      "effects": [
+        {"type": "quality_bonus", "value_per_point": 0.10}
+      ]
+    },
+    {
+      "id": 3,
+      "profession_id": 1,
+      "name": "Overcharge Mastery",
+      "description": "Reduce overcharge failure chance by 10% per point",
+      "max_points": 3,
+      "tier": 2,
+      "prerequisites": [1],
+      "effects": [
+        {"type": "overcharge_safety", "value_per_point": 0.10}
+      ]
+    },
+    {
+      "id": 4,
+      "profession_id": 1,
+      "name": "Dual Production",
+      "description": "5% chance per point to produce double output",
+      "max_points": 5,
+      "tier": 3,
+      "prerequisites": [2, 3],
+      "effects": [
+        {"type": "double_output", "value_per_point": 0.05}
+      ]
+    },
+    {
+      "id": 101,
+      "profession_id": 101,
+      "name": "Keen Eye",
+      "description": "Increase node detection range by 5m per point",
+      "max_points": 3,
+      "tier": 1,
+      "prerequisites": [],
+      "effects": [
+        {"type": "detection_range", "value_per_point": 5.0}
+      ]
+    },
+    {
+      "id": 102,
+      "profession_id": 101,
+      "name": "Swift Harvest",
+      "description": "Reduce gathering time by 10% per point",
+      "max_points": 3,
+      "tier": 1,
+      "prerequisites": [],
+      "effects": [
+        {"type": "gather_speed", "value_per_point": 0.10}
+      ]
+    },
+    {
+      "id": 103,
+      "profession_id": 101,
+      "name": "Bountiful Harvest",
+      "description": "Increase yield by 10% per point",
+      "max_points": 5,
+      "tier": 2,
+      "prerequisites": [101, 102],
+      "effects": [
+        {"type": "yield_bonus", "value_per_point": 0.10}
+      ]
+    },
+    {
+      "id": 104,
+      "profession_id": 101,
+      "name": "Rare Find",
+      "description": "5% chance per point to find rare materials",
+      "max_points": 3,
+      "tier": 3,
+      "prerequisites": [103],
+      "effects": [
+        {"type": "rare_chance", "value_per_point": 0.05}
+      ]
+    }
+  ]
+}

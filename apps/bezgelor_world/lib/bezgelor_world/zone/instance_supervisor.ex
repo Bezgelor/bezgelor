@@ -20,6 +20,7 @@ defmodule BezgelorWorld.Zone.InstanceSupervisor do
   use DynamicSupervisor
 
   alias BezgelorWorld.Zone.Instance
+  alias BezgelorWorld.EventManagerSupervisor
   alias BezgelorCore.ProcessRegistry
 
   require Logger
@@ -47,6 +48,8 @@ defmodule BezgelorWorld.Zone.InstanceSupervisor do
     case DynamicSupervisor.start_child(__MODULE__, child_spec) do
       {:ok, pid} ->
         Logger.info("Started zone instance: zone=#{zone_id} instance=#{instance_id}")
+        # Also start an EventManager for this zone instance
+        EventManagerSupervisor.start_manager(zone_id, instance_id)
         {:ok, pid}
 
       {:error, {:already_started, pid}} ->
@@ -69,6 +72,8 @@ defmodule BezgelorWorld.Zone.InstanceSupervisor do
         {:error, :not_found}
 
       pid ->
+        # Stop the EventManager first
+        EventManagerSupervisor.stop_manager(zone_id, instance_id)
         DynamicSupervisor.terminate_child(__MODULE__, pid)
         Logger.info("Stopped zone instance: zone=#{zone_id} instance=#{instance_id}")
         :ok

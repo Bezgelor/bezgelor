@@ -1,0 +1,116 @@
+{
+  "work_order_templates": [
+    {
+      "id": 1,
+      "profession_id": 1,
+      "name": "Weaponsmith Daily: Basic Blades",
+      "description": "Craft swords for the militia",
+      "min_level": 1,
+      "schematic_id": 1001,
+      "quantity_required": 3,
+      "rewards": {
+        "xp": 500,
+        "gold": 1000,
+        "reputation_faction_id": 1,
+        "reputation_amount": 50
+      },
+      "cooldown_hours": 24
+    },
+    {
+      "id": 2,
+      "profession_id": 2,
+      "name": "Armorer Daily: Patrol Armor",
+      "description": "Supply armor for patrol guards",
+      "min_level": 1,
+      "schematic_id": 2001,
+      "quantity_required": 2,
+      "rewards": {
+        "xp": 400,
+        "gold": 800,
+        "reputation_faction_id": 1,
+        "reputation_amount": 40
+      },
+      "cooldown_hours": 24
+    },
+    {
+      "id": 3,
+      "profession_id": 5,
+      "name": "Technologist Daily: Medical Supplies",
+      "description": "Craft healing potions for the infirmary",
+      "min_level": 1,
+      "schematic_id": 5001,
+      "quantity_required": 5,
+      "rewards": {
+        "xp": 350,
+        "gold": 600,
+        "reputation_faction_id": 2,
+        "reputation_amount": 30
+      },
+      "cooldown_hours": 24
+    },
+    {
+      "id": 4,
+      "profession_id": 6,
+      "name": "Architect Daily: Furniture Request",
+      "description": "Build furniture for new housing plots",
+      "min_level": 1,
+      "schematic_id": 6001,
+      "quantity_required": 4,
+      "rewards": {
+        "xp": 450,
+        "gold": 900,
+        "reputation_faction_id": 3,
+        "reputation_amount": 45
+      },
+      "cooldown_hours": 24
+    },
+    {
+      "id": 101,
+      "profession_id": 101,
+      "name": "Mining Daily: Ore Quota",
+      "description": "Gather ore for the smelters",
+      "min_level": 1,
+      "node_type_id": 1,
+      "quantity_required": 10,
+      "rewards": {
+        "xp": 300,
+        "gold": 500,
+        "reputation_faction_id": 4,
+        "reputation_amount": 25
+      },
+      "cooldown_hours": 24
+    },
+    {
+      "id": 102,
+      "profession_id": 102,
+      "name": "Survivalist Daily: Herb Collection",
+      "description": "Gather herbs for the apothecary",
+      "min_level": 1,
+      "node_type_id": 101,
+      "quantity_required": 15,
+      "rewards": {
+        "xp": 250,
+        "gold": 400,
+        "reputation_faction_id": 2,
+        "reputation_amount": 20
+      },
+      "cooldown_hours": 24
+    },
+    {
+      "id": 103,
+      "profession_id": 103,
+      "name": "Relic Hunter Daily: Fragment Retrieval",
+      "description": "Recover Eldan artifact fragments",
+      "min_level": 10,
+      "node_type_id": 201,
+      "quantity_required": 5,
+      "rewards": {
+        "xp": 600,
+        "gold": 1200,
+        "reputation_faction_id": 5,
+        "reputation_amount": 75
+      },
+      "cooldown_hours": 24
+    }
+  ]
+}

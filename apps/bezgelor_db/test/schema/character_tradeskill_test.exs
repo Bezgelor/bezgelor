@@ -1,5 +1,6 @@
 defmodule BezgelorDb.Schema.CharacterTradeskillTest do
-  use BezgelorDb.DataCase, async: true
+  use ExUnit.Case, async: true
+  import BezgelorDb.TestHelpers
 
   alias BezgelorDb.Schema.CharacterTradeskill
 

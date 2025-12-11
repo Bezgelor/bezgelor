@@ -1,0 +1,1258 @@
+{
+  "instance_bosses": [
+    {
+      "id": 100101,
+      "instance_id": 1001,
+      "name": "Aethros",
+      "order": 1,
+      "creature_id": 50001,
+      "health_multiplier": 1.0,
+      "damage_multiplier": 1.0,
+      "is_optional": false,
+      "loot_table_id": 100101,
+      "mechanics": ["tornado_spawn", "lightning_strike"],
+      "phases": [
+        {
+          "phase": 1,
+          "health_threshold": 100,
+          "abilities": [
+            {"ability_id": 60001, "name": "Tempest", "cooldown": 15, "type": "aoe"},
+            {"ability_id": 60002, "name": "Lightning Bolt", "cooldown": 8, "type": "targeted"}
+          ]
+        },
+        {
+          "phase": 2,
+          "health_threshold": 50,
+          "abilities": [
+            {"ability_id": 60003, "name": "Storm Fury", "cooldown": 20, "type": "raid_wide"},
+            {"ability_id": 60004, "name": "Tornado", "cooldown": 25, "type": "spawn"}
+          ]
+        }
+      ],
+      "veteran_modifiers": {
+        "health_multiplier": 1.5,
+        "damage_multiplier": 1.3,
+        "additional_mechanics": ["chain_lightning"]
+      }
+    },
+    {
+      "id": 100102,
+      "instance_id": 1001,
+      "name": "Blade-Wind the Invoker",
+      "order": 2,
+      "creature_id": 50002,
+      "health_multiplier": 1.2,
+      "damage_multiplier": 1.1,
+      "is_optional": false,
+      "loot_table_id": 100102,
+      "mechanics": ["wind_wall", "blade_dance"],
+      "phases": [
+        {
+          "phase": 1,
+          "health_threshold": 100,
+          "abilities": [
+            {"ability_id": 60010, "name": "Blade Flurry", "cooldown": 12, "type": "frontal_cone"},
+            {"ability_id": 60011, "name": "Wind Slash", "cooldown": 6, "type": "targeted"}
+          ]
+        },
+        {
+          "phase": 2,
+          "health_threshold": 60,
+          "abilities": [
+            {"ability_id": 60012, "name": "Cyclone Barrier", "cooldown": 30, "type": "shield"},
+            {"ability_id": 60013, "name": "Whirlwind", "cooldown": 18, "type": "aoe"}
+          ]
+        }
+      ],
+      "veteran_modifiers": {
+        "health_multiplier": 1.5,
+        "damage_multiplier": 1.3,
+        "additional_mechanics": ["reflecting_blades"]
+      }
+    },
+    {
+      "id": 100103,
+      "instance_id": 1001,
+      "name": "Overseer Drift-Catcher",
+      "order": 3,
+      "creature_id": 50003,
+      "health_multiplier": 1.3,
+      "damage_multiplier": 1.15,
+      "is_optional": true,
+      "loot_table_id": 100103,
+      "mechanics": ["gravity_well", "floating_platforms"],
+      "phases": [
+        {
+          "phase": 1,
+          "health_threshold": 100,
+          "abilities": [
+            {"ability_id": 60020, "name": "Gravity Slam", "cooldown": 10, "type": "ground_aoe"},
+            {"ability_id": 60021, "name": "Tether", "cooldown": 20, "type": "debuff"}
+          ]
+        }
+      ],
+      "veteran_modifiers": {
+        "health_multiplier": 1.5,
+        "damage_multiplier": 1.3,
+        "additional_mechanics": ["anti_gravity_field"]
+      }
+    },
+    {
+      "id": 100104,
+      "instance_id": 1001,
+      "name": "Stormtalon",
+      "order": 4,
+      "creature_id": 50004,
+      "health_multiplier": 1.5,
+      "damage_multiplier": 1.2,
+      "is_optional": false,
+      "loot_table_id": 100104,
+      "mechanics": ["eye_of_storm", "static_discharge", "add_waves"],
+      "phases": [
+        {
+          "phase": 1,
+          "health_threshold": 100,
+          "abilities": [
+            {"ability_id": 60030, "name": "Thunder Claw", "cooldown": 8, "type": "tank_buster"},
+            {"ability_id": 60031, "name": "Static Shock", "cooldown": 15, "type": "random_target"}
+          ]
+        },
+        {
+          "phase": 2,
+          "health_threshold": 70,
+          "abilities": [
+            {"ability_id": 60032, "name": "Lightning Storm", "cooldown": 25, "type": "raid_wide"},
+            {"ability_id": 60033, "name": "Summon Sparks", "cooldown": 30, "type": "spawn"}
+          ]
+        },
+        {
+          "phase": 3,
+          "health_threshold": 30,
+          "abilities": [
+            {"ability_id": 60034, "name": "Eye of the Storm", "cooldown": 45, "type": "phase_mechanic"},
+            {"ability_id": 60035, "name": "Thunderclap", "cooldown": 10, "type": "aoe"}
+          ]
+        }
+      ],
+      "veteran_modifiers": {
+        "health_multiplier": 1.6,
+        "damage_multiplier": 1.4,
+        "additional_mechanics": ["electrical_overload", "empowered_sparks"]
+      }
+    },
+    {
+      "id": 100201,
+      "instance_id": 1002,
+      "name": "Grond the Corpsemaker",
+      "order": 1,
+      "creature_id": 50101,
+      "health_multiplier": 1.0,
+      "damage_multiplier": 1.0,
+      "is_optional": false,
+      "loot_table_id": 100201,
+      "mechanics": ["bone_totems", "corpse_explosion"],
+      "phases": [
+        {
+          "phase": 1,
+          "health_threshold": 100,
+          "abilities": [
+            {"ability_id": 60101, "name": "Cleave", "cooldown": 6, "type": "frontal_cone"},
+            {"ability_id": 60102, "name": "Summon Skeleton", "cooldown": 20, "type": "spawn"}
+          ]
+        },
+        {
+          "phase": 2,
+          "health_threshold": 50,
+          "abilities": [
+            {"ability_id": 60103, "name": "Corpse Explosion", "cooldown": 15, "type": "ground_aoe"},
+            {"ability_id": 60104, "name": "Bone Storm", "cooldown": 30, "type": "raid_wide"}
+          ]
+        }
+      ],
+      "veteran_modifiers": {
+        "health_multiplier": 1.5,
+        "damage_multiplier": 1.3,
+        "additional_mechanics": ["bone_shield"]
+      }
+    },
+    {
+      "id": 100202,
+      "instance_id": 1002,
+      "name": "Slavemaster Drokk",
+      "order": 2,
+      "creature_id": 50102,
+      "health_multiplier": 1.1,
+      "damage_multiplier": 1.05,
+      "is_optional": false,
+      "loot_table_id": 100202,
+      "mechanics": ["prisoner_torture", "chain_pull"],
+      "phases": [
+        {
+          "phase": 1,
+          "health_threshold": 100,
+          "abilities": [
+            {"ability_id": 60110, "name": "Lash", "cooldown": 5, "type": "targeted"},
+            {"ability_id": 60111, "name": "Chain Pull", "cooldown": 12, "type": "pull"}
+          ]
+        },
+        {
+          "phase": 2,
+          "health_threshold": 40,
+          "abilities": [
+            {"ability_id": 60112, "name": "Enrage", "cooldown": 0, "type": "buff"},
+            {"ability_id": 60113, "name": "Whip Frenzy", "cooldown": 8, "type": "multi_target"}
+          ]
+        }
+      ],
+      "veteran_modifiers": {
+        "health_multiplier": 1.5,
+        "damage_multiplier": 1.3,
+        "additional_mechanics": ["shackle"]
+      }
+    },
+    {
+      "id": 100203,
+      "instance_id": 1002,
+      "name": "Forgemaster Trogun",
+      "order": 3,
+      "creature_id": 50103,
+      "health_multiplier": 1.2,
+      "damage_multiplier": 1.1,
+      "is_optional": false,
+      "loot_table_id": 100203,
+      "mechanics": ["lava_pools", "forge_weapons"],
+      "phases": [
+        {
+          "phase": 1,
+          "health_threshold": 100,
+          "abilities": [
+            {"ability_id": 60120, "name": "Hammer Slam", "cooldown": 10, "type": "tank_buster"},
+            {"ability_id": 60121, "name": "Molten Spray", "cooldown": 15, "type": "frontal_cone"}
+          ]
+        },
+        {
+          "phase": 2,
+          "health_threshold": 60,
+          "abilities": [
+            {"ability_id": 60122, "name": "Summon Construct", "cooldown": 25, "type": "spawn"},
+            {"ability_id": 60123, "name": "Superheated", "cooldown": 30, "type": "enrage"}
+          ]
+        }
+      ],
+      "veteran_modifiers": {
+        "health_multiplier": 1.5,
+        "damage_multiplier": 1.3,
+        "additional_mechanics": ["empowered_constructs"]
+      }
+    },
+    {
+      "id": 100204,
+      "instance_id": 1002,
+      "name": "Skulltaker Mordechai",
+      "order": 4,
+      "creature_id": 50104,
+      "health_multiplier": 1.4,
+      "damage_multiplier": 1.2,
+      "is_optional": false,
+      "loot_table_id": 100204,
+      "mechanics": ["skull_collection", "death_mark"],
+      "phases": [
+        {
+          "phase": 1,
+          "health_threshold": 100,
+          "abilities": [
+            {"ability_id": 60130, "name": "Decapitate", "cooldown": 12, "type": "tank_buster"},
+            {"ability_id": 60131, "name": "Death Mark", "cooldown": 20, "type": "debuff"}
+          ]
+        },
+        {
+          "phase": 2,
+          "health_threshold": 50,
+          "abilities": [
+            {"ability_id": 60132, "name": "Skull Barrage", "cooldown": 18, "type": "multi_target"},
+            {"ability_id": 60133, "name": "Soul Harvest", "cooldown": 35, "type": "raid_wide"}
+          ]
+        },
+        {
+          "phase": 3,
+          "health_threshold": 20,
+          "abilities": [
+            {"ability_id": 60134, "name": "Final Execution", "cooldown": 25, "type": "enrage"},
+            {"ability_id": 60135, "name": "Army of Skulls", "cooldown": 40, "type": "spawn"}
+          ]
+        }
+      ],
+      "veteran_modifiers": {
+        "health_multiplier": 1.6,
+        "damage_multiplier": 1.4,
+        "additional_mechanics": ["cursed_skulls", "soul_link"]
+      }
+    },
+    {
+      "id": 100301,
+      "instance_id": 1003,
+      "name": "Stew-Shaman Tugga",
+      "order": 1,
+      "creature_id": 50201,
+      "health_multiplier": 1.0,
+      "damage_multiplier": 1.0,
+      "is_optional": false,
+      "loot_table_id": 100301,
+      "mechanics": ["cauldron", "ingredient_toss"],
+      "phases": [
+        {
+          "phase": 1,
+          "health_threshold": 100,
+          "abilities": [
+            {"ability_id": 60201, "name": "Boiling Splash", "cooldown": 8, "type": "ground_aoe"},
+            {"ability_id": 60202, "name": "Throw Ingredient", "cooldown": 12, "type": "targeted"}
+          ]
+        },
+        {
+          "phase": 2,
+          "health_threshold": 50,
+          "abilities": [
+            {"ability_id": 60203, "name": "Toxic Stew", "cooldown": 20, "type": "raid_wide"},
+            {"ability_id": 60204, "name": "Call Helpers", "cooldown": 30, "type": "spawn"}
+          ]
+        }
+      ],
+      "veteran_modifiers": {
+        "health_multiplier": 1.5,
+        "damage_multiplier": 1.3,
+        "additional_mechanics": ["explosive_cauldron"]
+      }
+    },
+    {
+      "id": 100302,
+      "instance_id": 1003,
+      "name": "Thunderfoot",
+      "order": 2,
+      "creature_id": 50202,
+      "health_multiplier": 1.2,
+      "damage_multiplier": 1.1,
+      "is_optional": false,
+      "loot_table_id": 100302,
+      "mechanics": ["ground_pound", "charge"],
+      "phases": [
+        {
+          "phase": 1,
+          "health_threshold": 100,
+          "abilities": [
+            {"ability_id": 60210, "name": "Stomp", "cooldown": 10, "type": "aoe"},
+            {"ability_id": 60211, "name": "Charge", "cooldown": 15, "type": "dash"}
+          ]
+        },
+        {
+          "phase": 2,
+          "health_threshold": 40,
+          "abilities": [
+            {"ability_id": 60212, "name": "Earthquake", "cooldown": 25, "type": "raid_wide"},
+            {"ability_id": 60213, "name": "Rampage", "cooldown": 0, "type": "enrage"}
+          ]
+        }
+      ],
+      "veteran_modifiers": {
+        "health_multiplier": 1.5,
+        "damage_multiplier": 1.3,
+        "additional_mechanics": ["aftershock"]
+      }
+    },
+    {
+      "id": 100303,
+      "instance_id": 1003,
+      "name": "Laveka the Firesinger",
+      "order": 3,
+      "creature_id": 50203,
+      "health_multiplier": 1.4,
+      "damage_multiplier": 1.2,
+      "is_optional": false,
+      "loot_table_id": 100303,
+      "mechanics": ["fire_totems", "lava_eruption", "volcanic_prison"],
+      "phases": [
+        {
+          "phase": 1,
+          "health_threshold": 100,
+          "abilities": [
+            {"ability_id": 60220, "name": "Fireball", "cooldown": 6, "type": "targeted"},
+            {"ability_id": 60221, "name": "Flame Totem", "cooldown": 20, "type": "spawn"}
+          ]
+        },
+        {
+          "phase": 2,
+          "health_threshold": 70,
+          "abilities": [
+            {"ability_id": 60222, "name": "Lava Eruption", "cooldown": 15, "type": "ground_aoe"},
+            {"ability_id": 60223, "name": "Fire Shield", "cooldown": 25, "type": "shield"}
+          ]
+        },
+        {
+          "phase": 3,
+          "health_threshold": 30,
+          "abilities": [
+            {"ability_id": 60224, "name": "Volcanic Prison", "cooldown": 30, "type": "cc"},
+            {"ability_id": 60225, "name": "Inferno", "cooldown": 40, "type": "raid_wide"}
+          ]
+        }
+      ],
+      "veteran_modifiers": {
+        "health_multiplier": 1.6,
+        "damage_multiplier": 1.4,
+        "additional_mechanics": ["empowered_totems", "spreading_flames"]
+      }
+    },
+    {
+      "id": 100401,
+      "instance_id": 1004,
+      "name": "Rayna Darkspeaker",
+      "order": 1,
+      "creature_id": 50301,
+      "health_multiplier": 1.2,
+      "damage_multiplier": 1.1,
+      "is_optional": false,
+      "loot_table_id": 100401,
+      "mechanics": ["shadow_clones", "darkness"],
+      "phases": [
+        {
+          "phase": 1,
+          "health_threshold": 100,
+          "abilities": [
+            {"ability_id": 60301, "name": "Shadow Bolt", "cooldown": 5, "type": "targeted"},
+            {"ability_id": 60302, "name": "Dark Nova", "cooldown": 15, "type": "aoe"}
+          ]
+        },
+        {
+          "phase": 2,
+          "health_threshold": 50,
+          "abilities": [
+            {"ability_id": 60303, "name": "Shadow Clone", "cooldown": 25, "type": "spawn"},
+            {"ability_id": 60304, "name": "Enveloping Darkness", "cooldown": 30, "type": "raid_wide"}
+          ]
+        }
+      ],
+      "veteran_modifiers": {
+        "health_multiplier": 1.5,
+        "damage_multiplier": 1.3,
+        "additional_mechanics": ["shadow_link"]
+      }
+    },
+    {
+      "id": 100402,
+      "instance_id": 1004,
+      "name": "Ondu Lifeweaver",
+      "order": 2,
+      "creature_id": 50302,
+      "health_multiplier": 1.3,
+      "damage_multiplier": 1.0,
+      "is_optional": false,
+      "loot_table_id": 100402,
+      "mechanics": ["healing_adds", "life_drain"],
+      "phases": [
+        {
+          "phase": 1,
+          "health_threshold": 100,
+          "abilities": [
+            {"ability_id": 60310, "name": "Life Drain", "cooldown": 10, "type": "channel"},
+            {"ability_id": 60311, "name": "Summon Guardian", "cooldown": 25, "type": "spawn"}
+          ]
+        },
+        {
+          "phase": 2,
+          "health_threshold": 40,
+          "abilities": [
+            {"ability_id": 60312, "name": "Mass Regeneration", "cooldown": 35, "type": "heal"},
+            {"ability_id": 60313, "name": "Nature's Wrath", "cooldown": 20, "type": "aoe"}
+          ]
+        }
+      ],
+      "veteran_modifiers": {
+        "health_multiplier": 1.5,
+        "damage_multiplier": 1.2,
+        "additional_mechanics": ["empowered_guardians"]
+      }
+    },
+    {
+      "id": 100403,
+      "instance_id": 1004,
+      "name": "Moldwood Overlord",
+      "order": 3,
+      "creature_id": 50303,
+      "health_multiplier": 1.3,
+      "damage_multiplier": 1.15,
+      "is_optional": true,
+      "loot_table_id": 100403,
+      "mechanics": ["spore_clouds", "root_snare"],
+      "phases": [
+        {
+          "phase": 1,
+          "health_threshold": 100,
+          "abilities": [
+            {"ability_id": 60320, "name": "Spore Cloud", "cooldown": 12, "type": "ground_aoe"},
+            {"ability_id": 60321, "name": "Root Grasp", "cooldown": 18, "type": "cc"}
+          ]
+        }
+      ],
+      "veteran_modifiers": {
+        "health_multiplier": 1.5,
+        "damage_multiplier": 1.3,
+        "additional_mechanics": ["toxic_spores"]
+      }
+    },
+    {
+      "id": 100404,
+      "instance_id": 1004,
+      "name": "Spiritmother Selene",
+      "order": 4,
+      "creature_id": 50304,
+      "health_multiplier": 1.4,
+      "damage_multiplier": 1.15,
+      "is_optional": false,
+      "loot_table_id": 100404,
+      "mechanics": ["spirit_transition", "ethereal_chains"],
+      "phases": [
+        {
+          "phase": 1,
+          "health_threshold": 100,
+          "abilities": [
+            {"ability_id": 60330, "name": "Spirit Lance", "cooldown": 8, "type": "targeted"},
+            {"ability_id": 60331, "name": "Ethereal Chains", "cooldown": 20, "type": "cc"}
+          ]
+        },
+        {
+          "phase": 2,
+          "health_threshold": 60,
+          "abilities": [
+            {"ability_id": 60332, "name": "Phase Shift", "cooldown": 30, "type": "phase_mechanic"},
+            {"ability_id": 60333, "name": "Spirit Storm", "cooldown": 25, "type": "raid_wide"}
+          ]
+        }
+      ],
+      "veteran_modifiers": {
+        "health_multiplier": 1.5,
+        "damage_multiplier": 1.3,
+        "additional_mechanics": ["spirit_possession"]
+      }
+    },
+    {
+      "id": 100405,
+      "instance_id": 1004,
+      "name": "Skullcano",
+      "order": 5,
+      "creature_id": 50305,
+      "health_multiplier": 1.6,
+      "damage_multiplier": 1.25,
+      "is_optional": false,
+      "loot_table_id": 100405,
+      "mechanics": ["sword_phases", "blessing_mechanic", "final_stand"],
+      "phases": [
+        {
+          "phase": 1,
+          "health_threshold": 100,
+          "abilities": [
+            {"ability_id": 60340, "name": "Blade Dance", "cooldown": 10, "type": "frontal_cone"},
+            {"ability_id": 60341, "name": "Whirlwind Strike", "cooldown": 18, "type": "aoe"}
+          ]
+        },
+        {
+          "phase": 2,
+          "health_threshold": 70,
+          "abilities": [
+            {"ability_id": 60342, "name": "Summon Swords", "cooldown": 30, "type": "spawn"},
+            {"ability_id": 60343, "name": "Blessing of Steel", "cooldown": 40, "type": "buff"}
+          ]
+        },
+        {
+          "phase": 3,
+          "health_threshold": 40,
+          "abilities": [
+            {"ability_id": 60344, "name": "Maiden's Fury", "cooldown": 20, "type": "multi_target"},
+            {"ability_id": 60345, "name": "Holy Ground", "cooldown": 35, "type": "ground_aoe"}
+          ]
+        },
+        {
+          "phase": 4,
+          "health_threshold": 15,
+          "abilities": [
+            {"ability_id": 60346, "name": "Final Judgment", "cooldown": 45, "type": "enrage"},
+            {"ability_id": 60347, "name": "Divine Wrath", "cooldown": 15, "type": "raid_wide"}
+          ]
+        }
+      ],
+      "veteran_modifiers": {
+        "health_multiplier": 1.7,
+        "damage_multiplier": 1.5,
+        "additional_mechanics": ["empowered_swords", "divine_intervention"]
+      }
+    },
+    {
+      "id": 300101,
+      "instance_id": 3001,
+      "name": "Experiment X-89",
+      "order": 1,
+      "creature_id": 60001,
+      "health_multiplier": 2.0,
+      "damage_multiplier": 1.5,
+      "is_optional": false,
+      "loot_table_id": 300101,
+      "mechanics": ["corruption_spread", "big_bomb", "small_bombs"],
+      "phases": [
+        {
+          "phase": 1,
+          "health_threshold": 100,
+          "abilities": [
+            {"ability_id": 70001, "name": "Corruption", "cooldown": 8, "type": "debuff"},
+            {"ability_id": 70002, "name": "Repugnant Spew", "cooldown": 15, "type": "frontal_cone"}
+          ]
+        },
+        {
+          "phase": 2,
+          "health_threshold": 75,
+          "abilities": [
+            {"ability_id": 70003, "name": "Small Bombs", "cooldown": 20, "type": "multi_target"},
+            {"ability_id": 70004, "name": "Shattering Shockwave", "cooldown": 25, "type": "raid_wide"}
+          ]
+        },
+        {
+          "phase": 3,
+          "health_threshold": 50,
+          "abilities": [
+            {"ability_id": 70005, "name": "Big Bomb", "cooldown": 45, "type": "phase_mechanic"},
+            {"ability_id": 70006, "name": "Resurgence", "cooldown": 60, "type": "heal"}
+          ]
+        },
+        {
+          "phase": 4,
+          "health_threshold": 25,
+          "abilities": [
+            {"ability_id": 70007, "name": "Strain Overload", "cooldown": 30, "type": "enrage"},
+            {"ability_id": 70008, "name": "Final Mutation", "cooldown": 0, "type": "transform"}
+          ]
+        }
+      ],
+      "veteran_modifiers": null
+    },
+    {
+      "id": 300102,
+      "instance_id": 3001,
+      "name": "Kuralak the Defiler",
+      "order": 2,
+      "creature_id": 60002,
+      "health_multiplier": 2.2,
+      "damage_multiplier": 1.6,
+      "is_optional": false,
+      "loot_table_id": 300102,
+      "mechanics": ["egg_spawns", "dna_mutation", "siphon"],
+      "phases": [
+        {
+          "phase": 1,
+          "health_threshold": 100,
+          "abilities": [
+            {"ability_id": 70010, "name": "Siphon", "cooldown": 12, "type": "channel"},
+            {"ability_id": 70011, "name": "Chromosome Corruption", "cooldown": 18, "type": "debuff"}
+          ]
+        },
+        {
+          "phase": 2,
+          "health_threshold": 80,
+          "abilities": [
+            {"ability_id": 70012, "name": "Spawn Eggs", "cooldown": 25, "type": "spawn"},
+            {"ability_id": 70013, "name": "DNA Siphon", "cooldown": 30, "type": "phase_mechanic"}
+          ]
+        },
+        {
+          "phase": 3,
+          "health_threshold": 50,
+          "abilities": [
+            {"ability_id": 70014, "name": "Genetic Torrent", "cooldown": 35, "type": "raid_wide"},
+            {"ability_id": 70015, "name": "Vanish", "cooldown": 60, "type": "phase_mechanic"}
+          ]
+        },
+        {
+          "phase": 4,
+          "health_threshold": 20,
+          "abilities": [
+            {"ability_id": 70016, "name": "Final Form", "cooldown": 0, "type": "enrage"}
+          ]
+        }
+      ],
+      "veteran_modifiers": null
+    },
+    {
+      "id": 300103,
+      "instance_id": 3001,
+      "name": "Phagetech Prototypes",
+      "order": 3,
+      "creature_id": 60003,
+      "health_multiplier": 1.8,
+      "damage_multiplier": 1.4,
+      "is_optional": false,
+      "loot_table_id": 300103,
+      "mechanics": ["add_management", "shared_health", "enrage_timer"],
+      "phases": [
+        {
+          "phase": 1,
+          "health_threshold": 100,
+          "abilities": [
+            {"ability_id": 70020, "name": "Prototype Alpha Strike", "cooldown": 10, "type": "tank_buster"},
+            {"ability_id": 70021, "name": "Prototype Beta Beam", "cooldown": 15, "type": "line_aoe"}
+          ]
+        },
+        {
+          "phase": 2,
+          "health_threshold": 60,
+          "abilities": [
+            {"ability_id": 70022, "name": "Synchronize", "cooldown": 40, "type": "buff"},
+            {"ability_id": 70023, "name": "Combined Assault", "cooldown": 30, "type": "raid_wide"}
+          ]
+        }
+      ],
+      "veteran_modifiers": null
+    },
+    {
+      "id": 300104,
+      "instance_id": 3001,
+      "name": "Genetic Monstrosity",
+      "order": 4,
+      "creature_id": 60004,
+      "health_multiplier": 2.5,
+      "damage_multiplier": 1.7,
+      "is_optional": false,
+      "loot_table_id": 300104,
+      "mechanics": ["mutation_stacks", "add_waves", "tank_swap"],
+      "phases": [
+        {
+          "phase": 1,
+          "health_threshold": 100,
+          "abilities": [
+            {"ability_id": 70030, "name": "Genetic Mutation", "cooldown": 15, "type": "debuff"},
+            {"ability_id": 70031, "name": "Monstrous Cleave", "cooldown": 8, "type": "frontal_cone"}
+          ]
+        },
+        {
+          "phase": 2,
+          "health_threshold": 70,
+          "abilities": [
+            {"ability_id": 70032, "name": "Summon Aberrations", "cooldown": 35, "type": "spawn"},
+            {"ability_id": 70033, "name": "Unstable Mutation", "cooldown": 25, "type": "raid_wide"}
+          ]
+        },
+        {
+          "phase": 3,
+          "health_threshold": 40,
+          "abilities": [
+            {"ability_id": 70034, "name": "Devolution", "cooldown": 45, "type": "phase_mechanic"},
+            {"ability_id": 70035, "name": "Primal Rage", "cooldown": 20, "type": "enrage"}
+          ]
+        }
+      ],
+      "veteran_modifiers": null
+    },
+    {
+      "id": 300105,
+      "instance_id": 3001,
+      "name": "Phageborn Convergence",
+      "order": 5,
+      "creature_id": 60005,
+      "health_multiplier": 2.0,
+      "damage_multiplier": 1.5,
+      "is_optional": false,
+      "loot_table_id": 300105,
+      "mechanics": ["council_fight", "interrupt_rotation", "convergence"],
+      "phases": [
+        {
+          "phase": 1,
+          "health_threshold": 100,
+          "abilities": [
+            {"ability_id": 70040, "name": "Noxious Strike", "cooldown": 10, "type": "targeted"},
+            {"ability_id": 70041, "name": "Rupture", "cooldown": 18, "type": "ground_aoe"}
+          ]
+        },
+        {
+          "phase": 2,
+          "health_threshold": 50,
+          "abilities": [
+            {"ability_id": 70042, "name": "Convergence", "cooldown": 60, "type": "phase_mechanic"},
+            {"ability_id": 70043, "name": "Unified Assault", "cooldown": 30, "type": "raid_wide"}
+          ]
+        }
+      ],
+      "veteran_modifiers": null
+    },
+    {
+      "id": 300106,
+      "instance_id": 3001,
+      "name": "Dreadphage Ohmna",
+      "order": 6,
+      "creature_id": 60006,
+      "health_multiplier": 3.0,
+      "damage_multiplier": 2.0,
+      "is_optional": false,
+      "loot_table_id": 300106,
+      "mechanics": ["tentacle_phases", "moo_mechanic", "pillar_destruction", "enrage_timer"],
+      "phases": [
+        {
+          "phase": 1,
+          "health_threshold": 100,
+          "abilities": [
+            {"ability_id": 70050, "name": "Tentacle Slam", "cooldown": 12, "type": "tank_buster"},
+            {"ability_id": 70051, "name": "Genetic Torrent", "cooldown": 20, "type": "raid_wide"}
+          ]
+        },
+        {
+          "phase": 2,
+          "health_threshold": 75,
+          "abilities": [
+            {"ability_id": 70052, "name": "Summon Tentacles", "cooldown": 40, "type": "spawn"},
+            {"ability_id": 70053, "name": "Devour", "cooldown": 30, "type": "phase_mechanic"}
+          ]
+        },
+        {
+          "phase": 3,
+          "health_threshold": 50,
+          "abilities": [
+            {"ability_id": 70054, "name": "Pillar Destruction", "cooldown": 60, "type": "phase_mechanic"},
+            {"ability_id": 70055, "name": "Dread Wave", "cooldown": 25, "type": "raid_wide"}
+          ]
+        },
+        {
+          "phase": 4,
+          "health_threshold": 25,
+          "abilities": [
+            {"ability_id": 70056, "name": "Final Stand", "cooldown": 0, "type": "enrage"},
+            {"ability_id": 70057, "name": "Apocalypse", "cooldown": 45, "type": "raid_wide"}
+          ]
+        }
+      ],
+      "veteran_modifiers": null
+    },
+    {
+      "id": 300201,
+      "instance_id": 3002,
+      "name": "System Daemons",
+      "order": 1,
+      "creature_id": 60101,
+      "health_multiplier": 2.5,
+      "damage_multiplier": 1.8,
+      "is_optional": false,
+      "loot_table_id": 300201,
+      "mechanics": ["binary_system", "interrupt_chains", "probe_spawns"],
+      "phases": [
+        {
+          "phase": 1,
+          "health_threshold": 100,
+          "abilities": [
+            {"ability_id": 70101, "name": "Binary Strike", "cooldown": 8, "type": "tank_buster"},
+            {"ability_id": 70102, "name": "Data Corruption", "cooldown": 15, "type": "debuff"}
+          ]
+        },
+        {
+          "phase": 2,
+          "health_threshold": 65,
+          "abilities": [
+            {"ability_id": 70103, "name": "Spawn Probes", "cooldown": 30, "type": "spawn"},
+            {"ability_id": 70104, "name": "System Purge", "cooldown": 40, "type": "raid_wide"}
+          ]
+        },
+        {
+          "phase": 3,
+          "health_threshold": 30,
+          "abilities": [
+            {"ability_id": 70105, "name": "Kernel Panic", "cooldown": 25, "type": "phase_mechanic"},
+            {"ability_id": 70106, "name": "Reboot", "cooldown": 60, "type": "heal"}
+          ]
+        }
+      ],
+      "veteran_modifiers": null
+    },
+    {
+      "id": 300202,
+      "instance_id": 3002,
+      "name": "Gloomclaw",
+      "order": 2,
+      "creature_id": 60102,
+      "health_multiplier": 2.8,
+      "damage_multiplier": 1.9,
+      "is_optional": false,
+      "loot_table_id": 300202,
+      "mechanics": ["corruption_zones", "add_spawns", "platform_management"],
+      "phases": [
+        {
+          "phase": 1,
+          "health_threshold": 100,
+          "abilities": [
+            {"ability_id": 70110, "name": "Shadow Claw", "cooldown": 10, "type": "tank_buster"},
+            {"ability_id": 70111, "name": "Corruption Zone", "cooldown": 20, "type": "ground_aoe"}
+          ]
+        },
+        {
+          "phase": 2,
+          "health_threshold": 70,
+          "abilities": [
+            {"ability_id": 70112, "name": "Summon Shades", "cooldown": 35, "type": "spawn"},
+            {"ability_id": 70113, "name": "Enveloping Gloom", "cooldown": 30, "type": "raid_wide"}
+          ]
+        },
+        {
+          "phase": 3,
+          "health_threshold": 40,
+          "abilities": [
+            {"ability_id": 70114, "name": "Corrupted Ground", "cooldown": 25, "type": "phase_mechanic"},
+            {"ability_id": 70115, "name": "Final Darkness", "cooldown": 50, "type": "enrage"}
+          ]
+        }
+      ],
+      "veteran_modifiers": null
+    },
+    {
+      "id": 300203,
+      "instance_id": 3002,
+      "name": "Maelstrom Authority",
+      "order": 3,
+      "creature_id": 60103,
+      "health_multiplier": 2.6,
+      "damage_multiplier": 1.85,
+      "is_optional": false,
+      "loot_table_id": 300203,
+      "mechanics": ["wind_walls", "tornado_dodging", "platform_jumps"],
+      "phases": [
+        {
+          "phase": 1,
+          "health_threshold": 100,
+          "abilities": [
+            {"ability_id": 70120, "name": "Wind Blast", "cooldown": 8, "type": "frontal_cone"},
+            {"ability_id": 70121, "name": "Summon Tornado", "cooldown": 18, "type": "spawn"}
+          ]
+        },
+        {
+          "phase": 2,
+          "health_threshold": 60,
+          "abilities": [
+            {"ability_id": 70122, "name": "Wind Wall", "cooldown": 25, "type": "phase_mechanic"},
+            {"ability_id": 70123, "name": "Cyclonic Fury", "cooldown": 35, "type": "raid_wide"}
+          ]
+        },
+        {
+          "phase": 3,
+          "health_threshold": 30,
+          "abilities": [
+            {"ability_id": 70124, "name": "Eye of Storm", "cooldown": 45, "type": "phase_mechanic"},
+            {"ability_id": 70125, "name": "Hurricane", "cooldown": 30, "type": "raid_wide"}
+          ]
+        }
+      ],
+      "veteran_modifiers": null
+    },
+    {
+      "id": 300204,
+      "instance_id": 3002,
+      "name": "Elemental Pairs",
+      "order": 4,
+      "creature_id": 60104,
+      "health_multiplier": 2.4,
+      "damage_multiplier": 1.75,
+      "is_optional": false,
+      "loot_table_id": 300204,
+      "mechanics": ["element_matching", "pair_splitting", "combination_attacks"],
+      "phases": [
+        {
+          "phase": 1,
+          "health_threshold": 100,
+          "abilities": [
+            {"ability_id": 70130, "name": "Fire Strike", "cooldown": 10, "type": "targeted"},
+            {"ability_id": 70131, "name": "Ice Shard", "cooldown": 10, "type": "targeted"}
+          ]
+        },
+        {
+          "phase": 2,
+          "health_threshold": 50,
+          "abilities": [
+            {"ability_id": 70132, "name": "Elemental Fusion", "cooldown": 40, "type": "phase_mechanic"},
+            {"ability_id": 70133, "name": "Combined Blast", "cooldown": 25, "type": "raid_wide"}
+          ]
+        }
+      ],
+      "veteran_modifiers": null
+    },
+    {
+      "id": 300205,
+      "instance_id": 3002,
+      "name": "Limbo Infomatrix",
+      "order": 5,
+      "creature_id": 60105,
+      "health_multiplier": 2.7,
+      "damage_multiplier": 1.8,
+      "is_optional": false,
+      "loot_table_id": 300205,
+      "mechanics": ["data_streams", "firewall_mechanic", "system_override"],
+      "phases": [
+        {
+          "phase": 1,
+          "health_threshold": 100,
+          "abilities": [
+            {"ability_id": 70140, "name": "Data Stream", "cooldown": 12, "type": "line_aoe"},
+            {"ability_id": 70141, "name": "System Error", "cooldown": 20, "type": "debuff"}
+          ]
+        },
+        {
+          "phase": 2,
+          "health_threshold": 65,
+          "abilities": [
+            {"ability_id": 70142, "name": "Firewall", "cooldown": 35, "type": "phase_mechanic"},
+            {"ability_id": 70143, "name": "Buffer Overflow", "cooldown": 30, "type": "raid_wide"}
+          ]
+        },
+        {
+          "phase": 3,
+          "health_threshold": 30,
+          "abilities": [
+            {"ability_id": 70144, "name": "System Override", "cooldown": 45, "type": "enrage"},
+            {"ability_id": 70145, "name": "Total Wipe", "cooldown": 60, "type": "raid_wide"}
+          ]
+        }
+      ],
+      "veteran_modifiers": null
+    },
+    {
+      "id": 300206,
+      "instance_id": 3002,
+      "name": "Visceralus",
+      "order": 6,
+      "creature_id": 60106,
+      "health_multiplier": 2.5,
+      "damage_multiplier": 1.7,
+      "is_optional": false,
+      "loot_table_id": 300206,
+      "mechanics": ["life_force_mechanic", "flower_phases", "healing_check"],
+      "phases": [
+        {
+          "phase": 1,
+          "health_threshold": 100,
+          "abilities": [
+            {"ability_id": 70150, "name": "Life Drain", "cooldown": 10, "type": "channel"},
+            {"ability_id": 70151, "name": "Thorn Burst", "cooldown": 15, "type": "aoe"}
+          ]
+        },
+        {
+          "phase": 2,
+          "health_threshold": 70,
+          "abilities": [
+            {"ability_id": 70152, "name": "Bloom", "cooldown": 40, "type": "spawn"},
+            {"ability_id": 70153, "name": "Pollen Cloud", "cooldown": 25, "type": "ground_aoe"}
+          ]
+        },
+        {
+          "phase": 3,
+          "health_threshold": 35,
+          "abilities": [
+            {"ability_id": 70154, "name": "Overgrowth", "cooldown": 50, "type": "phase_mechanic"},
+            {"ability_id": 70155, "name": "Nature's Wrath", "cooldown": 30, "type": "raid_wide"}
+          ]
+        }
+      ],
+      "veteran_modifiers": null
+    },
+    {
+      "id": 300207,
+      "instance_id": 3002,
+      "name": "Pyrobane",
+      "order": 7,
+      "creature_id": 60107,
+      "health_multiplier": 2.6,
+      "damage_multiplier": 1.85,
+      "is_optional": false,
+      "loot_table_id": 300207,
+      "mechanics": ["fire_phases", "lava_floor", "add_management"],
+      "phases": [
+        {
+          "phase": 1,
+          "health_threshold": 100,
+          "abilities": [
+            {"ability_id": 70160, "name": "Flame Strike", "cooldown": 8, "type": "targeted"},
+            {"ability_id": 70161, "name": "Meteor", "cooldown": 20, "type": "ground_aoe"}
+          ]
+        },
+        {
+          "phase": 2,
+          "health_threshold": 60,
+          "abilities": [
+            {"ability_id": 70162, "name": "Lava Flood", "cooldown": 35, "type": "phase_mechanic"},
+            {"ability_id": 70163, "name": "Fire Adds", "cooldown": 30, "type": "spawn"}
+          ]
+        },
+        {
+          "phase": 3,
+          "health_threshold": 25,
+          "abilities": [
+            {"ability_id": 70164, "name": "Infernal Rage", "cooldown": 45, "type": "enrage"},
+            {"ability_id": 70165, "name": "Apocalypse Flame", "cooldown": 40, "type": "raid_wide"}
+          ]
+        }
+      ],
+      "veteran_modifiers": null
+    },
+    {
+      "id": 300208,
+      "instance_id": 3002,
+      "name": "Aileron",
+      "order": 8,
+      "creature_id": 60108,
+      "health_multiplier": 2.5,
+      "damage_multiplier": 1.75,
+      "is_optional": false,
+      "loot_table_id": 300208,
+      "mechanics": ["air_platforms", "tornado_phase", "knockback_management"],
+      "phases": [
+        {
+          "phase": 1,
+          "health_threshold": 100,
+          "abilities": [
+            {"ability_id": 70170, "name": "Wind Slash", "cooldown": 8, "type": "frontal_cone"},
+            {"ability_id": 70171, "name": "Gust", "cooldown": 15, "type": "knockback"}
+          ]
+        },
+        {
+          "phase": 2,
+          "health_threshold": 65,
+          "abilities": [
+            {"ability_id": 70172, "name": "Tornado Phase", "cooldown": 40, "type": "phase_mechanic"},
+            {"ability_id": 70173, "name": "Air Platform", "cooldown": 35, "type": "spawn"}
+          ]
+        },
+        {
+          "phase": 3,
+          "health_threshold": 30,
+          "abilities": [
+            {"ability_id": 70174, "name": "Storm's Eye", "cooldown": 50, "type": "phase_mechanic"},
+            {"ability_id": 70175, "name": "Devastating Gale", "cooldown": 35, "type": "raid_wide"}
+          ]
+        }
+      ],
+      "veteran_modifiers": null
+    },
+    {
+      "id": 300209,
+      "instance_id": 3002,
+      "name": "Avatus",
+      "order": 9,
+      "creature_id": 60109,
+      "health_multiplier": 4.0,
+      "damage_multiplier": 2.5,
+      "is_optional": false,
+      "loot_table_id": 300209,
+      "mechanics": ["room_phases", "data_corruption", "hand_mechanics", "enrage_timer"],
+      "phases": [
+        {
+          "phase": 1,
+          "health_threshold": 100,
+          "abilities": [
+            {"ability_id": 70180, "name": "Data Blast", "cooldown": 10, "type": "tank_buster"},
+            {"ability_id": 70181, "name": "Corruption Wave", "cooldown": 18, "type": "raid_wide"}
+          ]
+        },
+        {
+          "phase": 2,
+          "health_threshold": 75,
+          "abilities": [
+            {"ability_id": 70182, "name": "Yellow Room", "cooldown": 60, "type": "phase_mechanic"},
+            {"ability_id": 70183, "name": "Summon Hands", "cooldown": 35, "type": "spawn"}
+          ]
+        },
+        {
+          "phase": 3,
+          "health_threshold": 50,
+          "abilities": [
+            {"ability_id": 70184, "name": "Blue Room", "cooldown": 60, "type": "phase_mechanic"},
+            {"ability_id": 70185, "name": "System Shock", "cooldown": 30, "type": "raid_wide"}
+          ]
+        },
+        {
+          "phase": 4,
+          "health_threshold": 25,
+          "abilities": [
+            {"ability_id": 70186, "name": "Red Room", "cooldown": 60, "type": "phase_mechanic"},
+            {"ability_id": 70187, "name": "Oblivion Protocol", "cooldown": 45, "type": "enrage"}
+          ]
+        },
+        {
+          "phase": 5,
+          "health_threshold": 10,
+          "abilities": [
+            {"ability_id": 70188, "name": "Final Deletion", "cooldown": 0, "type": "enrage"},
+            {"ability_id": 70189, "name": "Total System Failure", "cooldown": 30, "type": "raid_wide"}
+          ]
+        }
+      ],
+      "veteran_modifiers": null
+    },
+    {
+      "id": 400101,
+      "instance_id": 4001,
+      "name": "Kel'voreth Broodmaster",
+      "order": 1,
+      "creature_id": 70001,
+      "health_multiplier": 1.0,
+      "damage_multiplier": 1.0,
+      "is_optional": false,
+      "loot_table_id": 400101,
+      "mechanics": ["egg_spawns", "poison_pools"],
+      "phases": [
+        {
+          "phase": 1,
+          "health_threshold": 100,
+          "abilities": [
+            {"ability_id": 80001, "name": "Venomous Bite", "cooldown": 6, "type": "targeted"},
+            {"ability_id": 80002, "name": "Spawn Eggs", "cooldown": 20, "type": "spawn"}
+          ]
+        },
+        {
+          "phase": 2,
+          "health_threshold": 30,
+          "abilities": [
+            {"ability_id": 80003, "name": "Brood Frenzy", "cooldown": 0, "type": "enrage"},
+            {"ability_id": 80004, "name": "Poison Nova", "cooldown": 15, "type": "aoe"}
+          ]
+        }
+      ],
+      "veteran_modifiers": {
+        "health_multiplier": 1.5,
+        "damage_multiplier": 1.3,
+        "additional_mechanics": ["elite_eggs"]
+      }
+    },
+    {
+      "id": 400201,
+      "instance_id": 4002,
+      "name": "Datachron Prime",
+      "order": 1,
+      "creature_id": 70101,
+      "health_multiplier": 1.0,
+      "damage_multiplier": 1.0,
+      "is_optional": false,
+      "loot_table_id": 400201,
+      "mechanics": ["data_fragments", "system_purge"],
+      "phases": [
+        {
+          "phase": 1,
+          "health_threshold": 100,
+          "abilities": [
+            {"ability_id": 80101, "name": "Data Spike", "cooldown": 8, "type": "targeted"},
+            {"ability_id": 80102, "name": "Fragment Scatter", "cooldown": 15, "type": "multi_target"}
+          ]
+        },
+        {
+          "phase": 2,
+          "health_threshold": 40,
+          "abilities": [
+            {"ability_id": 80103, "name": "System Purge", "cooldown": 25, "type": "raid_wide"},
+            {"ability_id": 80104, "name": "Overload", "cooldown": 0, "type": "enrage"}
+          ]
+        }
+      ],
+      "veteran_modifiers": {
+        "health_multiplier": 1.6,
+        "damage_multiplier": 1.4,
+        "additional_mechanics": ["corrupt_data"]
+      }
+    }
+  ]
+}

@@ -26,6 +26,7 @@ defmodule BezgelorWorld.Handler.GatheringHandler do
     ServerNodeUpdate,
     ServerTradeskillUpdate
   }
+  alias BezgelorData.Store
   alias BezgelorWorld.Gathering.GatheringNode
   alias BezgelorWorld.TradeskillConfig
 
@@ -157,30 +158,49 @@ defmodule BezgelorWorld.Handler.GatheringHandler do
   end
 
   defp generate_loot(node_type_id) do
-    # TODO: Load from static data based on node type
-    # Placeholder loot generation
-    [
-      %{item_id: node_type_id * 100 + 1, quantity: Enum.random(1..3)},
-      %{item_id: node_type_id * 100 + 2, quantity: Enum.random(0..1)}
-    ]
-    |> Enum.filter(fn item -> item.quantity > 0 end)
+    case Store.get_node_type(node_type_id) do
+      {:ok, node_type} ->
+        node_type.loot_table
+        |> Enum.filter(fn loot_entry ->
+          :rand.uniform() <= loot_entry.chance
+        end)
+        |> Enum.map(fn loot_entry ->
+          quantity = Enum.random(loot_entry.min_quantity..loot_entry.max_quantity)
+          %{item_id: loot_entry.item_id, quantity: quantity}
+        end)
+        |> Enum.filter(fn item -> item.quantity > 0 end)
+
+      :error ->
+        # Fallback loot
+        [
+          %{item_id: node_type_id * 100 + 1, quantity: Enum.random(1..3)},
+          %{item_id: node_type_id * 100 + 2, quantity: Enum.random(0..1)}
+        ]
+        |> Enum.filter(fn item -> item.quantity > 0 end)
+    end
   end
 
-  defp calculate_gather_xp(_node_type_id) do
-    # TODO: Load from static data
-    # Base XP modified by node level/tier
-    150
+  defp calculate_gather_xp(node_type_id) do
+    case Store.get_node_type(node_type_id) do
+      {:ok, node_type} -> node_type.xp_reward
+      :error -> 150
+    end
   end
 
-  defp get_respawn_time(_node_type_id) do
-    # TODO: Load from static data
-    # Default 60 seconds
-    60
+  defp get_respawn_time(node_type_id) do
+    case Store.get_node_type(node_type_id) do
+      {:ok, node_type} -> node_type.respawn_seconds
+      :error -> 60
+    end
   end
 
   defp award_gathering_xp(character_id, node_type_id, xp, state) do
-    # TODO: Look up profession from node type
-    profession_id = 101  # Placeholder gathering profession
+    # Look up profession from node type
+    profession_id =
+      case Store.get_node_type(node_type_id) do
+        {:ok, node_type} -> node_type.profession_id
+        :error -> 101  # Fallback to Mining
+      end
 
     case Tradeskills.add_xp(character_id, profession_id, xp) do
       {:ok, tradeskill, levels_gained} when levels_gained > 0 ->
