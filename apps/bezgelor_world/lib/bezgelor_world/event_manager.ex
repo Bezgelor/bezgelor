@@ -182,6 +182,35 @@ defmodule BezgelorWorld.EventManager do
     GenServer.call(manager, {:get_objectives, instance_id})
   end
 
+  # World Boss Functions
+
+  @doc "Spawn a world boss."
+  @spec spawn_world_boss(pid() | tuple(), non_neg_integer(), map()) ::
+          {:ok, non_neg_integer()} | {:error, term()}
+  def spawn_world_boss(manager, boss_id, position) do
+    GenServer.call(manager, {:spawn_world_boss, boss_id, position})
+  end
+
+  @doc "Record damage to world boss."
+  @spec damage_world_boss(pid() | tuple(), non_neg_integer(), non_neg_integer(), non_neg_integer()) ::
+          {:ok, map()} | {:error, term()}
+  def damage_world_boss(manager, boss_id, character_id, damage) do
+    GenServer.call(manager, {:damage_world_boss, boss_id, character_id, damage})
+  end
+
+  @doc "Get world boss state."
+  @spec get_world_boss(pid() | tuple(), non_neg_integer()) ::
+          {:ok, world_boss_state()} | {:error, :not_found}
+  def get_world_boss(manager, boss_id) do
+    GenServer.call(manager, {:get_world_boss, boss_id})
+  end
+
+  @doc "List active world bosses in zone."
+  @spec list_world_bosses(pid() | tuple()) :: [map()]
+  def list_world_bosses(manager) do
+    GenServer.call(manager, :list_world_bosses)
+  end
+
   ## Server Callbacks
 
   @impl true
@@ -517,6 +546,106 @@ defmodule BezgelorWorld.EventManager do
     end
   end
 
+  # World Boss Handlers
+
+  @impl true
+  def handle_call({:spawn_world_boss, boss_id, position}, _from, state) do
+    case BezgelorData.get_world_boss(boss_id) do
+      {:ok, boss_def} ->
+        creature_id = System.unique_integer([:positive])
+
+        boss_state = %{
+          boss_id: boss_id,
+          boss_def: boss_def,
+          creature_id: creature_id,
+          phase: 1,
+          health_max: boss_def["health"] || 1_000_000,
+          health_current: boss_def["health"] || 1_000_000,
+          engaged_at: nil,
+          position: position,
+          participants: MapSet.new(),
+          contributions: %{}
+        }
+
+        world_bosses = Map.put(state.world_bosses, boss_id, boss_state)
+
+        # Update DB
+        PublicEvents.spawn_boss(boss_id)
+
+        Logger.info("Spawned world boss #{boss_id} (creature #{creature_id}) in zone #{state.zone_id}")
+        {:reply, {:ok, creature_id}, %{state | world_bosses: world_bosses}}
+
+      :error ->
+        {:reply, {:error, :boss_not_found}, state}
+    end
+  end
+
+  @impl true
+  def handle_call({:damage_world_boss, boss_id, character_id, damage}, _from, state) do
+    case Map.get(state.world_bosses, boss_id) do
+      nil ->
+        {:reply, {:error, :boss_not_found}, state}
+
+      boss_state ->
+        # Mark as engaged if first damage
+        boss_state =
+          if is_nil(boss_state.engaged_at) do
+            PublicEvents.engage_boss(boss_id)
+            %{boss_state | engaged_at: DateTime.utc_now()}
+          else
+            boss_state
+          end
+
+        # Add to participants
+        boss_state = %{boss_state | participants: MapSet.put(boss_state.participants, character_id)}
+
+        # Track contribution
+        current_contrib = Map.get(boss_state.contributions, character_id, 0)
+        contributions = Map.put(boss_state.contributions, character_id, current_contrib + damage)
+        boss_state = %{boss_state | contributions: contributions}
+
+        # Apply damage
+        new_health = max(0, boss_state.health_current - damage)
+        boss_state = %{boss_state | health_current: new_health}
+
+        # Check for phase transitions
+        boss_state = check_boss_phase_transition(boss_state)
+
+        # Check for death
+        if new_health <= 0 do
+          state = kill_world_boss(state, boss_id, boss_state)
+          {:reply, {:ok, %{health: 0, killed: true}}, state}
+        else
+          world_bosses = Map.put(state.world_bosses, boss_id, boss_state)
+          {:reply, {:ok, %{health: new_health, killed: false, phase: boss_state.phase}}, %{state | world_bosses: world_bosses}}
+        end
+    end
+  end
+
+  @impl true
+  def handle_call({:get_world_boss, boss_id}, _from, state) do
+    case Map.get(state.world_bosses, boss_id) do
+      nil -> {:reply, {:error, :not_found}, state}
+      boss_state -> {:reply, {:ok, boss_state}, state}
+    end
+  end
+
+  @impl true
+  def handle_call(:list_world_bosses, _from, state) do
+    bosses =
+      Enum.map(state.world_bosses, fn {boss_id, boss_state} ->
+        %{
+          boss_id: boss_id,
+          creature_id: boss_state.creature_id,
+          health_percent: div(boss_state.health_current * 100, boss_state.health_max),
+          phase: boss_state.phase,
+          participant_count: MapSet.size(boss_state.participants)
+        }
+      end)
+
+    {:reply, bosses, state}
+  end
+
   @impl true
   def handle_info({:event_time_limit, instance_id}, state) do
     case Map.get(state.events, instance_id) do
@@ -668,5 +797,73 @@ defmodule BezgelorWorld.EventManager do
 
     participant = %{participant | contribution: participant.contribution + amount}
     %{state | participants: Map.put(state.participants, character_id, participant)}
+  end
+
+  # World Boss Helpers
+
+  defp check_boss_phase_transition(boss_state) do
+    phases = boss_state.boss_def["phases"] || []
+    health_percent = div(boss_state.health_current * 100, boss_state.health_max)
+
+    # Find the appropriate phase based on health
+    new_phase =
+      phases
+      |> Enum.with_index(1)
+      |> Enum.find_value(boss_state.phase, fn {phase_def, phase_num} ->
+        threshold = phase_def["health_threshold"] || 0
+
+        if health_percent <= threshold and phase_num > boss_state.phase do
+          phase_num
+        else
+          nil
+        end
+      end)
+
+    if new_phase != boss_state.phase do
+      Logger.info("World boss #{boss_state.boss_id} transitioned to phase #{new_phase}")
+      %{boss_state | phase: new_phase}
+    else
+      boss_state
+    end
+  end
+
+  defp kill_world_boss(state, boss_id, boss_state) do
+    # Calculate kill time
+    kill_time_ms =
+      if boss_state.engaged_at do
+        DateTime.diff(DateTime.utc_now(), boss_state.engaged_at, :millisecond)
+      else
+        0
+      end
+
+    # Update DB
+    PublicEvents.kill_boss(boss_id, 24)
+
+    # Calculate top contributors (will be used for rewards in Task 21)
+    _top_contributors =
+      boss_state.contributions
+      |> Enum.sort_by(fn {_id, damage} -> damage end, :desc)
+      |> Enum.take(10)
+      |> Enum.map(fn {character_id, damage} ->
+        %{
+          character_id: character_id,
+          damage_dealt: damage,
+          contribution: calculate_boss_contribution_points(damage, boss_state.health_max)
+        }
+      end)
+
+    Logger.info(
+      "World boss #{boss_id} killed in #{kill_time_ms}ms by #{MapSet.size(boss_state.participants)} participants"
+    )
+
+    # TODO: Distribute rewards using _top_contributors (Task 21)
+
+    world_bosses = Map.delete(state.world_bosses, boss_id)
+    %{state | world_bosses: world_bosses}
+  end
+
+  defp calculate_boss_contribution_points(damage, max_health) do
+    # 1 point per 0.1% of boss health dealt
+    div(damage * 1000, max_health)
   end
 end
