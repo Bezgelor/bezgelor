@@ -405,4 +405,237 @@ defmodule BezgelorDb.PublicEvents do
         {:ok, participation}
     end
   end
+
+  # ============================================================================
+  # Completion History
+  # ============================================================================
+
+  @doc "Get completion history for a character and event."
+  def get_completion_history(character_id, event_id) do
+    Repo.get_by(EventCompletion, character_id: character_id, event_id: event_id)
+  end
+
+  @doc "Get all completions for a character."
+  def get_all_completions(character_id) do
+    EventCompletion
+    |> where([c], c.character_id == ^character_id)
+    |> order_by([c], desc: c.last_completed_at)
+    |> Repo.all()
+  end
+
+  @doc "Record a completion."
+  def record_completion(character_id, event_id, tier, contribution, duration_ms) do
+    now = DateTime.utc_now() |> DateTime.truncate(:second)
+
+    case get_completion_history(character_id, event_id) do
+      nil ->
+        tier_counts = tier_to_counts(tier)
+
+        %EventCompletion{}
+        |> EventCompletion.changeset(%{
+          character_id: character_id,
+          event_id: event_id,
+          gold_count: tier_counts.gold,
+          silver_count: tier_counts.silver,
+          bronze_count: tier_counts.bronze,
+          best_contribution: contribution,
+          fastest_completion_ms: duration_ms,
+          last_completed_at: now
+        })
+        |> Repo.insert()
+
+      existing ->
+        existing
+        |> EventCompletion.increment_changeset(tier, contribution, duration_ms, now)
+        |> Repo.update()
+    end
+  end
+
+  defp tier_to_counts(:gold), do: %{gold: 1, silver: 0, bronze: 0}
+  defp tier_to_counts(:silver), do: %{gold: 0, silver: 1, bronze: 0}
+  defp tier_to_counts(:bronze), do: %{gold: 0, silver: 0, bronze: 1}
+  defp tier_to_counts(_), do: %{gold: 0, silver: 0, bronze: 0}
+
+  # ============================================================================
+  # Scheduling
+  # ============================================================================
+
+  @doc "Get a schedule by ID."
+  def get_schedule(schedule_id) do
+    Repo.get(EventSchedule, schedule_id)
+  end
+
+  @doc "Get all schedules for a zone."
+  def get_zone_schedules(zone_id) do
+    EventSchedule
+    |> where([s], s.zone_id == ^zone_id and s.enabled == true)
+    |> Repo.all()
+  end
+
+  @doc "Get all enabled schedules that are due to trigger."
+  def get_due_schedules do
+    now = DateTime.utc_now() |> DateTime.truncate(:second)
+
+    EventSchedule
+    |> where([s], s.enabled == true)
+    |> where([s], is_nil(s.next_trigger_at) or s.next_trigger_at <= ^now)
+    |> Repo.all()
+  end
+
+  @doc "Create a new schedule."
+  def create_schedule(event_id, zone_id, trigger_type, config) do
+    %EventSchedule{}
+    |> EventSchedule.changeset(%{
+      event_id: event_id,
+      zone_id: zone_id,
+      trigger_type: trigger_type,
+      trigger_config: config
+    })
+    |> Repo.insert()
+  end
+
+  @doc "Set the next trigger time."
+  def set_next_trigger(schedule_id, next_trigger_at) do
+    case get_schedule(schedule_id) do
+      nil ->
+        {:error, :not_found}
+
+      schedule ->
+        schedule
+        |> EventSchedule.update_next_trigger_changeset(next_trigger_at)
+        |> Repo.update()
+    end
+  end
+
+  @doc "Mark a schedule as triggered."
+  def mark_triggered(schedule_id, next_trigger_at) do
+    now = DateTime.utc_now() |> DateTime.truncate(:second)
+
+    case get_schedule(schedule_id) do
+      nil ->
+        {:error, :not_found}
+
+      schedule ->
+        schedule
+        |> EventSchedule.trigger_changeset(now, next_trigger_at)
+        |> Repo.update()
+    end
+  end
+
+  @doc "Enable a schedule."
+  def enable_schedule(schedule_id) do
+    case get_schedule(schedule_id) do
+      nil -> {:error, :not_found}
+      schedule ->
+        schedule
+        |> EventSchedule.enable_changeset()
+        |> Repo.update()
+    end
+  end
+
+  @doc "Disable a schedule."
+  def disable_schedule(schedule_id) do
+    case get_schedule(schedule_id) do
+      nil -> {:error, :not_found}
+      schedule ->
+        schedule
+        |> EventSchedule.disable_changeset()
+        |> Repo.update()
+    end
+  end
+
+  # ============================================================================
+  # World Boss Spawns
+  # ============================================================================
+
+  @doc "Get world boss spawn record."
+  def get_boss_spawn(boss_id) do
+    Repo.get_by(WorldBossSpawn, boss_id: boss_id)
+  end
+
+  @doc "Get all spawned bosses in a zone."
+  def get_spawned_bosses(zone_id) do
+    WorldBossSpawn
+    |> where([b], b.zone_id == ^zone_id)
+    |> where([b], b.state in [:spawned, :engaged])
+    |> Repo.all()
+  end
+
+  @doc "Get all bosses waiting to spawn."
+  def get_waiting_bosses do
+    now = DateTime.utc_now() |> DateTime.truncate(:second)
+
+    WorldBossSpawn
+    |> where([b], b.state == :waiting)
+    |> where([b], b.spawn_window_start <= ^now and b.spawn_window_end >= ^now)
+    |> Repo.all()
+  end
+
+  @doc "Create or update boss spawn record."
+  def create_boss_spawn(boss_id, zone_id) do
+    case get_boss_spawn(boss_id) do
+      nil ->
+        %WorldBossSpawn{}
+        |> WorldBossSpawn.changeset(%{boss_id: boss_id, zone_id: zone_id})
+        |> Repo.insert()
+
+      existing ->
+        {:ok, existing}
+    end
+  end
+
+  @doc "Set spawn window for a boss."
+  def set_boss_spawn_window(boss_id, window_start, window_end) do
+    case get_boss_spawn(boss_id) do
+      nil ->
+        {:error, :not_found}
+
+      spawn ->
+        spawn
+        |> WorldBossSpawn.set_window_changeset(window_start, window_end)
+        |> Repo.update()
+    end
+  end
+
+  @doc "Mark boss as spawned."
+  def spawn_boss(boss_id) do
+    case get_boss_spawn(boss_id) do
+      nil ->
+        {:error, :not_found}
+
+      spawn ->
+        spawn
+        |> WorldBossSpawn.spawn_changeset()
+        |> Repo.update()
+    end
+  end
+
+  @doc "Mark boss as engaged in combat."
+  def engage_boss(boss_id) do
+    case get_boss_spawn(boss_id) do
+      nil ->
+        {:error, :not_found}
+
+      spawn ->
+        spawn
+        |> WorldBossSpawn.engage_changeset()
+        |> Repo.update()
+    end
+  end
+
+  @doc "Mark boss as killed."
+  def kill_boss(boss_id, cooldown_hours) do
+    now = DateTime.utc_now() |> DateTime.truncate(:second)
+    next_spawn = DateTime.add(now, cooldown_hours * 3600, :second)
+
+    case get_boss_spawn(boss_id) do
+      nil ->
+        {:error, :not_found}
+
+      spawn ->
+        spawn
+        |> WorldBossSpawn.kill_changeset(next_spawn)
+        |> Repo.update()
+    end
+  end
 end

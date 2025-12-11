@@ -205,4 +205,65 @@ defmodule BezgelorDb.PublicEventsTest do
       assert hd(participations).contribution_score == 100
     end
   end
+
+  describe "record_completion/4" do
+    test "records first completion", %{character: char} do
+      {:ok, instance} = PublicEvents.create_event_instance(1, 100, 1)
+      {:ok, _} = PublicEvents.start_event(instance.id, 300_000)
+      {:ok, _} = PublicEvents.join_event(instance.id, char.id)
+      {:ok, _} = PublicEvents.add_contribution(instance.id, char.id, 500)
+
+      assert {:ok, completion} = PublicEvents.record_completion(char.id, 1, :gold, 500, 60000)
+      assert completion.completion_count == 1
+      assert completion.gold_count == 1
+      assert completion.best_contribution == 500
+    end
+
+    test "increments completion count", %{character: char} do
+      {:ok, _} = PublicEvents.record_completion(char.id, 1, :gold, 500, 60000)
+      {:ok, completion} = PublicEvents.record_completion(char.id, 1, :silver, 300, 45000)
+
+      assert completion.completion_count == 2
+      assert completion.gold_count == 1
+      assert completion.silver_count == 1
+      assert completion.best_contribution == 500
+      assert completion.fastest_completion_ms == 45000
+    end
+  end
+
+  describe "get_completion_history/2" do
+    test "returns completion record", %{character: char} do
+      {:ok, _} = PublicEvents.record_completion(char.id, 1, :gold, 500, 60000)
+
+      history = PublicEvents.get_completion_history(char.id, 1)
+      assert history.completion_count == 1
+      assert history.gold_count == 1
+    end
+
+    test "returns nil for no completions", %{character: char} do
+      assert PublicEvents.get_completion_history(char.id, 999) == nil
+    end
+  end
+
+  describe "create_schedule/4" do
+    test "creates a timer schedule" do
+      config = %{"interval_hours" => 2, "offset_minutes" => 30}
+      assert {:ok, schedule} = PublicEvents.create_schedule(1, 100, :timer, config)
+      assert schedule.trigger_type == :timer
+      assert schedule.enabled == true
+    end
+  end
+
+  describe "get_due_schedules/0" do
+    test "returns schedules past their trigger time" do
+      past = DateTime.utc_now() |> DateTime.add(-3600, :second) |> DateTime.truncate(:second)
+      config = %{"interval_hours" => 2}
+
+      {:ok, _} = PublicEvents.create_schedule(1, 100, :timer, config)
+      |> then(fn {:ok, s} -> PublicEvents.set_next_trigger(s.id, past) end)
+
+      schedules = PublicEvents.get_due_schedules()
+      assert length(schedules) >= 1
+    end
+  end
 end
