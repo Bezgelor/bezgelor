@@ -544,6 +544,98 @@ defmodule BezgelorData do
     end)
   end
 
+  # Public Events
+
+  @doc """
+  Get a public event definition by ID.
+  """
+  @spec get_public_event(non_neg_integer()) :: {:ok, map()} | :error
+  def get_public_event(id) do
+    Store.get_public_event(id)
+  end
+
+  @doc """
+  Get a public event by ID, raising if not found.
+  """
+  @spec get_public_event!(non_neg_integer()) :: map()
+  def get_public_event!(id) do
+    case get_public_event(id) do
+      {:ok, event} -> event
+      :error -> raise "Public event #{id} not found"
+    end
+  end
+
+  @doc """
+  List all public events.
+  """
+  @spec list_public_events() :: [map()]
+  def list_public_events do
+    Store.list(:public_events)
+  end
+
+  @doc """
+  Get all public events for a zone.
+  """
+  @spec public_events_for_zone(non_neg_integer()) :: [map()]
+  def public_events_for_zone(zone_id) do
+    Store.get_zone_public_events(zone_id)
+  end
+
+  # World Bosses
+
+  @doc """
+  Get a world boss definition by ID.
+  """
+  @spec get_world_boss(non_neg_integer()) :: {:ok, map()} | :error
+  def get_world_boss(id) do
+    Store.get_world_boss(id)
+  end
+
+  @doc """
+  Get a world boss by ID, raising if not found.
+  """
+  @spec get_world_boss!(non_neg_integer()) :: map()
+  def get_world_boss!(id) do
+    case get_world_boss(id) do
+      {:ok, boss} -> boss
+      :error -> raise "World boss #{id} not found"
+    end
+  end
+
+  @doc """
+  List all world bosses.
+  """
+  @spec list_world_bosses() :: [map()]
+  def list_world_bosses do
+    Store.list(:world_bosses)
+  end
+
+  @doc """
+  Get all world bosses for a zone.
+  """
+  @spec world_bosses_for_zone(non_neg_integer()) :: [map()]
+  def world_bosses_for_zone(zone_id) do
+    Store.get_zone_world_bosses(zone_id)
+  end
+
+  # Event Spawn Points
+
+  @doc """
+  Get spawn points for a zone.
+  """
+  @spec get_event_spawn_points(non_neg_integer()) :: {:ok, map()} | :error
+  def get_event_spawn_points(zone_id) do
+    Store.get_event_spawn_points(zone_id)
+  end
+
+  @doc """
+  Get specific spawn point group for a zone.
+  """
+  @spec get_spawn_point_group(non_neg_integer(), String.t()) :: [map()]
+  def get_spawn_point_group(zone_id, group_name) do
+    Store.get_spawn_point_group(zone_id, group_name)
+  end
+
   # Stats
 
   @doc """
@@ -560,7 +652,10 @@ defmodule BezgelorData do
       house_types: Store.count(:house_types),
       housing_decor: Store.count(:housing_decor),
       housing_fabkits: Store.count(:housing_fabkits),
-      titles: Store.count(:titles)
+      titles: Store.count(:titles),
+      public_events: Store.count(:public_events),
+      world_bosses: Store.count(:world_bosses),
+      event_spawn_points: Store.count(:event_spawn_points)
     }
   end
 end
