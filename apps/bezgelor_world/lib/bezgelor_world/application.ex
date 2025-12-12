@@ -31,8 +31,18 @@ defmodule BezgelorWorld.Application do
       BezgelorWorld.WorldManager,
       BezgelorWorld.CreatureManager,
       BezgelorWorld.BuffManager,
+      # Registry for instance processes (must start before supervisors)
+      BezgelorWorld.Instance.Registry,
       # Dynamic supervisor for zone instances
       BezgelorWorld.Zone.InstanceSupervisor,
+      # Dynamic supervisor for dungeon/raid instances
+      BezgelorWorld.Instance.Supervisor,
+      # Group finder matchmaking
+      BezgelorWorld.GroupFinder.GroupFinder,
+      # Lockout reset manager
+      BezgelorWorld.Instance.LockoutManager,
+      # Mythic+ keystone and affix manager
+      BezgelorWorld.MythicPlus.MythicManager,
       # Registry for EventManager processes
       {Registry, keys: :unique, name: BezgelorWorld.EventRegistry},
       # Dynamic supervisor for EventManagers
