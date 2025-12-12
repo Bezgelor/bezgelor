@@ -5,7 +5,7 @@ defmodule BezgelorWorld.Handler.QuestHandler do
   Processes quest acceptance, abandonment, turn-in, and progress updates.
   """
 
-  alias BezgelorDb.Quests
+  alias BezgelorDb.{Characters, Quests}
   alias BezgelorProtocol.Packets.World.{
     ClientAcceptQuest,
     ClientAbandonQuest,
@@ -16,7 +16,7 @@ defmodule BezgelorWorld.Handler.QuestHandler do
     ServerQuestRemove
   }
 
-  alias BezgelorWorld.Handler.ReputationHandler
+  alias BezgelorWorld.Quest.{PrerequisiteChecker, RewardHandler}
 
   require Logger
 
@@ -99,7 +99,7 @@ defmodule BezgelorWorld.Handler.QuestHandler do
   - :gold_reward - gold to grant
   """
   @spec handle_turn_in_quest(pid(), integer(), ClientTurnInQuest.t(), map()) :: :ok
-  def handle_turn_in_quest(connection_pid, character_id, %ClientTurnInQuest{} = packet, quest_data \\ %{}) do
+  def handle_turn_in_quest(connection_pid, character_id, %ClientTurnInQuest{} = packet, _quest_data \\ %{}) do
     case Quests.turn_in_quest(character_id, packet.quest_id) do
       {:ok, _history} ->
         remove_packet = %ServerQuestRemove{
@@ -110,8 +110,14 @@ defmodule BezgelorWorld.Handler.QuestHandler do
         send(connection_pid, {:send_packet, remove_packet})
         Logger.debug("Character #{character_id} turned in quest #{packet.quest_id}")
 
-        # Grant rewards
-        grant_quest_rewards(connection_pid, character_id, quest_data)
+        # Grant rewards using the RewardHandler
+        case RewardHandler.grant_quest_rewards(connection_pid, character_id, packet.quest_id) do
+          {:ok, summary} ->
+            Logger.debug("Quest rewards granted: #{inspect(summary)}")
+
+          {:error, reason} ->
+            Logger.warning("Failed to grant quest rewards: #{inspect(reason)}")
+        end
 
         :ok
 
@@ -124,22 +130,6 @@ defmodule BezgelorWorld.Handler.QuestHandler do
       {:error, reason} ->
         Logger.error("Failed to turn in quest: #{inspect(reason)}")
     end
-
-    :ok
-  end
-
-  # Grant all quest rewards
-  defp grant_quest_rewards(connection_pid, character_id, quest_data) do
-    # Grant reputation rewards
-    reputation_rewards = Map.get(quest_data, :reputation_rewards, [])
-
-    Enum.each(reputation_rewards, fn {faction_id, amount} ->
-      ReputationHandler.modify_reputation(connection_pid, character_id, faction_id, amount)
-    end)
-
-    # TODO: Grant XP and gold when those systems are integrated
-    # xp_reward = Map.get(quest_data, :xp_reward, 0)
-    # gold_reward = Map.get(quest_data, :gold_reward, 0)
 
     :ok
   end
@@ -275,21 +265,32 @@ defmodule BezgelorWorld.Handler.QuestHandler do
   """
   @spec can_accept_quest?(integer(), map()) :: boolean()
   def can_accept_quest?(character_id, quest_data) do
-    # Check prerequisites
-    prereqs = Map.get(quest_data, :prerequisites, [])
+    character = get_character_data(character_id)
 
-    prereqs_met =
-      Enum.all?(prereqs, fn prereq_id ->
-        has_completed_quest?(character_id, prereq_id)
-      end)
+    if character do
+      case PrerequisiteChecker.can_accept_quest?(character, quest_data) do
+        {:ok, true} -> true
+        {:error, _reason} -> false
+      end
+    else
+      false
+    end
+  end
 
-    # Check not already on quest
-    quest_id = Map.get(quest_data, :id)
-    not_on_quest = not Quests.has_quest?(character_id, quest_id)
+  # Get character data for prerequisite checks
+  defp get_character_data(character_id) do
+    case Characters.get_character(character_id) do
+      nil ->
+        nil
 
-    # Check quest log not full
-    has_space = Quests.count_active_quests(character_id) < Quests.max_active_quests()
-
-    prereqs_met and not_on_quest and has_space
+      character ->
+        %{
+          id: character.id,
+          level: character.level,
+          race_id: character.race_id,
+          class_id: character.class_id,
+          faction_id: character.faction_id
+        }
+    end
   end
 end

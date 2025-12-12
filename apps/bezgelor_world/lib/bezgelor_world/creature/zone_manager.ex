@@ -589,6 +589,7 @@ defmodule BezgelorWorld.Creature.ZoneManager do
           faction: spawn_def[:faction1] || faction_to_int(template.faction),
           level: template.level,
           position: position,
+          creature_id: creature_id,
           health: template.max_health,
           max_health: template.max_health
         }

@@ -23,6 +23,7 @@ defmodule BezgelorWorld.CombatBroadcaster do
 
   alias BezgelorProtocol.PacketWriter
   alias BezgelorWorld.{EventManager, WorldManager}
+  alias BezgelorWorld.Quest.ObjectiveHandler
 
   @doc """
   Broadcast entity death to a list of player GUIDs.
@@ -207,13 +208,15 @@ defmodule BezgelorWorld.CombatBroadcaster do
   end
 
   @doc """
-  Notify EventManager of a creature kill for event objective tracking.
+  Notify EventManager and quest system of a creature kill.
 
   Called when a creature dies in combat. The EventManager will check if
   the creature type matches any active event objectives and update progress.
+  Quest objectives for kill-type objectives are also updated.
   """
   @spec notify_creature_kill(non_neg_integer(), non_neg_integer(), non_neg_integer(), non_neg_integer()) :: :ok
   def notify_creature_kill(zone_id, instance_id, killer_character_id, creature_id) do
+    # Notify EventManager
     manager = EventManager.via_tuple(zone_id, instance_id)
 
     case GenServer.whereis(manager) do
@@ -224,6 +227,168 @@ defmodule BezgelorWorld.CombatBroadcaster do
       _pid ->
         # Notify the EventManager of the kill
         EventManager.report_creature_kill(manager, killer_character_id, creature_id)
+    end
+
+    # Notify quest objective handler
+    case WorldManager.get_session_by_character(killer_character_id) do
+      nil ->
+        :ok
+
+      session ->
+        ObjectiveHandler.process_event(
+          :kill,
+          session.connection_pid,
+          killer_character_id,
+          %{creature_id: creature_id}
+        )
+    end
+  end
+
+  @doc """
+  Notify quest system of item loot.
+
+  Called when a player loots an item. Updates collect/loot quest objectives.
+  """
+  @spec notify_item_loot(non_neg_integer(), non_neg_integer(), non_neg_integer()) :: :ok
+  def notify_item_loot(character_id, item_id, count \\ 1) do
+    case WorldManager.get_session_by_character(character_id) do
+      nil ->
+        :ok
+
+      session ->
+        ObjectiveHandler.process_event(
+          :loot,
+          session.connection_pid,
+          character_id,
+          %{item_id: item_id, count: count}
+        )
+    end
+  end
+
+  @doc """
+  Notify quest system of object interaction.
+
+  Called when a player interacts with a world object. Updates interact objectives.
+  """
+  @spec notify_object_interact(non_neg_integer(), non_neg_integer()) :: :ok
+  def notify_object_interact(character_id, object_id) do
+    case WorldManager.get_session_by_character(character_id) do
+      nil ->
+        :ok
+
+      session ->
+        ObjectiveHandler.process_event(
+          :interact,
+          session.connection_pid,
+          character_id,
+          %{object_id: object_id}
+        )
+    end
+  end
+
+  @doc """
+  Notify quest system of NPC talk.
+
+  Called when a player talks to an NPC. Updates talk objectives.
+  """
+  @spec notify_npc_talk(non_neg_integer(), non_neg_integer()) :: :ok
+  def notify_npc_talk(character_id, creature_id) do
+    case WorldManager.get_session_by_character(character_id) do
+      nil ->
+        :ok
+
+      session ->
+        ObjectiveHandler.process_event(
+          :talk_npc,
+          session.connection_pid,
+          character_id,
+          %{creature_id: creature_id}
+        )
+    end
+  end
+
+  @doc """
+  Notify quest system of location/zone entry.
+
+  Called when a player enters a tracked location. Updates enter/explore objectives.
+  """
+  @spec notify_location_enter(non_neg_integer(), non_neg_integer(), non_neg_integer()) :: :ok
+  def notify_location_enter(character_id, location_id, zone_id) do
+    case WorldManager.get_session_by_character(character_id) do
+      nil ->
+        :ok
+
+      session ->
+        # Try both location_id and zone_id for objective matching
+        ObjectiveHandler.process_event(
+          :enter_location,
+          session.connection_pid,
+          character_id,
+          %{location_id: location_id, zone_id: zone_id}
+        )
+    end
+  end
+
+  @doc """
+  Notify quest system of item use.
+
+  Called when a player uses an item. Updates use_item objectives.
+  """
+  @spec notify_item_use(non_neg_integer(), non_neg_integer()) :: :ok
+  def notify_item_use(character_id, item_id) do
+    case WorldManager.get_session_by_character(character_id) do
+      nil ->
+        :ok
+
+      session ->
+        ObjectiveHandler.process_event(
+          :use_item,
+          session.connection_pid,
+          character_id,
+          %{item_id: item_id}
+        )
+    end
+  end
+
+  @doc """
+  Notify quest system of ability use.
+
+  Called when a player uses a spell/ability. Updates use_ability objectives.
+  """
+  @spec notify_ability_use(non_neg_integer(), non_neg_integer()) :: :ok
+  def notify_ability_use(character_id, spell_id) do
+    case WorldManager.get_session_by_character(character_id) do
+      nil ->
+        :ok
+
+      session ->
+        ObjectiveHandler.process_event(
+          :use_ability,
+          session.connection_pid,
+          character_id,
+          %{spell_id: spell_id}
+        )
+    end
+  end
+
+  @doc """
+  Notify quest system of resource gathering.
+
+  Called when a player gathers a resource node. Updates gather objectives.
+  """
+  @spec notify_gather(non_neg_integer(), non_neg_integer(), atom() | nil) :: :ok
+  def notify_gather(character_id, node_id, resource_type \\ nil) do
+    case WorldManager.get_session_by_character(character_id) do
+      nil ->
+        :ok
+
+      session ->
+        ObjectiveHandler.process_event(
+          :gather,
+          session.connection_pid,
+          character_id,
+          %{node_id: node_id, resource_type: resource_type}
+        )
     end
   end
 

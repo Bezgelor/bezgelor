@@ -906,6 +906,88 @@ defmodule BezgelorData.Store do
   @spec get_quest_hub(non_neg_integer()) :: {:ok, map()} | :error
   def get_quest_hub(id), do: get(:quest_hubs, id)
 
+  @doc """
+  Get quest IDs that a creature can give.
+  Extracts non-zero questIdGiven00-24 fields from the full creature record.
+  """
+  @spec get_quests_for_creature_giver(non_neg_integer()) :: [non_neg_integer()]
+  def get_quests_for_creature_giver(creature_id) do
+    case get_creature_full(creature_id) do
+      {:ok, creature} ->
+        0..24
+        |> Enum.map(fn i ->
+          key = String.to_atom("questIdGiven#{String.pad_leading(Integer.to_string(i), 2, "0")}")
+          Map.get(creature, key)
+        end)
+        |> Enum.reject(&(&1 == 0 or is_nil(&1)))
+
+      :error ->
+        []
+    end
+  end
+
+  @doc """
+  Get quest IDs that a creature can receive turn-ins for.
+  Extracts non-zero questIdReceive00-24 fields from the full creature record.
+  """
+  @spec get_quests_for_creature_receiver(non_neg_integer()) :: [non_neg_integer()]
+  def get_quests_for_creature_receiver(creature_id) do
+    case get_creature_full(creature_id) do
+      {:ok, creature} ->
+        0..24
+        |> Enum.map(fn i ->
+          key = String.to_atom("questIdReceive#{String.pad_leading(Integer.to_string(i), 2, "0")}")
+          Map.get(creature, key)
+        end)
+        |> Enum.reject(&(&1 == 0 or is_nil(&1)))
+
+      :error ->
+        []
+    end
+  end
+
+  @doc """
+  Get quest definition with all objective definitions included.
+  Joins the quest with its objectives based on objective0-5 fields.
+  """
+  @spec get_quest_with_objectives(non_neg_integer()) :: {:ok, map()} | :error
+  def get_quest_with_objectives(quest_id) do
+    case get(:quests, quest_id) do
+      {:ok, quest} ->
+        objectives =
+          0..5
+          |> Enum.map(fn i ->
+            key = String.to_atom("objective#{i}")
+            Map.get(quest, key)
+          end)
+          |> Enum.reject(&(&1 == 0 or is_nil(&1)))
+          |> Enum.map(&get(:quest_objectives, &1))
+          |> Enum.filter(&match?({:ok, _}, &1))
+          |> Enum.map(fn {:ok, obj} -> obj end)
+
+        {:ok, Map.put(quest, :objectives, objectives)}
+
+      :error ->
+        :error
+    end
+  end
+
+  @doc """
+  Check if creature is a quest giver.
+  """
+  @spec creature_quest_giver?(non_neg_integer()) :: boolean()
+  def creature_quest_giver?(creature_id) do
+    get_quests_for_creature_giver(creature_id) != []
+  end
+
+  @doc """
+  Check if creature is a quest receiver (turn-in NPC).
+  """
+  @spec creature_quest_receiver?(non_neg_integer()) :: boolean()
+  def creature_quest_receiver?(creature_id) do
+    get_quests_for_creature_receiver(creature_id) != []
+  end
+
   # NPC/Vendor queries
 
   @doc """

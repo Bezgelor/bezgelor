@@ -101,6 +101,22 @@ defmodule BezgelorWorld.Zone.Instance do
   end
 
   @doc """
+  Get the creature_id (template ID) for an entity by GUID.
+
+  Returns {:ok, creature_id} if the entity exists and is a creature,
+  or :error if not found or not a creature.
+  """
+  @spec get_entity_creature_id(pid() | {non_neg_integer(), instance_id()}, non_neg_integer()) ::
+          {:ok, non_neg_integer()} | :error
+  def get_entity_creature_id(instance, guid) when is_pid(instance) do
+    GenServer.call(instance, {:get_entity_creature_id, guid})
+  end
+
+  def get_entity_creature_id({zone_id, instance_id}, guid) do
+    GenServer.call(via_tuple(zone_id, instance_id), {:get_entity_creature_id, guid})
+  end
+
+  @doc """
   Update an entity's state.
   """
   @spec update_entity(pid() | {non_neg_integer(), instance_id()}, non_neg_integer(), (Entity.t() -> Entity.t())) ::
@@ -300,6 +316,23 @@ defmodule BezgelorWorld.Zone.Instance do
       case Map.get(state.entities, guid) do
         nil -> :error
         entity -> {:ok, entity}
+      end
+
+    {:reply, result, state}
+  end
+
+  @impl true
+  def handle_call({:get_entity_creature_id, guid}, _from, state) do
+    result =
+      case Map.get(state.entities, guid) do
+        nil ->
+          :error
+
+        %{type: :creature, creature_id: creature_id} when not is_nil(creature_id) ->
+          {:ok, creature_id}
+
+        _ ->
+          :error
       end
 
     {:reply, result, state}

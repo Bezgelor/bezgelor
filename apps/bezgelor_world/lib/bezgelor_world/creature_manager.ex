@@ -189,6 +189,7 @@ defmodule BezgelorWorld.CreatureManager do
           faction: faction_to_int(template.faction),
           level: template.level,
           position: position,
+          creature_id: template_id,
           health: template.max_health,
           max_health: template.max_health
         }
@@ -601,6 +602,7 @@ defmodule BezgelorWorld.CreatureManager do
           faction: spawn_def[:faction1] || faction_to_int(template.faction),
           level: template.level,
           position: position,
+          creature_id: creature_id,
           health: template.max_health,
           max_health: template.max_health
         }
