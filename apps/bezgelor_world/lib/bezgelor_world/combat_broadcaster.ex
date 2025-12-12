@@ -47,9 +47,8 @@ defmodule BezgelorWorld.CombatBroadcaster do
   """
   @spec send_xp_gain(non_neg_integer(), non_neg_integer(), atom(), non_neg_integer()) :: :ok
   def send_xp_gain(player_guid, xp_amount, source_type, source_guid) do
-    # TODO: Get actual player XP state from database/cache
-    current_xp = 0
-    xp_to_level = 1000
+    # Get actual player XP state from character
+    {current_xp, xp_to_level} = get_player_xp_state(player_guid)
 
     packet = %ServerXPGain{
       xp_amount: xp_amount,
@@ -478,6 +477,32 @@ defmodule BezgelorWorld.CombatBroadcaster do
                   Logger.error("Failed to persist XP: #{inspect(reason)}")
               end
           end
+        end
+    end
+  end
+
+  defp get_player_xp_state(player_guid) do
+    alias BezgelorDb.Characters
+
+    case WorldManager.get_session_by_entity_guid(player_guid) do
+      nil ->
+        {0, 1000}
+
+      session ->
+        if session.character_id do
+          case Characters.get_character(session.character_id) do
+            nil ->
+              {0, 1000}
+
+            character ->
+              current = character.total_xp
+              current_level_xp = Characters.total_xp_for_level(character.level)
+              next_level_xp = Characters.total_xp_for_level(character.level + 1)
+              xp_to_level = next_level_xp - current_level_xp
+              {current - current_level_xp, xp_to_level}
+          end
+        else
+          {0, 1000}
         end
     end
   end
