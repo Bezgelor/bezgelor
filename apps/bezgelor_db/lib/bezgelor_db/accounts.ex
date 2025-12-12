@@ -276,6 +276,92 @@ defmodule BezgelorDb.Accounts do
   end
 
   @doc """
+  Register a new account (for web portal).
+
+  Creates an account with `email_verified_at: nil`. The account exists but
+  should not be allowed to play until email is verified.
+
+  ## Parameters
+
+  - `email` - The account email address
+  - `password` - The plaintext password
+
+  ## Returns
+
+  - `{:ok, account}` on success
+  - `{:error, changeset}` on failure (e.g., duplicate email, validation error)
+
+  ## Example
+
+      {:ok, account} = Accounts.register_account("player@example.com", "secret123")
+      # account.email_verified_at is nil
+  """
+  @spec register_account(String.t(), String.t()) :: {:ok, Account.t()} | {:error, Ecto.Changeset.t()}
+  def register_account(email, password) do
+    {salt, verifier} = BezgelorCrypto.Password.generate_salt_and_verifier(email, password)
+
+    %Account{}
+    |> Account.registration_changeset(%{
+      email: email,
+      salt: salt,
+      verifier: verifier
+    })
+    |> Repo.insert()
+  end
+
+  @doc """
+  Mark an account's email as verified.
+
+  ## Parameters
+
+  - `account` - The account to verify
+
+  ## Returns
+
+  - `{:ok, account}` on success
+  - `{:error, changeset}` on failure
+  """
+  @spec verify_email(Account.t()) :: {:ok, Account.t()} | {:error, Ecto.Changeset.t()}
+  def verify_email(account) do
+    account
+    |> Ecto.Changeset.change(%{
+      email_verified_at: DateTime.utc_now() |> DateTime.truncate(:second)
+    })
+    |> Repo.update()
+  end
+
+  @doc """
+  Check if an account's email has been verified.
+
+  ## Parameters
+
+  - `account` - The account to check
+
+  ## Returns
+
+  `true` if email is verified, `false` otherwise.
+  """
+  @spec email_verified?(Account.t()) :: boolean()
+  def email_verified?(%Account{email_verified_at: nil}), do: false
+  def email_verified?(%Account{email_verified_at: _}), do: true
+
+  @doc """
+  Check if an email address is already registered.
+
+  ## Parameters
+
+  - `email` - The email address to check
+
+  ## Returns
+
+  `true` if the email is already registered, `false` otherwise.
+  """
+  @spec email_exists?(String.t()) :: boolean()
+  def email_exists?(email) when is_binary(email) do
+    get_by_email(email) != nil
+  end
+
+  @doc """
   Check if an account has any active suspensions or bans.
 
   ## Parameters
@@ -377,5 +463,369 @@ defmodule BezgelorDb.Accounts do
       nil -> {:error, :not_found}
       account -> {:ok, account}
     end
+  end
+
+  @doc """
+  Update an account's password.
+
+  Generates new SRP6 salt and verifier from the new password.
+
+  ## Parameters
+
+  - `account` - The account to update
+  - `new_password` - The new plaintext password
+
+  ## Returns
+
+  - `{:ok, account}` on success
+  - `{:error, changeset}` on failure
+
+  ## Example
+
+      {:ok, account} = Accounts.update_password(account, "new_secret123")
+  """
+  @spec update_password(Account.t(), String.t()) :: {:ok, Account.t()} | {:error, Ecto.Changeset.t()}
+  def update_password(account, new_password) do
+    {salt, verifier} = BezgelorCrypto.Password.generate_salt_and_verifier(account.email, new_password)
+
+    account
+    |> Ecto.Changeset.change(%{salt: salt, verifier: verifier})
+    |> Repo.update()
+  end
+
+  @doc """
+  Update an account's email address.
+
+  ## Parameters
+
+  - `account` - The account to update
+  - `new_email` - The new email address
+
+  ## Returns
+
+  - `{:ok, account}` on success
+  - `{:error, changeset}` on failure
+  """
+  @spec update_email(Account.t(), String.t()) :: {:ok, Account.t()} | {:error, Ecto.Changeset.t()}
+  def update_email(account, new_email) do
+    # Update email and regenerate SRP6 credentials (email is part of the salt derivation)
+    # Note: This means the user will need to use the new email to log in
+    # We need to keep the same password, but we don't have it stored
+    # For now, just update the email - the user will need to reset their password
+    # after changing email if we want to be strict about SRP6
+
+    account
+    |> Ecto.Changeset.change(%{
+      email: String.downcase(new_email),
+      email_verified_at: nil  # Require re-verification
+    })
+    |> Ecto.Changeset.unique_constraint(:email)
+    |> Repo.update()
+  end
+
+  @doc """
+  Soft delete an account.
+
+  Marks the account as deleted by setting `deleted_at` timestamp.
+  The account data will be anonymized after a retention period.
+
+  ## Parameters
+
+  - `account` - The account to delete
+
+  ## Returns
+
+  - `{:ok, account}` on success
+  - `{:error, changeset}` on failure
+  """
+  @spec soft_delete_account(Account.t()) :: {:ok, Account.t()} | {:error, Ecto.Changeset.t()}
+  def soft_delete_account(account) do
+    account
+    |> Ecto.Changeset.change(%{
+      deleted_at: DateTime.utc_now() |> DateTime.truncate(:second)
+    })
+    |> Repo.update()
+  end
+
+  @doc """
+  Check if an account is deleted.
+
+  ## Parameters
+
+  - `account` - The account to check
+
+  ## Returns
+
+  `true` if the account is deleted, `false` otherwise.
+  """
+  @spec deleted?(Account.t()) :: boolean()
+  def deleted?(%Account{deleted_at: nil}), do: false
+  def deleted?(%Account{deleted_at: _}), do: true
+
+  # ============================================================================
+  # Admin Statistics
+  # ============================================================================
+
+  @doc """
+  Count total accounts.
+
+  ## Options
+
+  - `:include_deleted` - Include soft-deleted accounts (default: false)
+
+  ## Returns
+
+  Integer count of accounts.
+  """
+  @spec count_accounts(keyword()) :: integer()
+  def count_accounts(opts \\ []) do
+    include_deleted = Keyword.get(opts, :include_deleted, false)
+
+    query = from(a in Account)
+
+    query =
+      if include_deleted do
+        query
+      else
+        from(a in query, where: is_nil(a.deleted_at))
+      end
+
+    Repo.aggregate(query, :count)
+  end
+
+  @doc """
+  Count total characters across all accounts.
+
+  ## Options
+
+  - `:include_deleted` - Include soft-deleted characters (default: false)
+
+  ## Returns
+
+  Integer count of characters.
+  """
+  @spec count_characters(keyword()) :: integer()
+  def count_characters(opts \\ []) do
+    include_deleted = Keyword.get(opts, :include_deleted, false)
+
+    query = from(c in Character)
+
+    query =
+      if include_deleted do
+        query
+      else
+        from(c in query, where: is_nil(c.deleted_at))
+      end
+
+    Repo.aggregate(query, :count)
+  end
+
+  @doc """
+  List all accounts with optional filtering and pagination.
+
+  ## Options
+
+  - `:search` - Search term for email
+  - `:limit` - Maximum results (default: 50)
+  - `:offset` - Offset for pagination (default: 0)
+  - `:include_deleted` - Include deleted accounts (default: false)
+
+  ## Returns
+
+  List of accounts.
+  """
+  @spec list_accounts(keyword()) :: [Account.t()]
+  def list_accounts(opts \\ []) do
+    search = Keyword.get(opts, :search)
+    limit = Keyword.get(opts, :limit, 50)
+    offset = Keyword.get(opts, :offset, 0)
+    include_deleted = Keyword.get(opts, :include_deleted, false)
+
+    query =
+      from(a in Account,
+        order_by: [desc: a.inserted_at],
+        limit: ^limit,
+        offset: ^offset
+      )
+
+    query =
+      if include_deleted do
+        query
+      else
+        from(a in query, where: is_nil(a.deleted_at))
+      end
+
+    query =
+      if search && search != "" do
+        search_term = "%#{search}%"
+        from(a in query, where: ilike(a.email, ^search_term))
+      else
+        query
+      end
+
+    Repo.all(query)
+  end
+
+  @doc """
+  List accounts with character counts for admin view.
+
+  Includes a virtual `character_count` field.
+
+  ## Options
+
+  Same as `list_accounts/1`.
+
+  ## Returns
+
+  List of account maps with character counts.
+  """
+  @spec list_accounts_with_character_counts(keyword()) :: [map()]
+  def list_accounts_with_character_counts(opts \\ []) do
+    search = Keyword.get(opts, :search)
+    limit = Keyword.get(opts, :limit, 50)
+    offset = Keyword.get(opts, :offset, 0)
+    include_deleted = Keyword.get(opts, :include_deleted, false)
+
+    # Subquery to count characters per account
+    character_counts =
+      from(c in Character,
+        where: is_nil(c.deleted_at),
+        group_by: c.account_id,
+        select: %{account_id: c.account_id, count: count(c.id)}
+      )
+
+    query =
+      from(a in Account,
+        left_join: cc in subquery(character_counts),
+        on: cc.account_id == a.id,
+        order_by: [desc: a.inserted_at],
+        limit: ^limit,
+        offset: ^offset,
+        select: %{
+          id: a.id,
+          email: a.email,
+          email_verified_at: a.email_verified_at,
+          totp_enabled_at: a.totp_enabled_at,
+          discord_id: a.discord_id,
+          discord_username: a.discord_username,
+          deleted_at: a.deleted_at,
+          inserted_at: a.inserted_at,
+          character_count: coalesce(cc.count, 0)
+        }
+      )
+
+    query =
+      if include_deleted do
+        query
+      else
+        from([a, cc] in query, where: is_nil(a.deleted_at))
+      end
+
+    query =
+      if search && search != "" do
+        search_term = "%#{search}%"
+        from([a, cc] in query, where: ilike(a.email, ^search_term))
+      else
+        query
+      end
+
+    Repo.all(query)
+  end
+
+  @doc """
+  Search accounts by character name.
+
+  Finds accounts that have a character matching the given name.
+
+  ## Parameters
+
+  - `character_name` - Partial character name to search for
+  - `opts` - Options for pagination
+
+  ## Returns
+
+  List of account maps with matching character info.
+  """
+  @spec search_accounts_by_character(String.t(), keyword()) :: [map()]
+  def search_accounts_by_character(character_name, opts \\ []) do
+    limit = Keyword.get(opts, :limit, 50)
+    offset = Keyword.get(opts, :offset, 0)
+    search_term = "%#{character_name}%"
+
+    from(c in Character,
+      join: a in Account,
+      on: a.id == c.account_id,
+      where: ilike(c.name, ^search_term) and is_nil(c.deleted_at) and is_nil(a.deleted_at),
+      order_by: [asc: c.name],
+      limit: ^limit,
+      offset: ^offset,
+      select: %{
+        account_id: a.id,
+        account_email: a.email,
+        character_id: c.id,
+        character_name: c.name,
+        character_level: c.level,
+        character_class: c.class
+      }
+    )
+    |> Repo.all()
+  end
+
+  @doc """
+  Get an account with all details for admin view.
+
+  Preloads suspensions and roles.
+  """
+  @spec get_account_for_admin(integer()) :: Account.t() | nil
+  def get_account_for_admin(id) when is_integer(id) do
+    Account
+    |> where([a], a.id == ^id)
+    |> preload([:suspensions, :roles])
+    |> Repo.one()
+  end
+
+  @doc """
+  Remove a suspension from an account.
+
+  ## Parameters
+
+  - `suspension` - The suspension to remove
+
+  ## Returns
+
+  - `{:ok, suspension}` on success
+  - `{:error, changeset}` on failure
+  """
+  @spec remove_suspension(AccountSuspension.t()) :: {:ok, AccountSuspension.t()} | {:error, Ecto.Changeset.t()}
+  def remove_suspension(suspension) do
+    Repo.delete(suspension)
+  end
+
+  @doc """
+  Get active suspension for an account.
+
+  ## Returns
+
+  The active suspension or nil if not suspended.
+  """
+  @spec get_active_suspension(Account.t()) :: AccountSuspension.t() | nil
+  def get_active_suspension(account) do
+    from(s in AccountSuspension,
+      where: s.account_id == ^account.id,
+      where: is_nil(s.end_time) or s.end_time > ^DateTime.utc_now(),
+      order_by: [desc: s.start_time],
+      limit: 1
+    )
+    |> Repo.one()
+  end
+
+  @doc """
+  Restore a soft-deleted account.
+  """
+  @spec restore_account(Account.t()) :: {:ok, Account.t()} | {:error, Ecto.Changeset.t()}
+  def restore_account(account) do
+    account
+    |> Ecto.Changeset.change(%{deleted_at: nil})
+    |> Repo.update()
   end
 end

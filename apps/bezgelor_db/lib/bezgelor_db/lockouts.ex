@@ -316,6 +316,25 @@ defmodule BezgelorDb.Lockouts do
     |> Repo.delete_all()
   end
 
+  @doc """
+  Reset a specific lockout by ID (admin function).
+  """
+  @spec reset_lockout(integer()) :: {:ok, InstanceLockout.t()} | {:error, :not_found}
+  def reset_lockout(lockout_id) do
+    case Repo.get(InstanceLockout, lockout_id) do
+      nil -> {:error, :not_found}
+      lockout -> Repo.delete(lockout)
+    end
+  end
+
+  @doc """
+  Get a lockout by ID.
+  """
+  @spec get_lockout_by_id(integer()) :: InstanceLockout.t() | nil
+  def get_lockout_by_id(lockout_id) do
+    Repo.get(InstanceLockout, lockout_id)
+  end
+
   # ============================================================================
   # Private Helpers
   # ============================================================================

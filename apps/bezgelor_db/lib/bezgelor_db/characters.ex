@@ -315,4 +315,167 @@ defmodule BezgelorDb.Characters do
   defp valid_race_faction_atom?(race, 166) when race in @exile_races, do: true
   defp valid_race_faction_atom?(race, 167) when race in @dominion_races, do: true
   defp valid_race_faction_atom?(_, _), do: false
+
+  # ============================================================================
+  # Admin Functions
+  # ============================================================================
+
+  @doc """
+  Search characters by name (admin).
+
+  ## Options
+
+  - `:search` - Partial name search
+  - `:account_id` - Filter by account
+  - `:include_deleted` - Include deleted characters
+  - `:limit` - Max results (default 50)
+  - `:offset` - Pagination offset
+  """
+  @spec search_characters(keyword()) :: [map()]
+  def search_characters(opts \\ []) do
+    search = Keyword.get(opts, :search)
+    account_id = Keyword.get(opts, :account_id)
+    include_deleted = Keyword.get(opts, :include_deleted, false)
+    limit = Keyword.get(opts, :limit, 50)
+    offset = Keyword.get(opts, :offset, 0)
+
+    query =
+      from(c in Character,
+        join: a in assoc(c, :account),
+        order_by: [asc: c.name],
+        limit: ^limit,
+        offset: ^offset,
+        select: %{
+          id: c.id,
+          name: c.name,
+          level: c.level,
+          race: c.race,
+          class: c.class,
+          faction_id: c.faction_id,
+          last_online: c.last_online,
+          deleted_at: c.deleted_at,
+          account_id: a.id,
+          account_email: a.email
+        }
+      )
+
+    query =
+      if include_deleted do
+        query
+      else
+        from([c, a] in query, where: is_nil(c.deleted_at))
+      end
+
+    query =
+      if search && search != "" do
+        search_term = "%#{search}%"
+        from([c, a] in query, where: ilike(c.name, ^search_term))
+      else
+        query
+      end
+
+    query =
+      if account_id do
+        from([c, a] in query, where: c.account_id == ^account_id)
+      else
+        query
+      end
+
+    Repo.all(query)
+  end
+
+  @doc """
+  Get a character for admin view (includes deleted, no account check).
+  """
+  @spec get_character_for_admin(integer()) :: Character.t() | nil
+  def get_character_for_admin(character_id) do
+    Character
+    |> where([c], c.id == ^character_id)
+    |> preload([:appearance, :account])
+    |> Repo.one()
+  end
+
+  @doc """
+  Admin rename a character.
+
+  Bypasses account ownership check.
+  """
+  @spec admin_rename(Character.t(), String.t()) ::
+          {:ok, Character.t()} | {:error, :name_taken | :invalid_name | Ecto.Changeset.t()}
+  def admin_rename(character, new_name) do
+    with :ok <- validate_name_format(new_name),
+         :ok <- check_name_available_except(new_name, character.id) do
+      character
+      |> Ecto.Changeset.change(name: new_name)
+      |> Repo.update()
+    end
+  end
+
+  defp check_name_available_except(name, character_id) do
+    exists =
+      Character
+      |> where([c], fragment("lower(?)", c.name) == ^String.downcase(name))
+      |> where([c], c.id != ^character_id)
+      |> where([c], is_nil(c.deleted_at))
+      |> Repo.exists?()
+
+    if exists, do: {:error, :name_taken}, else: :ok
+  end
+
+  @doc """
+  Admin set character level.
+  """
+  @spec admin_set_level(Character.t(), integer()) ::
+          {:ok, Character.t()} | {:error, Ecto.Changeset.t()}
+  def admin_set_level(character, level) when level >= 1 and level <= 50 do
+    character
+    |> Ecto.Changeset.change(level: level)
+    |> Repo.update()
+  end
+
+  def admin_set_level(_character, _level), do: {:error, :invalid_level}
+
+  @doc """
+  Admin teleport a character.
+  """
+  @spec admin_teleport(Character.t(), map()) ::
+          {:ok, Character.t()} | {:error, Ecto.Changeset.t()}
+  def admin_teleport(character, attrs) do
+    character
+    |> Character.position_changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Admin delete a character (bypasses account check).
+  """
+  @spec admin_delete_character(Character.t()) ::
+          {:ok, Character.t()} | {:error, Ecto.Changeset.t()}
+  def admin_delete_character(character) do
+    character
+    |> Character.delete_changeset()
+    |> Repo.update()
+  end
+
+  @doc """
+  Admin restore a deleted character.
+  """
+  @spec admin_restore_character(Character.t()) ::
+          {:ok, Character.t()} | {:error, :name_taken | Ecto.Changeset.t()}
+  def admin_restore_character(character) do
+    # Check if original name is available
+    original_name = character.original_name || character.name
+
+    if name_taken?(original_name) do
+      {:error, :name_taken}
+    else
+      character
+      |> Ecto.Changeset.change(
+        deleted_at: nil,
+        name: original_name,
+        original_name: nil
+      )
+      |> Repo.update()
+    end
+  end
 end

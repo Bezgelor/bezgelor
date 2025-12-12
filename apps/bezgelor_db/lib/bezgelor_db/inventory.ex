@@ -492,4 +492,117 @@ defmodule BezgelorDb.Inventory do
 
     removed
   end
+
+  # ============================================================================
+  # Currency Management
+  # ============================================================================
+
+  alias BezgelorDb.Schema.CharacterCurrency
+
+  @doc """
+  Get all currencies for a character.
+
+  Returns a list of currency maps with type, name, amount, and icon.
+  Creates currency record if it doesn't exist.
+  """
+  @spec get_currencies(integer()) :: [map()]
+  def get_currencies(character_id) do
+    currency = get_or_create_currency(character_id)
+
+    CharacterCurrency.currency_fields()
+    |> Enum.map(fn field ->
+      info = CharacterCurrency.currency_info(field)
+      amount = Map.get(currency, field, 0)
+
+      %{
+        type: field,
+        name: info.name,
+        amount: amount,
+        icon: info.icon,
+        max: info[:max]
+      }
+    end)
+  end
+
+  @doc """
+  Get or create a character's currency record.
+  """
+  @spec get_or_create_currency(integer()) :: CharacterCurrency.t()
+  def get_or_create_currency(character_id) do
+    case Repo.get_by(CharacterCurrency, character_id: character_id) do
+      nil ->
+        {:ok, currency} =
+          %CharacterCurrency{}
+          |> CharacterCurrency.changeset(%{character_id: character_id})
+          |> Repo.insert()
+
+        currency
+
+      currency ->
+        currency
+    end
+  end
+
+  @doc """
+  Modify a character's currency amount.
+
+  ## Parameters
+
+  - `character_id` - The character ID
+  - `currency_type` - Currency type atom (e.g., :gold, :elder_gems)
+  - `amount` - Amount to add (positive) or remove (negative)
+
+  ## Returns
+
+  - `{:ok, currency}` on success
+  - `{:error, :insufficient_funds}` if trying to remove more than available
+  - `{:error, :invalid_currency}` if currency type is invalid
+  """
+  @spec modify_currency(integer(), atom(), integer()) ::
+          {:ok, CharacterCurrency.t()} | {:error, atom()}
+  def modify_currency(character_id, currency_type, amount) when is_atom(currency_type) do
+    if currency_type in CharacterCurrency.currency_fields() do
+      currency = get_or_create_currency(character_id)
+
+      case CharacterCurrency.modify_changeset(currency, currency_type, amount) do
+        {:ok, changeset} -> Repo.update(changeset)
+        {:error, reason} -> {:error, reason}
+      end
+    else
+      {:error, :invalid_currency}
+    end
+  end
+
+  # Support integer currency_id for backwards compatibility
+  def modify_currency(character_id, currency_id, amount) when is_integer(currency_id) do
+    # Map legacy integer IDs to currency types
+    currency_type =
+      case currency_id do
+        1 -> :gold
+        2 -> :elder_gems
+        3 -> :renown
+        4 -> :prestige
+        5 -> :glory
+        6 -> :crafting_vouchers
+        7 -> :war_coins
+        8 -> :shade_silver
+        9 -> :protostar_promissory_notes
+        _ -> nil
+      end
+
+    if currency_type do
+      modify_currency(character_id, currency_type, amount)
+    else
+      {:error, :invalid_currency}
+    end
+  end
+
+  @doc """
+  Get a specific currency amount for a character.
+  """
+  @spec get_currency(integer(), atom()) :: integer()
+  def get_currency(character_id, currency_type) when is_atom(currency_type) do
+    currency = get_or_create_currency(character_id)
+    Map.get(currency, currency_type, 0)
+  end
 end
