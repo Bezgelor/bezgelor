@@ -31,6 +31,7 @@ defmodule BezgelorWorld.CreatureManager do
   require Logger
 
   alias BezgelorCore.{AI, CreatureTemplate, Entity, Loot}
+  alias BezgelorData.Store
   alias BezgelorWorld.{CombatBroadcaster, WorldManager}
   alias BezgelorWorld.Zone.Instance, as: ZoneInstance
 
@@ -114,6 +115,40 @@ defmodule BezgelorWorld.CreatureManager do
   @spec creature_count() :: non_neg_integer()
   def creature_count do
     GenServer.call(__MODULE__, :creature_count)
+  end
+
+  @doc """
+  Load all creature spawns for a zone from static data.
+  Returns the number of creatures spawned.
+  """
+  @spec load_zone_spawns(non_neg_integer()) :: {:ok, non_neg_integer()} | {:error, term()}
+  def load_zone_spawns(world_id) do
+    GenServer.call(__MODULE__, {:load_zone_spawns, world_id}, 30_000)
+  end
+
+  @doc """
+  Load spawns for a specific area within a zone.
+  """
+  @spec load_area_spawns(non_neg_integer(), non_neg_integer()) ::
+          {:ok, non_neg_integer()} | {:error, term()}
+  def load_area_spawns(world_id, area_id) do
+    GenServer.call(__MODULE__, {:load_area_spawns, world_id, area_id}, 30_000)
+  end
+
+  @doc """
+  Clear all spawned creatures. Used for zone reset/shutdown.
+  """
+  @spec clear_all_creatures() :: :ok
+  def clear_all_creatures do
+    GenServer.call(__MODULE__, :clear_all_creatures)
+  end
+
+  @doc """
+  Get spawn definitions loaded for the current zone.
+  """
+  @spec get_spawn_definitions() :: [map()]
+  def get_spawn_definitions do
+    GenServer.call(__MODULE__, :get_spawn_definitions)
   end
 
   ## Server Callbacks
@@ -229,6 +264,49 @@ defmodule BezgelorWorld.CreatureManager do
   @impl true
   def handle_call(:creature_count, _from, state) do
     {:reply, map_size(state.creatures), state}
+  end
+
+  @impl true
+  def handle_call({:load_zone_spawns, world_id}, _from, state) do
+    case Store.get_creature_spawns(world_id) do
+      {:ok, zone_data} ->
+        {spawned_count, new_state} = spawn_from_definitions(zone_data.creature_spawns, state)
+        Logger.info("Loaded #{spawned_count} creature spawns for world #{world_id}")
+        {:reply, {:ok, spawned_count}, new_state}
+
+      :error ->
+        Logger.warning("No spawn data found for world #{world_id}")
+        {:reply, {:error, :no_spawn_data}, state}
+    end
+  end
+
+  @impl true
+  def handle_call({:load_area_spawns, world_id, area_id}, _from, state) do
+    spawns = Store.get_spawns_in_area(world_id, area_id)
+
+    if Enum.empty?(spawns) do
+      {:reply, {:error, :no_spawn_data}, state}
+    else
+      {spawned_count, new_state} = spawn_from_definitions(spawns, state)
+      Logger.info("Loaded #{spawned_count} creature spawns for world #{world_id} area #{area_id}")
+      {:reply, {:ok, spawned_count}, new_state}
+    end
+  end
+
+  @impl true
+  def handle_call(:clear_all_creatures, _from, state) do
+    # Cancel any pending respawn timers
+    for {_guid, %{respawn_timer: timer}} <- state.creatures, timer != nil do
+      Process.cancel_timer(timer)
+    end
+
+    Logger.info("Cleared #{map_size(state.creatures)} creatures")
+    {:reply, :ok, %{state | creatures: %{}, spawn_definitions: []}}
+  end
+
+  @impl true
+  def handle_call(:get_spawn_definitions, _from, state) do
+    {:reply, state.spawn_definitions, state}
   end
 
   @impl true
@@ -469,6 +547,82 @@ defmodule BezgelorWorld.CreatureManager do
   defp faction_to_int(:neutral), do: 1
   defp faction_to_int(:friendly), do: 2
   defp faction_to_int(_), do: 0
+
+  # Spawn creatures from static data definitions
+  defp spawn_from_definitions(spawn_defs, state) do
+    # Store definitions for reference
+    state = %{state | spawn_definitions: state.spawn_definitions ++ spawn_defs}
+
+    # Spawn each creature
+    {spawned_count, creatures} =
+      Enum.reduce(spawn_defs, {0, state.creatures}, fn spawn_def, {count, creatures} ->
+        case spawn_creature_from_def(spawn_def) do
+          {:ok, guid, creature_state} ->
+            {count + 1, Map.put(creatures, guid, creature_state)}
+
+          {:error, reason} ->
+            Logger.warning(
+              "Failed to spawn creature #{spawn_def.creature_id} at #{inspect(spawn_def.position)}: #{inspect(reason)}"
+            )
+
+            {count, creatures}
+        end
+      end)
+
+    {spawned_count, %{state | creatures: creatures}}
+  end
+
+  # Spawn a single creature from a spawn definition
+  defp spawn_creature_from_def(spawn_def) do
+    creature_id = spawn_def.creature_id
+    [x, y, z] = spawn_def.position
+    position = {x, y, z}
+
+    case CreatureTemplate.get(creature_id) do
+      nil ->
+        {:error, :template_not_found}
+
+      template ->
+        guid = WorldManager.generate_guid(:creature)
+
+        # Use display_info from spawn if provided, otherwise from template
+        display_info =
+          if spawn_def[:display_info] && spawn_def.display_info > 0 do
+            spawn_def.display_info
+          else
+            template.display_info
+          end
+
+        entity = %Entity{
+          guid: guid,
+          type: :creature,
+          name: template.name,
+          display_info: display_info,
+          faction: spawn_def[:faction1] || faction_to_int(template.faction),
+          level: template.level,
+          position: position,
+          health: template.max_health,
+          max_health: template.max_health
+        }
+
+        ai = AI.new(position)
+
+        creature_state = %{
+          entity: entity,
+          template: template,
+          ai: ai,
+          spawn_position: position,
+          respawn_timer: nil,
+          spawn_def: spawn_def
+        }
+
+        Logger.debug(
+          "Spawned creature #{template.name} (#{guid}) at #{inspect(position)} from spawn def #{spawn_def.id}"
+        )
+
+        {:ok, guid, creature_state}
+    end
+  end
 
   # Apply creature attack damage to a target
   defp apply_creature_attack(creature_entity, template, target_guid) do
