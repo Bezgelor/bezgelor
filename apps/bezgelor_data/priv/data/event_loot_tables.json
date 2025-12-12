@@ -1,0 +1,123 @@
+{
+  "event_loot_tables": [
+    {
+      "id": 9001,
+      "name": "Strain Invasion Rewards",
+      "event_id": 1001,
+      "tier_drops": {
+        "gold": [
+          {"item_id": 50001, "quantity": 1, "chance": 0.20, "name": "Strain-Touched Weapon Box"},
+          {"item_id": 50002, "quantity": 1, "chance": 0.15, "name": "Corrupted Genesis Key"},
+          {"item_id": 50010, "quantity": 3, "chance": 1.00, "name": "Strain Sample"}
+        ],
+        "silver": [
+          {"item_id": 50002, "quantity": 1, "chance": 0.08, "name": "Corrupted Genesis Key"},
+          {"item_id": 50010, "quantity": 2, "chance": 1.00, "name": "Strain Sample"}
+        ],
+        "bronze": [
+          {"item_id": 50010, "quantity": 1, "chance": 1.00, "name": "Strain Sample"}
+        ],
+        "participation": [
+          {"item_id": 50011, "quantity": 1, "chance": 0.50, "name": "Strain Fragment"}
+        ]
+      },
+      "bonus_drops": [
+        {"item_id": 50020, "quantity": 1, "chance": 0.05, "condition": "first_completion", "name": "Strain Slayer Title Token"},
+        {"item_id": 50021, "quantity": 1, "chance": 0.01, "condition": "gold_streak_5", "name": "Elite Strain Hunter Mount"}
+      ]
+    },
+    {
+      "id": 9002,
+      "name": "Resource Collection Rewards",
+      "event_id": 1002,
+      "tier_drops": {
+        "gold": [
+          {"item_id": 50030, "quantity": 5, "chance": 1.00, "name": "Refined Resource Cache"},
+          {"item_id": 50031, "quantity": 1, "chance": 0.25, "name": "Gatherer's Fortune Bag"}
+        ],
+        "silver": [
+          {"item_id": 50030, "quantity": 3, "chance": 1.00, "name": "Refined Resource Cache"}
+        ],
+        "bronze": [
+          {"item_id": 50030, "quantity": 1, "chance": 1.00, "name": "Refined Resource Cache"}
+        ],
+        "participation": [
+          {"item_id": 50032, "quantity": 1, "chance": 0.75, "name": "Basic Resource Bundle"}
+        ]
+      },
+      "bonus_drops": []
+    },
+    {
+      "id": 9003,
+      "name": "Territory Control Rewards",
+      "event_id": 1003,
+      "tier_drops": {
+        "gold": [
+          {"item_id": 50040, "quantity": 1, "chance": 0.30, "name": "Conqueror's Insignia"},
+          {"item_id": 50041, "quantity": 2, "chance": 1.00, "name": "War Spoils"}
+        ],
+        "silver": [
+          {"item_id": 50040, "quantity": 1, "chance": 0.15, "name": "Conqueror's Insignia"},
+          {"item_id": 50041, "quantity": 1, "chance": 1.00, "name": "War Spoils"}
+        ],
+        "bronze": [
+          {"item_id": 50041, "quantity": 1, "chance": 0.50, "name": "War Spoils"}
+        ],
+        "participation": []
+      },
+      "bonus_drops": [
+        {"item_id": 50042, "quantity": 1, "chance": 0.02, "condition": "control_all_points", "name": "Dominator's Banner"}
+      ]
+    },
+    {
+      "id": 9100,
+      "name": "Metal Maw Prime Loot",
+      "world_boss_id": 5001,
+      "tier_drops": {
+        "gold": [
+          {"item_id": 60001, "quantity": 1, "chance": 0.10, "name": "Metal Maw's Fang"},
+          {"item_id": 60002, "quantity": 1, "chance": 0.05, "name": "Corrupted Power Core"},
+          {"item_id": 60010, "quantity": 3, "chance": 1.00, "name": "Prime Essence"}
+        ],
+        "silver": [
+          {"item_id": 60002, "quantity": 1, "chance": 0.02, "name": "Corrupted Power Core"},
+          {"item_id": 60010, "quantity": 2, "chance": 1.00, "name": "Prime Essence"}
+        ],
+        "bronze": [
+          {"item_id": 60010, "quantity": 1, "chance": 1.00, "name": "Prime Essence"}
+        ],
+        "participation": [
+          {"item_id": 60011, "quantity": 1, "chance": 0.25, "name": "Scrap Metal"}
+        ]
+      },
+      "bonus_drops": [
+        {"item_id": 60020, "quantity": 1, "chance": 0.005, "condition": "any", "name": "Metal Maw Prime Mount"}
+      ]
+    },
+    {
+      "id": 9101,
+      "name": "Scorchwing Loot",
+      "world_boss_id": 5002,
+      "tier_drops": {
+        "gold": [
+          {"item_id": 60101, "quantity": 1, "chance": 0.10, "name": "Scorchwing Scale"},
+          {"item_id": 60102, "quantity": 1, "chance": 0.05, "name": "Phoenix Feather"},
+          {"item_id": 60110, "quantity": 3, "chance": 1.00, "name": "Ember Dust"}
+        ],
+        "silver": [
+          {"item_id": 60102, "quantity": 1, "chance": 0.02, "name": "Phoenix Feather"},
+          {"item_id": 60110, "quantity": 2, "chance": 1.00, "name": "Ember Dust"}
+        ],
+        "bronze": [
+          {"item_id": 60110, "quantity": 1, "chance": 1.00, "name": "Ember Dust"}
+        ],
+        "participation": [
+          {"item_id": 60111, "quantity": 1, "chance": 0.25, "name": "Ash Fragment"}
+        ]
+      },
+      "bonus_drops": [
+        {"item_id": 60120, "quantity": 1, "chance": 0.003, "condition": "any", "name": "Scorchwing Hatchling Pet"}
+      ]
+    }
+  ]
+}

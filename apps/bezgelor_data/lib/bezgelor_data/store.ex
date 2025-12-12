@@ -31,6 +31,7 @@ defmodule BezgelorData.Store do
     :public_events,
     :world_bosses,
     :event_spawn_points,
+    :event_loot_tables,
     :instances,
     :instance_bosses,
     :mythic_affixes,
@@ -258,6 +259,49 @@ defmodule BezgelorData.Store do
     case get_event_spawn_points(zone_id) do
       {:ok, data} -> Map.get(data.spawn_point_groups, group_name, [])
       :error -> []
+    end
+  end
+
+  @doc """
+  Get an event loot table by ID.
+  """
+  @spec get_event_loot_table(non_neg_integer()) :: {:ok, map()} | :error
+  def get_event_loot_table(id), do: get(:event_loot_tables, id)
+
+  @doc """
+  Get loot table for an event.
+  """
+  @spec get_loot_table_for_event(non_neg_integer()) :: {:ok, map()} | :error
+  def get_loot_table_for_event(event_id) do
+    case Enum.find(list(:event_loot_tables), fn lt -> lt.event_id == event_id end) do
+      nil -> :error
+      loot_table -> {:ok, loot_table}
+    end
+  end
+
+  @doc """
+  Get loot table for a world boss.
+  """
+  @spec get_loot_table_for_world_boss(non_neg_integer()) :: {:ok, map()} | :error
+  def get_loot_table_for_world_boss(boss_id) do
+    case Enum.find(list(:event_loot_tables), fn lt -> lt[:world_boss_id] == boss_id end) do
+      nil -> :error
+      loot_table -> {:ok, loot_table}
+    end
+  end
+
+  @doc """
+  Get tier drops from a loot table.
+  """
+  @spec get_tier_drops(non_neg_integer(), atom()) :: [map()]
+  def get_tier_drops(loot_table_id, tier) when tier in [:gold, :silver, :bronze, :participation] do
+    case get_event_loot_table(loot_table_id) do
+      {:ok, loot_table} ->
+        tier_key = Atom.to_string(tier)
+        Map.get(loot_table.tier_drops, String.to_atom(tier_key), [])
+
+      :error ->
+        []
     end
   end
 
@@ -577,6 +621,7 @@ defmodule BezgelorData.Store do
     load_table(:public_events, "public_events.json", "public_events")
     load_table(:world_bosses, "world_bosses.json", "world_bosses")
     load_table_by_zone(:event_spawn_points, "event_spawn_points.json", "event_spawn_points")
+    load_table(:event_loot_tables, "event_loot_tables.json", "event_loot_tables")
 
     # Instance/dungeon data
     load_table(:instances, "instances.json", "instances")
