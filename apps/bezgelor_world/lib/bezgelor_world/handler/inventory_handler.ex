@@ -255,56 +255,40 @@ defmodule BezgelorWorld.Handler.InventoryHandler do
 
   # Private
 
-  defp do_split_stack(connection_pid, character_id, src_item, packet) do
-    BezgelorDb.Repo.transaction(fn ->
-      # Reduce source stack
-      new_src_quantity = src_item.quantity - packet.quantity
+  defp do_split_stack(connection_pid, _character_id, src_item, packet) do
+    case Inventory.split_stack(
+           src_item,
+           packet.quantity,
+           packet.dst_container,
+           packet.dst_bag_index,
+           packet.dst_slot
+         ) do
+      {:ok, {updated_source, new_item}} ->
+        # Send updates
+        update_packet = %ServerItemUpdate{
+          container_type: updated_source.container_type,
+          bag_index: updated_source.bag_index,
+          slot: updated_source.slot,
+          quantity: updated_source.quantity,
+          durability: updated_source.durability
+        }
 
-      {:ok, _} =
-        src_item
-        |> BezgelorDb.Schema.InventoryItem.stack_changeset(%{quantity: new_src_quantity})
-        |> BezgelorDb.Repo.update()
+        add_packet = %ServerItemAdd{
+          container_type: new_item.container_type,
+          bag_index: new_item.bag_index,
+          slot: new_item.slot,
+          item_id: new_item.item_id,
+          quantity: new_item.quantity,
+          max_stack: new_item.max_stack,
+          durability: new_item.durability,
+          bound: new_item.bound
+        }
 
-      # Create new stack at destination
-      attrs = %{
-        character_id: character_id,
-        item_id: src_item.item_id,
-        container_type: packet.dst_container,
-        bag_index: packet.dst_bag_index,
-        slot: packet.dst_slot,
-        quantity: packet.quantity,
-        max_stack: src_item.max_stack,
-        durability: src_item.durability,
-        bound: src_item.bound
-      }
+        send(connection_pid, {:send_packet, update_packet})
+        send(connection_pid, {:send_packet, add_packet})
 
-      {:ok, new_item} =
-        %BezgelorDb.Schema.InventoryItem{}
-        |> BezgelorDb.Schema.InventoryItem.changeset(attrs)
-        |> BezgelorDb.Repo.insert()
-
-      # Send updates
-      update_packet = %ServerItemUpdate{
-        container_type: src_item.container_type,
-        bag_index: src_item.bag_index,
-        slot: src_item.slot,
-        quantity: new_src_quantity,
-        durability: src_item.durability
-      }
-
-      add_packet = %ServerItemAdd{
-        container_type: new_item.container_type,
-        bag_index: new_item.bag_index,
-        slot: new_item.slot,
-        item_id: new_item.item_id,
-        quantity: new_item.quantity,
-        max_stack: new_item.max_stack,
-        durability: new_item.durability,
-        bound: new_item.bound
-      }
-
-      send(connection_pid, {:send_packet, update_packet})
-      send(connection_pid, {:send_packet, add_packet})
-    end)
+      {:error, reason} ->
+        Logger.warning("Split stack failed: #{inspect(reason)}")
+    end
   end
 end

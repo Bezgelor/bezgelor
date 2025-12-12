@@ -23,8 +23,7 @@ defmodule BezgelorWorld.Handler.StorefrontHandler do
 
   alias BezgelorDb.Storefront
   alias BezgelorDb.Accounts
-  alias BezgelorDb.Schema.{AccountCurrency, StoreItem}
-  alias BezgelorDb.Repo
+  alias BezgelorDb.Schema.StoreItem
   alias BezgelorProtocol.PacketReader
   alias BezgelorProtocol.PacketWriter
   alias BezgelorProtocol.Packets.World.{
@@ -320,19 +319,25 @@ defmodule BezgelorWorld.Handler.StorefrontHandler do
   # Helper functions
 
   defp send_balance(connection_pid, account_id) do
-    currency = Repo.get_by(AccountCurrency, account_id: account_id)
+    case Storefront.get_account_balance(account_id) do
+      {:ok, %{premium: premium, bonus: bonus}} ->
+        response = ServerStoreBalance.new(premium, bonus)
 
-    if currency do
-      response = ServerStoreBalance.new(
-        currency.premium_currency,
-        currency.bonus_currency
-      )
+        writer = PacketWriter.new()
+        {:ok, writer} = ServerStoreBalance.write(response, writer)
+        packet_data = PacketWriter.to_binary(writer)
 
-      writer = PacketWriter.new()
-      {:ok, writer} = ServerStoreBalance.write(response, writer)
-      packet_data = PacketWriter.to_binary(writer)
+        send(connection_pid, {:send_packet, :server_store_balance, packet_data})
 
-      send(connection_pid, {:send_packet, :server_store_balance, packet_data})
+      {:error, :not_found} ->
+        # No currency record exists yet, send zeros
+        response = ServerStoreBalance.new(0, 0)
+
+        writer = PacketWriter.new()
+        {:ok, writer} = ServerStoreBalance.write(response, writer)
+        packet_data = PacketWriter.to_binary(writer)
+
+        send(connection_pid, {:send_packet, :server_store_balance, packet_data})
     end
   end
 
