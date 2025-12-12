@@ -271,6 +271,68 @@ defmodule BezgelorDb.Inventory do
     end
   end
 
+  @doc """
+  Split a stack into two parts.
+
+  Takes a source item and creates a new stack at the destination location
+  with the specified quantity. Updates the source stack's quantity accordingly.
+
+  ## Parameters
+    - source_item: The item to split from
+    - character_id: The character ID (for ownership verification)
+    - quantity: Amount to split off to the new stack
+    - dest_container: Destination container type
+    - dest_bag_index: Destination bag index
+    - dest_slot: Destination slot
+
+  ## Returns
+    - `{:ok, {updated_source, new_stack}}` on success
+    - `{:error, :invalid_quantity}` if quantity is invalid
+    - `{:error, :slot_occupied}` if destination is occupied
+  """
+  @spec split_stack(InventoryItem.t(), integer(), atom(), integer(), integer()) ::
+          {:ok, {InventoryItem.t(), InventoryItem.t()}} | {:error, atom()}
+  def split_stack(source_item, quantity, dest_container, dest_bag_index, dest_slot) do
+    cond do
+      quantity <= 0 or quantity >= source_item.quantity ->
+        {:error, :invalid_quantity}
+
+      get_item_at(source_item.character_id, dest_container, dest_bag_index, dest_slot) != nil ->
+        {:error, :slot_occupied}
+
+      true ->
+        Repo.transaction(fn ->
+          # Reduce source stack
+          new_src_quantity = source_item.quantity - quantity
+
+          {:ok, updated_source} =
+            source_item
+            |> InventoryItem.stack_changeset(%{quantity: new_src_quantity})
+            |> Repo.update()
+
+          # Create new stack at destination
+          attrs = %{
+            character_id: source_item.character_id,
+            item_id: source_item.item_id,
+            container_type: dest_container,
+            bag_index: dest_bag_index,
+            slot: dest_slot,
+            quantity: quantity,
+            max_stack: source_item.max_stack,
+            durability: source_item.durability,
+            bound: source_item.bound
+          }
+
+          {:ok, new_item} =
+            %InventoryItem{}
+            |> InventoryItem.changeset(attrs)
+            |> Repo.insert()
+
+          {updated_source, new_item}
+        end)
+    end
+  end
+
   @doc "Count total quantity of an item in inventory."
   @spec count_item(integer(), integer()) :: integer()
   def count_item(character_id, item_id) do

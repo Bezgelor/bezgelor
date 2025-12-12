@@ -550,6 +550,30 @@ defmodule BezgelorDb.Storefront do
   end
 
   # ============================================================================
+  # Account Balance
+  # ============================================================================
+
+  @doc """
+  Get account currency balance.
+
+  Returns the account's premium and bonus currency amounts.
+
+  ## Returns
+    - `{:ok, %{premium: integer(), bonus: integer()}}` if found
+    - `{:error, :not_found}` if no currency record exists
+  """
+  @spec get_account_balance(integer()) :: {:ok, map()} | {:error, :not_found}
+  def get_account_balance(account_id) do
+    case Repo.get_by(AccountCurrency, account_id: account_id) do
+      nil ->
+        {:error, :not_found}
+
+      currency ->
+        {:ok, %{premium: currency.premium_currency, bonus: currency.bonus_currency}}
+    end
+  end
+
+  # ============================================================================
   # Purchase History
   # ============================================================================
 
