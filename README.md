@@ -4,7 +4,7 @@ A WildStar MMORPG server emulator written in Elixir, ported from [NexusForever](
 
 ## Overview
 
-Bezgelor is an Elixir umbrella application that emulates WildStar game servers using OTP for concurrency and fault tolerance. The project implements the full server stack including authentication, realm selection, and world gameplay.
+Bezgelor is an Elixir umbrella application that emulates WildStar game servers using OTP for concurrency and fault tolerance. The project implements the full server stack including authentication, realm selection, and world gameplay. A Phoenix LiveView account portal provides players with a web dashboard for managing characters, inventory, and guilds, while administrators get a real-time console for server monitoring, user management, and event control. The project also includes tools such as a packet capture system enabling efficient reverse engineering of unknown protocol packets.
 
 ## Features
 
@@ -18,6 +18,7 @@ Bezgelor is an Elixir umbrella application that emulates WildStar game servers u
 - **Public Events** - World bosses, invasions, territory control
 - **Dungeons** - Instance management, boss encounters DSL, group finder, loot distribution
 - **Mythic+** - Keystones, affixes, timers, score calculation
+- **Account Portal** - Web-based player dashboard and admin console with real-time server management
 
 ## Architecture
 
@@ -34,6 +35,8 @@ Bezgelor is an Elixir umbrella application that emulates WildStar game servers u
 | `bezgelor_realm` | Realm server (port 23115) |
 | `bezgelor_world` | World server (port 24000) |
 | `bezgelor_api` | Phoenix REST API |
+| `bezgelor_portal` | Phoenix LiveView account portal - player dashboard & admin console |
+| `bezgelor_dev` | Development capture system for reverse engineering |
 
 ### Key Patterns
 
@@ -85,6 +88,53 @@ mix test apps/bezgelor_core/test/
 mix test --include database
 ```
 
+## Development Capture System
+
+The `bezgelor_dev` app provides zero-overhead infrastructure for reverse engineering unknown WildStar protocol packets. When enabled in development mode:
+
+1. Unknown/unhandled packets are automatically captured with rich context
+2. An interactive terminal UI prompts for what action triggered the packet
+3. Markdown reports and LLM-ready analysis prompts are generated
+4. Prompts can be fed to any LLM for offline packet analysis
+
+Enable in `config/dev.exs`:
+
+```elixir
+config :bezgelor_dev,
+  mode: :interactive,  # :disabled | :logging | :interactive
+  capture_directory: "priv/dev_captures"
+```
+
+Compile-time macros ensure zero runtime overhead when disabled. See [DEV_CAPTURE_SYSTEM.md](docs/DEV_CAPTURE_SYSTEM.md) for full documentation.
+
+## Account Portal
+
+The `bezgelor_portal` app provides a full-featured web interface for players and administrators built with Phoenix LiveView.
+
+### Player Dashboard
+
+- **Character Overview** - View all characters with stats, gear, and progression
+- **Inventory Browser** - Browse bags, bank, and equipped items
+- **Achievement Tracker** - Track progress across all achievement categories
+- **Guild Management** - View guild roster, ranks, and manage applications
+- **Mail Center** - Read, compose, and manage in-game mail with attachments
+- **Settings** - Update email, password, and account preferences
+
+### Admin Console
+
+- **Server Dashboard** - Real-time monitoring of online players, zones, and server health
+- **User Management** - Search accounts, view details, suspend/ban, reset passwords
+- **Character Tools** - Grant items/currency, modify stats, teleport, reset lockouts
+- **Economy Monitor** - Track currency distribution, transaction history, grant rewards
+- **Instance Management** - Monitor active dungeons/raids, teleport players, close instances
+- **Event Control** - Start/stop public events, spawn world bosses, manage schedules
+- **Analytics** - Player activity trends, economy graphs, content completion rates
+- **Audit Logs** - Complete history of all admin actions with filtering
+
+### Access Control
+
+Role-based permissions (Player, GM, Admin, SuperAdmin) control access to features. All admin actions are logged with full audit trails.
+
 ## Data Extraction
 
 Python tools in `tools/tbl_extractor/` extract WildStar game data:
@@ -111,10 +161,13 @@ python tools/tbl_extractor/language_extractor.py en-US.bin
 | 8. Tradeskills | Complete |
 | 9. Public Events | Complete |
 | 10. Dungeons & Instances | Complete |
-| 11. PvP | In Progress |
+| 11. PvP | Complete |
+| 12. Account Portal | Complete |
 
 See [STATUS.md](docs/STATUS.md) for detailed implementation status.
 
 ## License
 
-This project is for educational purposes. WildStar is a trademark of NCSOFT Corporation.
+This project is licensed under the [GNU Affero General Public License v3.0](LICENSE). This means if you run a modified version of this server software, you must make your source code available to users who connect to it.
+
+WildStar is a trademark of NCSOFT Corporation. This project is not affiliated with or endorsed by NCSOFT.
