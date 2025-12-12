@@ -34,6 +34,8 @@ defmodule BezgelorWorld.Application do
     base_children = [
       BezgelorWorld.WorldManager,
       BezgelorWorld.CreatureManager,
+      # TickScheduler must start before BuffManager (BuffManager registers with it)
+      BezgelorWorld.TickScheduler,
       BezgelorWorld.BuffManager,
       # Registry for zone instance processes
       {Registry, keys: :unique, name: BezgelorWorld.ZoneRegistry},
