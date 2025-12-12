@@ -1,5 +1,7 @@
 # Phase 2: Protocol Layer - Implementation Plan
 
+**Status:** ✅ Complete
+
 **Goal:** Implement WildStar network protocol parsing and TCP connection handling.
 
 **Outcome:** Server accepts TCP connections, parses incoming packets into Elixir structs, can send packets back with proper framing and encryption.
@@ -40,43 +42,43 @@ This phase creates the `bezgelor_protocol` app which handles:
 
 ### Batch 1: App Setup & Core Types (Tasks 1-3)
 
-| Task | Description |
-|------|-------------|
-| 1 | Create bezgelor_protocol app with Ranch dependency |
-| 2 | Define GameMessageOpcode enum module |
-| 3 | Create Packet behaviour and base types |
+| Task | Description | Status |
+|------|-------------|--------|
+| 1 | Create bezgelor_protocol app with Ranch dependency | ✅ Done |
+| 2 | Define GameMessageOpcode enum module | ✅ Done |
+| 3 | Create Packet behaviour and base types | ✅ Done |
 
 ### Batch 2: Binary Parsing (Tasks 4-6)
 
-| Task | Description |
-|------|-------------|
-| 4 | Implement PacketReader for bit-level parsing |
-| 5 | Implement PacketWriter for bit-level serialization |
-| 6 | Create packet framing module (header read/write) |
+| Task | Description | Status |
+|------|-------------|--------|
+| 4 | Implement PacketReader for bit-level parsing | ✅ Done |
+| 5 | Implement PacketWriter for bit-level serialization | ✅ Done |
+| 6 | Create packet framing module (header read/write) | ✅ Done |
 
 ### Batch 3: Connection Infrastructure (Tasks 7-9)
 
-| Task | Description |
-|------|-------------|
-| 7 | Set up Ranch TCP acceptor |
-| 8 | Create Connection GenServer |
-| 9 | Implement packet send/receive pipeline |
+| Task | Description | Status |
+|------|-------------|--------|
+| 7 | Set up Ranch TCP acceptor | ✅ Done |
+| 8 | Create Connection GenServer | ✅ Done |
+| 9 | Implement packet send/receive pipeline | ✅ Done |
 
 ### Batch 4: Core Packets (Tasks 10-12)
 
-| Task | Description |
-|------|-------------|
-| 10 | Implement ServerHello packet |
-| 11 | Implement ClientHelloAuth packet |
-| 12 | Implement encrypted packet wrappers |
+| Task | Description | Status |
+|------|-------------|--------|
+| 10 | Implement ServerHello packet | ✅ Done |
+| 11 | Implement ClientHelloAuth packet | ✅ Done |
+| 12 | Implement encrypted packet wrappers | ✅ Done |
 
 ### Batch 5: Message Routing (Tasks 13-15)
 
-| Task | Description |
-|------|-------------|
-| 13 | Create MessageRegistry for opcode → module mapping |
-| 14 | Define MessageHandler behaviour |
-| 15 | Integration test: echo server |
+| Task | Description | Status |
+|------|-------------|--------|
+| 13 | Create MessageRegistry for opcode → module mapping | ✅ Done |
+| 14 | Define MessageHandler behaviour | ✅ Done |
+| 15 | Integration test: echo server | ✅ Done |
 
 ---
 
@@ -1704,17 +1706,17 @@ The plan continues with:
 
 ## Success Criteria
 
-Phase 2 is complete when:
-
-1. ✅ `bezgelor_protocol` app exists with Ranch dependency
-2. ✅ Can parse WildStar packet headers (6-byte format)
-3. ✅ PacketReader/Writer support bit-level operations
-4. ✅ TCP listener accepts connections on configured port
-5. ✅ Connection GenServer manages per-client state
-6. ✅ ServerHello packet sent on connection
-7. ✅ Packet encryption/decryption integrated
-8. ✅ Message routing dispatches to handlers
-9. ✅ All tests pass
+| # | Criterion | Status |
+|---|-----------|--------|
+| 1 | `bezgelor_protocol` app exists with Ranch dependency | ✅ Done |
+| 2 | Can parse WildStar packet headers (6-byte format) | ✅ Done |
+| 3 | PacketReader/Writer support bit-level operations | ✅ Done |
+| 4 | TCP listener accepts connections on configured port | ✅ Done |
+| 5 | Connection GenServer manages per-client state | ✅ Done |
+| 6 | ServerHello packet sent on connection | ✅ Done |
+| 7 | Packet encryption/decryption integrated | ✅ Done |
+| 8 | Message routing dispatches to handlers | ✅ Done |
+| 9 | All tests pass | ✅ Done |
 
 ---
 
@@ -1735,3 +1737,42 @@ Phase 2 is complete when:
 - Handle SRP6 authentication handshake
 - Create/verify accounts via `bezgelor_db`
 - Generate session tickets for world server
+
+---
+
+## Implementation Notes
+
+**Files Implemented:**
+
+*Core Modules:*
+- `apps/bezgelor_protocol/lib/bezgelor_protocol/opcode.ex` - GameMessageOpcode enum
+- `apps/bezgelor_protocol/lib/bezgelor_protocol/packet.ex` - Packet behaviour and header parsing
+- `apps/bezgelor_protocol/lib/bezgelor_protocol/packet_reader.ex` - Bit-level packet parsing
+- `apps/bezgelor_protocol/lib/bezgelor_protocol/packet_writer.ex` - Bit-level packet serialization
+- `apps/bezgelor_protocol/lib/bezgelor_protocol/framing.ex` - Packet framing for wire format
+
+*Connection Infrastructure:*
+- `apps/bezgelor_protocol/lib/bezgelor_protocol/tcp_listener.ex` - Ranch TCP acceptor wrapper
+- `apps/bezgelor_protocol/lib/bezgelor_protocol/connection.ex` - Connection GenServer
+
+*Message Routing:*
+- `apps/bezgelor_protocol/lib/bezgelor_protocol/packet_registry.ex` - Opcode to module mapping
+- `apps/bezgelor_protocol/lib/bezgelor_protocol/handler.ex` - MessageHandler behaviour
+
+*Packets:*
+- `apps/bezgelor_protocol/lib/bezgelor_protocol/packets/client_hello_auth.ex` - Client auth request
+
+*Tests:*
+- `apps/bezgelor_protocol/test/bezgelor_protocol/opcode_test.exs`
+- `apps/bezgelor_protocol/test/bezgelor_protocol/packet_test.exs`
+- `apps/bezgelor_protocol/test/bezgelor_protocol/packet_reader_test.exs`
+- `apps/bezgelor_protocol/test/bezgelor_protocol/packet_writer_test.exs`
+- `apps/bezgelor_protocol/test/bezgelor_protocol/framing_test.exs`
+- `apps/bezgelor_protocol/test/bezgelor_protocol/tcp_listener_test.exs`
+- `apps/bezgelor_protocol/test/bezgelor_protocol/connection_test.exs`
+- `apps/bezgelor_protocol/test/bezgelor_protocol/packet_registry_test.exs`
+
+**Design Notes:**
+- MessageRegistry was implemented as `PacketRegistry` for clearer naming
+- ServerHello packet built inline in `connection.ex` rather than as separate packet module
+- Handler behaviour defined in `handler.ex` module
