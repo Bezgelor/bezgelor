@@ -18,20 +18,18 @@ Bezgelor is a **feature-complete game engine with minimal game content**. The ar
 
 ---
 
-## Comparison: Bezgelor vs NexusForever
+## What's Needed
 
-| Aspect | Bezgelor | NexusForever |
-|--------|----------|--------------|
-| **Language** | Elixir/OTP | C# |
-| **Architecture** | Excellent (umbrella app, supervision trees) | Good (monolithic) |
-| **Systems** | ~95% complete | ~80% complete |
-| **Content** | ~75% complete (data extracted) | ~15% complete |
-| **Playable Worlds** | All 7 open world | Most open world |
-| **Quests** | 5,194 extracted + giver mappings | "Major thing lacking" |
-| **Dungeons** | Framework only | 1 of 46 playable |
-| **Can Progress** | Needs wiring | Barely |
+| Category | Status | Work Required |
+|----------|--------|---------------|
+| **Quest Wiring** | Data ready | Wire 5,194 quests to handlers using creature giver mappings |
+| **Vendor Inventories** | NPCs identified | Generate/mine item lists for 881 vendors |
+| **Loot Tables** | Framework ready | Assign creature → loot table mappings |
+| **Gathering Nodes** | System ready | Extract or generate node spawn positions |
+| **Dungeon Scripts** | DSL ready | Script 46 dungeon encounters |
+| **Dialogue Wiring** | Data ready | Connect gossipSetId to NPC interactions |
 
-NexusForever still faces the content gap. Bezgelor has extracted significantly more data and now primarily needs **wiring** rather than **content creation**.
+The primary work is **integration**, not content creation—data exists, systems exist, they need connection.
 
 ---
 
