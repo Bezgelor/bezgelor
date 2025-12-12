@@ -35,4 +35,3 @@ Thumbs.db
 
 # Docker volumes (if using local bind mounts)
 /docker/postgres/data/
-apps/bezgelor_data/priv/data/creatures_full.json

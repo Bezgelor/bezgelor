@@ -14,6 +14,7 @@ defmodule BezgelorData.Store do
 
   @tables [
     :creatures,
+    :creatures_full,
     :zones,
     :spells,
     :items,
@@ -971,6 +972,13 @@ defmodule BezgelorData.Store do
   @spec get_creature_affiliation(non_neg_integer()) :: {:ok, map()} | :error
   def get_creature_affiliation(id), do: get(:creature_affiliations, id)
 
+  @doc """
+  Get full creature data by ID.
+  Returns complete creature2 record with all 173 fields.
+  """
+  @spec get_creature_full(non_neg_integer()) :: {:ok, map()} | :error
+  def get_creature_full(id), do: get(:creatures_full, id)
+
   # Gossip/Dialogue queries
 
   @doc """
@@ -1187,6 +1195,7 @@ defmodule BezgelorData.Store do
 
     # Load each table
     load_table(:creatures, "creatures.json", "creatures")
+    load_creatures_full()
     load_table(:zones, "zones.json", "zones")
     load_table(:spells, "spells.json", "spells")
     load_table(:items, "items.json", "items")
@@ -1548,6 +1557,44 @@ defmodule BezgelorData.Store do
       {:error, reason} ->
         Logger.warning("Failed to load warplot plugs: #{inspect(reason)}")
     end
+  end
+
+  defp load_creatures_full do
+    table_name = table_name(:creatures_full)
+
+    # Clear existing data
+    :ets.delete_all_objects(table_name)
+
+    # Load from split part files (each under 100MB for GitHub)
+    part_files = [
+      "creatures_part1.json",
+      "creatures_part2.json",
+      "creatures_part3.json",
+      "creatures_part4.json"
+    ]
+
+    total_loaded =
+      Enum.reduce(part_files, 0, fn filename, acc ->
+        json_path = Path.join(data_directory(), filename)
+
+        case load_json_raw(json_path) do
+          {:ok, data} ->
+            creatures = Map.get(data, :creature2, [])
+
+            for creature <- creatures do
+              id = Map.get(creature, :ID)
+              :ets.insert(table_name, {id, creature})
+            end
+
+            acc + length(creatures)
+
+          {:error, reason} ->
+            Logger.warning("Failed to load #{filename}: #{inspect(reason)}")
+            acc
+        end
+      end)
+
+    Logger.debug("Loaded #{total_loaded} full creature records from #{length(part_files)} parts")
   end
 
   defp load_creature_spawns do
