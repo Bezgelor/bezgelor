@@ -36,7 +36,16 @@ defmodule BezgelorDb.Schema.Account do
           verifier: String.t() | nil,
           game_token: String.t() | nil,
           session_key: String.t() | nil,
+          session_key_created_at: DateTime.t() | nil,
           active_title_id: integer() | nil,
+          # Portal fields
+          email_verified_at: DateTime.t() | nil,
+          totp_secret_encrypted: binary() | nil,
+          totp_enabled_at: DateTime.t() | nil,
+          backup_codes_hashed: [String.t()] | nil,
+          discord_id: String.t() | nil,
+          discord_username: String.t() | nil,
+          discord_linked_at: DateTime.t() | nil,
           inserted_at: DateTime.t() | nil,
           updated_at: DateTime.t() | nil
         }
@@ -47,9 +56,21 @@ defmodule BezgelorDb.Schema.Account do
     field :verifier, :string
     field :game_token, :string
     field :session_key, :string
+    field :session_key_created_at, :utc_datetime
     field :active_title_id, :integer
 
+    # Portal fields
+    field :email_verified_at, :utc_datetime
+    field :totp_secret_encrypted, :binary
+    field :totp_enabled_at, :utc_datetime
+    field :backup_codes_hashed, {:array, :string}
+    field :discord_id, :string
+    field :discord_username, :string
+    field :discord_linked_at, :utc_datetime
+
     has_many :suspensions, BezgelorDb.Schema.AccountSuspension
+    has_many :account_roles, BezgelorDb.Schema.AccountRole
+    many_to_many :roles, BezgelorDb.Schema.Role, join_through: "account_roles"
 
     timestamps(type: :utc_datetime)
   end
@@ -79,6 +100,6 @@ defmodule BezgelorDb.Schema.Account do
   @spec session_changeset(t(), map()) :: Ecto.Changeset.t()
   def session_changeset(account, attrs) do
     account
-    |> cast(attrs, [:game_token, :session_key])
+    |> cast(attrs, [:game_token, :session_key, :session_key_created_at])
   end
 end

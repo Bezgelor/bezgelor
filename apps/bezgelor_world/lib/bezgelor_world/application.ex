@@ -26,6 +26,10 @@ defmodule BezgelorWorld.Application do
 
   @impl true
   def start(_type, _args) do
+    # Register world handlers with packet registry before starting supervision tree
+    # This breaks the compile-time dependency from protocol to world layer
+    BezgelorWorld.HandlerRegistration.register_all()
+
     # Always start WorldManager, CreatureManager, and Zone infrastructure
     base_children = [
       BezgelorWorld.WorldManager,

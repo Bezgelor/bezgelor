@@ -123,7 +123,10 @@ defmodule BezgelorDb.Accounts do
   @spec update_session_key(Account.t(), String.t()) :: {:ok, Account.t()} | {:error, Ecto.Changeset.t()}
   def update_session_key(account, key) do
     account
-    |> Account.session_changeset(%{session_key: key})
+    |> Account.session_changeset(%{
+      session_key: key,
+      session_key_created_at: DateTime.utc_now()
+    })
     |> Repo.update()
   end
 
@@ -152,6 +155,74 @@ defmodule BezgelorDb.Accounts do
       email: String.downcase(email),
       session_key: session_key
     )
+  end
+
+  # Session TTL: 1 hour
+  @session_ttl_seconds 3600
+
+  @doc """
+  Validate a session key with expiration checking.
+
+  Used by the World Server to validate session keys issued by the Realm Server.
+  Rejects sessions that are older than the configured TTL (default: 1 hour).
+
+  ## Parameters
+
+  - `email` - The account email address
+  - `session_key` - The session key to validate (hex string)
+
+  ## Returns
+
+  - `{:ok, account}` if session is valid and not expired
+  - `{:error, :session_not_found}` if no matching session
+  - `{:error, :session_expired}` if session has expired
+
+  ## Example
+
+      case Accounts.validate_session_key("player@example.com", "ABC123...") do
+        {:ok, account} -> # proceed with authentication
+        {:error, :session_expired} -> # request re-login
+        {:error, :session_not_found} -> # invalid credentials
+      end
+  """
+  @spec validate_session_key(String.t(), String.t()) ::
+          {:ok, Account.t()} | {:error, :session_not_found | :session_expired}
+  def validate_session_key(email, session_key) when is_binary(email) and is_binary(session_key) do
+    case get_by_session_key(email, session_key) do
+      nil ->
+        {:error, :session_not_found}
+
+      account ->
+        if session_expired?(account) do
+          # Clear the expired session key
+          clear_session_key(account)
+          {:error, :session_expired}
+        else
+          {:ok, account}
+        end
+    end
+  end
+
+  @doc """
+  Check if a session has expired.
+  """
+  @spec session_expired?(Account.t()) :: boolean()
+  def session_expired?(%Account{session_key_created_at: nil}), do: true
+
+  def session_expired?(%Account{session_key_created_at: created_at}) do
+    now = DateTime.utc_now()
+    diff = DateTime.diff(now, created_at, :second)
+    diff > @session_ttl_seconds
+  end
+
+  @doc """
+  Clear the session key for an account.
+  """
+  @spec clear_session_key(Account.t()) :: {:ok, Account.t()} | {:error, Ecto.Changeset.t()}
+  def clear_session_key(account) do
+    account
+    |> Account.session_changeset(%{session_key: nil, session_key_created_at: nil})
+    |> Repo.update()
   end
 
   @doc """
