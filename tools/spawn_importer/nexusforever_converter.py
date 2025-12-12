@@ -138,10 +138,39 @@ class SQLParser:
 
         return entities, splines, stats
 
+    # Regex for @GUID+N pattern
+    GUID_VAR_RE = re.compile(r'@GUID\s*\+\s*(\d+)', re.IGNORECASE)
+    # Regex for @WORLD variable
+    WORLD_VAR_RE = re.compile(r'@WORLD', re.IGNORECASE)
+
+    @classmethod
+    def _parse_int_or_var(cls, value: str, base_id: int = 0, world_id: int = 0) -> int:
+        """Parse an integer value, handling @GUID+N and @WORLD variables."""
+        value = value.strip()
+
+        # Check for @GUID+N pattern
+        guid_match = cls.GUID_VAR_RE.match(value)
+        if guid_match:
+            return base_id + int(guid_match.group(1))
+
+        # Check for @WORLD variable
+        if cls.WORLD_VAR_RE.match(value):
+            return world_id
+
+        # Try parsing as regular integer
+        return int(value)
+
     @classmethod
     def _parse_entities(cls, content: str) -> List[EntitySpawn]:
         """Extract entity spawn data from SQL content."""
         entities = []
+        entity_id_counter = 0
+
+        # Extract @WORLD value if set
+        world_id = 0
+        world_match = re.search(r'SET\s+@WORLD\s*=\s*(\d+)', content, re.IGNORECASE)
+        if world_match:
+            world_id = int(world_match.group(1))
 
         for match in cls.ENTITY_INSERT_RE.finditer(content):
             values_block = match.group(1)
@@ -152,11 +181,15 @@ class SQLParser:
 
                 if len(values) >= 16:
                     try:
+                        # Handle @GUID+N or literal ID
+                        entity_id_counter += 1
+                        spawn_id = cls._parse_int_or_var(values[0], entity_id_counter, world_id)
+
                         entity = EntitySpawn(
-                            id=int(values[0]),
+                            id=spawn_id,
                             entity_type=int(values[1]),
                             creature_id=int(values[2]),
-                            world_id=int(values[3]),
+                            world_id=cls._parse_int_or_var(values[3], 0, world_id),
                             area_id=int(values[4]),
                             x=float(values[5]),
                             y=float(values[6]),
@@ -168,8 +201,8 @@ class SQLParser:
                             outfit_info=int(values[12]),
                             faction1=int(values[13]),
                             faction2=int(values[14]),
-                            quest_checklist_idx=int(values[15]),
-                            active_prop_id=int(values[16]) if len(values) > 16 else None
+                            quest_checklist_idx=cls._parse_int_or_var(values[15], 0, 0) if values[15].strip() not in ('NULL', '') else 0,
+                            active_prop_id=cls._parse_int_or_var(values[16], 0, 0) if len(values) > 16 and values[16].strip() not in ('NULL', '') else None
                         )
                         entities.append(entity)
                     except (ValueError, IndexError) as e:
