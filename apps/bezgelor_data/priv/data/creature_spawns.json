@@ -1,0 +1,317 @@
+{
+  "source": "NexusForever.WorldDatabase",
+  "zone_spawns": [
+    {
+      "world_id": 51,
+      "zone_name": "Celestion",
+      "creature_spawns": [
+        {
+          "id": 1,
+          "creature_id": 4064,
+          "position": [2154.733, -883.2069, -1924.554],
+          "rotation": [0.0, 0.0, 0.0],
+          "area_id": 303,
+          "display_info": 21720,
+          "outfit_info": 0,
+          "faction1": 682,
+          "faction2": 682,
+          "respawn_time_ms": 300000,
+          "patrol_path_id": null
+        },
+        {
+          "id": 2,
+          "creature_id": 6999,
+          "position": [2596.255, -931.8887, -2437.36],
+          "rotation": [-0.9866927, 0.0, 0.0],
+          "area_id": 300,
+          "display_info": 21959,
+          "outfit_info": 0,
+          "faction1": 219,
+          "faction2": 219,
+          "respawn_time_ms": 300000,
+          "patrol_path_id": null
+        },
+        {
+          "id": 3,
+          "creature_id": 11254,
+          "position": [592.9612, -927.7834, -1916.544],
+          "rotation": [0.0, 0.0, 0.0],
+          "area_id": 2512,
+          "display_info": 22968,
+          "outfit_info": 0,
+          "faction1": 219,
+          "faction2": 219,
+          "respawn_time_ms": 300000,
+          "patrol_path_id": null
+        },
+        {
+          "id": 4,
+          "creature_id": 11254,
+          "position": [1129.652, -880.8873, -3206.25],
+          "rotation": [0.0, 0.0, 0.0],
+          "area_id": 1620,
+          "display_info": 22968,
+          "outfit_info": 0,
+          "faction1": 219,
+          "faction2": 219,
+          "respawn_time_ms": 300000,
+          "patrol_path_id": null
+        },
+        {
+          "id": 5,
+          "creature_id": 11254,
+          "position": [1400.063, -959.415, -2375.229],
+          "rotation": [0.0, 0.0, 0.0],
+          "area_id": 1573,
+          "display_info": 22968,
+          "outfit_info": 0,
+          "faction1": 219,
+          "faction2": 219,
+          "respawn_time_ms": 300000,
+          "patrol_path_id": null
+        },
+        {
+          "id": 10,
+          "creature_id": 34107,
+          "position": [1526.821, -933.5513, -2100.858],
+          "rotation": [1.570796, 0.0, 0.0],
+          "area_id": 1573,
+          "display_info": 24201,
+          "outfit_info": 0,
+          "faction1": 219,
+          "faction2": 219,
+          "respawn_time_ms": 300000,
+          "patrol_path_id": null
+        },
+        {
+          "id": 11,
+          "creature_id": 34019,
+          "position": [1530.889, -933.5513, -2095.839],
+          "rotation": [1.815142, 0.0, 0.0],
+          "area_id": 1573,
+          "display_info": 24050,
+          "outfit_info": 0,
+          "faction1": 219,
+          "faction2": 219,
+          "respawn_time_ms": 300000,
+          "patrol_path_id": null
+        },
+        {
+          "id": 12,
+          "creature_id": 34019,
+          "position": [1531.5, -933.5513, -2104.0],
+          "rotation": [1.32645, 0.0, 0.0],
+          "area_id": 1573,
+          "display_info": 24050,
+          "outfit_info": 0,
+          "faction1": 219,
+          "faction2": 219,
+          "respawn_time_ms": 300000,
+          "patrol_path_id": null
+        },
+        {
+          "id": 20,
+          "creature_id": 33978,
+          "position": [2025.5, -894.2, -2150.3],
+          "rotation": [0.0, 0.0, 0.0],
+          "area_id": 303,
+          "display_info": 24078,
+          "outfit_info": 0,
+          "faction1": 682,
+          "faction2": 682,
+          "respawn_time_ms": 300000,
+          "patrol_path_id": null
+        },
+        {
+          "id": 21,
+          "creature_id": 33979,
+          "position": [2080.1, -890.5, -2175.8],
+          "rotation": [0.5, 0.0, 0.0],
+          "area_id": 303,
+          "display_info": 24079,
+          "outfit_info": 0,
+          "faction1": 682,
+          "faction2": 682,
+          "respawn_time_ms": 300000,
+          "patrol_path_id": null
+        },
+        {
+          "id": 30,
+          "creature_id": 34500,
+          "position": [1800.0, -920.0, -2300.0],
+          "rotation": [0.0, 0.0, 0.0],
+          "area_id": 300,
+          "display_info": 24100,
+          "outfit_info": 0,
+          "faction1": 219,
+          "faction2": 219,
+          "respawn_time_ms": 300000,
+          "patrol_path_id": 1,
+          "patrol_speed": 5.0,
+          "patrol_mode": 1
+        },
+        {
+          "id": 31,
+          "creature_id": 34501,
+          "position": [1850.0, -918.0, -2320.0],
+          "rotation": [0.78539816, 0.0, 0.0],
+          "area_id": 300,
+          "display_info": 24101,
+          "outfit_info": 0,
+          "faction1": 219,
+          "faction2": 219,
+          "respawn_time_ms": 300000,
+          "patrol_path_id": 1,
+          "patrol_speed": 5.0,
+          "patrol_mode": 1
+        },
+        {
+          "id": 40,
+          "creature_id": 35000,
+          "position": [2200.0, -880.0, -1900.0],
+          "rotation": [0.0, 0.0, 0.0],
+          "area_id": 303,
+          "display_info": 24200,
+          "outfit_info": 0,
+          "faction1": 219,
+          "faction2": 219,
+          "respawn_time_ms": 600000,
+          "patrol_path_id": null,
+          "stat_overrides": [
+            {"stat_id": 1, "value": 5000},
+            {"stat_id": 2, "value": 100}
+          ]
+        }
+      ],
+      "resource_spawns": [
+        {
+          "id": 100,
+          "resource_id": 40001,
+          "position": [1600.0, -935.0, -2050.0],
+          "rotation": [0.0, 0.0, 0.0],
+          "area_id": 1573,
+          "respawn_time_ms": 180000
+        },
+        {
+          "id": 101,
+          "resource_id": 40001,
+          "position": [1650.0, -930.0, -2100.0],
+          "rotation": [0.0, 0.0, 0.0],
+          "area_id": 1573,
+          "respawn_time_ms": 180000
+        },
+        {
+          "id": 102,
+          "resource_id": 40002,
+          "position": [2100.0, -885.0, -2000.0],
+          "rotation": [0.0, 0.0, 0.0],
+          "area_id": 303,
+          "respawn_time_ms": 180000
+        }
+      ],
+      "object_spawns": [
+        {
+          "id": 200,
+          "object_id": 50001,
+          "position": [1520.0, -933.5, -2098.0],
+          "rotation": [0.0, 0.0, 0.0],
+          "area_id": 1573,
+          "display_info": 25001,
+          "faction1": 219,
+          "faction2": 219
+        },
+        {
+          "id": 201,
+          "object_id": 50002,
+          "position": [2050.0, -892.0, -2160.0],
+          "rotation": [0.0, 0.0, 0.0],
+          "area_id": 303,
+          "display_info": 25002,
+          "faction1": 682,
+          "faction2": 682
+        }
+      ]
+    },
+    {
+      "world_id": 426,
+      "zone_name": "Deradune",
+      "creature_spawns": [
+        {
+          "id": 1000,
+          "creature_id": 5001,
+          "position": [3400.0, -950.0, -1200.0],
+          "rotation": [0.0, 0.0, 0.0],
+          "area_id": 500,
+          "display_info": 22001,
+          "outfit_info": 0,
+          "faction1": 166,
+          "faction2": 166,
+          "respawn_time_ms": 300000,
+          "patrol_path_id": null
+        },
+        {
+          "id": 1001,
+          "creature_id": 5002,
+          "position": [3450.0, -948.0, -1250.0],
+          "rotation": [0.5, 0.0, 0.0],
+          "area_id": 500,
+          "display_info": 22002,
+          "outfit_info": 0,
+          "faction1": 166,
+          "faction2": 166,
+          "respawn_time_ms": 300000,
+          "patrol_path_id": null
+        },
+        {
+          "id": 1002,
+          "creature_id": 5003,
+          "position": [3500.0, -945.0, -1300.0],
+          "rotation": [1.0, 0.0, 0.0],
+          "area_id": 501,
+          "display_info": 22003,
+          "outfit_info": 0,
+          "faction1": 166,
+          "faction2": 166,
+          "respawn_time_ms": 300000,
+          "patrol_path_id": null
+        }
+      ],
+      "resource_spawns": [],
+      "object_spawns": []
+    },
+    {
+      "world_id": 22,
+      "zone_name": "Levian_Bay",
+      "creature_spawns": [
+        {
+          "id": 2000,
+          "creature_id": 6001,
+          "position": [1000.0, -800.0, -500.0],
+          "rotation": [0.0, 0.0, 0.0],
+          "area_id": 600,
+          "display_info": 23001,
+          "outfit_info": 0,
+          "faction1": 219,
+          "faction2": 219,
+          "respawn_time_ms": 300000,
+          "patrol_path_id": null
+        },
+        {
+          "id": 2001,
+          "creature_id": 6002,
+          "position": [1050.0, -798.0, -520.0],
+          "rotation": [0.3, 0.0, 0.0],
+          "area_id": 600,
+          "display_info": 23002,
+          "outfit_info": 0,
+          "faction1": 219,
+          "faction2": 219,
+          "respawn_time_ms": 300000,
+          "patrol_path_id": null
+        }
+      ],
+      "resource_spawns": [],
+      "object_spawns": []
+    }
+  ]
+}
