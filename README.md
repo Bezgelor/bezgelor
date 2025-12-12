@@ -105,7 +105,7 @@ config :bezgelor_dev,
   capture_directory: "priv/dev_captures"
 ```
 
-Compile-time macros ensure zero runtime overhead when disabled. See [DEV_CAPTURE_SYSTEM.md](docs/DEV_CAPTURE_SYSTEM.md) for full documentation.
+Compile-time macros ensure zero runtime overhead when disabled. See [dev_capture_system.md](docs/dev_capture_system.md) for full documentation.
 
 ## Account Portal
 
@@ -164,7 +164,7 @@ python tools/tbl_extractor/language_extractor.py en-US.bin
 | 11. PvP | Complete |
 | 12. Account Portal | Complete |
 
-See [STATUS.md](docs/STATUS.md) for detailed implementation status.
+See [status.md](docs/status.md) for detailed implementation status.
 
 ## License
 

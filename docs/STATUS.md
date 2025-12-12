@@ -400,7 +400,7 @@ apps/
 docs/
 ├── plans/               # Phase planning documents
 ├── games/wildstar/      # WildStar research & data
-└── STATUS.md            # This file
+└── status.md            # This file
 
 tools/
 └── tbl_extractor/       # Game data extraction scripts
