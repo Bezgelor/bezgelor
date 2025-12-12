@@ -28,6 +28,7 @@ defmodule BezgelorWorld.Zone.Instance do
   use GenServer
 
   alias BezgelorCore.{Entity, ProcessRegistry}
+  alias BezgelorWorld.CreatureManager
 
   require Logger
 
@@ -198,7 +199,25 @@ defmodule BezgelorWorld.Zone.Instance do
 
     Logger.info("Zone instance started: #{zone_data[:name] || zone_id} (instance #{instance_id})")
 
-    {:ok, state}
+    # Load creature spawns asynchronously after init completes
+    {:ok, state, {:continue, :load_spawns}}
+  end
+
+  @impl true
+  def handle_continue(:load_spawns, state) do
+    # Load creature spawns for this zone from static data
+    case CreatureManager.load_zone_spawns(state.zone_id) do
+      {:ok, count} ->
+        Logger.info("Zone #{state.zone_id}: loaded #{count} creature spawns")
+
+      {:error, :not_found} ->
+        Logger.debug("Zone #{state.zone_id}: no spawn data found")
+
+      {:error, reason} ->
+        Logger.warning("Zone #{state.zone_id}: failed to load spawns: #{inspect(reason)}")
+    end
+
+    {:noreply, state}
   end
 
   @impl true
