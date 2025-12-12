@@ -1,5 +1,7 @@
 # Mounts, Pets & Storefront Implementation Plan
 
+**Status:** ✅ Complete (95%)
+
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
 **Goal:** Implement collection systems for mounts/pets with summoning, customization, pet auto-combat, and a full storefront with premium currency, gifting, and promo codes.
@@ -2193,19 +2195,26 @@ git log --oneline -10
 
 ## Summary
 
-| Task | Files | Tests |
-|------|-------|-------|
-| 1. Account Currency | 2 | - |
-| 2. Collection Schemas | 3 | - |
-| 3. Active Mount/Pet | 3 | - |
-| 4. Collections Context | 2 | 6 |
-| 5. Mounts Context | 2 | 5 |
-| 6. Pets Context | 2 | 6 |
-| 7. Storefront Schemas | 6 | - |
-| 8. Storefront Context | 2 | 7 |
-| 9. Mount Packets | 3 | - |
-| 10. Pet Packets | 3 | - |
-| 11. Mount Handler | 1 | - |
-| 12. Pet Handler | 1 | - |
+| Task | Files | Tests | Status |
+|------|-------|-------|--------|
+| 1. Account Currency | 2 | - | ✅ Done |
+| 2. Collection Schemas | 3 | - | ✅ Done |
+| 3. Active Mount/Pet | 3 | - | ✅ Done |
+| 4. Collections Context | 2 | 6 | ✅ Done |
+| 5. Mounts Context | 2 | 5 | ✅ Done |
+| 6. Pets Context | 2 | 6 | ✅ Done |
+| 7. Storefront Schemas | 6 | - | ✅ Done |
+| 8. Storefront Context | 2 | 7 | ✅ Done |
+| 9. Mount Packets | 3 | - | ✅ Done |
+| 10. Pet Packets | 3 | - | ✅ Done |
+| 11. Mount Handler | 1 | - | ✅ Done |
+| 12. Pet Handler | 1 | - | ✅ Done |
+| 13. Run All Tests | - | - | ✅ Done |
+| 14. Final Commit | - | - | ✅ Done |
 
 **Total: ~30 files, ~24 tests**
+
+### Remaining Work
+
+- 3 packets not yet implemented: `ClientGiftItem`, `ClientRedeemCode`, `ServerPromoCodeResult`
+- These are optional features for gifting and promo code redemption UI
