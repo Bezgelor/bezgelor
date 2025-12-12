@@ -97,9 +97,15 @@ defmodule BezgelorWorld.CombatBroadcaster do
   """
   @spec send_kill_rewards(non_neg_integer(), non_neg_integer(), map()) :: :ok
   def send_kill_rewards(player_guid, creature_guid, rewards) do
+    xp_amount = Map.get(rewards, :xp_reward, 0)
+
     # Send XP if any
-    if Map.get(rewards, :xp_reward, 0) > 0 do
-      send_xp_gain(player_guid, rewards.xp_reward, :kill, creature_guid)
+    if xp_amount > 0 do
+      # Persist XP to database
+      persist_xp_gain(player_guid, xp_amount)
+
+      # Send XP gain packet to client
+      send_xp_gain(player_guid, xp_amount, :kill, creature_guid)
     end
 
     # Send loot notification
@@ -440,6 +446,39 @@ defmodule BezgelorWorld.CombatBroadcaster do
          end) do
       nil -> nil
       {_account_id, session} -> session.connection_pid
+    end
+  end
+
+  defp persist_xp_gain(player_guid, xp_amount) do
+    alias BezgelorDb.Characters
+
+    # Get character_id from session
+    case WorldManager.get_session_by_entity_guid(player_guid) do
+      nil ->
+        Logger.warning("Cannot persist XP: no session for player #{player_guid}")
+
+      session ->
+        character_id = session.character_id
+
+        if character_id do
+          case Characters.get_character(character_id) do
+            nil ->
+              Logger.warning("Cannot persist XP: character #{character_id} not found")
+
+            character ->
+              case Characters.add_experience(character, xp_amount) do
+                {:ok, _updated} ->
+                  Logger.debug("Persisted #{xp_amount} XP for character #{character_id}")
+
+                {:ok, updated, level_up: true} ->
+                  Logger.info("Character #{character_id} leveled up to #{updated.level}!")
+                  # TODO: Send level up packet
+
+                {:error, reason} ->
+                  Logger.error("Failed to persist XP: #{inspect(reason)}")
+              end
+          end
+        end
     end
   end
 end
