@@ -10,9 +10,10 @@ Bezgelor is a **feature-complete game engine with minimal game content**. The ar
 | Aspect | Status |
 |--------|--------|
 | Systems Implementation | ~95% complete |
-| Content/Data | ~60% complete |
+| Content/Data | ~75% complete |
 | Populated Worlds | 7 of 7 (open world) |
 | Quests Defined | 5,194 (from client) |
+| Quest Giver Mappings | ✅ Available (creatures_full) |
 | Dungeons Working | 0 of 46 |
 
 ---
@@ -24,13 +25,13 @@ Bezgelor is a **feature-complete game engine with minimal game content**. The ar
 | **Language** | Elixir/OTP | C# |
 | **Architecture** | Excellent (umbrella app, supervision trees) | Good (monolithic) |
 | **Systems** | ~95% complete | ~80% complete |
-| **Content** | ~15% complete | ~15% complete |
+| **Content** | ~75% complete (data extracted) | ~15% complete |
 | **Playable Worlds** | All 7 open world | Most open world |
-| **Quests** | 5,194 extracted | "Major thing lacking" |
+| **Quests** | 5,194 extracted + giver mappings | "Major thing lacking" |
 | **Dungeons** | Framework only | 1 of 46 playable |
-| **Can Progress** | No | Barely |
+| **Can Progress** | Needs wiring | Barely |
 
-Both projects share the same fundamental problem: **systems without content**.
+NexusForever still faces the content gap. Bezgelor has extracted significantly more data and now primarily needs **wiring** rather than **content creation**.
 
 ---
 
@@ -42,6 +43,7 @@ Both projects share the same fundamental problem: **systems without content**.
 |----------|------------|---------|--------|
 | Zones | `zones.json` | 3,436 | ✅ Definitions complete |
 | Creatures | `creatures.json` (21MB) | 53,137 | ✅ Templates complete |
+| Creatures (Full) | `creatures_part1-4.json` (236MB) | 53,137 | ✅ **173 fields including quest givers** |
 | Items | `items.json` (37MB) | 71,918 | ✅ Definitions complete |
 | Texts | `texts.json` (31MB) | Full i18n | ✅ Localization complete |
 | Creature Spawns | `creature_spawns.json` | 41,056 | ✅ All open world zones |
@@ -88,10 +90,11 @@ Both projects share the same fundamental problem: **systems without content**.
 - ✅ **5,415 quest rewards** (`quest_rewards.json`)
 - ✅ **209 quest hubs** (`quest_hubs.json`)
 - ✅ **53 quest categories** (`quest_categories.json`)
+- ✅ **Quest giver/receiver mappings** (`creatures_part1-4.json` - `questIdGiven00-24`, `questIdReceive00-24` fields)
 
 **What's needed:**
 - Wire quest data to existing quest system
-- Map quest givers (WorldLocation2 → creature spawns)
+- ~~Map quest givers (WorldLocation2 → creature spawns)~~ → Available in creatures_full data
 - Implement quest objective handlers for all types
 
 **Impact:** ~~Cannot progress~~ → Data available, needs integration.
@@ -99,12 +102,14 @@ Both projects share the same fundamental problem: **systems without content**.
 ### 2. NPC/Vendor System (✅ Vendors Identified - Needs Inventory)
 
 **What exists:**
-- 53,137 creature templates
+- 53,137 creature templates with full metadata (`creatures_part1-4.json`)
 - Creature spawn system
 - ✅ **881 vendor NPCs identified** (`npc_vendors.json`)
 - ✅ **569 creature affiliations** (vendor types, trainers, etc.)
 - ✅ **10,799 gossip/dialogue entries** (`gossip_entries.json`)
 - ✅ **1,978 gossip sets** (`gossip_sets.json`)
+- ✅ **Creature → gossip mappings** (`gossipSetId` field in creatures_full)
+- ✅ **Creature → faction mappings** (`factionId` field in creatures_full)
 
 **Vendor types discovered:**
 - 162 General Goods, 87 Settler, 74 Quartermaster
@@ -114,7 +119,7 @@ Both projects share the same fundamental problem: **systems without content**.
 
 **What's needed:**
 - Vendor inventory data (not in client - server-side)
-- Wire gossip system to NPCs
+- ~~Wire gossip system to NPCs~~ → `gossipSetId` mapping available
 - Generate/mine vendor item lists from community data
 
 **Impact:** ~~Cannot interact~~ → NPCs identified, need inventories.
@@ -319,6 +324,7 @@ Options (in order of preference):
 **Extracted content:**
 | Category | Records | Files |
 |----------|---------|-------|
+| Creatures (Full) | 53,137 creatures, 173 fields each | `creatures_part1-4.json` (split for GitHub) |
 | Quests | 5,194 quests, 10,031 objectives, 5,415 rewards | `quests.json`, `quest_objectives.json`, `quest_rewards.json` |
 | NPCs | 881 vendors, 569 affiliations | `npc_vendors.json`, `creature_affiliations.json` |
 | Achievements | 4,943 achievements, 273 categories | `achievements.json`, `achievement_categories.json` |
@@ -327,6 +333,16 @@ Options (in order of preference):
 | Challenges | 643 challenges, 1,684 tiers | `challenges.json`, `challenge_tiers.json` |
 | World | 33,396 locations, 62 bind points | `world_locations.json`, `bind_points.json` |
 | Prerequisites | 32,131 prerequisites | `prerequisites.json` |
+
+**Key fields in creatures_full (173 total):**
+- `questIdGiven00-24` - Up to 25 quests this NPC can give
+- `questIdReceive00-24` - Up to 25 quests this NPC can accept turn-ins for
+- `gossipSetId` - Links to dialogue tree
+- `factionId` - Faction alignment
+- `minLevel`, `maxLevel` - Level range
+- `bindPointId` - Associated bind point
+- `taxiNodeId` - Flight path connection
+- `tradeSkillIdTrainer` - Tradeskill training offered
 
 ### Community Resources
 - **Jabbithole:** Item/quest database (archived)
