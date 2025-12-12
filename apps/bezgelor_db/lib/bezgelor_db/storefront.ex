@@ -191,26 +191,56 @@ defmodule BezgelorDb.Storefront do
     |> Repo.all()
   end
 
-  @doc "Get applicable promotion for an item."
+  @doc """
+  Get applicable promotion for an item.
+
+  Filters promotions in database using JSONB operators instead of loading all
+  promotions and filtering in memory.
+  """
   @spec get_applicable_promotion(StoreItem.t()) :: StorePromotion.t() | nil
   def get_applicable_promotion(%StoreItem{id: item_id, category_id: category_id}) do
     now = DateTime.utc_now()
 
-    # Find promotions that apply to this item or its category
-    StorePromotion
-    |> where([p], p.is_active == true)
-    |> where([p], p.starts_at <= ^now and p.ends_at >= ^now)
-    |> Repo.all()
-    |> Enum.find(fn promo ->
-      applies_to = promo.applies_to || %{}
-      item_ids = Map.get(applies_to, "item_ids", [])
-      category_ids = Map.get(applies_to, "category_ids", [])
+    # Build query that filters in database using JSONB operators
+    # This replaces the previous pattern of loading all promotions and filtering in memory
+    base_query =
+      StorePromotion
+      |> where([p], p.is_active == true)
+      |> where([p], p.starts_at <= ^now and p.ends_at >= ^now)
 
-      # Empty applies_to means applies to all
-      map_size(applies_to) == 0 or
-        item_id in item_ids or
-        (category_id && category_id in category_ids)
-    end)
+    # Filter by applicability in the database:
+    # - Empty/null applies_to means applies to all items
+    # - Check if item_id is in the item_ids array
+    # - Check if category_id is in the category_ids array (conditionally added)
+    query =
+      base_query
+      |> where(
+        [p],
+        # Empty applies_to means applies to all
+        is_nil(p.applies_to) or
+          p.applies_to == ^%{} or
+          # Item ID is in the promotion's item_ids array
+          fragment("?->'item_ids' @> ?::jsonb", p.applies_to, ^[item_id])
+      )
+
+    # Add category check if category_id is not nil
+    query =
+      if category_id do
+        query
+        |> or_where(
+          [p],
+          p.is_active == true and
+            p.starts_at <= ^now and p.ends_at >= ^now and
+            fragment("?->'category_ids' @> ?::jsonb", p.applies_to, ^[category_id])
+        )
+      else
+        query
+      end
+
+    query
+    |> order_by([p], desc: p.discount_percent)
+    |> limit(1)
+    |> Repo.one()
   end
 
   @doc "Create a promotion."

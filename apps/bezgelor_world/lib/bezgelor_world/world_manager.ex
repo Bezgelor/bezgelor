@@ -44,6 +44,7 @@ defmodule BezgelorWorld.WorldManager do
 
   @type state :: %{
           sessions: %{non_neg_integer() => session()},
+          name_to_account: %{String.t() => non_neg_integer()},
           entities: %{non_neg_integer() => any()},
           next_guid_counter: non_neg_integer()
         }
@@ -141,6 +142,7 @@ defmodule BezgelorWorld.WorldManager do
   def init(_opts) do
     state = %{
       sessions: %{},
+      name_to_account: %{},
       entities: %{},
       next_guid_counter: 1
     }
@@ -171,8 +173,16 @@ defmodule BezgelorWorld.WorldManager do
 
     sessions = Map.put(state.sessions, account_id, session)
 
+    # Maintain name index for O(1) lookup
+    name_to_account =
+      if character_name do
+        Map.put(state.name_to_account, String.downcase(character_name), account_id)
+      else
+        state.name_to_account
+      end
+
     Logger.debug("Registered session for account #{account_id}, character #{character_name}")
-    {:reply, :ok, %{state | sessions: sessions}}
+    {:reply, :ok, %{state | sessions: sessions, name_to_account: name_to_account}}
   end
 
   @impl true
@@ -193,11 +203,18 @@ defmodule BezgelorWorld.WorldManager do
 
   @impl true
   def handle_call({:find_session_by_name, character_name}, _from, state) do
+    # O(1) lookup using name index
     result =
-      Enum.find(state.sessions, fn {_account_id, session} ->
-        session.character_name != nil and
-          String.downcase(session.character_name) == String.downcase(character_name)
-      end)
+      case Map.get(state.name_to_account, String.downcase(character_name)) do
+        nil ->
+          nil
+
+        account_id ->
+          case Map.get(state.sessions, account_id) do
+            nil -> nil
+            session -> {account_id, session}
+          end
+      end
 
     {:reply, result, state}
   end
@@ -218,7 +235,7 @@ defmodule BezgelorWorld.WorldManager do
   @impl true
   def handle_call({:send_whisper, sender_guid, sender_name, target_name, message}, _from, state) do
     result =
-      case find_session_by_name_in_state(state.sessions, target_name) do
+      case find_session_by_name_in_state(state.sessions, state.name_to_account, target_name) do
         nil ->
           {:error, :player_not_found}
 
@@ -256,9 +273,19 @@ defmodule BezgelorWorld.WorldManager do
 
   @impl true
   def handle_cast({:unregister_session, account_id}, state) do
+    # Remove from name index if session exists
+    name_to_account =
+      case Map.get(state.sessions, account_id) do
+        %{character_name: name} when is_binary(name) ->
+          Map.delete(state.name_to_account, String.downcase(name))
+
+        _ ->
+          state.name_to_account
+      end
+
     sessions = Map.delete(state.sessions, account_id)
     Logger.debug("Unregistered session for account #{account_id}")
-    {:noreply, %{state | sessions: sessions}}
+    {:noreply, %{state | sessions: sessions, name_to_account: name_to_account}}
   end
 
   @impl true
@@ -289,11 +316,18 @@ defmodule BezgelorWorld.WorldManager do
   defp entity_type_to_bits(:vehicle), do: @entity_type_vehicle
   defp entity_type_to_bits(_), do: @entity_type_object
 
-  defp find_session_by_name_in_state(sessions, character_name) do
-    Enum.find(sessions, fn {_account_id, session} ->
-      session.character_name != nil and
-        String.downcase(session.character_name) == String.downcase(character_name)
-    end)
+  defp find_session_by_name_in_state(sessions, name_to_account, character_name) do
+    # O(1) lookup using name index
+    case Map.get(name_to_account, String.downcase(character_name)) do
+      nil ->
+        nil
+
+      account_id ->
+        case Map.get(sessions, account_id) do
+          nil -> nil
+          session -> {account_id, session}
+        end
+    end
   end
 
   defp send_chat_to_connection(connection_pid, sender_guid, sender_name, channel, message) do

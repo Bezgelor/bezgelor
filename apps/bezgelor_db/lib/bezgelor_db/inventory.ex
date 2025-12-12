@@ -285,30 +285,44 @@ defmodule BezgelorDb.Inventory do
     count_item(character_id, item_id) >= quantity
   end
 
-  @doc "Find first empty slot in bags."
+  @doc """
+  Find first empty slot in bags.
+
+  Uses a single query with join to avoid N+1 queries.
+  """
   @spec find_empty_slot(integer(), atom()) :: {integer(), integer()} | nil
   def find_empty_slot(character_id, container_type \\ :bag) do
-    bags = get_bags(character_id)
+    # Single query: get all bags and their occupied slots in one shot
+    # This replaces the previous N+1 pattern (1 query for bags + N queries for items)
+    query =
+      from b in Bag,
+        left_join: i in InventoryItem,
+          on:
+            i.character_id == b.character_id and
+              i.bag_index == b.bag_index and
+              i.container_type == ^container_type,
+        where: b.character_id == ^character_id,
+        select: {b, i.slot}
 
-    bags
-    |> Enum.filter(fn bag ->
+    results = Repo.all(query)
+
+    # Group slots by bag
+    bags_with_slots =
+      results
+      |> Enum.group_by(fn {bag, _slot} -> bag end, fn {_bag, slot} -> slot end)
+
+    # Filter bags by container type and find first with empty slot
+    bags_with_slots
+    |> Enum.filter(fn {bag, _slots} ->
       case container_type do
         :bag -> bag.bag_index <= @max_bag_slots
         :bank -> bag.bag_index > @max_bag_slots
         _ -> true
       end
     end)
-    |> Enum.find_value(fn bag ->
-      occupied_slots =
-        InventoryItem
-        |> where([i],
-          i.character_id == ^character_id and
-          i.container_type == ^container_type and
-          i.bag_index == ^bag.bag_index
-        )
-        |> select([i], i.slot)
-        |> Repo.all()
-        |> MapSet.new()
+    |> Enum.sort_by(fn {bag, _slots} -> bag.bag_index end)
+    |> Enum.find_value(fn {bag, slots} ->
+      occupied_slots = slots |> Enum.reject(&is_nil/1) |> MapSet.new()
 
       empty_slot =
         0..(bag.size - 1)
