@@ -206,6 +206,104 @@ defmodule BezgelorDb.PvP do
     {:ok, count}
   end
 
+  @doc """
+  Gets all ratings above a threshold for a bracket (for decay processing).
+  """
+  @spec get_ratings_above(String.t(), integer()) :: [PvpRating.t()]
+  def get_ratings_above(bracket, threshold) do
+    PvpRating
+    |> where([r], r.bracket == ^bracket and r.rating >= ^threshold)
+    |> Repo.all()
+  end
+
+  @doc """
+  Counts rated players in a bracket (minimum 10 games).
+  """
+  @spec count_rated_players(String.t()) :: integer()
+  def count_rated_players(bracket) do
+    PvpRating
+    |> where([r], r.bracket == ^bracket and r.games_played >= 10)
+    |> Repo.aggregate(:count)
+  end
+
+  @doc """
+  Gets the rating at a specific position in the leaderboard.
+  """
+  @spec rating_at_position(String.t(), integer()) :: integer() | nil
+  def rating_at_position(bracket, position) do
+    PvpRating
+    |> where([r], r.bracket == ^bracket and r.games_played >= 10)
+    |> order_by([r], desc: r.rating)
+    |> offset(^(position - 1))
+    |> limit(1)
+    |> select([r], r.rating)
+    |> Repo.one()
+  end
+
+  @doc """
+  Gets player rank in a bracket.
+  """
+  @spec get_player_rank(integer(), String.t()) :: integer() | nil
+  def get_player_rank(character_id, bracket) do
+    subquery =
+      from(r in PvpRating,
+        where: r.bracket == ^bracket and r.games_played >= 10,
+        select: %{
+          character_id: r.character_id,
+          rank: row_number() |> over(order_by: [desc: r.rating])
+        }
+      )
+
+    from(s in subquery(subquery), where: s.character_id == ^character_id, select: s.rank)
+    |> Repo.one()
+  end
+
+  @doc """
+  Gets players around a specific rank.
+  """
+  @spec get_players_around_rank(String.t(), integer(), integer()) :: [PvpRating.t()]
+  def get_players_around_rank(bracket, target_rank, range \\ 5) do
+    PvpRating
+    |> where([r], r.bracket == ^bracket and r.games_played >= 10)
+    |> order_by([r], desc: r.rating)
+    |> offset(^max(0, target_rank - range - 1))
+    |> limit(^(range * 2 + 1))
+    |> preload(:character)
+    |> Repo.all()
+  end
+
+  @doc """
+  Updates a rating record by ID.
+  """
+  @spec update_rating(integer(), map()) :: {:ok, PvpRating.t()} | {:error, Ecto.Changeset.t()}
+  def update_rating(rating_id, attrs) do
+    case Repo.get(PvpRating, rating_id) do
+      nil ->
+        {:error, :not_found}
+
+      rating ->
+        rating
+        |> PvpRating.changeset(attrs)
+        |> Repo.update()
+    end
+  end
+
+  @doc """
+  Updates a season record.
+  """
+  @spec update_season(integer(), map()) :: {:ok, PvpSeason.t()} | {:error, Ecto.Changeset.t()}
+  def update_season(season_id, attrs) do
+    case Repo.get(PvpSeason, season_id) do
+      nil ->
+        {:error, :not_found}
+
+      season ->
+        season
+        |> PvpSeason.changeset(attrs)
+        |> Repo.update()
+    end
+  end
+
   # =============================================================================
   # PvP Seasons
   # =============================================================================
