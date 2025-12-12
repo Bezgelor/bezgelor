@@ -2,6 +2,7 @@
 
 **Created:** 2025-12-11
 **Status:** Planning Complete
+**Last Review:** 2025-12-11 - Added supervision tree entries, noted implementation gaps
 
 ## Overview
 
@@ -892,6 +893,310 @@ Document Phase 10 completion.
 
 ---
 
+## Required Supervision Tree Additions
+
+The following entries must be added to `apps/bezgelor_world/lib/bezgelor_world/application.ex` in the `base_children` list:
+
+```elixir
+# Add after Zone.InstanceSupervisor in base_children:
+
+# Instance system registry and supervisor
+{Registry, keys: :unique, name: BezgelorWorld.Instance.Registry},
+BezgelorWorld.Instance.InstanceSupervisor,
+
+# Group finder
+BezgelorWorld.GroupFinder.GroupFinder,
+
+# Loot distribution
+BezgelorWorld.Loot.LootManager,
+
+# Lockout management with scheduled resets
+BezgelorWorld.LockoutManager,
+
+# Mythic+ keystone and affix management
+BezgelorWorld.Mythic.MythicManager,
+```
+
+**Note:** The existing `BezgelorWorld.Zone.InstanceSupervisor` handles zone instances. The new `BezgelorWorld.Instance.InstanceSupervisor` is for dungeon/raid instances specifically.
+
+---
+
+## Implementation Status
+
+### Completed
+- ✅ All 8 database schemas (instance_lockout, instance_completion, instance_save, group_finder_queue, group_finder_group, mythic_keystone, mythic_run, loot_history)
+- ✅ Database migration (`20251211000000_create_instance_tables.exs`)
+- ✅ Instances context module (`BezgelorDb.Instances`)
+- ✅ GroupFinder context module (`BezgelorDb.GroupFinder`)
+- ✅ Lockouts context module (`BezgelorDb.Lockouts`)
+- ✅ Instance GenServer (`BezgelorWorld.Instance.Instance`)
+- ✅ InstanceSupervisor (`BezgelorWorld.Instance.InstanceSupervisor`)
+- ✅ InstanceRegistry helpers (`BezgelorWorld.Instance.InstanceRegistry`)
+- ✅ BossEncounter GenServer (`BezgelorWorld.Instance.BossEncounter`)
+- ✅ GroupFinder GenServer (`BezgelorWorld.GroupFinder.GroupFinder`)
+- ✅ Combined Matcher module (`BezgelorWorld.GroupFinder.Matcher`) - implements all 3 tiers
+- ✅ LootManager GenServer (`BezgelorWorld.Loot.LootManager`)
+- ✅ LootRules module (`BezgelorWorld.Loot.LootRules`)
+- ✅ GroupFinder handler
+- ✅ Loot handler
+- ✅ Static data files (instances.json, instance_bosses.json, mythic_affixes.json)
+- ✅ All 31 protocol packets (22 server, 9 client)
+
+### Missing/Incomplete
+- ⚠️ **LockoutManager GenServer** - Needs dedicated GenServer for scheduled lockout resets
+- ⚠️ **MythicManager GenServer** - Keystone/affix management not implemented
+- ⚠️ **Sample Encounters** - No DSL-based boss encounters implemented yet
+- ⚠️ **Supervision Tree** - GenServers not registered in application.ex
+- ⚠️ **Schema Unit Tests** - No tests for Phase 10 schemas
+- ⚠️ **Configuration Module** - No unified config module (Task 53)
+
+---
+
+## LockoutManager GenServer (Missing)
+
+The `LockoutManager` GenServer handles event-driven lockout resets:
+
+```elixir
+# apps/bezgelor_world/lib/bezgelor_world/lockout_manager.ex
+defmodule BezgelorWorld.LockoutManager do
+  @moduledoc """
+  Manages instance lockout resets on schedule.
+
+  Handles:
+  - Daily reset at configured time (10 AM server default)
+  - Weekly reset on configured day (Tuesday default)
+  - Broadcasts lockout expiration to affected players
+  """
+
+  use GenServer
+  require Logger
+
+  alias BezgelorDb.Lockouts
+
+  @daily_check_interval :timer.minutes(1)
+
+  def start_link(opts \\ []) do
+    GenServer.start_link(__MODULE__, opts, name: __MODULE__)
+  end
+
+  @impl true
+  def init(_opts) do
+    schedule_next_check()
+
+    state = %{
+      daily_reset_hour: Application.get_env(:bezgelor_world, :lockouts)[:daily_reset_hour] || 10,
+      weekly_reset_day: Application.get_env(:bezgelor_world, :lockouts)[:weekly_reset_day] || :tuesday,
+      last_daily_reset: nil,
+      last_weekly_reset: nil
+    }
+
+    {:ok, state}
+  end
+
+  @impl true
+  def handle_info(:check_resets, state) do
+    state = maybe_trigger_daily_reset(state)
+    state = maybe_trigger_weekly_reset(state)
+    schedule_next_check()
+    {:noreply, state}
+  end
+
+  defp schedule_next_check do
+    Process.send_after(self(), :check_resets, @daily_check_interval)
+  end
+
+  defp maybe_trigger_daily_reset(state) do
+    now = DateTime.utc_now()
+    today = Date.utc_today()
+
+    if now.hour >= state.daily_reset_hour and state.last_daily_reset != today do
+      Logger.info("Triggering daily lockout reset")
+      Lockouts.cleanup_expired()
+      %{state | last_daily_reset: today}
+    else
+      state
+    end
+  end
+
+  defp maybe_trigger_weekly_reset(state) do
+    today = Date.utc_today()
+    day_of_week = Date.day_of_week(today)
+    reset_day_num = day_number(state.weekly_reset_day)
+
+    if day_of_week == reset_day_num and state.last_weekly_reset != today do
+      Logger.info("Triggering weekly lockout reset")
+      # Weekly resets are handled by expiration timestamps
+      %{state | last_weekly_reset: today}
+    else
+      state
+    end
+  end
+
+  defp day_number(:monday), do: 1
+  defp day_number(:tuesday), do: 2
+  defp day_number(:wednesday), do: 3
+  defp day_number(:thursday), do: 4
+  defp day_number(:friday), do: 5
+  defp day_number(:saturday), do: 6
+  defp day_number(:sunday), do: 7
+end
+```
+
+---
+
+## MythicManager GenServer (Missing)
+
+The `MythicManager` GenServer handles Mythic+ keystone and affix management:
+
+```elixir
+# apps/bezgelor_world/lib/bezgelor_world/mythic/mythic_manager.ex
+defmodule BezgelorWorld.Mythic.MythicManager do
+  @moduledoc """
+  Manages Mythic+ keystones and weekly affix rotation.
+
+  Handles:
+  - Keystone activation and validation
+  - Affix rotation on weekly reset
+  - Score calculation for completed runs
+  - Leaderboard queries
+  """
+
+  use GenServer
+  require Logger
+
+  alias BezgelorData.Store
+  alias BezgelorDb.Repo
+  alias BezgelorDb.Schema.{MythicKeystone, MythicRun}
+
+  @current_season 1
+
+  def start_link(opts \\ []) do
+    GenServer.start_link(__MODULE__, opts, name: __MODULE__)
+  end
+
+  @doc "Get current weekly affixes"
+  def get_weekly_affixes do
+    GenServer.call(__MODULE__, :get_weekly_affixes)
+  end
+
+  @doc "Activate a keystone for a dungeon run"
+  def activate_keystone(character_id, keystone_id) do
+    GenServer.call(__MODULE__, {:activate_keystone, character_id, keystone_id})
+  end
+
+  @doc "Record a completed mythic+ run"
+  def record_run(run_data) do
+    GenServer.call(__MODULE__, {:record_run, run_data})
+  end
+
+  @doc "Get leaderboard for a dungeon"
+  def get_leaderboard(instance_id, level, limit \\ 100) do
+    GenServer.call(__MODULE__, {:get_leaderboard, instance_id, level, limit})
+  end
+
+  @impl true
+  def init(_opts) do
+    affixes = calculate_weekly_affixes()
+
+    state = %{
+      season: @current_season,
+      weekly_affixes: affixes,
+      affix_week: get_current_week()
+    }
+
+    Logger.info("MythicManager started - Season #{@current_season}, Affixes: #{inspect(affixes)}")
+    {:ok, state}
+  end
+
+  @impl true
+  def handle_call(:get_weekly_affixes, _from, state) do
+    # Check if week changed
+    current_week = get_current_week()
+    state = if current_week != state.affix_week do
+      new_affixes = calculate_weekly_affixes()
+      %{state | weekly_affixes: new_affixes, affix_week: current_week}
+    else
+      state
+    end
+
+    {:reply, state.weekly_affixes, state}
+  end
+
+  def handle_call({:activate_keystone, character_id, keystone_id}, _from, state) do
+    # Validate keystone ownership and return activation data
+    result = do_activate_keystone(character_id, keystone_id, state.weekly_affixes)
+    {:reply, result, state}
+  end
+
+  def handle_call({:record_run, run_data}, _from, state) do
+    result = do_record_run(run_data, state.season)
+    {:reply, result, state}
+  end
+
+  def handle_call({:get_leaderboard, instance_id, level, limit}, _from, state) do
+    runs = BezgelorDb.Instances.get_leaderboard(instance_id, level, limit)
+    {:reply, runs, state}
+  end
+
+  # Private functions
+
+  defp calculate_weekly_affixes do
+    week = get_current_week()
+    affix_config = Application.get_env(:bezgelor_world, :mythic_plus, %{})
+
+    minor = Enum.at(affix_config[:affixes][:minor] || [:fortified, :tyrannical], rem(week, 2))
+    major = Enum.at(affix_config[:affixes][:major] || [:bolstering], rem(week, 4))
+    seasonal = Enum.at(affix_config[:affixes][:seasonal] || [:primal], rem(week, 3))
+
+    %{minor: minor, major: major, seasonal: seasonal}
+  end
+
+  defp get_current_week do
+    div(Date.diff(Date.utc_today(), ~D[2025-01-01]), 7)
+  end
+
+  defp do_activate_keystone(character_id, keystone_id, weekly_affixes) do
+    import Ecto.Query
+
+    case Repo.get(MythicKeystone, keystone_id) do
+      nil -> {:error, :keystone_not_found}
+      %{character_id: ^character_id, depleted: false} = keystone ->
+        {:ok, %{
+          keystone: keystone,
+          affixes: build_affix_list(keystone.level, weekly_affixes),
+          time_limit: get_time_limit(keystone.instance_definition_id)
+        }}
+      %{character_id: ^character_id, depleted: true} ->
+        {:error, :keystone_depleted}
+      _ ->
+        {:error, :not_owner}
+    end
+  end
+
+  defp build_affix_list(level, weekly) do
+    cond do
+      level >= 10 -> [weekly.minor, weekly.major, weekly.seasonal]
+      level >= 5 -> [weekly.minor, weekly.major]
+      level >= 2 -> [weekly.minor]
+      true -> []
+    end
+  end
+
+  defp get_time_limit(instance_id) do
+    config = Application.get_env(:bezgelor_world, :mythic_plus, %{})
+    Map.get(config[:time_limit_base_seconds] || %{}, instance_id, 1800)
+  end
+
+  defp do_record_run(run_data, season) do
+    %MythicRun{}
+    |> MythicRun.changeset(Map.put(run_data, :season, season))
+    |> Repo.insert()
+  end
+end
+```
+
+---
+
 ## File Structure
 
 ```
@@ -937,9 +1242,10 @@ apps/bezgelor_protocol/lib/bezgelor_protocol/packets/world/
 
 apps/bezgelor_world/lib/bezgelor_world/
 ├── instance/
-│   ├── instance.ex                     # Instance GenServer
-│   ├── instance_supervisor.ex          # DynamicSupervisor
-│   └── instance_registry.ex            # Registry helpers
+│   ├── instance.ex                     # Instance GenServer ✅
+│   ├── instance_supervisor.ex          # DynamicSupervisor ✅
+│   ├── instance_registry.ex            # Registry helpers ✅
+│   └── boss_encounter.ex               # Boss encounter GenServer ✅
 ├── encounter/
 │   ├── dsl.ex                          # Boss DSL macros
 │   ├── primitives/
@@ -951,40 +1257,43 @@ apps/bezgelor_world/lib/bezgelor_world/
 │   │   ├── interrupt.ex
 │   │   ├── environmental.ex
 │   │   └── coordination.ex
-│   ├── boss_process.ex                 # Boss encounter GenServer
-│   └── encounters/                     # Concrete boss implementations
-│       ├── stormtalon.ex
-│       ├── kel_voreth_overlord.ex
-│       └── ...
+│   └── encounters/                     # Concrete boss implementations ⚠️ MISSING
+│       ├── stormtalon.ex               # TODO: Implement
+│       └── kel_voreth_overlord.ex      # TODO: Implement
 ├── group_finder/
-│   ├── group_finder.ex                 # Main GenServer
-│   ├── matcher_simple.ex               # Tier 1 FIFO
-│   ├── matcher_smart.ex                # Tier 2
-│   └── matcher_advanced.ex             # Tier 3
+│   ├── group_finder.ex                 # Main GenServer ✅
+│   └── matcher.ex                      # Combined matcher (all 3 tiers) ✅
 ├── loot/
-│   ├── loot_manager.ex                 # Loot distribution
-│   ├── personal_loot.ex
-│   ├── need_greed.ex
-│   └── master_loot.ex
+│   ├── loot_manager.ex                 # Loot distribution ✅
+│   └── loot_rules.ex                   # Personal/NeedGreed/Master rules ✅
 ├── mythic/
-│   ├── mythic_manager.ex
-│   ├── keystone.ex
-│   └── affixes.ex
-├── lockout_manager.ex
+│   └── mythic_manager.ex               # ⚠️ MISSING - see template above
+├── lockout_manager.ex                  # ⚠️ MISSING - see template above
 └── handler/
-    ├── instance_handler.ex
-    └── group_finder_handler.ex
+    ├── group_finder_handler.ex         # ✅
+    └── loot_handler.ex                 # ✅
 ```
 
 ---
 
 ## Success Criteria
 
-1. **Group Finder** - Players can queue, get matched, and teleport into instances
-2. **Instance Lifecycle** - Instances create, run, and cleanup properly per content type
-3. **Boss Encounters** - At least 3 bosses scripted with DSL, all mechanics working
-4. **Lockouts** - Proper lockout enforcement per content type, weekly resets work
-5. **Loot** - All loot systems functional with smart defaults
-6. **Mythic+** - Keystone system working with scaling and affixes
-7. **Configuration** - All promised config options functional
-8. **Tests** - Comprehensive test coverage for critical paths
+| Criteria | Status | Notes |
+|----------|--------|-------|
+| **Group Finder** - Players can queue, get matched, and teleport into instances | ⚠️ Partial | GenServer exists but not registered in supervision tree |
+| **Instance Lifecycle** - Instances create, run, and cleanup properly per content type | ⚠️ Partial | GenServer exists but not registered in supervision tree |
+| **Boss Encounters** - At least 3 bosses scripted with DSL, all mechanics working | ❌ Missing | No sample encounters implemented |
+| **Lockouts** - Proper lockout enforcement per content type, weekly resets work | ⚠️ Partial | Context exists, LockoutManager GenServer missing |
+| **Loot** - All loot systems functional with smart defaults | ⚠️ Partial | GenServer exists but not registered in supervision tree |
+| **Mythic+** - Keystone system working with scaling and affixes | ❌ Missing | MythicManager GenServer not implemented |
+| **Configuration** - All promised config options functional | ⚠️ Partial | No unified config module |
+| **Tests** - Comprehensive test coverage for critical paths | ❌ Missing | No Phase 10 schema tests |
+
+### Remaining Work to Complete Phase 10
+
+1. **Add supervision tree entries** - Register GenServers in application.ex
+2. **Create LockoutManager** - Use template provided above
+3. **Create MythicManager** - Use template provided above
+4. **Implement sample encounters** - Stormtalon, Kel Voreth (2-3 bosses)
+5. **Add schema unit tests** - Tests for all 8 Phase 10 schemas
+6. **Create configuration module** - Consolidate all config options
