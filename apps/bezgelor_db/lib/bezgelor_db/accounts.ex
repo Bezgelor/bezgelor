@@ -26,8 +26,10 @@ defmodule BezgelorDb.Accounts do
       :ok = Accounts.check_suspension(account)
   """
 
+  import Ecto.Query
+
   alias BezgelorDb.Repo
-  alias BezgelorDb.Schema.{Account, AccountSuspension}
+  alias BezgelorDb.Schema.{Account, AccountSuspension, Character}
 
   @doc """
   Get an account by email address.
@@ -271,5 +273,38 @@ defmodule BezgelorDb.Accounts do
       end_time: end_time
     })
     |> Repo.insert()
+  end
+
+  @doc """
+  Get an account by character name.
+
+  Used for gifting items to another player by character name.
+
+  ## Parameters
+
+  - `character_name` - The character name to look up
+
+  ## Returns
+
+  - `{:ok, Account}` if found
+  - `{:error, :not_found}` if no character with that name exists
+
+  ## Example
+
+      {:ok, account} = Accounts.get_account_by_character_name("PlayerOne")
+  """
+  @spec get_account_by_character_name(String.t()) :: {:ok, Account.t()} | {:error, :not_found}
+  def get_account_by_character_name(character_name) when is_binary(character_name) do
+    query =
+      from c in Character,
+        where: c.name == ^character_name,
+        join: a in Account,
+        on: a.id == c.account_id,
+        select: a
+
+    case Repo.one(query) do
+      nil -> {:error, :not_found}
+      account -> {:ok, account}
+    end
   end
 end
