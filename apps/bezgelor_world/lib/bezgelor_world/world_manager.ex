@@ -150,6 +150,15 @@ defmodule BezgelorWorld.WorldManager do
     GenServer.call(__MODULE__, {:get_zone_sessions, zone_id})
   end
 
+  @doc "Get session info by entity GUID."
+  @spec get_session_by_entity_guid(non_neg_integer()) :: session() | nil
+  def get_session_by_entity_guid(entity_guid) do
+    list_sessions()
+    |> Enum.find_value(fn {_account_id, session} ->
+      if session.entity_guid == entity_guid, do: session, else: nil
+    end)
+  end
+
   @doc "Send a packet to a specific connection process."
   @spec send_packet(pid(), atom(), binary()) :: :ok
   def send_packet(connection_pid, opcode, packet_data) do

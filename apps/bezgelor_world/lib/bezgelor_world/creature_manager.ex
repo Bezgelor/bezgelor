@@ -30,12 +30,10 @@ defmodule BezgelorWorld.CreatureManager do
 
   require Logger
 
-  alias BezgelorCore.{AI, CreatureTemplate, Entity, Loot}
+  alias BezgelorCore.{AI, CreatureTemplate, Entity}
+  alias BezgelorWorld.{CombatBroadcaster, CreatureDeath, WorldManager}
   alias BezgelorData.Store
-  alias BezgelorWorld.{CombatBroadcaster, WorldManager}
   alias BezgelorWorld.Zone.Instance, as: ZoneInstance
-
-  import Bitwise
 
   @type creature_state :: %{
           entity: Entity.t(),
@@ -402,50 +400,33 @@ defmodule BezgelorWorld.CreatureManager do
   end
 
   defp handle_creature_death(creature_state, entity, killer_guid, state) do
-    template = creature_state.template
+    # Get killer level for loot scaling
+    killer_level = get_killer_level(killer_guid, creature_state.template.level)
 
-    # Set AI to dead
-    ai = AI.set_dead(creature_state.ai)
+    # Delegate to shared death handling logic
+    {result, new_creature_state} =
+      CreatureDeath.handle_death(creature_state, entity, killer_guid, killer_level)
 
-    # Generate loot
-    loot_drops =
-      if template.loot_table_id do
-        Loot.roll(template.loot_table_id)
-      else
-        []
+    {result, new_creature_state, state}
+  end
+
+  # Get the level of the killer for loot scaling
+  # If the killer is a player, try to get their level from ZoneInstance
+  # Falls back to default_level if not found
+  defp get_killer_level(killer_guid, default_level) do
+    # Check if killer is a player (type bits = 1 in bits 60-63)
+    if CreatureDeath.is_player_guid?(killer_guid) do
+      # Try to get player entity from zone instance
+      case ZoneInstance.get_entity({1, 1}, killer_guid) do
+        {:ok, player_entity} ->
+          player_entity.level
+
+        _ ->
+          default_level
       end
-
-    # Calculate XP reward
-    xp_reward = template.xp_reward
-
-    # Start respawn timer
-    respawn_timer =
-      if template.respawn_time > 0 do
-        Process.send_after(self(), {:respawn_creature, entity.guid}, template.respawn_time)
-      else
-        nil
-      end
-
-    new_creature_state = %{
-      creature_state
-      | entity: entity,
-        ai: ai,
-        respawn_timer: respawn_timer
-    }
-
-    result_info = %{
-      creature_guid: entity.guid,
-      xp_reward: xp_reward,
-      loot_drops: loot_drops,
-      gold: Loot.gold_from_drops(loot_drops),
-      items: Loot.items_from_drops(loot_drops),
-      killer_guid: killer_guid,
-      reputation_rewards: template.reputation_rewards || []
-    }
-
-    Logger.debug("Creature #{entity.name} (#{entity.guid}) killed by #{killer_guid}")
-
-    {{:ok, :killed, result_info}, new_creature_state, state}
+    else
+      default_level
+    end
   end
 
   defp process_ai_tick(state) do
@@ -629,20 +610,23 @@ defmodule BezgelorWorld.CreatureManager do
   # Apply creature attack damage to a target
   defp apply_creature_attack(creature_entity, template, target_guid) do
     # Only attack players for now
-    if is_player_guid?(target_guid) do
-      # Roll damage from template
-      damage = CreatureTemplate.roll_damage(template)
+    if CreatureDeath.is_player_guid?(target_guid) do
+      # Roll base damage from template
+      base_damage = CreatureTemplate.roll_damage(template)
+
+      # Get target's defensive stats and apply mitigation
+      final_damage = apply_damage_mitigation(target_guid, base_damage)
 
       # Try to apply damage to player in zone instance
       # For simplicity, assume zone 1 instance 1 (would need player tracking in real impl)
       # Use try/catch to handle zone instance not existing (e.g., during tests)
       try do
         case ZoneInstance.update_entity({1, 1}, target_guid, fn player_entity ->
-               Entity.apply_damage(player_entity, damage)
+               Entity.apply_damage(player_entity, final_damage)
              end) do
           :ok ->
             # Send damage effect to player
-            send_creature_attack_effect(creature_entity.guid, target_guid, damage)
+            send_creature_attack_effect(creature_entity.guid, target_guid, final_damage)
 
             # Check if player died
             case ZoneInstance.get_entity({1, 1}, target_guid) do
@@ -654,7 +638,7 @@ defmodule BezgelorWorld.CreatureManager do
             end
 
             Logger.debug(
-              "Creature #{creature_entity.name} dealt #{damage} damage to player #{target_guid}"
+              "Creature #{creature_entity.name} dealt #{final_damage} damage (base: #{base_damage}) to player #{target_guid}"
             )
 
           :error ->
@@ -667,6 +651,43 @@ defmodule BezgelorWorld.CreatureManager do
     end
 
     :ok
+  end
+
+  # Apply damage mitigation based on player's defensive stats
+  defp apply_damage_mitigation(player_guid, base_damage) do
+    alias BezgelorCore.CharacterStats
+
+    target_stats = get_target_defensive_stats(player_guid)
+    armor = Map.get(target_stats, :armor, 0.0)
+
+    # Armor reduces damage (capped at 75% mitigation)
+    mitigation = min(armor, 0.75)
+    final_damage = round(base_damage * (1 - mitigation))
+    max(final_damage, 1)  # Always deal at least 1 damage
+  end
+
+  # Get defensive stats for a player target
+  defp get_target_defensive_stats(player_guid) do
+    alias BezgelorCore.CharacterStats
+
+    # Try to get session data for the player
+    case WorldManager.get_session_by_entity_guid(player_guid) do
+      nil ->
+        %{armor: 0.0}
+
+      session ->
+        character = session[:character]
+
+        if character do
+          CharacterStats.compute_combat_stats(%{
+            level: character.level || 1,
+            class: character.class || 1,
+            race: character.race || 0
+          })
+        else
+          %{armor: 0.0}
+        end
+    end
   end
 
   defp send_creature_attack_effect(creature_guid, player_guid, damage) do
@@ -688,12 +709,4 @@ defmodule BezgelorWorld.CreatureManager do
 
     :ok
   end
-
-  # Check if GUID is a player (type bits = 1 in bits 60-63)
-  defp is_player_guid?(guid) when is_integer(guid) and guid > 0 do
-    type_bits = bsr(guid, 60) &&& 0xF
-    type_bits == 1
-  end
-
-  defp is_player_guid?(_), do: false
 end
