@@ -46,6 +46,7 @@ defmodule BezgelorDb.Schema.Account do
           discord_id: String.t() | nil,
           discord_username: String.t() | nil,
           discord_linked_at: DateTime.t() | nil,
+          deleted_at: DateTime.t() | nil,
           inserted_at: DateTime.t() | nil,
           updated_at: DateTime.t() | nil
         }
@@ -67,6 +68,7 @@ defmodule BezgelorDb.Schema.Account do
     field :discord_id, :string
     field :discord_username, :string
     field :discord_linked_at, :utc_datetime
+    field :deleted_at, :utc_datetime
 
     has_many :suspensions, BezgelorDb.Schema.AccountSuspension
     has_many :account_roles, BezgelorDb.Schema.AccountRole
@@ -101,5 +103,20 @@ defmodule BezgelorDb.Schema.Account do
   def session_changeset(account, attrs) do
     account
     |> cast(attrs, [:game_token, :session_key, :session_key_created_at])
+  end
+
+  @doc """
+  Changeset for web portal registration.
+
+  Same as regular changeset but with additional password validation.
+  """
+  @spec registration_changeset(t(), map()) :: Ecto.Changeset.t()
+  def registration_changeset(account, attrs) do
+    account
+    |> cast(attrs, [:email, :salt, :verifier])
+    |> validate_required([:email, :salt, :verifier])
+    |> validate_format(:email, ~r/^[^\s]+@[^\s]+\.[^\s]+$/, message: "has invalid format")
+    |> update_change(:email, &String.downcase/1)
+    |> unique_constraint(:email)
   end
 end
