@@ -43,6 +43,19 @@ defmodule BezgelorData.Store do
     :creature_spawns
   ]
 
+  # Secondary index tables for efficient lookups by foreign key
+  # Maps: foreign_key_value -> [primary_id, ...]
+  @index_tables [
+    :schematics_by_profession,
+    :talents_by_profession,
+    :nodes_by_profession,
+    :work_orders_by_profession,
+    :events_by_zone,
+    :world_bosses_by_zone,
+    :instances_by_type,
+    :bosses_by_instance
+  ]
+
   # Client API
 
   def start_link(opts) do
@@ -219,11 +232,13 @@ defmodule BezgelorData.Store do
 
   @doc """
   Get all schematics for a profession.
+
+  Uses secondary index for O(1) lookup instead of scanning all schematics.
   """
   @spec get_schematics_for_profession(non_neg_integer()) :: [map()]
   def get_schematics_for_profession(profession_id) do
-    list(:tradeskill_schematics)
-    |> Enum.filter(fn s -> s.profession_id == profession_id end)
+    ids = lookup_index(:schematics_by_profession, profession_id)
+    fetch_by_ids(:tradeskill_schematics, ids)
   end
 
   @doc """
@@ -245,11 +260,14 @@ defmodule BezgelorData.Store do
 
   @doc """
   Get all talents for a profession.
+
+  Uses secondary index for O(1) lookup instead of scanning all talents.
   """
   @spec get_talents_for_profession(non_neg_integer()) :: [map()]
   def get_talents_for_profession(profession_id) do
-    list(:tradeskill_talents)
-    |> Enum.filter(fn t -> t.profession_id == profession_id end)
+    ids = lookup_index(:talents_by_profession, profession_id)
+
+    fetch_by_ids(:tradeskill_talents, ids)
     |> Enum.sort_by(fn t -> {t.tier, t.id} end)
   end
 
@@ -278,11 +296,13 @@ defmodule BezgelorData.Store do
 
   @doc """
   Get all node types for a profession.
+
+  Uses secondary index for O(1) lookup instead of scanning all nodes.
   """
   @spec get_node_types_for_profession(non_neg_integer()) :: [map()]
   def get_node_types_for_profession(profession_id) do
-    list(:tradeskill_nodes)
-    |> Enum.filter(fn n -> n.profession_id == profession_id end)
+    ids = lookup_index(:nodes_by_profession, profession_id)
+    fetch_by_ids(:tradeskill_nodes, ids)
   end
 
   @doc """
@@ -304,11 +324,13 @@ defmodule BezgelorData.Store do
 
   @doc """
   Get all work order templates for a profession.
+
+  Uses secondary index for O(1) lookup instead of scanning all work orders.
   """
   @spec get_work_orders_for_profession(non_neg_integer()) :: [map()]
   def get_work_orders_for_profession(profession_id) do
-    list(:tradeskill_work_orders)
-    |> Enum.filter(fn wo -> wo.profession_id == profession_id end)
+    ids = lookup_index(:work_orders_by_profession, profession_id)
+    fetch_by_ids(:tradeskill_work_orders, ids)
   end
 
   @doc """
@@ -332,11 +354,13 @@ defmodule BezgelorData.Store do
 
   @doc """
   Get all public events for a zone.
+
+  Uses secondary index for O(1) lookup instead of scanning all events.
   """
   @spec get_zone_public_events(non_neg_integer()) :: [map()]
   def get_zone_public_events(zone_id) do
-    list(:public_events)
-    |> Enum.filter(fn event -> event.zone_id == zone_id end)
+    ids = lookup_index(:events_by_zone, zone_id)
+    fetch_by_ids(:public_events, ids)
   end
 
   @doc """
@@ -347,11 +371,13 @@ defmodule BezgelorData.Store do
 
   @doc """
   Get all world bosses for a zone.
+
+  Uses secondary index for O(1) lookup instead of scanning all bosses.
   """
   @spec get_zone_world_bosses(non_neg_integer()) :: [map()]
   def get_zone_world_bosses(zone_id) do
-    list(:world_bosses)
-    |> Enum.filter(fn boss -> boss.zone_id == zone_id end)
+    ids = lookup_index(:world_bosses_by_zone, zone_id)
+    fetch_by_ids(:world_bosses, ids)
   end
 
   @doc """
@@ -424,11 +450,13 @@ defmodule BezgelorData.Store do
 
   @doc """
   Get all instances of a specific type.
+
+  Uses secondary index for O(1) lookup instead of scanning all instances.
   """
   @spec get_instances_by_type(String.t()) :: [map()]
   def get_instances_by_type(type) when type in ["dungeon", "adventure", "raid", "expedition"] do
-    list(:instances)
-    |> Enum.filter(fn i -> i.type == type end)
+    ids = lookup_index(:instances_by_type, type)
+    fetch_by_ids(:instances, ids)
   end
 
   @doc """
@@ -457,11 +485,14 @@ defmodule BezgelorData.Store do
 
   @doc """
   Get all bosses for an instance.
+
+  Uses secondary index for O(1) lookup instead of scanning all bosses.
   """
   @spec get_bosses_for_instance(non_neg_integer()) :: [map()]
   def get_bosses_for_instance(instance_id) do
-    list(:instance_bosses)
-    |> Enum.filter(fn b -> b.instance_id == instance_id end)
+    ids = lookup_index(:bosses_by_instance, instance_id)
+
+    fetch_by_ids(:instance_bosses, ids)
     |> Enum.sort_by(fn b -> b.order end)
   end
 
@@ -778,6 +809,11 @@ defmodule BezgelorData.Store do
       :ets.new(table_name(table), [:set, :public, :named_table, read_concurrency: true])
     end
 
+    # Create secondary index tables
+    for table <- @index_tables do
+      :ets.new(index_table_name(table), [:set, :public, :named_table, read_concurrency: true])
+    end
+
     # Load data
     load_all_data()
 
@@ -793,6 +829,7 @@ defmodule BezgelorData.Store do
   # Private functions
 
   defp table_name(table), do: :"bezgelor_data_#{table}"
+  defp index_table_name(table), do: :"bezgelor_index_#{table}"
 
   defp load_all_data do
     Logger.info("Loading game data...")
@@ -840,6 +877,9 @@ defmodule BezgelorData.Store do
 
     # Spawn data
     load_creature_spawns()
+
+    # Build secondary indexes
+    build_all_indexes()
 
     Logger.info("Game data loaded: #{inspect(stats())}")
   end
@@ -1075,6 +1115,87 @@ defmodule BezgelorData.Store do
       {:error, reason} ->
         Logger.warning("Failed to load creature spawns: #{inspect(reason)}")
     end
+  end
+
+  # Secondary index building
+
+  defp build_all_indexes do
+    Logger.debug("Building secondary indexes...")
+
+    # Clear all index tables
+    for table <- @index_tables do
+      :ets.delete_all_objects(index_table_name(table))
+    end
+
+    # Build profession-based indexes
+    build_index(:tradeskill_schematics, :schematics_by_profession, :profession_id)
+    build_index(:tradeskill_talents, :talents_by_profession, :profession_id)
+    build_index(:tradeskill_nodes, :nodes_by_profession, :profession_id)
+    build_index(:tradeskill_work_orders, :work_orders_by_profession, :profession_id)
+
+    # Build zone-based indexes
+    build_index(:public_events, :events_by_zone, :zone_id)
+    build_index(:world_bosses, :world_bosses_by_zone, :zone_id)
+
+    # Build instance indexes
+    build_index_string(:instances, :instances_by_type, :type)
+    build_index(:instance_bosses, :bosses_by_instance, :instance_id)
+
+    Logger.debug("Secondary indexes built")
+  end
+
+  # Build an index from a source table to an index table using an integer key field
+  defp build_index(source_table, index_table, key_field) do
+    source_name = table_name(source_table)
+    index_name = index_table_name(index_table)
+
+    # Group items by the key field
+    groups =
+      :ets.tab2list(source_name)
+      |> Enum.group_by(fn {_id, data} -> Map.get(data, key_field) end, fn {id, _data} -> id end)
+
+    # Insert each group into the index table
+    for {key, ids} <- groups, not is_nil(key) do
+      :ets.insert(index_name, {key, ids})
+    end
+  end
+
+  # Build an index using a string key field (converted to atom for storage)
+  defp build_index_string(source_table, index_table, key_field) do
+    source_name = table_name(source_table)
+    index_name = index_table_name(index_table)
+
+    # Group items by the key field (string keys)
+    groups =
+      :ets.tab2list(source_name)
+      |> Enum.group_by(fn {_id, data} -> Map.get(data, key_field) end, fn {id, _data} -> id end)
+
+    # Insert each group into the index table
+    for {key, ids} <- groups, not is_nil(key) do
+      :ets.insert(index_name, {key, ids})
+    end
+  end
+
+  # Lookup IDs from an index, returns empty list if key not found
+  defp lookup_index(index_table, key) do
+    case :ets.lookup(index_table_name(index_table), key) do
+      [{^key, ids}] -> ids
+      [] -> []
+    end
+  end
+
+  # Fetch full records from a table for a list of IDs
+  defp fetch_by_ids(table, ids) do
+    table_name = table_name(table)
+
+    ids
+    |> Enum.map(fn id ->
+      case :ets.lookup(table_name, id) do
+        [{^id, data}] -> data
+        [] -> nil
+      end
+    end)
+    |> Enum.reject(&is_nil/1)
   end
 
   defp data_directory do
