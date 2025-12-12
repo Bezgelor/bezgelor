@@ -20,8 +20,98 @@ This document provides detailed design specifications for the remaining Phase 11
 | `arena_handler.ex` | **Missing** | Needs implementation |
 | `WarplotManager` | **Missing** | Needs implementation |
 | `warplot_handler.ex` | **Missing** | Needs implementation |
-| Rating calculations | **Missing** | ELO formulas needed |
-| Season management | **Missing** | Needs implementation |
+| Rating calculations | **Partial** | `BezgelorDb.PvP` has decay/reset, needs ELO module |
+| Season management | **Partial** | `BezgelorDb.PvP` has basics, needs scheduler |
+
+### Required Supervision Tree Additions
+
+Add to `BezgelorWorld.Application.start/2` in `base_children`:
+
+```elixir
+# After BattlegroundQueue, add:
+
+# Registry for arena instances
+{Registry, keys: :unique, name: BezgelorWorld.PvP.ArenaRegistry},
+# Dynamic supervisor for arena instances
+BezgelorWorld.PvP.ArenaSupervisor,
+# Arena queue manager (already exists, just needs to be added here)
+BezgelorWorld.PvP.ArenaQueue,
+
+# Registry for warplot instances
+{Registry, keys: :unique, name: BezgelorWorld.PvP.WarplotRegistry},
+# Dynamic supervisor for warplot instances
+BezgelorWorld.PvP.WarplotSupervisor,
+# Warplot manager
+BezgelorWorld.PvP.WarplotManager
+```
+
+### Required DB Context Additions
+
+Add to `BezgelorDb.PvP` module:
+
+```elixir
+@doc """
+Gets all ratings above a threshold for a bracket (for decay processing).
+"""
+@spec get_ratings_above(String.t(), integer()) :: [PvpRating.t()]
+def get_ratings_above(bracket, threshold) do
+  PvpRating
+  |> where([r], r.bracket == ^bracket and r.rating >= ^threshold)
+  |> Repo.all()
+end
+
+@doc """
+Counts rated players in a season (minimum 10 games).
+"""
+@spec count_rated_players(String.t()) :: integer()
+def count_rated_players(bracket) do
+  PvpRating
+  |> where([r], r.bracket == ^bracket and r.games_played >= 10)
+  |> Repo.aggregate(:count)
+end
+
+@doc """
+Gets the rating at a specific position in the leaderboard.
+"""
+@spec rating_at_position(String.t(), integer()) :: integer() | nil
+def rating_at_position(bracket, position) do
+  PvpRating
+  |> where([r], r.bracket == ^bracket and r.games_played >= 10)
+  |> order_by([r], desc: r.rating)
+  |> offset(^(position - 1))
+  |> limit(1)
+  |> select([r], r.rating)
+  |> Repo.one()
+end
+
+@doc """
+Gets player rank in a bracket.
+"""
+@spec get_player_rank(integer(), String.t()) :: integer() | nil
+def get_player_rank(character_id, bracket) do
+  subquery = from(r in PvpRating,
+    where: r.bracket == ^bracket and r.games_played >= 10,
+    select: %{character_id: r.character_id, rank: row_number() |> over(order_by: [desc: r.rating])}
+  )
+
+  from(s in subquery(subquery), where: s.character_id == ^character_id, select: s.rank)
+  |> Repo.one()
+end
+
+@doc """
+Gets players around a specific rank.
+"""
+@spec get_players_around_rank(String.t(), integer(), integer()) :: [map()]
+def get_players_around_rank(bracket, target_rank, range \\ 5) do
+  PvpRating
+  |> where([r], r.bracket == ^bracket and r.games_played >= 10)
+  |> order_by([r], desc: r.rating)
+  |> offset(^max(0, target_rank - range - 1))
+  |> limit(^(range * 2 + 1))
+  |> preload(:character)
+  |> Repo.all()
+end
+```
 
 ---
 
@@ -382,6 +472,114 @@ end
 }
 ```
 
+### F.5 BattlegroundInstance Objective Integration
+
+The existing `BattlegroundInstance` GenServer needs to be extended to use map-specific objectives.
+
+**Modify `BezgelorWorld.PvP.BattlegroundInstance`:**
+
+```elixir
+# Add to init/1 after building initial state:
+defp init_objectives(state) do
+  objectives = case state.battleground_id do
+    1 -> init_walatiki_objectives()
+    2 -> init_bloodsworn_objectives()
+    _ -> %{}
+  end
+  %{state | objectives: objectives}
+end
+
+defp init_walatiki_objectives do
+  %{
+    type: :walatiki,
+    mask: %BezgelorWorld.PvP.Objectives.WalatikiMask{
+      id: 1,
+      position: {0.0, 0.0, 0.0},  # Center spawn
+      state: :spawned,
+      carrier_guid: nil,
+      carrier_faction: nil
+    },
+    score_to_win: 5,  # First to 5 captures
+    exile_captures: 0,
+    dominion_captures: 0
+  }
+end
+
+defp init_bloodsworn_objectives do
+  %{
+    type: :bloodsworn,
+    control_points: %{
+      "A" => %BezgelorWorld.PvP.Objectives.ControlPoint{
+        id: 1, name: "Point A", owner: :neutral, capture_progress: 0.0,
+        capturing_faction: nil, players_in_range: %{exile: [], dominion: []},
+        score_multiplier: 1.0, position: {-50.0, 0.0, 25.0}
+      },
+      "B" => %BezgelorWorld.PvP.Objectives.ControlPoint{
+        id: 2, name: "Point B (Center)", owner: :neutral, capture_progress: 0.0,
+        capturing_faction: nil, players_in_range: %{exile: [], dominion: []},
+        score_multiplier: 2.0, position: {0.0, 0.0, 0.0}
+      },
+      "C" => %BezgelorWorld.PvP.Objectives.ControlPoint{
+        id: 3, name: "Point C", owner: :neutral, capture_progress: 0.0,
+        capturing_faction: nil, players_in_range: %{exile: [], dominion: []},
+        score_multiplier: 1.0, position: {50.0, 0.0, 25.0}
+      },
+      "D" => %BezgelorWorld.PvP.Objectives.ControlPoint{
+        id: 4, name: "Point D", owner: :neutral, capture_progress: 0.0,
+        capturing_faction: nil, players_in_range: %{exile: [], dominion: []},
+        score_multiplier: 1.0, position: {-50.0, 0.0, -25.0}
+      },
+      "E" => %BezgelorWorld.PvP.Objectives.ControlPoint{
+        id: 5, name: "Point E", owner: :neutral, capture_progress: 0.0,
+        capturing_faction: nil, players_in_range: %{exile: [], dominion: []},
+        score_multiplier: 1.0, position: {50.0, 0.0, -25.0}
+      }
+    },
+    score_to_win: 1600
+  }
+end
+
+# Add handle_info for objective ticks:
+def handle_info(:objective_tick, %{match_state: :active} = state) do
+  state = case state.objectives.type do
+    :walatiki -> tick_walatiki(state)
+    :bloodsworn -> tick_bloodsworn(state)
+    _ -> state
+  end
+
+  schedule_objective_tick()
+  {:noreply, state}
+end
+
+defp tick_bloodsworn(state) do
+  # Process each control point
+  {points, score_delta} =
+    Enum.reduce(state.objectives.control_points, {%{}, %{exile: 0, dominion: 0}}, fn {id, point}, {acc_points, acc_scores} ->
+      {result, updated_point} = BezgelorWorld.PvP.Objectives.ControlPoint.tick(point)
+
+      # Add score for owned points
+      score_add = case updated_point.owner do
+        :exile -> %{exile: round(10 * updated_point.score_multiplier), dominion: 0}
+        :dominion -> %{exile: 0, dominion: round(10 * updated_point.score_multiplier)}
+        _ -> %{exile: 0, dominion: 0}
+      end
+
+      {Map.put(acc_points, id, updated_point),
+       %{exile: acc_scores.exile + score_add.exile, dominion: acc_scores.dominion + score_add.dominion}}
+    end)
+
+  objectives = %{state.objectives | control_points: points}
+  exile_score = state.exile_score + score_delta.exile
+  dominion_score = state.dominion_score + score_delta.dominion
+
+  %{state | objectives: objectives, exile_score: exile_score, dominion_score: dominion_score}
+end
+
+defp schedule_objective_tick do
+  Process.send_after(self(), :objective_tick, 5_000)  # Every 5 seconds
+end
+```
+
 ---
 
 ## Phase G: Arena System
@@ -558,7 +756,7 @@ defmodule BezgelorWorld.PvP.ArenaInstance do
     if state.match_state == @match_state_ending do
       # Calculate and apply rating changes
       rating_changes = calculate_rating_changes(state)
-      apply_rating_changes(rating_changes)
+      apply_rating_changes(state, rating_changes)
 
       state = %{state |
         match_state: @match_state_complete,
@@ -688,10 +886,28 @@ defmodule BezgelorWorld.PvP.ArenaInstance do
     }
   end
 
-  defp apply_rating_changes(changes) do
+  defp apply_rating_changes(state, changes) do
+    # Use actual ArenaTeams.record_match/4 signature:
+    # record_match(team_id, won, rating_change, participant_ids)
     spawn(fn ->
-      ArenaTeams.update_rating(changes.winner.team_id, changes.winner.change, :win)
-      ArenaTeams.update_rating(changes.loser.team_id, changes.loser.change, :loss)
+      winner_team = if state.winner == :team1, do: state.team1, else: state.team2
+      loser_team = if state.winner == :team1, do: state.team2, else: state.team1
+
+      winner_participant_ids = Enum.map(winner_team.members, & &1.guid)
+      loser_participant_ids = Enum.map(loser_team.members, & &1.guid)
+
+      # Record team match results
+      ArenaTeams.record_match(changes.winner.team_id, true, changes.winner.change, winner_participant_ids)
+      ArenaTeams.record_match(changes.loser.team_id, false, changes.loser.change, loser_participant_ids)
+
+      # Also update individual player ratings via BezgelorDb.PvP
+      bracket = state.bracket
+      Enum.each(winner_participant_ids, fn char_id ->
+        BezgelorDb.PvP.record_match(char_id, bracket, true, changes.loser.old_rating)
+      end)
+      Enum.each(loser_participant_ids, fn char_id ->
+        BezgelorDb.PvP.record_match(char_id, bracket, false, changes.winner.old_rating)
+      end)
     end)
   end
 end
@@ -1370,115 +1586,118 @@ defmodule BezgelorWorld.PvP.Season do
   defp tier_conquest_reward(_), do: 0
 
   defp reset_ratings_for_new_season do
-    # Soft reset: new_rating = (old_rating + 1500) / 2
-    BezgelorDb.PvP.soft_reset_all_ratings(1500)
+    # Use existing BezgelorDb.PvP.reset_ratings_for_season/0
+    # which performs: new_rating = old_rating / 2
+    BezgelorDb.PvP.reset_ratings_for_season()
+    BezgelorDb.ArenaTeams.reset_for_season()
   end
 end
 ```
 
-### I.4 Leaderboard Queries
+### I.4 Season Scheduler
+
+A GenServer that manages automatic season transitions:
 
 ```elixir
-defmodule BezgelorDb.PvP.Leaderboard do
+defmodule BezgelorWorld.PvP.SeasonScheduler do
   @moduledoc """
-  Leaderboard queries for PvP rankings.
+  Manages PvP season lifecycle with scheduled transitions.
+
+  Runs checks daily to:
+  - Start new seasons when scheduled
+  - End seasons when their end_date is reached
+  - Apply weekly rating decay
   """
 
-  import Ecto.Query
+  use GenServer
 
-  alias BezgelorDb.Repo
-  alias BezgelorDb.Schema.{PvPRating, ArenaTeam, Character}
+  require Logger
 
-  @doc """
-  Get top players for a bracket.
-  """
-  def top_players(bracket, limit \\ 100) do
-    from(r in PvPRating,
-      where: r.bracket == ^bracket,
-      where: r.games_played >= 10,  # Minimum games
-      order_by: [desc: r.rating],
-      limit: ^limit,
-      join: c in Character, on: c.id == r.character_id,
-      select: %{
-        rank: row_number() |> over(order_by: [desc: r.rating]),
-        character_id: r.character_id,
-        character_name: c.name,
-        rating: r.rating,
-        season_high: r.season_high,
-        games_played: r.games_played,
-        games_won: r.games_won,
-        win_rate: fragment("ROUND(? * 100.0 / NULLIF(?, 0), 1)", r.games_won, r.games_played)
-      }
-    )
-    |> Repo.all()
+  @check_interval_ms 24 * 60 * 60 * 1000  # Daily check
+  @decay_day_of_week 2  # Tuesday (1=Monday, 7=Sunday)
+
+  def start_link(opts \\ []) do
+    GenServer.start_link(__MODULE__, opts, name: __MODULE__)
   end
 
-  @doc """
-  Get top arena teams for a bracket.
-  """
-  def top_teams(bracket, limit \\ 100) do
-    from(t in ArenaTeam,
-      where: t.bracket == ^bracket,
-      where: t.games_played >= 10,
-      where: is_nil(t.disbanded_at),
-      order_by: [desc: t.rating],
-      limit: ^limit,
-      select: %{
-        rank: row_number() |> over(order_by: [desc: t.rating]),
-        team_id: t.id,
-        team_name: t.name,
-        rating: t.rating,
-        season_high: t.season_high,
-        games_played: t.games_played,
-        games_won: t.games_won,
-        win_rate: fragment("ROUND(? * 100.0 / NULLIF(?, 0), 1)", t.games_won, t.games_played)
-      }
-    )
-    |> Repo.all()
+  @impl true
+  def init(_opts) do
+    Logger.info("SeasonScheduler started")
+    schedule_check()
+    {:ok, %{last_decay_week: nil}}
   end
 
-  @doc """
-  Get player's rank in a bracket.
-  """
-  def player_rank(character_id, bracket) do
-    subquery = from(r in PvPRating,
-      where: r.bracket == ^bracket,
-      where: r.games_played >= 10,
-      select: %{
-        character_id: r.character_id,
-        rank: row_number() |> over(order_by: [desc: r.rating])
-      }
-    )
-
-    from(s in subquery(subquery),
-      where: s.character_id == ^character_id,
-      select: s.rank
-    )
-    |> Repo.one()
+  @impl true
+  def handle_info(:check_seasons, state) do
+    state = check_season_transitions(state)
+    state = maybe_apply_decay(state)
+    schedule_check()
+    {:noreply, state}
   end
 
-  @doc """
-  Get players around a specific rank.
-  """
-  def players_around_rank(bracket, target_rank, range \\ 5) do
-    from(r in PvPRating,
-      where: r.bracket == ^bracket,
-      where: r.games_played >= 10,
-      order_by: [desc: r.rating],
-      offset: ^max(0, target_rank - range - 1),
-      limit: ^(range * 2 + 1),
-      join: c in Character, on: c.id == r.character_id,
-      select: %{
-        rank: row_number() |> over(order_by: [desc: r.rating]) + ^max(0, target_rank - range - 1),
-        character_id: r.character_id,
-        character_name: c.name,
-        rating: r.rating
-      }
-    )
-    |> Repo.all()
+  defp schedule_check do
+    Process.send_after(self(), :check_seasons, @check_interval_ms)
+  end
+
+  defp check_season_transitions(state) do
+    now = DateTime.utc_now()
+
+    # Check if current season should end
+    case BezgelorDb.PvP.get_active_season() do
+      nil ->
+        # No active season - check if one should start
+        check_pending_season_start(now)
+
+      season ->
+        if DateTime.compare(now, season.end_date) == :gt do
+          Logger.info("Ending PvP season #{season.season_number}")
+          BezgelorDb.PvP.end_season(season.season_number)
+          BezgelorWorld.PvP.Season.end_season(season.id)
+        end
+    end
+
+    state
+  end
+
+  defp check_pending_season_start(now) do
+    # Look for seasons with start_date in the past that aren't active
+    # This would require a new query in BezgelorDb.PvP
+    :ok
+  end
+
+  defp maybe_apply_decay(state) do
+    today = Date.utc_today()
+    day_of_week = Date.day_of_week(today)
+    week_number = div(Date.to_gregorian_days(today), 7)
+
+    if day_of_week == @decay_day_of_week and state.last_decay_week != week_number do
+      Logger.info("Applying weekly rating decay")
+      {:ok, count} = BezgelorDb.PvP.apply_rating_decay()
+      Logger.info("Applied decay to #{count} ratings")
+      %{state | last_decay_week: week_number}
+    else
+      state
+    end
   end
 end
 ```
+
+**Add to supervision tree** in `BezgelorWorld.Application`:
+
+```elixir
+# Add after WarplotManager:
+BezgelorWorld.PvP.SeasonScheduler
+```
+
+### I.5 Leaderboard Queries
+
+**Note:** The existing `BezgelorDb.PvP` context already has `get_leaderboard/2`. The additional functions defined in "Required DB Context Additions" above provide:
+- `get_player_rank/2` - Get a player's rank in a bracket
+- `get_players_around_rank/3` - Get players near a specific rank
+
+The existing `BezgelorDb.ArenaTeams.get_team_leaderboard/2` handles team rankings.
+
+No separate Leaderboard module is needed - use the existing context modules.
 
 ---
 
@@ -1893,10 +2112,9 @@ end
 | Task | Description | Est. LOC |
 |------|-------------|----------|
 | I.1 | Rating module (ELO calculations) | 100 |
-| I.2 | RatingDecay module | 75 |
-| I.3 | Season module | 200 |
-| I.4 | Leaderboard queries | 150 |
-| I.5 | Season scheduler (start/end) | 75 |
+| I.2 | Season module | 200 |
+| I.3 | SeasonScheduler GenServer | 100 |
+| I.4 | Add leaderboard functions to BezgelorDb.PvP | 75 |
 
 ### Phase J: Testing
 | Task | Description | Est. LOC |
@@ -1906,6 +2124,80 @@ end
 | J.3 | Rating calculation tests | 100 |
 | J.4 | Season/decay tests | 100 |
 | J.5 | Integration tests | 300 |
+
+---
+
+## Required Server Packets
+
+The following server packets need to be created in `apps/bezgelor_protocol/lib/bezgelor_protocol/packets/world/`:
+
+```elixir
+# server_arena_queue_status.ex
+defmodule BezgelorProtocol.Packets.World.ServerArenaQueueStatus do
+  @moduledoc "Sent when player joins arena queue or status changes."
+
+  use BezgelorProtocol.Packet
+
+  defstruct [:bracket, :status, :estimated_wait, :rating_window]
+
+  @impl true
+  def opcode, do: 0x0A20  # Placeholder - check actual WildStar opcode
+
+  @impl true
+  def write(packet) do
+    PacketWriter.new()
+    |> PacketWriter.write_string(packet.bracket)
+    |> PacketWriter.write_u8(packet.status)  # 0=queued, 1=popped, 2=cancelled
+    |> PacketWriter.write_u32(packet.estimated_wait)
+    |> PacketWriter.write_u32(packet.rating_window)
+  end
+end
+
+# server_arena_match_ready.ex
+defmodule BezgelorProtocol.Packets.World.ServerArenaMatchReady do
+  @moduledoc "Sent when arena match is found and ready to start."
+
+  use BezgelorProtocol.Packet
+
+  defstruct [:match_id, :bracket, :arena_id, :team1_name, :team2_name]
+
+  @impl true
+  def opcode, do: 0x0A21
+
+  @impl true
+  def write(packet) do
+    PacketWriter.new()
+    |> PacketWriter.write_string(packet.match_id)
+    |> PacketWriter.write_string(packet.bracket)
+    |> PacketWriter.write_u32(packet.arena_id)
+    |> PacketWriter.write_string(packet.team1_name)
+    |> PacketWriter.write_string(packet.team2_name)
+  end
+end
+
+# server_battleground_objective_update.ex
+defmodule BezgelorProtocol.Packets.World.ServerBattlegroundObjectiveUpdate do
+  @moduledoc "Sent when battleground objective state changes (mask pickup, point captured, etc)."
+
+  use BezgelorProtocol.Packet
+
+  defstruct [:objective_type, :objective_id, :state, :owner_faction, :progress, :carrier_guid]
+
+  @impl true
+  def opcode, do: 0x0A30
+
+  @impl true
+  def write(packet) do
+    PacketWriter.new()
+    |> PacketWriter.write_u8(packet.objective_type)  # 0=mask, 1=control_point
+    |> PacketWriter.write_u32(packet.objective_id)
+    |> PacketWriter.write_u8(packet.state)
+    |> PacketWriter.write_u8(packet.owner_faction)
+    |> PacketWriter.write_float(packet.progress)
+    |> PacketWriter.write_u64(packet.carrier_guid || 0)
+  end
+end
+```
 
 ---
 
@@ -1922,10 +2214,11 @@ apps/bezgelor_world/lib/bezgelor_world/
 │   ├── battleground_supervisor.ex # EXISTS
 │   ├── duel_manager.ex           # EXISTS
 │   ├── rating.ex                 # NEW
-│   ├── rating_decay.ex           # NEW
 │   ├── season.ex                 # NEW
+│   ├── season_scheduler.ex       # NEW
 │   ├── warplot_instance.ex       # NEW
 │   ├── warplot_manager.ex        # NEW
+│   ├── warplot_supervisor.ex     # NEW
 │   └── objectives/
 │       ├── walatiki_mask.ex      # NEW
 │       └── control_point.ex      # NEW
@@ -1937,8 +2230,12 @@ apps/bezgelor_world/lib/bezgelor_world/
 └── ...
 
 apps/bezgelor_db/lib/bezgelor_db/
-├── pvp.ex                        # EXISTS
-└── leaderboard.ex                # NEW
+└── pvp.ex                        # EXISTS (add leaderboard functions)
+
+apps/bezgelor_protocol/lib/bezgelor_protocol/packets/world/
+├── server_arena_queue_status.ex      # NEW
+├── server_arena_match_ready.ex       # NEW
+└── server_battleground_objective_update.ex  # NEW
 
 apps/bezgelor_world/test/
 ├── arena_test.exs                # NEW
@@ -1951,11 +2248,12 @@ apps/bezgelor_world/test/
 
 ## Success Criteria
 
-1. **Battlegrounds** - Walatiki and Bloodsworn objectives work correctly with proper scoring
-2. **Arenas** - ArenaInstance manages full match lifecycle with dampening
+1. **Battlegrounds** - Walatiki and Bloodsworn objectives integrated into BattlegroundInstance with proper scoring
+2. **Arenas** - ArenaInstance manages full match lifecycle with dampening and correct rating updates
 3. **Warplots** - WarplotManager handles plugs, queuing, and 40v40 battles
-4. **Rating** - ELO calculations produce reasonable rating changes
-5. **Seasons** - Season start/end works with proper reward distribution
-6. **Decay** - Inactive high-rated players decay appropriately
-7. **Leaderboards** - Queries return correct rankings
-8. **Tests** - Comprehensive coverage of all new functionality
+4. **Rating** - ELO calculations produce reasonable rating changes via ArenaTeams.record_match/4
+5. **Seasons** - SeasonScheduler automates season transitions and weekly decay
+6. **Decay** - Existing BezgelorDb.PvP.apply_rating_decay/0 called weekly by scheduler
+7. **Leaderboards** - Use existing BezgelorDb.PvP.get_leaderboard/2 plus new ranking functions
+8. **Supervision** - ArenaRegistry, ArenaSupervisor, WarplotRegistry, WarplotSupervisor in application tree
+9. **Tests** - Comprehensive coverage of all new functionality
