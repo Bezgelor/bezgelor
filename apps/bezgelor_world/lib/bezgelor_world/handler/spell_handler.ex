@@ -83,13 +83,8 @@ defmodule BezgelorWorld.Handler.SpellHandler do
   end
 
   defp do_cast(spell, packet, player_guid, state) do
-    # Get caster stats (simplified for Phase 8)
-    caster_stats = %{
-      power: 100,
-      tech: 100,
-      support: 100,
-      crit_chance: 10
-    }
+    # Get caster stats from character data and buff modifiers
+    caster_stats = get_caster_stats(state)
 
     case SpellManager.cast_spell(
            player_guid,
@@ -413,6 +408,39 @@ defmodule BezgelorWorld.Handler.SpellHandler do
 
       _ ->
         ServerSpellEffect.damage(caster_guid, target_guid, spell_id, effect.amount, effect.is_crit)
+    end
+  end
+
+  # Get combat stats for the casting player
+  defp get_caster_stats(state) do
+    alias BezgelorCore.CharacterStats
+
+    character = state.session_data[:character]
+    entity_guid = state.session_data[:entity_guid]
+
+    base_stats =
+      if character do
+        CharacterStats.compute_combat_stats(character)
+      else
+        # Fallback for tests without full session
+        %{power: 100, tech: 100, support: 100, crit_chance: 10, armor: 0.0}
+      end
+
+    # Apply buff modifiers if entity has buffs
+    if entity_guid do
+      power_mod = BuffManager.get_stat_modifier(entity_guid, :power)
+      tech_mod = BuffManager.get_stat_modifier(entity_guid, :tech)
+      support_mod = BuffManager.get_stat_modifier(entity_guid, :support)
+      crit_mod = BuffManager.get_stat_modifier(entity_guid, :crit_chance)
+
+      CharacterStats.apply_buff_modifiers(base_stats, %{
+        power: power_mod,
+        tech: tech_mod,
+        support: support_mod,
+        crit_chance: crit_mod
+      })
+    else
+      base_stats
     end
   end
 end
