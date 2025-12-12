@@ -235,4 +235,92 @@ defmodule BezgelorDataTest do
       assert stats.texts > 100_000
     end
   end
+
+  describe "Store pagination" do
+    alias BezgelorData.Store
+
+    test "list_paginated returns first page of items" do
+      {items, continuation} = Store.list_paginated(:creatures, 10)
+
+      assert is_list(items)
+      assert length(items) == 10
+      assert continuation != nil
+    end
+
+    test "list_continue returns next page" do
+      {first_page, continuation} = Store.list_paginated(:creatures, 10)
+      {second_page, _cont2} = Store.list_continue(continuation)
+
+      assert is_list(second_page)
+      assert length(second_page) == 10
+
+      # Pages should have different items
+      first_ids = Enum.map(first_page, & &1.id) |> MapSet.new()
+      second_ids = Enum.map(second_page, & &1.id) |> MapSet.new()
+      assert MapSet.disjoint?(first_ids, second_ids)
+    end
+
+    test "list_continue with nil returns empty list" do
+      {items, continuation} = Store.list_continue(nil)
+
+      assert items == []
+      assert continuation == nil
+    end
+
+    test "pagination iterates through all items" do
+      total_count = Store.count(:zones)
+
+      # Collect all items through pagination
+      all_items = collect_paginated(:zones, 20)
+
+      # Should get same count as total
+      assert length(all_items) == total_count
+    end
+
+    test "list_filtered returns matching items" do
+      # Filter creatures by tier
+      filter_fn = fn creature -> creature.tier_id == 1 end
+      {items, _continuation} = Store.list_filtered(:creatures, filter_fn, 50)
+
+      assert is_list(items)
+      assert Enum.all?(items, fn c -> c.tier_id == 1 end)
+    end
+
+    test "list_filtered_continue continues filtered iteration" do
+      filter_fn = fn creature -> creature.tier_id == 1 end
+      {_first_page, continuation} = Store.list_filtered(:creatures, filter_fn, 10)
+      {second_page, _cont2} = Store.list_filtered_continue(continuation)
+
+      assert is_list(second_page)
+      # All items should still match filter
+      assert Enum.all?(second_page, fn c -> c.tier_id == 1 end)
+    end
+
+    test "collect_all_pages collects entire filtered result" do
+      filter_fn = fn zone -> zone.pvp_rules == 0 end
+
+      # Collect using pagination
+      result = Store.list_filtered(:zones, filter_fn, 10)
+      all_filtered = Store.collect_all_pages(result, &Store.list_filtered_continue/1)
+
+      # Compare with non-paginated filter
+      all_zones = Store.list(:zones)
+      expected = Enum.filter(all_zones, filter_fn)
+
+      assert length(all_filtered) == length(expected)
+    end
+
+    # Helper to collect all items through pagination
+    defp collect_paginated(table, page_size) do
+      {items, continuation} = Store.list_paginated(table, page_size)
+      collect_paginated_loop(items, continuation)
+    end
+
+    defp collect_paginated_loop(acc, nil), do: acc
+
+    defp collect_paginated_loop(acc, continuation) do
+      {items, new_continuation} = Store.list_continue(continuation)
+      collect_paginated_loop(acc ++ items, new_continuation)
+    end
+  end
 end

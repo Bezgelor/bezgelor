@@ -27,7 +27,7 @@ defmodule BezgelorWorld.Zone.Instance do
 
   use GenServer
 
-  alias BezgelorCore.{Entity, ProcessRegistry}
+  alias BezgelorCore.{Entity, ProcessRegistry, SpatialGrid}
   alias BezgelorWorld.CreatureManager
 
   require Logger
@@ -39,6 +39,7 @@ defmodule BezgelorWorld.Zone.Instance do
           instance_id: instance_id(),
           zone_data: map(),
           entities: %{non_neg_integer() => Entity.t()},
+          spatial_grid: SpatialGrid.t(),
           players: MapSet.t(non_neg_integer()),
           creatures: MapSet.t(non_neg_integer())
         }
@@ -110,6 +111,22 @@ defmodule BezgelorWorld.Zone.Instance do
 
   def update_entity({zone_id, instance_id}, guid, update_fn) do
     GenServer.call(via_tuple(zone_id, instance_id), {:update_entity, guid, update_fn})
+  end
+
+  @doc """
+  Update an entity's position efficiently.
+
+  This is more efficient than update_entity when only the position changes,
+  as it avoids the overhead of a full entity update.
+  """
+  @spec update_entity_position(pid() | {non_neg_integer(), instance_id()}, non_neg_integer(), Entity.position()) ::
+          :ok | :error
+  def update_entity_position(instance, guid, position) when is_pid(instance) do
+    GenServer.call(instance, {:update_entity_position, guid, position})
+  end
+
+  def update_entity_position({zone_id, instance_id}, guid, position) do
+    GenServer.call(via_tuple(zone_id, instance_id), {:update_entity_position, guid, position})
   end
 
   @doc """
@@ -193,6 +210,7 @@ defmodule BezgelorWorld.Zone.Instance do
       instance_id: instance_id,
       zone_data: zone_data,
       entities: %{},
+      spatial_grid: SpatialGrid.new(50.0),
       players: MapSet.new(),
       creatures: MapSet.new()
     }
@@ -223,18 +241,19 @@ defmodule BezgelorWorld.Zone.Instance do
   @impl true
   def handle_cast({:add_entity, entity}, state) do
     entities = Map.put(state.entities, entity.guid, entity)
+    spatial_grid = SpatialGrid.insert(state.spatial_grid, entity.guid, entity.position)
 
     # Track by type
     state =
       case entity.type do
         :player ->
-          %{state | entities: entities, players: MapSet.put(state.players, entity.guid)}
+          %{state | entities: entities, spatial_grid: spatial_grid, players: MapSet.put(state.players, entity.guid)}
 
         :creature ->
-          %{state | entities: entities, creatures: MapSet.put(state.creatures, entity.guid)}
+          %{state | entities: entities, spatial_grid: spatial_grid, creatures: MapSet.put(state.creatures, entity.guid)}
 
         _ ->
-          %{state | entities: entities}
+          %{state | entities: entities, spatial_grid: spatial_grid}
       end
 
     Logger.debug("Entity #{entity.guid} (#{entity.type}) added to zone #{state.zone_id}")
@@ -245,21 +264,22 @@ defmodule BezgelorWorld.Zone.Instance do
   def handle_cast({:remove_entity, guid}, state) do
     entity = Map.get(state.entities, guid)
     entities = Map.delete(state.entities, guid)
+    spatial_grid = SpatialGrid.remove(state.spatial_grid, guid)
 
     state =
       if entity do
         case entity.type do
           :player ->
-            %{state | entities: entities, players: MapSet.delete(state.players, guid)}
+            %{state | entities: entities, spatial_grid: spatial_grid, players: MapSet.delete(state.players, guid)}
 
           :creature ->
-            %{state | entities: entities, creatures: MapSet.delete(state.creatures, guid)}
+            %{state | entities: entities, spatial_grid: spatial_grid, creatures: MapSet.delete(state.creatures, guid)}
 
           _ ->
-            %{state | entities: entities}
+            %{state | entities: entities, spatial_grid: spatial_grid}
         end
       else
-        %{state | entities: entities}
+        %{state | entities: entities, spatial_grid: spatial_grid}
       end
 
     Logger.debug("Entity #{guid} removed from zone #{state.zone_id}")
@@ -298,24 +318,42 @@ defmodule BezgelorWorld.Zone.Instance do
       entity ->
         updated_entity = update_fn.(entity)
         entities = Map.put(state.entities, guid, updated_entity)
-        {:reply, :ok, %{state | entities: entities}}
+
+        # Update spatial grid if position changed
+        spatial_grid =
+          if entity.position != updated_entity.position do
+            SpatialGrid.update(state.spatial_grid, guid, updated_entity.position)
+          else
+            state.spatial_grid
+          end
+
+        {:reply, :ok, %{state | entities: entities, spatial_grid: spatial_grid}}
     end
   end
 
   @impl true
-  def handle_call({:entities_in_range, {x, y, z}, radius}, _from, state) do
-    radius_sq = radius * radius
+  def handle_call({:update_entity_position, guid, new_position}, _from, state) do
+    case Map.get(state.entities, guid) do
+      nil ->
+        {:reply, :error, state}
+
+      entity ->
+        updated_entity = %{entity | position: new_position}
+        entities = Map.put(state.entities, guid, updated_entity)
+        spatial_grid = SpatialGrid.update(state.spatial_grid, guid, new_position)
+        {:reply, :ok, %{state | entities: entities, spatial_grid: spatial_grid}}
+    end
+  end
+
+  @impl true
+  def handle_call({:entities_in_range, position, radius}, _from, state) do
+    # Use spatial grid for O(k) lookup instead of O(n) iteration
+    guids = SpatialGrid.entities_in_range(state.spatial_grid, position, radius)
 
     entities =
-      state.entities
-      |> Map.values()
-      |> Enum.filter(fn entity ->
-        {ex, ey, ez} = entity.position
-        dx = ex - x
-        dy = ey - y
-        dz = ez - z
-        dx * dx + dy * dy + dz * dz <= radius_sq
-      end)
+      guids
+      |> Enum.map(&Map.get(state.entities, &1))
+      |> Enum.reject(&is_nil/1)
 
     {:reply, entities, state}
   end
