@@ -543,4 +543,131 @@ defmodule BezgelorDb.Storefront do
     |> preload(:store_item)
     |> Repo.all()
   end
+
+  # ============================================================================
+  # Gifting
+  # ============================================================================
+
+  @doc """
+  Gift a store item to another player.
+
+  Creates a purchase for the gifter and unlocks the item for the recipient.
+  """
+  @spec gift_item(integer(), integer(), integer(), :premium | :bonus, String.t() | nil) ::
+          {:ok, StorePurchase.t()}
+          | {:error, :not_found | :insufficient_funds | :no_price | :recipient_not_found | term()}
+  def gift_item(gifter_account_id, recipient_account_id, store_item_id, currency_type, message \\ nil) do
+    with {:ok, item} <- get_store_item(store_item_id),
+         {:ok, base_price} <- get_price(item, currency_type),
+         {:ok, result} <-
+           execute_gift(gifter_account_id, recipient_account_id, item, currency_type, base_price, message) do
+      {:ok, result.purchase}
+    else
+      {:error, :currency, :insufficient_funds, _} -> {:error, :insufficient_funds}
+      {:error, _} = error -> error
+    end
+  end
+
+  defp execute_gift(gifter_account_id, recipient_account_id, item, currency_type, price, message) do
+    Multi.new()
+    |> Multi.run(:currency, fn _repo, _changes ->
+      deduct_currency(gifter_account_id, currency_type, price)
+    end)
+    |> Multi.run(:unlock, fn _repo, _changes ->
+      unlock_collectible(recipient_account_id, item)
+    end)
+    |> Multi.insert(:purchase, fn _changes ->
+      %StorePurchase{}
+      |> StorePurchase.changeset(%{
+        account_id: gifter_account_id,
+        store_item_id: item.id,
+        currency_type: Atom.to_string(currency_type),
+        amount_paid: price,
+        original_price: price,
+        discount_applied: 0,
+        metadata: %{
+          "gift" => true,
+          "recipient_account_id" => recipient_account_id,
+          "gift_message" => message
+        }
+      })
+    end)
+    |> Repo.transaction()
+  end
+
+  # ============================================================================
+  # Promo Code Redemption
+  # ============================================================================
+
+  @doc """
+  Redeem a promo code for its rewards.
+
+  Unlike discount codes (used at purchase), this redeems item or currency codes directly.
+  """
+  @spec redeem_promo_code(String.t(), integer()) ::
+          {:ok, PromoCode.t()}
+          | {:error, :not_found | :expired | :already_redeemed | :not_redeemable}
+  def redeem_promo_code(code, account_id) do
+    with {:ok, promo} <- validate_promo_code(code, account_id),
+         {:ok, _} <- apply_promo_rewards(promo, account_id),
+         {:ok, _} <- record_promo_redemption(promo, account_id) do
+      {:ok, promo}
+    end
+  end
+
+  defp apply_promo_rewards(%PromoCode{code_type: "discount"}, _account_id) do
+    # Discount codes can't be redeemed directly, only used at purchase
+    {:error, :not_redeemable}
+  end
+
+  defp apply_promo_rewards(%PromoCode{code_type: "item", granted_item_id: item_id}, account_id)
+       when not is_nil(item_id) do
+    # Grant the item to the account's collection
+    # For now, we'll unlock it as a mount - in a real system, we'd check the item type
+    Collections.unlock_account_mount(account_id, item_id, "promo_code")
+  end
+
+  defp apply_promo_rewards(
+         %PromoCode{
+           code_type: "currency",
+           granted_currency_amount: amount,
+           granted_currency_type: currency_type
+         },
+         account_id
+       )
+       when not is_nil(amount) and not is_nil(currency_type) do
+    grant_currency(account_id, String.to_existing_atom(currency_type), amount)
+  end
+
+  defp apply_promo_rewards(_, _), do: {:error, :not_redeemable}
+
+  defp grant_currency(account_id, currency_type, amount) do
+    currency = Repo.get_by(AccountCurrency, account_id: account_id)
+
+    if currency do
+      changeset =
+        case currency_type do
+          :premium ->
+            AccountCurrency.changeset(currency, %{
+              premium_currency: currency.premium_currency + amount
+            })
+
+          :bonus ->
+            AccountCurrency.changeset(currency, %{
+              bonus_currency: currency.bonus_currency + amount
+            })
+        end
+
+      Repo.update(changeset)
+    else
+      # Create currency record if it doesn't exist
+      %AccountCurrency{}
+      |> AccountCurrency.changeset(%{
+        account_id: account_id,
+        premium_currency: if(currency_type == :premium, do: amount, else: 0),
+        bonus_currency: if(currency_type == :bonus, do: amount, else: 0)
+      })
+      |> Repo.insert()
+    end
+  end
 end
