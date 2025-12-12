@@ -1,0 +1,314 @@
+{
+  "bindpoint": [
+    {
+      "ID": 1,
+      "bindPointFactionEnum": 0,
+      "localizedTextId": 170555
+    },
+    {
+      "ID": 2,
+      "bindPointFactionEnum": 0,
+      "localizedTextId": 171975
+    },
+    {
+      "ID": 3,
+      "bindPointFactionEnum": 0,
+      "localizedTextId": 0
+    },
+    {
+      "ID": 4,
+      "bindPointFactionEnum": 0,
+      "localizedTextId": 0
+    },
+    {
+      "ID": 5,
+      "bindPointFactionEnum": 0,
+      "localizedTextId": 0
+    },
+    {
+      "ID": 6,
+      "bindPointFactionEnum": 1,
+      "localizedTextId": 172053
+    },
+    {
+      "ID": 7,
+      "bindPointFactionEnum": 1,
+      "localizedTextId": 171978
+    },
+    {
+      "ID": 8,
+      "bindPointFactionEnum": 2,
+      "localizedTextId": 172646
+    },
+    {
+      "ID": 9,
+      "bindPointFactionEnum": 2,
+      "localizedTextId": 172647
+    },
+    {
+      "ID": 10,
+      "bindPointFactionEnum": 2,
+      "localizedTextId": 172648
+    },
+    {
+      "ID": 11,
+      "bindPointFactionEnum": 2,
+      "localizedTextId": 172650
+    },
+    {
+      "ID": 12,
+      "bindPointFactionEnum": 1,
+      "localizedTextId": 172651
+    },
+    {
+      "ID": 13,
+      "bindPointFactionEnum": 1,
+      "localizedTextId": 173502
+    },
+    {
+      "ID": 14,
+      "bindPointFactionEnum": 1,
+      "localizedTextId": 173503
+    },
+    {
+      "ID": 15,
+      "bindPointFactionEnum": 1,
+      "localizedTextId": 173504
+    },
+    {
+      "ID": 16,
+      "bindPointFactionEnum": 1,
+      "localizedTextId": 173597
+    },
+    {
+      "ID": 17,
+      "bindPointFactionEnum": 1,
+      "localizedTextId": 173599
+    },
+    {
+      "ID": 18,
+      "bindPointFactionEnum": 1,
+      "localizedTextId": 173600
+    },
+    {
+      "ID": 19,
+      "bindPointFactionEnum": 1,
+      "localizedTextId": 173603
+    },
+    {
+      "ID": 20,
+      "bindPointFactionEnum": 1,
+      "localizedTextId": 173604
+    },
+    {
+      "ID": 21,
+      "bindPointFactionEnum": 1,
+      "localizedTextId": 178066
+    },
+    {
+      "ID": 22,
+      "bindPointFactionEnum": 1,
+      "localizedTextId": 184856
+    },
+    {
+      "ID": 24,
+      "bindPointFactionEnum": 1,
+      "localizedTextId": 188695
+    },
+    {
+      "ID": 25,
+      "bindPointFactionEnum": 1,
+      "localizedTextId": 190296
+    },
+    {
+      "ID": 26,
+      "bindPointFactionEnum": 1,
+      "localizedTextId": 190298
+    },
+    {
+      "ID": 27,
+      "bindPointFactionEnum": 2,
+      "localizedTextId": 200191
+    },
+    {
+      "ID": 28,
+      "bindPointFactionEnum": 2,
+      "localizedTextId": 205641
+    },
+    {
+      "ID": 29,
+      "bindPointFactionEnum": 1,
+      "localizedTextId": 224950
+    },
+    {
+      "ID": 30,
+      "bindPointFactionEnum": 0,
+      "localizedTextId": 224951
+    },
+    {
+      "ID": 31,
+      "bindPointFactionEnum": 2,
+      "localizedTextId": 224952
+    },
+    {
+      "ID": 32,
+      "bindPointFactionEnum": 0,
+      "localizedTextId": 224953
+    },
+    {
+      "ID": 33,
+      "bindPointFactionEnum": 2,
+      "localizedTextId": 230870
+    },
+    {
+      "ID": 34,
+      "bindPointFactionEnum": 2,
+      "localizedTextId": 230871
+    },
+    {
+      "ID": 35,
+      "bindPointFactionEnum": 2,
+      "localizedTextId": 240613
+    },
+    {
+      "ID": 36,
+      "bindPointFactionEnum": 2,
+      "localizedTextId": 240614
+    },
+    {
+      "ID": 37,
+      "bindPointFactionEnum": 0,
+      "localizedTextId": 243598
+    },
+    {
+      "ID": 38,
+      "bindPointFactionEnum": 0,
+      "localizedTextId": 243597
+    },
+    {
+      "ID": 39,
+      "bindPointFactionEnum": 1,
+      "localizedTextId": 253944
+    },
+    {
+      "ID": 40,
+      "bindPointFactionEnum": 1,
+      "localizedTextId": 254826
+    },
+    {
+      "ID": 41,
+      "bindPointFactionEnum": 2,
+      "localizedTextId": 254841
+    },
+    {
+      "ID": 42,
+      "bindPointFactionEnum": 2,
+      "localizedTextId": 259510
+    },
+    {
+      "ID": 43,
+      "bindPointFactionEnum": 1,
+      "localizedTextId": 267413
+    },
+    {
+      "ID": 44,
+      "bindPointFactionEnum": 2,
+      "localizedTextId": 280345
+    },
+    {
+      "ID": 45,
+      "bindPointFactionEnum": 2,
+      "localizedTextId": 280346
+    },
+    {
+      "ID": 46,
+      "bindPointFactionEnum": 1,
+      "localizedTextId": 289199
+    },
+    {
+      "ID": 47,
+      "bindPointFactionEnum": 2,
+      "localizedTextId": 311832
+    },
+    {
+      "ID": 48,
+      "bindPointFactionEnum": 0,
+      "localizedTextId": 342507
+    },
+    {
+      "ID": 49,
+      "bindPointFactionEnum": 0,
+      "localizedTextId": 342508
+    },
+    {
+      "ID": 52,
+      "bindPointFactionEnum": 2,
+      "localizedTextId": 435190
+    },
+    {
+      "ID": 53,
+      "bindPointFactionEnum": 2,
+      "localizedTextId": 476880
+    },
+    {
+      "ID": 54,
+      "bindPointFactionEnum": 1,
+      "localizedTextId": 509809
+    },
+    {
+      "ID": 55,
+      "bindPointFactionEnum": 2,
+      "localizedTextId": 509811
+    },
+    {
+      "ID": 56,
+      "bindPointFactionEnum": 2,
+      "localizedTextId": 522543
+    },
+    {
+      "ID": 57,
+      "bindPointFactionEnum": 2,
+      "localizedTextId": 537198
+    },
+    {
+      "ID": 58,
+      "bindPointFactionEnum": 1,
+      "localizedTextId": 537199
+    },
+    {
+      "ID": 59,
+      "bindPointFactionEnum": 2,
+      "localizedTextId": 537200
+    },
+    {
+      "ID": 60,
+      "bindPointFactionEnum": 1,
+      "localizedTextId": 537201
+    },
+    {
+      "ID": 61,
+      "bindPointFactionEnum": 2,
+      "localizedTextId": 570385
+    },
+    {
+      "ID": 62,
+      "bindPointFactionEnum": 1,
+      "localizedTextId": 570386
+    },
+    {
+      "ID": 63,
+      "bindPointFactionEnum": 0,
+      "localizedTextId": 570387
+    },
+    {
+      "ID": 65,
+      "bindPointFactionEnum": 1,
+      "localizedTextId": 683207
+    },
+    {
+      "ID": 66,
+      "bindPointFactionEnum": 2,
+      "localizedTextId": 683208
+    }
+  ]
+}

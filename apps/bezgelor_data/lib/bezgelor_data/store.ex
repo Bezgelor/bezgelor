@@ -40,7 +40,36 @@ defmodule BezgelorData.Store do
     :arenas,
     :warplot_plugs,
     # Spawn data
-    :creature_spawns
+    :creature_spawns,
+    # Quest data (extracted from client)
+    :quests,
+    :quest_objectives,
+    :quest_rewards,
+    :quest_categories,
+    :quest_hubs,
+    # NPC/Vendor data
+    :npc_vendors,
+    :vendor_inventories,
+    :creature_affiliations,
+    # Dialogue data
+    :gossip_entries,
+    :gossip_sets,
+    # Achievement data
+    :achievements,
+    :achievement_categories,
+    :achievement_checklists,
+    # Path data
+    :path_missions,
+    :path_episodes,
+    :path_rewards,
+    # Challenge data
+    :challenges,
+    :challenge_tiers,
+    # World location data
+    :world_locations,
+    :bind_points,
+    # Prerequisites
+    :prerequisites
   ]
 
   # Secondary index tables for efficient lookups by foreign key
@@ -53,7 +82,28 @@ defmodule BezgelorData.Store do
     :events_by_zone,
     :world_bosses_by_zone,
     :instances_by_type,
-    :bosses_by_instance
+    :bosses_by_instance,
+    # Quest indexes
+    :quests_by_zone,
+    :quest_objectives_by_quest,
+    :quest_rewards_by_quest,
+    # NPC/Vendor indexes
+    :vendors_by_creature,
+    :vendors_by_type,
+    # Dialogue indexes
+    :gossip_entries_by_set,
+    # Achievement indexes
+    :achievements_by_category,
+    :achievements_by_zone,
+    # Path indexes
+    :path_missions_by_episode,
+    :path_missions_by_type,
+    # Challenge indexes
+    :challenges_by_zone,
+    :challenge_tiers_by_challenge,
+    # World location indexes
+    :world_locations_by_world,
+    :world_locations_by_zone
   ]
 
   # Client API
@@ -800,6 +850,301 @@ defmodule BezgelorData.Store do
     end)
   end
 
+  # Quest queries
+
+  @doc """
+  Get a quest definition by ID.
+  """
+  @spec get_quest(non_neg_integer()) :: {:ok, map()} | :error
+  def get_quest(id), do: get(:quests, id)
+
+  @doc """
+  Get all quests for a zone.
+  Uses secondary index for O(1) lookup.
+  """
+  @spec get_quests_for_zone(non_neg_integer()) :: [map()]
+  def get_quests_for_zone(zone_id) do
+    ids = lookup_index(:quests_by_zone, zone_id)
+    fetch_by_ids(:quests, ids)
+  end
+
+  @doc """
+  Get all quests of a specific type.
+  """
+  @spec get_quests_by_type(non_neg_integer()) :: [map()]
+  def get_quests_by_type(type) do
+    list(:quests)
+    |> Enum.filter(fn q -> q.type == type end)
+  end
+
+  @doc """
+  Get a quest objective by ID.
+  """
+  @spec get_quest_objective(non_neg_integer()) :: {:ok, map()} | :error
+  def get_quest_objective(id), do: get(:quest_objectives, id)
+
+  @doc """
+  Get quest rewards by quest ID.
+  Uses secondary index for O(1) lookup.
+  """
+  @spec get_quest_rewards(non_neg_integer()) :: [map()]
+  def get_quest_rewards(quest_id) do
+    ids = lookup_index(:quest_rewards_by_quest, quest_id)
+    fetch_by_ids(:quest_rewards, ids)
+  end
+
+  @doc """
+  Get a quest category by ID.
+  """
+  @spec get_quest_category(non_neg_integer()) :: {:ok, map()} | :error
+  def get_quest_category(id), do: get(:quest_categories, id)
+
+  @doc """
+  Get a quest hub by ID.
+  """
+  @spec get_quest_hub(non_neg_integer()) :: {:ok, map()} | :error
+  def get_quest_hub(id), do: get(:quest_hubs, id)
+
+  # NPC/Vendor queries
+
+  @doc """
+  Get vendor data by vendor ID.
+  """
+  @spec get_vendor(non_neg_integer()) :: {:ok, map()} | :error
+  def get_vendor(id), do: get(:npc_vendors, id)
+
+  @doc """
+  Get vendor by creature ID.
+  Uses secondary index for O(1) lookup.
+  """
+  @spec get_vendor_by_creature(non_neg_integer()) :: {:ok, map()} | :error
+  def get_vendor_by_creature(creature_id) do
+    case lookup_index(:vendors_by_creature, creature_id) do
+      [id | _] -> get(:npc_vendors, id)
+      [] -> :error
+    end
+  end
+
+  @doc """
+  Get all vendors of a specific type.
+  Uses secondary index for O(1) lookup.
+  """
+  @spec get_vendors_by_type(String.t()) :: [map()]
+  def get_vendors_by_type(vendor_type) do
+    ids = lookup_index(:vendors_by_type, vendor_type)
+    fetch_by_ids(:npc_vendors, ids)
+  end
+
+  @doc """
+  Get all vendors.
+  """
+  @spec get_all_vendors() :: [map()]
+  def get_all_vendors, do: list(:npc_vendors)
+
+  @doc """
+  Get vendor inventory by vendor ID.
+  """
+  @spec get_vendor_inventory(non_neg_integer()) :: {:ok, map()} | :error
+  def get_vendor_inventory(vendor_id), do: get(:vendor_inventories, vendor_id)
+
+  @doc """
+  Get vendor inventory items for a creature.
+  Returns the list of items the vendor sells, or empty list if not a vendor.
+  """
+  @spec get_vendor_items_for_creature(non_neg_integer()) :: [map()]
+  def get_vendor_items_for_creature(creature_id) do
+    case get_vendor_by_creature(creature_id) do
+      {:ok, vendor} ->
+        case get_vendor_inventory(vendor.id) do
+          {:ok, inventory} -> inventory.items
+          :error -> []
+        end
+
+      :error ->
+        []
+    end
+  end
+
+  @doc """
+  Get creature affiliation by ID.
+  """
+  @spec get_creature_affiliation(non_neg_integer()) :: {:ok, map()} | :error
+  def get_creature_affiliation(id), do: get(:creature_affiliations, id)
+
+  # Gossip/Dialogue queries
+
+  @doc """
+  Get a gossip entry by ID.
+  """
+  @spec get_gossip_entry(non_neg_integer()) :: {:ok, map()} | :error
+  def get_gossip_entry(id), do: get(:gossip_entries, id)
+
+  @doc """
+  Get gossip entries for a gossip set.
+  Uses secondary index for O(1) lookup.
+  """
+  @spec get_gossip_entries_for_set(non_neg_integer()) :: [map()]
+  def get_gossip_entries_for_set(set_id) do
+    ids = lookup_index(:gossip_entries_by_set, set_id)
+    fetch_by_ids(:gossip_entries, ids)
+  end
+
+  @doc """
+  Get a gossip set by ID.
+  """
+  @spec get_gossip_set(non_neg_integer()) :: {:ok, map()} | :error
+  def get_gossip_set(id), do: get(:gossip_sets, id)
+
+  # Achievement queries
+
+  @doc """
+  Get an achievement by ID.
+  """
+  @spec get_achievement(non_neg_integer()) :: {:ok, map()} | :error
+  def get_achievement(id), do: get(:achievements, id)
+
+  @doc """
+  Get achievements for a category.
+  Uses secondary index for O(1) lookup.
+  """
+  @spec get_achievements_for_category(non_neg_integer()) :: [map()]
+  def get_achievements_for_category(category_id) do
+    ids = lookup_index(:achievements_by_category, category_id)
+    fetch_by_ids(:achievements, ids)
+  end
+
+  @doc """
+  Get achievements for a zone.
+  Uses secondary index for O(1) lookup.
+  """
+  @spec get_achievements_for_zone(non_neg_integer()) :: [map()]
+  def get_achievements_for_zone(zone_id) do
+    ids = lookup_index(:achievements_by_zone, zone_id)
+    fetch_by_ids(:achievements, ids)
+  end
+
+  @doc """
+  Get an achievement category by ID.
+  """
+  @spec get_achievement_category(non_neg_integer()) :: {:ok, map()} | :error
+  def get_achievement_category(id), do: get(:achievement_categories, id)
+
+  @doc """
+  Get achievement checklist items for an achievement.
+  """
+  @spec get_achievement_checklists(non_neg_integer()) :: [map()]
+  def get_achievement_checklists(achievement_id) do
+    list(:achievement_checklists)
+    |> Enum.filter(fn c -> c.achievementId == achievement_id end)
+    |> Enum.sort_by(fn c -> c.bit end)
+  end
+
+  # Path queries
+
+  @doc """
+  Get a path mission by ID.
+  """
+  @spec get_path_mission(non_neg_integer()) :: {:ok, map()} | :error
+  def get_path_mission(id), do: get(:path_missions, id)
+
+  @doc """
+  Get path missions for an episode.
+  Uses secondary index for O(1) lookup.
+  """
+  @spec get_path_missions_for_episode(non_neg_integer()) :: [map()]
+  def get_path_missions_for_episode(episode_id) do
+    ids = lookup_index(:path_missions_by_episode, episode_id)
+    fetch_by_ids(:path_missions, ids)
+  end
+
+  @doc """
+  Get path missions by path type (0=Soldier, 1=Settler, 2=Scientist, 3=Explorer).
+  Uses secondary index for O(1) lookup.
+  """
+  @spec get_path_missions_by_type(non_neg_integer()) :: [map()]
+  def get_path_missions_by_type(path_type) do
+    ids = lookup_index(:path_missions_by_type, path_type)
+    fetch_by_ids(:path_missions, ids)
+  end
+
+  @doc """
+  Get a path episode by ID.
+  """
+  @spec get_path_episode(non_neg_integer()) :: {:ok, map()} | :error
+  def get_path_episode(id), do: get(:path_episodes, id)
+
+  @doc """
+  Get a path reward by ID.
+  """
+  @spec get_path_reward(non_neg_integer()) :: {:ok, map()} | :error
+  def get_path_reward(id), do: get(:path_rewards, id)
+
+  # Challenge queries
+
+  @doc """
+  Get a challenge by ID.
+  """
+  @spec get_challenge(non_neg_integer()) :: {:ok, map()} | :error
+  def get_challenge(id), do: get(:challenges, id)
+
+  @doc """
+  Get challenges for a zone.
+  Uses secondary index for O(1) lookup.
+  """
+  @spec get_challenges_for_zone(non_neg_integer()) :: [map()]
+  def get_challenges_for_zone(zone_id) do
+    ids = lookup_index(:challenges_by_zone, zone_id)
+    fetch_by_ids(:challenges, ids)
+  end
+
+  @doc """
+  Get a challenge tier by ID.
+  """
+  @spec get_challenge_tier(non_neg_integer()) :: {:ok, map()} | :error
+  def get_challenge_tier(id), do: get(:challenge_tiers, id)
+
+  # World Location queries
+
+  @doc """
+  Get a world location by ID.
+  """
+  @spec get_world_location(non_neg_integer()) :: {:ok, map()} | :error
+  def get_world_location(id), do: get(:world_locations, id)
+
+  @doc """
+  Get world locations for a world.
+  Uses secondary index for O(1) lookup.
+  """
+  @spec get_world_locations_for_world(non_neg_integer()) :: [map()]
+  def get_world_locations_for_world(world_id) do
+    ids = lookup_index(:world_locations_by_world, world_id)
+    fetch_by_ids(:world_locations, ids)
+  end
+
+  @doc """
+  Get world locations for a zone.
+  Uses secondary index for O(1) lookup.
+  """
+  @spec get_world_locations_for_zone(non_neg_integer()) :: [map()]
+  def get_world_locations_for_zone(zone_id) do
+    ids = lookup_index(:world_locations_by_zone, zone_id)
+    fetch_by_ids(:world_locations, ids)
+  end
+
+  @doc """
+  Get a bind point by ID.
+  """
+  @spec get_bind_point(non_neg_integer()) :: {:ok, map()} | :error
+  def get_bind_point(id), do: get(:bind_points, id)
+
+  # Prerequisite queries
+
+  @doc """
+  Get a prerequisite by ID.
+  """
+  @spec get_prerequisite(non_neg_integer()) :: {:ok, map()} | :error
+  def get_prerequisite(id), do: get(:prerequisites, id)
+
   # Server callbacks
 
   @impl true
@@ -878,6 +1223,43 @@ defmodule BezgelorData.Store do
     # Spawn data
     load_creature_spawns()
 
+    # Quest data (extracted from client - uses uppercase ID)
+    load_client_table(:quests, "quests.json", "quest2")
+    load_client_table(:quest_objectives, "quest_objectives.json", "questobjective")
+    load_client_table_with_fk(:quest_rewards, "quest_rewards.json", "quest2reward", :quest2Id)
+    load_client_table(:quest_categories, "quest_categories.json", "questcategory")
+    load_client_table(:quest_hubs, "quest_hubs.json", "questhub")
+
+    # NPC/Vendor data
+    load_table(:npc_vendors, "npc_vendors.json", "npc_vendors")
+    load_vendor_inventories()
+    load_client_table(:creature_affiliations, "creature_affiliations.json", "creature2affiliation")
+
+    # Dialogue data
+    load_client_table(:gossip_entries, "gossip_entries.json", "gossipentry")
+    load_client_table(:gossip_sets, "gossip_sets.json", "gossipset")
+
+    # Achievement data
+    load_client_table(:achievements, "achievements.json", "achievement")
+    load_client_table(:achievement_categories, "achievement_categories.json", "achievementcategory")
+    load_client_table(:achievement_checklists, "achievement_checklists.json", "achievementchecklist")
+
+    # Path data
+    load_client_table(:path_missions, "path_missions.json", "pathmission")
+    load_client_table(:path_episodes, "path_episodes.json", "pathepisode")
+    load_client_table(:path_rewards, "path_rewards.json", "pathreward")
+
+    # Challenge data
+    load_client_table(:challenges, "challenges.json", "challenge")
+    load_client_table(:challenge_tiers, "challenge_tiers.json", "challengetier")
+
+    # World location data
+    load_client_table(:world_locations, "world_locations.json", "worldlocation2")
+    load_client_table(:bind_points, "bind_points.json", "bindpoint")
+
+    # Prerequisites
+    load_client_table(:prerequisites, "prerequisites.json", "prerequisite")
+
     # Build secondary indexes
     build_all_indexes()
 
@@ -937,6 +1319,93 @@ defmodule BezgelorData.Store do
 
       {:error, reason} ->
         Logger.warning("Failed to load #{key}: #{inspect(reason)}")
+    end
+  end
+
+  # Load tables from WildStar client data (uses uppercase ID field)
+  defp load_client_table(table, json_file, key) do
+    table_name = table_name(table)
+
+    # Clear existing data
+    :ets.delete_all_objects(table_name)
+
+    json_path = Path.join(data_directory(), json_file)
+
+    case load_json_raw(json_path) do
+      {:ok, data} ->
+        items = Map.get(data, String.to_atom(key), [])
+
+        for item <- items do
+          # Client data uses uppercase ID
+          id = Map.get(item, :ID)
+
+          if id do
+            # Normalize to lowercase :id for consistency
+            normalized = item |> Map.put(:id, id) |> Map.delete(:ID)
+            :ets.insert(table_name, {id, normalized})
+          end
+        end
+
+        Logger.debug("Loaded #{length(items)} #{key}")
+
+      {:error, reason} ->
+        Logger.warning("Failed to load #{key} from #{json_file}: #{inspect(reason)}")
+    end
+  end
+
+  # Load client table that needs a foreign key index (e.g., quest_rewards by quest_id)
+  defp load_client_table_with_fk(table, json_file, key, _fk_field) do
+    table_name = table_name(table)
+
+    # Clear existing data
+    :ets.delete_all_objects(table_name)
+
+    json_path = Path.join(data_directory(), json_file)
+
+    case load_json_raw(json_path) do
+      {:ok, data} ->
+        items = Map.get(data, String.to_atom(key), [])
+
+        for item <- items do
+          # Client data uses uppercase ID
+          id = Map.get(item, :ID)
+
+          if id do
+            # Normalize to lowercase :id for consistency
+            normalized = item |> Map.put(:id, id) |> Map.delete(:ID)
+            :ets.insert(table_name, {id, normalized})
+          end
+        end
+
+        Logger.debug("Loaded #{length(items)} #{key}")
+
+      {:error, reason} ->
+        Logger.warning("Failed to load #{key} from #{json_file}: #{inspect(reason)}")
+    end
+  end
+
+  defp load_vendor_inventories do
+    table_name = table_name(:vendor_inventories)
+
+    # Clear existing data
+    :ets.delete_all_objects(table_name)
+
+    json_path = Path.join(data_directory(), "vendor_inventories.json")
+
+    case load_json_raw(json_path) do
+      {:ok, data} ->
+        inventories = Map.get(data, :vendor_inventories, [])
+
+        for inv <- inventories do
+          # Index by vendor_id
+          :ets.insert(table_name, {inv.vendor_id, inv})
+        end
+
+        total_items = Enum.reduce(inventories, 0, fn inv, acc -> acc + length(inv.items) end)
+        Logger.debug("Loaded #{length(inventories)} vendor inventories (#{total_items} total items)")
+
+      {:error, reason} ->
+        Logger.warning("Failed to load vendor inventories: #{inspect(reason)}")
     end
   end
 
@@ -1140,6 +1609,32 @@ defmodule BezgelorData.Store do
     # Build instance indexes
     build_index_string(:instances, :instances_by_type, :type)
     build_index(:instance_bosses, :bosses_by_instance, :instance_id)
+
+    # Build quest indexes
+    build_index(:quests, :quests_by_zone, :worldZoneId)
+    build_index(:quest_rewards, :quest_rewards_by_quest, :quest2Id)
+
+    # Build vendor indexes
+    build_index(:npc_vendors, :vendors_by_creature, :creature_id)
+    build_index_string(:npc_vendors, :vendors_by_type, :vendor_type)
+
+    # Build gossip indexes
+    build_index(:gossip_entries, :gossip_entries_by_set, :gossipSetId)
+
+    # Build achievement indexes
+    build_index(:achievements, :achievements_by_category, :achievementCategoryId)
+    build_index(:achievements, :achievements_by_zone, :worldZoneId)
+
+    # Build path indexes
+    build_index(:path_missions, :path_missions_by_episode, :pathEpisodeId)
+    build_index(:path_missions, :path_missions_by_type, :pathTypeEnum)
+
+    # Build challenge indexes
+    build_index(:challenges, :challenges_by_zone, :worldZoneId)
+
+    # Build world location indexes
+    build_index(:world_locations, :world_locations_by_world, :worldId)
+    build_index(:world_locations, :world_locations_by_zone, :worldZoneId)
 
     Logger.debug("Secondary indexes built")
   end

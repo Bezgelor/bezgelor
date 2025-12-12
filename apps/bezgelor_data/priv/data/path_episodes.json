@@ -1,0 +1,924 @@
+{
+  "pathepisode": [
+    {
+      "ID": 8,
+      "localizedTextIdName": 108790,
+      "localizedTextIdSummary": 108791,
+      "worldId": 426,
+      "worldZoneId": 35,
+      "pathTypeEnum": 0
+    },
+    {
+      "ID": 9,
+      "localizedTextIdName": 108823,
+      "localizedTextIdSummary": 108824,
+      "worldId": 426,
+      "worldZoneId": 35,
+      "pathTypeEnum": 3
+    },
+    {
+      "ID": 12,
+      "localizedTextIdName": 110790,
+      "localizedTextIdSummary": 110791,
+      "worldId": 22,
+      "worldZoneId": 483,
+      "pathTypeEnum": 3
+    },
+    {
+      "ID": 13,
+      "localizedTextIdName": 110955,
+      "localizedTextIdSummary": 110956,
+      "worldId": 22,
+      "worldZoneId": 483,
+      "pathTypeEnum": 0
+    },
+    {
+      "ID": 14,
+      "localizedTextIdName": 111023,
+      "localizedTextIdSummary": 111024,
+      "worldId": 22,
+      "worldZoneId": 483,
+      "pathTypeEnum": 1
+    },
+    {
+      "ID": 15,
+      "localizedTextIdName": 111145,
+      "localizedTextIdSummary": 572603,
+      "worldId": 870,
+      "worldZoneId": 622,
+      "pathTypeEnum": 0
+    },
+    {
+      "ID": 16,
+      "localizedTextIdName": 111250,
+      "localizedTextIdSummary": 111251,
+      "worldId": 22,
+      "worldZoneId": 483,
+      "pathTypeEnum": 2
+    },
+    {
+      "ID": 17,
+      "localizedTextIdName": 111373,
+      "localizedTextIdSummary": 572604,
+      "worldId": 870,
+      "worldZoneId": 622,
+      "pathTypeEnum": 3
+    },
+    {
+      "ID": 18,
+      "localizedTextIdName": 112072,
+      "localizedTextIdSummary": 572605,
+      "worldId": 870,
+      "worldZoneId": 622,
+      "pathTypeEnum": 2
+    },
+    {
+      "ID": 19,
+      "localizedTextIdName": 112821,
+      "localizedTextIdSummary": 270857,
+      "worldId": 870,
+      "worldZoneId": 622,
+      "pathTypeEnum": 1
+    },
+    {
+      "ID": 20,
+      "localizedTextIdName": 113470,
+      "localizedTextIdSummary": 113471,
+      "worldId": 625,
+      "worldZoneId": 642,
+      "pathTypeEnum": 1
+    },
+    {
+      "ID": 28,
+      "localizedTextIdName": 114138,
+      "localizedTextIdSummary": 114139,
+      "worldId": 426,
+      "worldZoneId": 35,
+      "pathTypeEnum": 2
+    },
+    {
+      "ID": 30,
+      "localizedTextIdName": 114178,
+      "localizedTextIdSummary": 694448,
+      "worldId": 783,
+      "worldZoneId": 481,
+      "pathTypeEnum": 1
+    },
+    {
+      "ID": 31,
+      "localizedTextIdName": 114453,
+      "localizedTextIdSummary": 694447,
+      "worldId": 625,
+      "worldZoneId": 642,
+      "pathTypeEnum": 3
+    },
+    {
+      "ID": 34,
+      "localizedTextIdName": 115246,
+      "localizedTextIdSummary": 694449,
+      "worldId": 783,
+      "worldZoneId": 481,
+      "pathTypeEnum": 3
+    },
+    {
+      "ID": 35,
+      "localizedTextIdName": 117762,
+      "localizedTextIdSummary": 572606,
+      "worldId": 22,
+      "worldZoneId": 36,
+      "pathTypeEnum": 2
+    },
+    {
+      "ID": 36,
+      "localizedTextIdName": 118868,
+      "localizedTextIdSummary": 118869,
+      "worldId": 51,
+      "worldZoneId": 13,
+      "pathTypeEnum": 1
+    },
+    {
+      "ID": 38,
+      "localizedTextIdName": 119859,
+      "localizedTextIdSummary": 572607,
+      "worldId": 22,
+      "worldZoneId": 36,
+      "pathTypeEnum": 3
+    },
+    {
+      "ID": 39,
+      "localizedTextIdName": 120071,
+      "localizedTextIdSummary": 124016,
+      "worldId": 51,
+      "worldZoneId": 13,
+      "pathTypeEnum": 3
+    },
+    {
+      "ID": 40,
+      "localizedTextIdName": 124015,
+      "localizedTextIdSummary": 124017,
+      "worldId": 51,
+      "worldZoneId": 13,
+      "pathTypeEnum": 0
+    },
+    {
+      "ID": 41,
+      "localizedTextIdName": 120106,
+      "localizedTextIdSummary": 120105,
+      "worldId": 51,
+      "worldZoneId": 13,
+      "pathTypeEnum": 2
+    },
+    {
+      "ID": 42,
+      "localizedTextIdName": 120211,
+      "localizedTextIdSummary": 572608,
+      "worldId": 22,
+      "worldZoneId": 36,
+      "pathTypeEnum": 0
+    },
+    {
+      "ID": 43,
+      "localizedTextIdName": 120217,
+      "localizedTextIdSummary": 694450,
+      "worldId": 625,
+      "worldZoneId": 642,
+      "pathTypeEnum": 2
+    },
+    {
+      "ID": 46,
+      "localizedTextIdName": 123097,
+      "localizedTextIdSummary": 694451,
+      "worldId": 625,
+      "worldZoneId": 642,
+      "pathTypeEnum": 0
+    },
+    {
+      "ID": 49,
+      "localizedTextIdName": 129920,
+      "localizedTextIdSummary": 131351,
+      "worldId": 51,
+      "worldZoneId": 29,
+      "pathTypeEnum": 3
+    },
+    {
+      "ID": 50,
+      "localizedTextIdName": 129995,
+      "localizedTextIdSummary": 129996,
+      "worldId": 51,
+      "worldZoneId": 29,
+      "pathTypeEnum": 2
+    },
+    {
+      "ID": 51,
+      "localizedTextIdName": 130620,
+      "localizedTextIdSummary": 130621,
+      "worldId": 51,
+      "worldZoneId": 29,
+      "pathTypeEnum": 0
+    },
+    {
+      "ID": 57,
+      "localizedTextIdName": 133702,
+      "localizedTextIdSummary": 133703,
+      "worldId": 51,
+      "worldZoneId": 29,
+      "pathTypeEnum": 1
+    },
+    {
+      "ID": 64,
+      "localizedTextIdName": 149338,
+      "localizedTextIdSummary": 149343,
+      "worldId": 1068,
+      "worldZoneId": 871,
+      "pathTypeEnum": 0
+    },
+    {
+      "ID": 70,
+      "localizedTextIdName": 694453,
+      "localizedTextIdSummary": 694454,
+      "worldId": 921,
+      "worldZoneId": 140,
+      "pathTypeEnum": 1
+    },
+    {
+      "ID": 71,
+      "localizedTextIdName": 156022,
+      "localizedTextIdSummary": 156023,
+      "worldId": 825,
+      "worldZoneId": 580,
+      "pathTypeEnum": 0
+    },
+    {
+      "ID": 82,
+      "localizedTextIdName": 164834,
+      "localizedTextIdSummary": 164835,
+      "worldId": 426,
+      "worldZoneId": 35,
+      "pathTypeEnum": 1
+    },
+    {
+      "ID": 120,
+      "localizedTextIdName": 180149,
+      "localizedTextIdSummary": 180150,
+      "worldId": 51,
+      "worldZoneId": 137,
+      "pathTypeEnum": 3
+    },
+    {
+      "ID": 121,
+      "localizedTextIdName": 180153,
+      "localizedTextIdSummary": 180154,
+      "worldId": 51,
+      "worldZoneId": 137,
+      "pathTypeEnum": 2
+    },
+    {
+      "ID": 123,
+      "localizedTextIdName": 181020,
+      "localizedTextIdSummary": 181021,
+      "worldId": 51,
+      "worldZoneId": 137,
+      "pathTypeEnum": 1
+    },
+    {
+      "ID": 124,
+      "localizedTextIdName": 181268,
+      "localizedTextIdSummary": 181269,
+      "worldId": 51,
+      "worldZoneId": 137,
+      "pathTypeEnum": 0
+    },
+    {
+      "ID": 125,
+      "localizedTextIdName": 184205,
+      "localizedTextIdSummary": 184206,
+      "worldId": 625,
+      "worldZoneId": 262,
+      "pathTypeEnum": 2
+    },
+    {
+      "ID": 131,
+      "localizedTextIdName": 191999,
+      "localizedTextIdSummary": 192000,
+      "worldId": 1228,
+      "worldZoneId": 228,
+      "pathTypeEnum": 0
+    },
+    {
+      "ID": 134,
+      "localizedTextIdName": 192007,
+      "localizedTextIdSummary": 192008,
+      "worldId": 1228,
+      "worldZoneId": 228,
+      "pathTypeEnum": 2
+    },
+    {
+      "ID": 192,
+      "localizedTextIdName": 212963,
+      "localizedTextIdSummary": 212964,
+      "worldId": 22,
+      "worldZoneId": 36,
+      "pathTypeEnum": 1
+    },
+    {
+      "ID": 195,
+      "localizedTextIdName": 213789,
+      "localizedTextIdSummary": 694455,
+      "worldId": 625,
+      "worldZoneId": 1282,
+      "pathTypeEnum": 0
+    },
+    {
+      "ID": 226,
+      "localizedTextIdName": 234865,
+      "localizedTextIdSummary": 234866,
+      "worldId": 1387,
+      "worldZoneId": 1304,
+      "pathTypeEnum": 0
+    },
+    {
+      "ID": 227,
+      "localizedTextIdName": 223561,
+      "localizedTextIdSummary": 234862,
+      "worldId": 1387,
+      "worldZoneId": 1304,
+      "pathTypeEnum": 2
+    },
+    {
+      "ID": 228,
+      "localizedTextIdName": 223562,
+      "localizedTextIdSummary": 234873,
+      "worldId": 1387,
+      "worldZoneId": 1304,
+      "pathTypeEnum": 1
+    },
+    {
+      "ID": 229,
+      "localizedTextIdName": 223696,
+      "localizedTextIdSummary": 234875,
+      "worldId": 1387,
+      "worldZoneId": 1304,
+      "pathTypeEnum": 3
+    },
+    {
+      "ID": 230,
+      "localizedTextIdName": 228759,
+      "localizedTextIdSummary": 694456,
+      "worldId": 625,
+      "worldZoneId": 1333,
+      "pathTypeEnum": 0
+    },
+    {
+      "ID": 233,
+      "localizedTextIdName": 244625,
+      "localizedTextIdSummary": 244626,
+      "worldId": 990,
+      "worldZoneId": 1414,
+      "pathTypeEnum": 0
+    },
+    {
+      "ID": 234,
+      "localizedTextIdName": 244861,
+      "localizedTextIdSummary": 244862,
+      "worldId": 990,
+      "worldZoneId": 1414,
+      "pathTypeEnum": 2
+    },
+    {
+      "ID": 235,
+      "localizedTextIdName": 246476,
+      "localizedTextIdSummary": 246477,
+      "worldId": 990,
+      "worldZoneId": 1414,
+      "pathTypeEnum": 1
+    },
+    {
+      "ID": 236,
+      "localizedTextIdName": 246885,
+      "localizedTextIdSummary": 246886,
+      "worldId": 990,
+      "worldZoneId": 1414,
+      "pathTypeEnum": 3
+    },
+    {
+      "ID": 237,
+      "localizedTextIdName": 247360,
+      "localizedTextIdSummary": 572609,
+      "worldId": 1421,
+      "worldZoneId": 936,
+      "pathTypeEnum": 0
+    },
+    {
+      "ID": 238,
+      "localizedTextIdName": 247361,
+      "localizedTextIdSummary": 572610,
+      "worldId": 1421,
+      "worldZoneId": 936,
+      "pathTypeEnum": 2
+    },
+    {
+      "ID": 239,
+      "localizedTextIdName": 247363,
+      "localizedTextIdSummary": 572611,
+      "worldId": 1421,
+      "worldZoneId": 936,
+      "pathTypeEnum": 3
+    },
+    {
+      "ID": 240,
+      "localizedTextIdName": 432484,
+      "localizedTextIdSummary": 247367,
+      "worldId": 1068,
+      "worldZoneId": 871,
+      "pathTypeEnum": 1
+    },
+    {
+      "ID": 241,
+      "localizedTextIdName": 247368,
+      "localizedTextIdSummary": 432378,
+      "worldId": 1421,
+      "worldZoneId": 936,
+      "pathTypeEnum": 1
+    },
+    {
+      "ID": 243,
+      "localizedTextIdName": 247717,
+      "localizedTextIdSummary": 360818,
+      "worldId": 1068,
+      "worldZoneId": 871,
+      "pathTypeEnum": 2
+    },
+    {
+      "ID": 244,
+      "localizedTextIdName": 248097,
+      "localizedTextIdSummary": 572612,
+      "worldId": 22,
+      "worldZoneId": 1402,
+      "pathTypeEnum": 0
+    },
+    {
+      "ID": 245,
+      "localizedTextIdName": 248697,
+      "localizedTextIdSummary": 372702,
+      "worldId": 1068,
+      "worldZoneId": 871,
+      "pathTypeEnum": 3
+    },
+    {
+      "ID": 246,
+      "localizedTextIdName": 248801,
+      "localizedTextIdSummary": 572613,
+      "worldId": 22,
+      "worldZoneId": 1402,
+      "pathTypeEnum": 2
+    },
+    {
+      "ID": 247,
+      "localizedTextIdName": 700018,
+      "localizedTextIdSummary": 572614,
+      "worldId": 22,
+      "worldZoneId": 1402,
+      "pathTypeEnum": 3
+    },
+    {
+      "ID": 248,
+      "localizedTextIdName": 249508,
+      "localizedTextIdSummary": 249509,
+      "worldId": 1163,
+      "worldZoneId": 1033,
+      "pathTypeEnum": 2
+    },
+    {
+      "ID": 249,
+      "localizedTextIdName": 252092,
+      "localizedTextIdSummary": 432477,
+      "worldId": 22,
+      "worldZoneId": 1402,
+      "pathTypeEnum": 1
+    },
+    {
+      "ID": 250,
+      "localizedTextIdName": 259566,
+      "localizedTextIdSummary": 259567,
+      "worldId": 22,
+      "worldZoneId": 37,
+      "pathTypeEnum": 3
+    },
+    {
+      "ID": 251,
+      "localizedTextIdName": 259569,
+      "localizedTextIdSummary": 572615,
+      "worldId": 22,
+      "worldZoneId": 37,
+      "pathTypeEnum": 2
+    },
+    {
+      "ID": 252,
+      "localizedTextIdName": 259570,
+      "localizedTextIdSummary": 428398,
+      "worldId": 22,
+      "worldZoneId": 37,
+      "pathTypeEnum": 1
+    },
+    {
+      "ID": 253,
+      "localizedTextIdName": 259571,
+      "localizedTextIdSummary": 572616,
+      "worldId": 22,
+      "worldZoneId": 37,
+      "pathTypeEnum": 0
+    },
+    {
+      "ID": 254,
+      "localizedTextIdName": 432352,
+      "localizedTextIdSummary": 263075,
+      "worldId": 51,
+      "worldZoneId": 248,
+      "pathTypeEnum": 1
+    },
+    {
+      "ID": 255,
+      "localizedTextIdName": 267195,
+      "localizedTextIdSummary": 572617,
+      "worldId": 51,
+      "worldZoneId": 248,
+      "pathTypeEnum": 2
+    },
+    {
+      "ID": 256,
+      "localizedTextIdName": 267196,
+      "localizedTextIdSummary": 572618,
+      "worldId": 51,
+      "worldZoneId": 248,
+      "pathTypeEnum": 0
+    },
+    {
+      "ID": 257,
+      "localizedTextIdName": 267197,
+      "localizedTextIdSummary": 572620,
+      "worldId": 51,
+      "worldZoneId": 248,
+      "pathTypeEnum": 3
+    },
+    {
+      "ID": 263,
+      "localizedTextIdName": 286337,
+      "localizedTextIdSummary": 694457,
+      "worldId": 1454,
+      "worldZoneId": 1479,
+      "pathTypeEnum": 0
+    },
+    {
+      "ID": 264,
+      "localizedTextIdName": 286566,
+      "localizedTextIdSummary": 694458,
+      "worldId": 1454,
+      "worldZoneId": 1479,
+      "pathTypeEnum": 1
+    },
+    {
+      "ID": 277,
+      "localizedTextIdName": 694459,
+      "localizedTextIdSummary": 694460,
+      "worldId": 1446,
+      "worldZoneId": 1462,
+      "pathTypeEnum": 2
+    },
+    {
+      "ID": 278,
+      "localizedTextIdName": 694461,
+      "localizedTextIdSummary": 694462,
+      "worldId": 1446,
+      "worldZoneId": 1462,
+      "pathTypeEnum": 0
+    },
+    {
+      "ID": 282,
+      "localizedTextIdName": 353707,
+      "localizedTextIdSummary": 353708,
+      "worldId": 1061,
+      "worldZoneId": 2067,
+      "pathTypeEnum": 1
+    },
+    {
+      "ID": 283,
+      "localizedTextIdName": 353714,
+      "localizedTextIdSummary": 353715,
+      "worldId": 1061,
+      "worldZoneId": 2067,
+      "pathTypeEnum": 3
+    },
+    {
+      "ID": 284,
+      "localizedTextIdName": 353716,
+      "localizedTextIdSummary": 353717,
+      "worldId": 1061,
+      "worldZoneId": 2067,
+      "pathTypeEnum": 2
+    },
+    {
+      "ID": 285,
+      "localizedTextIdName": 353719,
+      "localizedTextIdSummary": 353720,
+      "worldId": 1061,
+      "worldZoneId": 2067,
+      "pathTypeEnum": 0
+    },
+    {
+      "ID": 287,
+      "localizedTextIdName": 372668,
+      "localizedTextIdSummary": 372669,
+      "worldId": 1068,
+      "worldZoneId": 2047,
+      "pathTypeEnum": 0
+    },
+    {
+      "ID": 288,
+      "localizedTextIdName": 372697,
+      "localizedTextIdSummary": 372695,
+      "worldId": 1068,
+      "worldZoneId": 2047,
+      "pathTypeEnum": 1
+    },
+    {
+      "ID": 289,
+      "localizedTextIdName": 372696,
+      "localizedTextIdSummary": 372698,
+      "worldId": 1068,
+      "worldZoneId": 2047,
+      "pathTypeEnum": 2
+    },
+    {
+      "ID": 290,
+      "localizedTextIdName": 372700,
+      "localizedTextIdSummary": 372701,
+      "worldId": 1068,
+      "worldZoneId": 2047,
+      "pathTypeEnum": 3
+    },
+    {
+      "ID": 291,
+      "localizedTextIdName": 373118,
+      "localizedTextIdSummary": 694464,
+      "worldId": 1447,
+      "worldZoneId": 2190,
+      "pathTypeEnum": 0
+    },
+    {
+      "ID": 292,
+      "localizedTextIdName": 373675,
+      "localizedTextIdSummary": 373676,
+      "worldId": 22,
+      "worldZoneId": 2191,
+      "pathTypeEnum": 2
+    },
+    {
+      "ID": 293,
+      "localizedTextIdName": 700110,
+      "localizedTextIdSummary": 373886,
+      "worldId": 22,
+      "worldZoneId": 2191,
+      "pathTypeEnum": 1
+    },
+    {
+      "ID": 294,
+      "localizedTextIdName": 377415,
+      "localizedTextIdSummary": 377416,
+      "worldId": 22,
+      "worldZoneId": 2191,
+      "pathTypeEnum": 0
+    },
+    {
+      "ID": 295,
+      "localizedTextIdName": 378215,
+      "localizedTextIdSummary": 378216,
+      "worldId": 22,
+      "worldZoneId": 2191,
+      "pathTypeEnum": 3
+    },
+    {
+      "ID": 302,
+      "localizedTextIdName": 385037,
+      "localizedTextIdSummary": 385042,
+      "worldId": 1061,
+      "worldZoneId": 2121,
+      "pathTypeEnum": 2
+    },
+    {
+      "ID": 304,
+      "localizedTextIdName": 385043,
+      "localizedTextIdSummary": 385044,
+      "worldId": 1061,
+      "worldZoneId": 2121,
+      "pathTypeEnum": 0
+    },
+    {
+      "ID": 305,
+      "localizedTextIdName": 385300,
+      "localizedTextIdSummary": 385304,
+      "worldId": 1061,
+      "worldZoneId": 2121,
+      "pathTypeEnum": 3
+    },
+    {
+      "ID": 306,
+      "localizedTextIdName": 385306,
+      "localizedTextIdSummary": 385309,
+      "worldId": 1061,
+      "worldZoneId": 2121,
+      "pathTypeEnum": 1
+    },
+    {
+      "ID": 448,
+      "localizedTextIdName": 700109,
+      "localizedTextIdSummary": 435439,
+      "worldId": 51,
+      "worldZoneId": 122,
+      "pathTypeEnum": 1
+    },
+    {
+      "ID": 449,
+      "localizedTextIdName": 466312,
+      "localizedTextIdSummary": 466313,
+      "worldId": 1228,
+      "worldZoneId": 228,
+      "pathTypeEnum": 3
+    },
+    {
+      "ID": 450,
+      "localizedTextIdName": 469742,
+      "localizedTextIdSummary": 469755,
+      "worldId": 1061,
+      "worldZoneId": 2227,
+      "pathTypeEnum": 1
+    },
+    {
+      "ID": 451,
+      "localizedTextIdName": 700108,
+      "localizedTextIdSummary": 486498,
+      "worldId": 51,
+      "worldZoneId": 122,
+      "pathTypeEnum": 0
+    },
+    {
+      "ID": 452,
+      "localizedTextIdName": 700107,
+      "localizedTextIdSummary": 487435,
+      "worldId": 51,
+      "worldZoneId": 122,
+      "pathTypeEnum": 3
+    },
+    {
+      "ID": 453,
+      "localizedTextIdName": 491729,
+      "localizedTextIdSummary": 491730,
+      "worldId": 1061,
+      "worldZoneId": 2227,
+      "pathTypeEnum": 3
+    },
+    {
+      "ID": 454,
+      "localizedTextIdName": 491731,
+      "localizedTextIdSummary": 491732,
+      "worldId": 1061,
+      "worldZoneId": 2227,
+      "pathTypeEnum": 2
+    },
+    {
+      "ID": 455,
+      "localizedTextIdName": 491734,
+      "localizedTextIdSummary": 491733,
+      "worldId": 1061,
+      "worldZoneId": 2227,
+      "pathTypeEnum": 0
+    },
+    {
+      "ID": 456,
+      "localizedTextIdName": 700106,
+      "localizedTextIdSummary": 572622,
+      "worldId": 51,
+      "worldZoneId": 122,
+      "pathTypeEnum": 2
+    },
+    {
+      "ID": 457,
+      "localizedTextIdName": 520560,
+      "localizedTextIdSummary": 694463,
+      "worldId": 1256,
+      "worldZoneId": 1128,
+      "pathTypeEnum": 2
+    },
+    {
+      "ID": 458,
+      "localizedTextIdName": 521136,
+      "localizedTextIdSummary": 572623,
+      "worldId": 1061,
+      "worldZoneId": 377,
+      "pathTypeEnum": 0
+    },
+    {
+      "ID": 459,
+      "localizedTextIdName": 521139,
+      "localizedTextIdSummary": 572624,
+      "worldId": 1061,
+      "worldZoneId": 377,
+      "pathTypeEnum": 1
+    },
+    {
+      "ID": 460,
+      "localizedTextIdName": 521140,
+      "localizedTextIdSummary": 572625,
+      "worldId": 1061,
+      "worldZoneId": 377,
+      "pathTypeEnum": 2
+    },
+    {
+      "ID": 461,
+      "localizedTextIdName": 521141,
+      "localizedTextIdSummary": 572626,
+      "worldId": 1061,
+      "worldZoneId": 377,
+      "pathTypeEnum": 3
+    },
+    {
+      "ID": 462,
+      "localizedTextIdName": 533959,
+      "localizedTextIdSummary": 533960,
+      "worldId": 1061,
+      "worldZoneId": 2228,
+      "pathTypeEnum": 2
+    },
+    {
+      "ID": 463,
+      "localizedTextIdName": 541528,
+      "localizedTextIdSummary": 541529,
+      "worldId": 1061,
+      "worldZoneId": 2228,
+      "pathTypeEnum": 0
+    },
+    {
+      "ID": 464,
+      "localizedTextIdName": 534039,
+      "localizedTextIdSummary": 534040,
+      "worldId": 1061,
+      "worldZoneId": 2228,
+      "pathTypeEnum": 3
+    },
+    {
+      "ID": 465,
+      "localizedTextIdName": 534115,
+      "localizedTextIdSummary": 534117,
+      "worldId": 1061,
+      "worldZoneId": 2228,
+      "pathTypeEnum": 1
+    },
+    {
+      "ID": 472,
+      "localizedTextIdName": 615639,
+      "localizedTextIdSummary": 626773,
+      "worldId": 3044,
+      "worldZoneId": 4382,
+      "pathTypeEnum": 1
+    },
+    {
+      "ID": 474,
+      "localizedTextIdName": 634142,
+      "localizedTextIdSummary": 634143,
+      "worldId": 3232,
+      "worldZoneId": 4653,
+      "pathTypeEnum": 3
+    },
+    {
+      "ID": 476,
+      "localizedTextIdName": 0,
+      "localizedTextIdSummary": 0,
+      "worldId": 3335,
+      "worldZoneId": 4762,
+      "pathTypeEnum": 0
+    },
+    {
+      "ID": 477,
+      "localizedTextIdName": 0,
+      "localizedTextIdSummary": 0,
+      "worldId": 3335,
+      "worldZoneId": 4762,
+      "pathTypeEnum": 2
+    },
+    {
+      "ID": 478,
+      "localizedTextIdName": 0,
+      "localizedTextIdSummary": 0,
+      "worldId": 3335,
+      "worldZoneId": 4762,
+      "pathTypeEnum": 1
+    },
+    {
+      "ID": 479,
+      "localizedTextIdName": 0,
+      "localizedTextIdSummary": 0,
+      "worldId": 3335,
+      "worldZoneId": 4762,
+      "pathTypeEnum": 3
+    }
+  ]
+}

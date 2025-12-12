@@ -636,6 +636,282 @@ defmodule BezgelorData do
     Store.get_spawn_point_group(zone_id, group_name)
   end
 
+  # Quests
+
+  @doc """
+  Get a quest definition by ID.
+  """
+  @spec get_quest(non_neg_integer()) :: {:ok, map()} | :error
+  def get_quest(id), do: Store.get_quest(id)
+
+  @doc """
+  Get a quest by ID, raising if not found.
+  """
+  @spec get_quest!(non_neg_integer()) :: map()
+  def get_quest!(id) do
+    case get_quest(id) do
+      {:ok, quest} -> quest
+      :error -> raise "Quest #{id} not found"
+    end
+  end
+
+  @doc """
+  List all quests.
+  """
+  @spec list_quests() :: [map()]
+  def list_quests, do: Store.list(:quests)
+
+  @doc """
+  Get all quests for a zone.
+  """
+  @spec quests_for_zone(non_neg_integer()) :: [map()]
+  def quests_for_zone(zone_id), do: Store.get_quests_for_zone(zone_id)
+
+  @doc """
+  Get quests by type.
+  """
+  @spec quests_by_type(non_neg_integer()) :: [map()]
+  def quests_by_type(type), do: Store.get_quests_by_type(type)
+
+  @doc """
+  Get a quest with its title resolved from the text table.
+  """
+  @spec get_quest_with_title(non_neg_integer()) :: {:ok, map()} | :error
+  def get_quest_with_title(id) do
+    with {:ok, quest} <- get_quest(id) do
+      title = text_or_nil(quest.localizedTextIdTitle) || ""
+      {:ok, Map.put(quest, :title, title)}
+    end
+  end
+
+  @doc """
+  Get quest rewards for a quest.
+  """
+  @spec quest_rewards(non_neg_integer()) :: [map()]
+  def quest_rewards(quest_id), do: Store.get_quest_rewards(quest_id)
+
+  @doc """
+  Get a quest objective by ID.
+  """
+  @spec get_quest_objective(non_neg_integer()) :: {:ok, map()} | :error
+  def get_quest_objective(id), do: Store.get_quest_objective(id)
+
+  # NPC/Vendors
+
+  @doc """
+  Get vendor data by vendor ID.
+  """
+  @spec get_vendor(non_neg_integer()) :: {:ok, map()} | :error
+  def get_vendor(id), do: Store.get_vendor(id)
+
+  @doc """
+  Get vendor by creature ID.
+  """
+  @spec get_vendor_by_creature(non_neg_integer()) :: {:ok, map()} | :error
+  def get_vendor_by_creature(creature_id), do: Store.get_vendor_by_creature(creature_id)
+
+  @doc """
+  Get all vendors of a specific type.
+  """
+  @spec vendors_by_type(String.t()) :: [map()]
+  def vendors_by_type(vendor_type), do: Store.get_vendors_by_type(vendor_type)
+
+  @doc """
+  List all vendors.
+  """
+  @spec list_vendors() :: [map()]
+  def list_vendors, do: Store.get_all_vendors()
+
+  @doc """
+  Check if a creature is a vendor.
+  """
+  @spec is_vendor?(non_neg_integer()) :: boolean()
+  def is_vendor?(creature_id) do
+    case Store.get_vendor_by_creature(creature_id) do
+      {:ok, _} -> true
+      :error -> false
+    end
+  end
+
+  @doc """
+  Get vendor inventory by vendor ID.
+  """
+  @spec get_vendor_inventory(non_neg_integer()) :: {:ok, map()} | :error
+  def get_vendor_inventory(vendor_id), do: Store.get_vendor_inventory(vendor_id)
+
+  @doc """
+  Get items sold by a creature vendor.
+  Returns empty list if creature is not a vendor.
+  """
+  @spec get_vendor_items(non_neg_integer()) :: [map()]
+  def get_vendor_items(creature_id), do: Store.get_vendor_items_for_creature(creature_id)
+
+  # Gossip/Dialogue
+
+  @doc """
+  Get a gossip entry by ID.
+  """
+  @spec get_gossip_entry(non_neg_integer()) :: {:ok, map()} | :error
+  def get_gossip_entry(id), do: Store.get_gossip_entry(id)
+
+  @doc """
+  Get gossip entries for a gossip set.
+  """
+  @spec gossip_entries_for_set(non_neg_integer()) :: [map()]
+  def gossip_entries_for_set(set_id), do: Store.get_gossip_entries_for_set(set_id)
+
+  @doc """
+  Get a gossip set by ID.
+  """
+  @spec get_gossip_set(non_neg_integer()) :: {:ok, map()} | :error
+  def get_gossip_set(id), do: Store.get_gossip_set(id)
+
+  @doc """
+  Get gossip text for an entry, resolving the text ID.
+  """
+  @spec get_gossip_text(non_neg_integer()) :: String.t() | nil
+  def get_gossip_text(entry_id) do
+    with {:ok, entry} <- get_gossip_entry(entry_id) do
+      text_or_nil(entry.localizedTextId)
+    else
+      _ -> nil
+    end
+  end
+
+  # Achievements
+
+  @doc """
+  Get an achievement by ID.
+  """
+  @spec get_achievement(non_neg_integer()) :: {:ok, map()} | :error
+  def get_achievement(id), do: Store.get_achievement(id)
+
+  @doc """
+  Get an achievement by ID, raising if not found.
+  """
+  @spec get_achievement!(non_neg_integer()) :: map()
+  def get_achievement!(id) do
+    case get_achievement(id) do
+      {:ok, achievement} -> achievement
+      :error -> raise "Achievement #{id} not found"
+    end
+  end
+
+  @doc """
+  List all achievements.
+  """
+  @spec list_achievements() :: [map()]
+  def list_achievements, do: Store.list(:achievements)
+
+  @doc """
+  Get achievements for a category.
+  """
+  @spec achievements_for_category(non_neg_integer()) :: [map()]
+  def achievements_for_category(category_id), do: Store.get_achievements_for_category(category_id)
+
+  @doc """
+  Get achievements for a zone.
+  """
+  @spec achievements_for_zone(non_neg_integer()) :: [map()]
+  def achievements_for_zone(zone_id), do: Store.get_achievements_for_zone(zone_id)
+
+  @doc """
+  Get an achievement with its title resolved from the text table.
+  """
+  @spec get_achievement_with_title(non_neg_integer()) :: {:ok, map()} | :error
+  def get_achievement_with_title(id) do
+    with {:ok, achievement} <- get_achievement(id) do
+      title = text_or_nil(achievement.localizedTextIdTitle) || ""
+      {:ok, Map.put(achievement, :title, title)}
+    end
+  end
+
+  # Path Missions
+
+  @doc """
+  Get a path mission by ID.
+  """
+  @spec get_path_mission(non_neg_integer()) :: {:ok, map()} | :error
+  def get_path_mission(id), do: Store.get_path_mission(id)
+
+  @doc """
+  List all path missions.
+  """
+  @spec list_path_missions() :: [map()]
+  def list_path_missions, do: Store.list(:path_missions)
+
+  @doc """
+  Get path missions for an episode.
+  """
+  @spec path_missions_for_episode(non_neg_integer()) :: [map()]
+  def path_missions_for_episode(episode_id), do: Store.get_path_missions_for_episode(episode_id)
+
+  @doc """
+  Get path missions by path type (0=Soldier, 1=Settler, 2=Scientist, 3=Explorer).
+  """
+  @spec path_missions_by_type(non_neg_integer()) :: [map()]
+  def path_missions_by_type(path_type), do: Store.get_path_missions_by_type(path_type)
+
+  @doc """
+  Get a path episode by ID.
+  """
+  @spec get_path_episode(non_neg_integer()) :: {:ok, map()} | :error
+  def get_path_episode(id), do: Store.get_path_episode(id)
+
+  # Challenges
+
+  @doc """
+  Get a challenge by ID.
+  """
+  @spec get_challenge(non_neg_integer()) :: {:ok, map()} | :error
+  def get_challenge(id), do: Store.get_challenge(id)
+
+  @doc """
+  List all challenges.
+  """
+  @spec list_challenges() :: [map()]
+  def list_challenges, do: Store.list(:challenges)
+
+  @doc """
+  Get challenges for a zone.
+  """
+  @spec challenges_for_zone(non_neg_integer()) :: [map()]
+  def challenges_for_zone(zone_id), do: Store.get_challenges_for_zone(zone_id)
+
+  # World Locations
+
+  @doc """
+  Get a world location by ID.
+  """
+  @spec get_world_location(non_neg_integer()) :: {:ok, map()} | :error
+  def get_world_location(id), do: Store.get_world_location(id)
+
+  @doc """
+  Get world locations for a world.
+  """
+  @spec world_locations_for_world(non_neg_integer()) :: [map()]
+  def world_locations_for_world(world_id), do: Store.get_world_locations_for_world(world_id)
+
+  @doc """
+  Get world locations for a zone.
+  """
+  @spec world_locations_for_zone(non_neg_integer()) :: [map()]
+  def world_locations_for_zone(zone_id), do: Store.get_world_locations_for_zone(zone_id)
+
+  @doc """
+  Get a bind point by ID.
+  """
+  @spec get_bind_point(non_neg_integer()) :: {:ok, map()} | :error
+  def get_bind_point(id), do: Store.get_bind_point(id)
+
+  # Prerequisites
+
+  @doc """
+  Get a prerequisite by ID.
+  """
+  @spec get_prerequisite(non_neg_integer()) :: {:ok, map()} | :error
+  def get_prerequisite(id), do: Store.get_prerequisite(id)
+
   # Stats
 
   @doc """
@@ -655,7 +931,18 @@ defmodule BezgelorData do
       titles: Store.count(:titles),
       public_events: Store.count(:public_events),
       world_bosses: Store.count(:world_bosses),
-      event_spawn_points: Store.count(:event_spawn_points)
+      event_spawn_points: Store.count(:event_spawn_points),
+      # New extracted data
+      quests: Store.count(:quests),
+      quest_objectives: Store.count(:quest_objectives),
+      quest_rewards: Store.count(:quest_rewards),
+      npc_vendors: Store.count(:npc_vendors),
+      gossip_entries: Store.count(:gossip_entries),
+      achievements: Store.count(:achievements),
+      path_missions: Store.count(:path_missions),
+      challenges: Store.count(:challenges),
+      world_locations: Store.count(:world_locations),
+      prerequisites: Store.count(:prerequisites)
     }
   end
 end

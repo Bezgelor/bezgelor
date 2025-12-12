@@ -1,0 +1,1049 @@
+{
+  "questhub": [
+    {
+      "ID": 1,
+      "worldLocation2Id": 12354,
+      "localizedTextIdName": 685536
+    },
+    {
+      "ID": 2,
+      "worldLocation2Id": 12361,
+      "localizedTextIdName": 685537
+    },
+    {
+      "ID": 3,
+      "worldLocation2Id": 12381,
+      "localizedTextIdName": 685539
+    },
+    {
+      "ID": 4,
+      "worldLocation2Id": 12725,
+      "localizedTextIdName": 685540
+    },
+    {
+      "ID": 5,
+      "worldLocation2Id": 12809,
+      "localizedTextIdName": 685541
+    },
+    {
+      "ID": 6,
+      "worldLocation2Id": 16449,
+      "localizedTextIdName": 685542
+    },
+    {
+      "ID": 7,
+      "worldLocation2Id": 13194,
+      "localizedTextIdName": 685543
+    },
+    {
+      "ID": 8,
+      "worldLocation2Id": 13276,
+      "localizedTextIdName": 685544
+    },
+    {
+      "ID": 9,
+      "worldLocation2Id": 16973,
+      "localizedTextIdName": 685545
+    },
+    {
+      "ID": 10,
+      "worldLocation2Id": 29641,
+      "localizedTextIdName": 685548
+    },
+    {
+      "ID": 11,
+      "worldLocation2Id": 23392,
+      "localizedTextIdName": 685552
+    },
+    {
+      "ID": 12,
+      "worldLocation2Id": 23359,
+      "localizedTextIdName": 685575
+    },
+    {
+      "ID": 13,
+      "worldLocation2Id": 23348,
+      "localizedTextIdName": 685576
+    },
+    {
+      "ID": 14,
+      "worldLocation2Id": 23564,
+      "localizedTextIdName": 685577
+    },
+    {
+      "ID": 15,
+      "worldLocation2Id": 25095,
+      "localizedTextIdName": 685579
+    },
+    {
+      "ID": 16,
+      "worldLocation2Id": 25085,
+      "localizedTextIdName": 685580
+    },
+    {
+      "ID": 17,
+      "worldLocation2Id": 25076,
+      "localizedTextIdName": 685581
+    },
+    {
+      "ID": 18,
+      "worldLocation2Id": 23597,
+      "localizedTextIdName": 685601
+    },
+    {
+      "ID": 19,
+      "worldLocation2Id": 23618,
+      "localizedTextIdName": 685602
+    },
+    {
+      "ID": 20,
+      "worldLocation2Id": 23543,
+      "localizedTextIdName": 685604
+    },
+    {
+      "ID": 21,
+      "worldLocation2Id": 12976,
+      "localizedTextIdName": 685777
+    },
+    {
+      "ID": 22,
+      "worldLocation2Id": 39613,
+      "localizedTextIdName": 685980
+    },
+    {
+      "ID": 23,
+      "worldLocation2Id": 7726,
+      "localizedTextIdName": 686825
+    },
+    {
+      "ID": 24,
+      "worldLocation2Id": 29526,
+      "localizedTextIdName": 686827
+    },
+    {
+      "ID": 25,
+      "worldLocation2Id": 21065,
+      "localizedTextIdName": 686829
+    },
+    {
+      "ID": 26,
+      "worldLocation2Id": 21026,
+      "localizedTextIdName": 686830
+    },
+    {
+      "ID": 27,
+      "worldLocation2Id": 21027,
+      "localizedTextIdName": 686833
+    },
+    {
+      "ID": 28,
+      "worldLocation2Id": 42149,
+      "localizedTextIdName": 686835
+    },
+    {
+      "ID": 29,
+      "worldLocation2Id": 38571,
+      "localizedTextIdName": 686836
+    },
+    {
+      "ID": 30,
+      "worldLocation2Id": 38100,
+      "localizedTextIdName": 686837
+    },
+    {
+      "ID": 31,
+      "worldLocation2Id": 17819,
+      "localizedTextIdName": 686842
+    },
+    {
+      "ID": 32,
+      "worldLocation2Id": 17803,
+      "localizedTextIdName": 686850
+    },
+    {
+      "ID": 33,
+      "worldLocation2Id": 17901,
+      "localizedTextIdName": 686854
+    },
+    {
+      "ID": 34,
+      "worldLocation2Id": 6846,
+      "localizedTextIdName": 686991
+    },
+    {
+      "ID": 35,
+      "worldLocation2Id": 49374,
+      "localizedTextIdName": 686992
+    },
+    {
+      "ID": 36,
+      "worldLocation2Id": 7214,
+      "localizedTextIdName": 686993
+    },
+    {
+      "ID": 37,
+      "worldLocation2Id": 7717,
+      "localizedTextIdName": 686994
+    },
+    {
+      "ID": 38,
+      "worldLocation2Id": 18378,
+      "localizedTextIdName": 686995
+    },
+    {
+      "ID": 39,
+      "worldLocation2Id": 18772,
+      "localizedTextIdName": 686996
+    },
+    {
+      "ID": 40,
+      "worldLocation2Id": 18137,
+      "localizedTextIdName": 686997
+    },
+    {
+      "ID": 41,
+      "worldLocation2Id": 17633,
+      "localizedTextIdName": 686998
+    },
+    {
+      "ID": 42,
+      "worldLocation2Id": 19476,
+      "localizedTextIdName": 686999
+    },
+    {
+      "ID": 43,
+      "worldLocation2Id": 19619,
+      "localizedTextIdName": 687005
+    },
+    {
+      "ID": 44,
+      "worldLocation2Id": 19417,
+      "localizedTextIdName": 687006
+    },
+    {
+      "ID": 45,
+      "worldLocation2Id": 8759,
+      "localizedTextIdName": 687007
+    },
+    {
+      "ID": 46,
+      "worldLocation2Id": 8384,
+      "localizedTextIdName": 687028
+    },
+    {
+      "ID": 47,
+      "worldLocation2Id": 23404,
+      "localizedTextIdName": 687438
+    },
+    {
+      "ID": 48,
+      "worldLocation2Id": 23560,
+      "localizedTextIdName": 687439
+    },
+    {
+      "ID": 49,
+      "worldLocation2Id": 23430,
+      "localizedTextIdName": 687440
+    },
+    {
+      "ID": 50,
+      "worldLocation2Id": 23427,
+      "localizedTextIdName": 687441
+    },
+    {
+      "ID": 51,
+      "worldLocation2Id": 25300,
+      "localizedTextIdName": 687442
+    },
+    {
+      "ID": 52,
+      "worldLocation2Id": 25234,
+      "localizedTextIdName": 687444
+    },
+    {
+      "ID": 53,
+      "worldLocation2Id": 25991,
+      "localizedTextIdName": 687455
+    },
+    {
+      "ID": 54,
+      "worldLocation2Id": 26686,
+      "localizedTextIdName": 687479
+    },
+    {
+      "ID": 55,
+      "worldLocation2Id": 25828,
+      "localizedTextIdName": 687484
+    },
+    {
+      "ID": 56,
+      "worldLocation2Id": 26686,
+      "localizedTextIdName": 687487
+    },
+    {
+      "ID": 57,
+      "worldLocation2Id": 25301,
+      "localizedTextIdName": 687493
+    },
+    {
+      "ID": 58,
+      "worldLocation2Id": 26352,
+      "localizedTextIdName": 687563
+    },
+    {
+      "ID": 59,
+      "worldLocation2Id": 18381,
+      "localizedTextIdName": 687565
+    },
+    {
+      "ID": 60,
+      "worldLocation2Id": 18111,
+      "localizedTextIdName": 687569
+    },
+    {
+      "ID": 61,
+      "worldLocation2Id": 9588,
+      "localizedTextIdName": 687570
+    },
+    {
+      "ID": 62,
+      "worldLocation2Id": 26562,
+      "localizedTextIdName": 687573
+    },
+    {
+      "ID": 63,
+      "worldLocation2Id": 9806,
+      "localizedTextIdName": 687574
+    },
+    {
+      "ID": 64,
+      "worldLocation2Id": 20195,
+      "localizedTextIdName": 687577
+    },
+    {
+      "ID": 65,
+      "worldLocation2Id": 20051,
+      "localizedTextIdName": 687578
+    },
+    {
+      "ID": 66,
+      "worldLocation2Id": 10017,
+      "localizedTextIdName": 687582
+    },
+    {
+      "ID": 67,
+      "worldLocation2Id": 9980,
+      "localizedTextIdName": 687583
+    },
+    {
+      "ID": 68,
+      "worldLocation2Id": 21282,
+      "localizedTextIdName": 687589
+    },
+    {
+      "ID": 69,
+      "worldLocation2Id": 20977,
+      "localizedTextIdName": 687590
+    },
+    {
+      "ID": 70,
+      "worldLocation2Id": 22077,
+      "localizedTextIdName": 687608
+    },
+    {
+      "ID": 71,
+      "worldLocation2Id": 21390,
+      "localizedTextIdName": 687609
+    },
+    {
+      "ID": 72,
+      "worldLocation2Id": 23366,
+      "localizedTextIdName": 687610
+    },
+    {
+      "ID": 73,
+      "worldLocation2Id": 23666,
+      "localizedTextIdName": 687611
+    },
+    {
+      "ID": 74,
+      "worldLocation2Id": 24072,
+      "localizedTextIdName": 687612
+    },
+    {
+      "ID": 75,
+      "worldLocation2Id": 23935,
+      "localizedTextIdName": 687613
+    },
+    {
+      "ID": 76,
+      "worldLocation2Id": 14282,
+      "localizedTextIdName": 688028
+    },
+    {
+      "ID": 77,
+      "worldLocation2Id": 12943,
+      "localizedTextIdName": 689113
+    },
+    {
+      "ID": 78,
+      "worldLocation2Id": 12943,
+      "localizedTextIdName": 689119
+    },
+    {
+      "ID": 79,
+      "worldLocation2Id": 12912,
+      "localizedTextIdName": 689120
+    },
+    {
+      "ID": 80,
+      "worldLocation2Id": 12873,
+      "localizedTextIdName": 689127
+    },
+    {
+      "ID": 81,
+      "worldLocation2Id": 13146,
+      "localizedTextIdName": 689135
+    },
+    {
+      "ID": 82,
+      "worldLocation2Id": 29604,
+      "localizedTextIdName": 689137
+    },
+    {
+      "ID": 83,
+      "worldLocation2Id": 13040,
+      "localizedTextIdName": 689146
+    },
+    {
+      "ID": 84,
+      "worldLocation2Id": 13185,
+      "localizedTextIdName": 689154
+    },
+    {
+      "ID": 85,
+      "worldLocation2Id": 16048,
+      "localizedTextIdName": 689163
+    },
+    {
+      "ID": 86,
+      "worldLocation2Id": 15989,
+      "localizedTextIdName": 689164
+    },
+    {
+      "ID": 87,
+      "worldLocation2Id": 12365,
+      "localizedTextIdName": 689167
+    },
+    {
+      "ID": 88,
+      "worldLocation2Id": 27396,
+      "localizedTextIdName": 689172
+    },
+    {
+      "ID": 89,
+      "worldLocation2Id": 12330,
+      "localizedTextIdName": 689177
+    },
+    {
+      "ID": 90,
+      "worldLocation2Id": 12330,
+      "localizedTextIdName": 689178
+    },
+    {
+      "ID": 91,
+      "worldLocation2Id": 12601,
+      "localizedTextIdName": 689179
+    },
+    {
+      "ID": 92,
+      "worldLocation2Id": 27777,
+      "localizedTextIdName": 689182
+    },
+    {
+      "ID": 93,
+      "worldLocation2Id": 28060,
+      "localizedTextIdName": 689183
+    },
+    {
+      "ID": 94,
+      "worldLocation2Id": 12630,
+      "localizedTextIdName": 689184
+    },
+    {
+      "ID": 95,
+      "worldLocation2Id": 12629,
+      "localizedTextIdName": 689188
+    },
+    {
+      "ID": 96,
+      "worldLocation2Id": 16237,
+      "localizedTextIdName": 689190
+    },
+    {
+      "ID": 97,
+      "worldLocation2Id": 14825,
+      "localizedTextIdName": 689657
+    },
+    {
+      "ID": 98,
+      "worldLocation2Id": 14886,
+      "localizedTextIdName": 689658
+    },
+    {
+      "ID": 99,
+      "worldLocation2Id": 14790,
+      "localizedTextIdName": 689659
+    },
+    {
+      "ID": 100,
+      "worldLocation2Id": 14899,
+      "localizedTextIdName": 689660
+    },
+    {
+      "ID": 101,
+      "worldLocation2Id": 0,
+      "localizedTextIdName": 689729
+    },
+    {
+      "ID": 102,
+      "worldLocation2Id": 15884,
+      "localizedTextIdName": 689882
+    },
+    {
+      "ID": 103,
+      "worldLocation2Id": 14896,
+      "localizedTextIdName": 689976
+    },
+    {
+      "ID": 104,
+      "worldLocation2Id": 16317,
+      "localizedTextIdName": 689977
+    },
+    {
+      "ID": 105,
+      "worldLocation2Id": 16450,
+      "localizedTextIdName": 690014
+    },
+    {
+      "ID": 106,
+      "worldLocation2Id": 16455,
+      "localizedTextIdName": 690017
+    },
+    {
+      "ID": 107,
+      "worldLocation2Id": 16325,
+      "localizedTextIdName": 690025
+    },
+    {
+      "ID": 108,
+      "worldLocation2Id": 16344,
+      "localizedTextIdName": 690029
+    },
+    {
+      "ID": 109,
+      "worldLocation2Id": 27987,
+      "localizedTextIdName": 690134
+    },
+    {
+      "ID": 110,
+      "worldLocation2Id": 18178,
+      "localizedTextIdName": 690135
+    },
+    {
+      "ID": 111,
+      "worldLocation2Id": 17752,
+      "localizedTextIdName": 690143
+    },
+    {
+      "ID": 112,
+      "worldLocation2Id": 17774,
+      "localizedTextIdName": 690138
+    },
+    {
+      "ID": 113,
+      "worldLocation2Id": 17751,
+      "localizedTextIdName": 690141
+    },
+    {
+      "ID": 114,
+      "worldLocation2Id": 19549,
+      "localizedTextIdName": 690153
+    },
+    {
+      "ID": 115,
+      "worldLocation2Id": 19428,
+      "localizedTextIdName": 690156
+    },
+    {
+      "ID": 116,
+      "worldLocation2Id": 19429,
+      "localizedTextIdName": 690159
+    },
+    {
+      "ID": 117,
+      "worldLocation2Id": 19445,
+      "localizedTextIdName": 690161
+    },
+    {
+      "ID": 118,
+      "worldLocation2Id": 19459,
+      "localizedTextIdName": 690163
+    },
+    {
+      "ID": 119,
+      "worldLocation2Id": 31150,
+      "localizedTextIdName": 690285
+    },
+    {
+      "ID": 120,
+      "worldLocation2Id": 30594,
+      "localizedTextIdName": 690286
+    },
+    {
+      "ID": 121,
+      "worldLocation2Id": 30172,
+      "localizedTextIdName": 690287
+    },
+    {
+      "ID": 122,
+      "worldLocation2Id": 30390,
+      "localizedTextIdName": 690289
+    },
+    {
+      "ID": 123,
+      "worldLocation2Id": 30734,
+      "localizedTextIdName": 690292
+    },
+    {
+      "ID": 124,
+      "worldLocation2Id": 30804,
+      "localizedTextIdName": 690294
+    },
+    {
+      "ID": 125,
+      "worldLocation2Id": 30079,
+      "localizedTextIdName": 690295
+    },
+    {
+      "ID": 126,
+      "worldLocation2Id": 30182,
+      "localizedTextIdName": 690296
+    },
+    {
+      "ID": 127,
+      "worldLocation2Id": 30391,
+      "localizedTextIdName": 690297
+    },
+    {
+      "ID": 128,
+      "worldLocation2Id": 30735,
+      "localizedTextIdName": 690299
+    },
+    {
+      "ID": 129,
+      "worldLocation2Id": 32082,
+      "localizedTextIdName": 690300
+    },
+    {
+      "ID": 130,
+      "worldLocation2Id": 30083,
+      "localizedTextIdName": 690305
+    },
+    {
+      "ID": 131,
+      "worldLocation2Id": 23054,
+      "localizedTextIdName": 690308
+    },
+    {
+      "ID": 132,
+      "worldLocation2Id": 22619,
+      "localizedTextIdName": 690309
+    },
+    {
+      "ID": 133,
+      "worldLocation2Id": 21178,
+      "localizedTextIdName": 690310
+    },
+    {
+      "ID": 134,
+      "worldLocation2Id": 22217,
+      "localizedTextIdName": 690311
+    },
+    {
+      "ID": 135,
+      "worldLocation2Id": 23057,
+      "localizedTextIdName": 690314
+    },
+    {
+      "ID": 136,
+      "worldLocation2Id": 21016,
+      "localizedTextIdName": 690315
+    },
+    {
+      "ID": 137,
+      "worldLocation2Id": 21179,
+      "localizedTextIdName": 690316
+    },
+    {
+      "ID": 138,
+      "worldLocation2Id": 39308,
+      "localizedTextIdName": 690331
+    },
+    {
+      "ID": 139,
+      "worldLocation2Id": 21032,
+      "localizedTextIdName": 690333
+    },
+    {
+      "ID": 140,
+      "worldLocation2Id": 21176,
+      "localizedTextIdName": 690345
+    },
+    {
+      "ID": 141,
+      "worldLocation2Id": 22084,
+      "localizedTextIdName": 690346
+    },
+    {
+      "ID": 142,
+      "worldLocation2Id": 21198,
+      "localizedTextIdName": 690349
+    },
+    {
+      "ID": 143,
+      "worldLocation2Id": 21198,
+      "localizedTextIdName": 690351
+    },
+    {
+      "ID": 144,
+      "worldLocation2Id": 32291,
+      "localizedTextIdName": 690362
+    },
+    {
+      "ID": 145,
+      "worldLocation2Id": 32331,
+      "localizedTextIdName": 690368
+    },
+    {
+      "ID": 146,
+      "worldLocation2Id": 38614,
+      "localizedTextIdName": 690369
+    },
+    {
+      "ID": 147,
+      "worldLocation2Id": 50532,
+      "localizedTextIdName": 690375
+    },
+    {
+      "ID": 148,
+      "worldLocation2Id": 30107,
+      "localizedTextIdName": 690376
+    },
+    {
+      "ID": 149,
+      "worldLocation2Id": 30881,
+      "localizedTextIdName": 690377
+    },
+    {
+      "ID": 150,
+      "worldLocation2Id": 45025,
+      "localizedTextIdName": 690408
+    },
+    {
+      "ID": 151,
+      "worldLocation2Id": 32170,
+      "localizedTextIdName": 690409
+    },
+    {
+      "ID": 152,
+      "worldLocation2Id": 30395,
+      "localizedTextIdName": 690410
+    },
+    {
+      "ID": 153,
+      "worldLocation2Id": 31064,
+      "localizedTextIdName": 690413
+    },
+    {
+      "ID": 154,
+      "worldLocation2Id": 32100,
+      "localizedTextIdName": 690422
+    },
+    {
+      "ID": 155,
+      "worldLocation2Id": 32172,
+      "localizedTextIdName": 690423
+    },
+    {
+      "ID": 156,
+      "worldLocation2Id": 27159,
+      "localizedTextIdName": 690455
+    },
+    {
+      "ID": 157,
+      "worldLocation2Id": 27311,
+      "localizedTextIdName": 690456
+    },
+    {
+      "ID": 158,
+      "worldLocation2Id": 27161,
+      "localizedTextIdName": 690459
+    },
+    {
+      "ID": 159,
+      "worldLocation2Id": 27528,
+      "localizedTextIdName": 690460
+    },
+    {
+      "ID": 160,
+      "worldLocation2Id": 27459,
+      "localizedTextIdName": 690464
+    },
+    {
+      "ID": 161,
+      "worldLocation2Id": 29612,
+      "localizedTextIdName": 690465
+    },
+    {
+      "ID": 162,
+      "worldLocation2Id": 28382,
+      "localizedTextIdName": 690466
+    },
+    {
+      "ID": 163,
+      "worldLocation2Id": 28227,
+      "localizedTextIdName": 690467
+    },
+    {
+      "ID": 164,
+      "worldLocation2Id": 28178,
+      "localizedTextIdName": 690468
+    },
+    {
+      "ID": 165,
+      "worldLocation2Id": 28178,
+      "localizedTextIdName": 690469
+    },
+    {
+      "ID": 166,
+      "worldLocation2Id": 34983,
+      "localizedTextIdName": 690470
+    },
+    {
+      "ID": 167,
+      "worldLocation2Id": 41891,
+      "localizedTextIdName": 690713
+    },
+    {
+      "ID": 168,
+      "worldLocation2Id": 32160,
+      "localizedTextIdName": 690715
+    },
+    {
+      "ID": 169,
+      "worldLocation2Id": 32161,
+      "localizedTextIdName": 690729
+    },
+    {
+      "ID": 170,
+      "worldLocation2Id": 32164,
+      "localizedTextIdName": 690730
+    },
+    {
+      "ID": 171,
+      "worldLocation2Id": 50537,
+      "localizedTextIdName": 690731
+    },
+    {
+      "ID": 172,
+      "worldLocation2Id": 39564,
+      "localizedTextIdName": 690732
+    },
+    {
+      "ID": 174,
+      "worldLocation2Id": 41890,
+      "localizedTextIdName": 690733
+    },
+    {
+      "ID": 175,
+      "worldLocation2Id": 30157,
+      "localizedTextIdName": 690734
+    },
+    {
+      "ID": 176,
+      "worldLocation2Id": 30158,
+      "localizedTextIdName": 690736
+    },
+    {
+      "ID": 177,
+      "worldLocation2Id": 31564,
+      "localizedTextIdName": 690737
+    },
+    {
+      "ID": 178,
+      "worldLocation2Id": 31135,
+      "localizedTextIdName": 690738
+    },
+    {
+      "ID": 179,
+      "worldLocation2Id": 31134,
+      "localizedTextIdName": 690739
+    },
+    {
+      "ID": 180,
+      "worldLocation2Id": 50540,
+      "localizedTextIdName": 690742
+    },
+    {
+      "ID": 181,
+      "worldLocation2Id": 29998,
+      "localizedTextIdName": 690743
+    },
+    {
+      "ID": 182,
+      "worldLocation2Id": 34478,
+      "localizedTextIdName": 690746
+    },
+    {
+      "ID": 183,
+      "worldLocation2Id": 44567,
+      "localizedTextIdName": 690748
+    },
+    {
+      "ID": 184,
+      "worldLocation2Id": 50539,
+      "localizedTextIdName": 690750
+    },
+    {
+      "ID": 185,
+      "worldLocation2Id": 32368,
+      "localizedTextIdName": 690752
+    },
+    {
+      "ID": 186,
+      "worldLocation2Id": 43073,
+      "localizedTextIdName": 690782
+    },
+    {
+      "ID": 187,
+      "worldLocation2Id": 34478,
+      "localizedTextIdName": 690787
+    },
+    {
+      "ID": 188,
+      "worldLocation2Id": 35384,
+      "localizedTextIdName": 690796
+    },
+    {
+      "ID": 189,
+      "worldLocation2Id": 34478,
+      "localizedTextIdName": 690797
+    },
+    {
+      "ID": 190,
+      "worldLocation2Id": 44568,
+      "localizedTextIdName": 690800
+    },
+    {
+      "ID": 191,
+      "worldLocation2Id": 34478,
+      "localizedTextIdName": 690808
+    },
+    {
+      "ID": 192,
+      "worldLocation2Id": 42881,
+      "localizedTextIdName": 690826
+    },
+    {
+      "ID": 193,
+      "worldLocation2Id": 41391,
+      "localizedTextIdName": 690827
+    },
+    {
+      "ID": 194,
+      "worldLocation2Id": 41547,
+      "localizedTextIdName": 690834
+    },
+    {
+      "ID": 195,
+      "worldLocation2Id": 42921,
+      "localizedTextIdName": 690836
+    },
+    {
+      "ID": 196,
+      "worldLocation2Id": 40798,
+      "localizedTextIdName": 690839
+    },
+    {
+      "ID": 197,
+      "worldLocation2Id": 41444,
+      "localizedTextIdName": 690840
+    },
+    {
+      "ID": 198,
+      "worldLocation2Id": 43197,
+      "localizedTextIdName": 690895
+    },
+    {
+      "ID": 199,
+      "worldLocation2Id": 43094,
+      "localizedTextIdName": 690896
+    },
+    {
+      "ID": 200,
+      "worldLocation2Id": 43052,
+      "localizedTextIdName": 690897
+    },
+    {
+      "ID": 201,
+      "worldLocation2Id": 43362,
+      "localizedTextIdName": 690898
+    },
+    {
+      "ID": 202,
+      "worldLocation2Id": 43094,
+      "localizedTextIdName": 690899
+    },
+    {
+      "ID": 203,
+      "worldLocation2Id": 46642,
+      "localizedTextIdName": 690907
+    },
+    {
+      "ID": 204,
+      "worldLocation2Id": 46642,
+      "localizedTextIdName": 690908
+    },
+    {
+      "ID": 205,
+      "worldLocation2Id": 26512,
+      "localizedTextIdName": 690935
+    },
+    {
+      "ID": 206,
+      "worldLocation2Id": 26515,
+      "localizedTextIdName": 690936
+    },
+    {
+      "ID": 207,
+      "worldLocation2Id": 28771,
+      "localizedTextIdName": 690937
+    },
+    {
+      "ID": 208,
+      "worldLocation2Id": 28770,
+      "localizedTextIdName": 690938
+    },
+    {
+      "ID": 209,
+      "worldLocation2Id": 43476,
+      "localizedTextIdName": 739845
+    },
+    {
+      "ID": 210,
+      "worldLocation2Id": 51289,
+      "localizedTextIdName": 739846
+    }
+  ]
+}
