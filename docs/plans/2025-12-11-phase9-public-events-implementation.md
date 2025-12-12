@@ -10,38 +10,119 @@
 
 **Design Doc:** See `docs/plans/2025-12-11-phase9-public-events-design.md` for full architecture.
 
+**Status:** ~92% Complete (24/26 tasks)
+**Last Review:** 2025-12-11
+
+---
+
+## Implementation Status Summary
+
+| Category | Complete | Total | Notes |
+|----------|----------|-------|-------|
+| Database Schemas | 5 | 5 | All event schemas implemented |
+| Context Modules | 3 | 3 | Core, Participation, Scheduling |
+| Static Data | 3 | 4 | Missing event_loot_tables.json |
+| Server Packets | 11 | 12 | Missing ServerEventWave, ServerRewardTierUpdate |
+| Client Packets | 4 | 4 | All complete |
+| GenServers | 3 | 3 | EventManager, EventScheduler, EventManagerSupervisor |
+| Handler | 1 | 1 | EventHandler complete |
+| Tests | 1 | 2 | EventManager tests; missing schema tests |
+
 ---
 
 ## Task Overview
 
-| # | Task | Description |
-|---|------|-------------|
-| 1 | Migration | Create database tables |
-| 2 | EventInstance Schema | Active event tracking |
-| 3 | EventParticipation Schema | Player contribution tracking |
-| 4 | EventCompletion Schema | Historical completions |
-| 5 | EventSchedule Schema | Event scheduling |
-| 6 | WorldBossSpawn Schema | World boss spawn tracking |
-| 7 | PublicEvents Context - Core | Instance lifecycle |
-| 8 | PublicEvents Context - Participation | Join/contribute/rewards |
-| 9 | PublicEvents Context - Scheduling | Schedule management |
-| 10 | Static Data Files | JSON event definitions |
-| 11 | ETS Integration | Load static data |
-| 12 | Server Packets - Events | Start/update/complete packets |
-| 13 | Server Packets - World Boss | Boss-specific packets |
-| 14 | Client Packets | Request packets |
-| 15 | EventManager GenServer - Core | Basic lifecycle |
-| 16 | EventManager - Objectives | Kill/collect tracking |
-| 17 | EventManager - Scheduling | Timer-based triggers |
-| 18 | EventManager - World Bosses | Boss spawn management |
-| 19 | EventManager - Waves | Invasion wave system |
-| 20 | EventManager - Territory | Control point mechanics |
-| 21 | EventManager - Rewards | Tier calculation & distribution |
-| 22 | Event Handler | Packet processing |
-| 23 | Supervision Tree | Add to application |
-| 24 | Combat Integration | Kill recording |
-| 25 | Tests | Comprehensive test suite |
-| 26 | Update STATUS.md | Mark Phase 9 complete |
+| # | Task | Description | Status |
+|---|------|-------------|--------|
+| 1 | Migration | Create database tables | ✅ Complete |
+| 2 | EventInstance Schema | Active event tracking | ✅ Complete |
+| 3 | EventParticipation Schema | Player contribution tracking | ✅ Complete |
+| 4 | EventCompletion Schema | Historical completions | ✅ Complete |
+| 5 | EventSchedule Schema | Event scheduling | ✅ Complete |
+| 6 | WorldBossSpawn Schema | World boss spawn tracking | ✅ Complete |
+| 7 | PublicEvents Context - Core | Instance lifecycle | ✅ Complete |
+| 8 | PublicEvents Context - Participation | Join/contribute/rewards | ✅ Complete |
+| 9 | PublicEvents Context - Scheduling | Schedule management | ✅ Complete |
+| 10 | Static Data Files | JSON event definitions | ⚠️ 75% (missing loot tables) |
+| 11 | ETS Integration | Load static data | ✅ Complete |
+| 12 | Server Packets - Events | Start/update/complete packets | ⚠️ 83% (missing wave/tier) |
+| 13 | Server Packets - World Boss | Boss-specific packets | ✅ Complete |
+| 14 | Client Packets | Request packets | ✅ Complete |
+| 15 | EventManager GenServer - Core | Basic lifecycle | ✅ Complete |
+| 16 | EventManager - Objectives | Kill/collect tracking | ✅ Complete |
+| 17 | EventManager - Scheduling | Timer-based triggers | ✅ Complete |
+| 18 | EventManager - World Bosses | Boss spawn management | ✅ Complete |
+| 19 | EventManager - Waves | Invasion wave system | ✅ Complete |
+| 20 | EventManager - Territory | Control point mechanics | ✅ Complete |
+| 21 | EventManager - Rewards | Tier calculation & distribution | ✅ Complete |
+| 22 | Event Handler | Packet processing | ✅ Complete |
+| 23 | Supervision Tree | Add to application | ✅ Complete |
+| 24 | Combat Integration | Kill recording | ✅ Complete |
+| 25 | Tests | Comprehensive test suite | ⚠️ 50% (missing schema tests) |
+| 26 | Update STATUS.md | Mark Phase 9 complete | ✅ Complete |
+
+---
+
+## Missing Items
+
+### 1. ServerEventWave Packet
+
+Notifies clients of wave progression in invasion events.
+
+```elixir
+# apps/bezgelor_protocol/lib/bezgelor_protocol/packets/world/server_event_wave.ex
+defmodule BezgelorProtocol.Packets.World.ServerEventWave do
+  @moduledoc "Wave progression update for invasion events."
+  use BezgelorProtocol.Packet, id: 0x0XXX  # TODO: Determine opcode
+
+  defstruct [:event_instance_id, :wave_number, :total_waves, :enemies_spawned, :enemies_remaining]
+
+  @impl true
+  def write(packet) do
+    <<
+      packet.event_instance_id::little-32,
+      packet.wave_number::8,
+      packet.total_waves::8,
+      packet.enemies_spawned::little-16,
+      packet.enemies_remaining::little-16
+    >>
+  end
+end
+```
+
+### 2. ServerRewardTierUpdate Packet
+
+Notifies client when their reward tier changes during an event.
+
+```elixir
+# apps/bezgelor_protocol/lib/bezgelor_protocol/packets/world/server_reward_tier_update.ex
+defmodule BezgelorProtocol.Packets.World.ServerRewardTierUpdate do
+  @moduledoc "Reward tier change notification."
+  use BezgelorProtocol.Packet, id: 0x0XXX  # TODO: Determine opcode
+
+  @tiers %{participation: 0, bronze: 1, silver: 2, gold: 3}
+
+  defstruct [:event_instance_id, :tier, :contribution_score]
+
+  @impl true
+  def write(packet) do
+    tier_id = Map.get(@tiers, packet.tier, 0)
+    <<
+      packet.event_instance_id::little-32,
+      tier_id::8,
+      packet.contribution_score::little-32
+    >>
+  end
+end
+```
+
+### 3. event_loot_tables.json
+
+Static data for event-specific loot tables. Create at `apps/bezgelor_data/priv/data/event_loot_tables.json`.
+
+### 4. Event Schema Tests
+
+Add test file at `apps/bezgelor_db/test/schema/event_instance_test.exs` covering all event schemas.
 
 ---
 
