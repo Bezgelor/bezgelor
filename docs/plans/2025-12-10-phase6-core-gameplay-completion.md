@@ -1,5 +1,7 @@
 # Phase 6 Completion: Core Gameplay
 
+**Status:** ✅ Complete
+
 ## Overview
 
 Complete the remaining Phase 6 components from the original roadmap:
@@ -176,45 +178,46 @@ end
 
 ## Implementation Tasks
 
-### Task 1: Creature Template Module
-- `bezgelor_core/creature_template.ex` - Template struct and test data
-
-### Task 2: Combat Module
-- `bezgelor_core/combat.ex` - Damage application, death handling
-
-### Task 3: Experience Module
-- `bezgelor_core/experience.ex` - XP calculations, level formulas
-
-### Task 4: Loot Module
-- `bezgelor_core/loot.ex` - Loot tables and roll logic
-
-### Task 5: AI Module
-- `bezgelor_core/ai.ex` - AI state machine and behavior
-
-### Task 6: CreatureManager
-- `bezgelor_world/creature_manager.ex` - Spawn and manage creatures
-
-### Task 7: Target Packets
-- Client/Server targeting packets
-
-### Task 8: Death/Respawn Packets
-- Death notification, respawn request/confirm
-
-### Task 9: XP/Level Packets
-- XP gain, level up notifications
-
-### Task 10: Combat Handler Updates
-- Integrate combat into spell system
-- Apply damage to targets
-- Handle death on kill
+| Task | Description | Status |
+|------|-------------|--------|
+| 1 | Creature Template Module (`bezgelor_core/creature_template.ex`) | ✅ Done |
+| 2 | Combat Module (`bezgelor_world/handler/combat_handler.ex`) | ✅ Done |
+| 3 | Experience Module (`bezgelor_core/experience.ex`) | ✅ Done |
+| 4 | Loot Module (`bezgelor_core/loot.ex`) | ✅ Done |
+| 5 | AI Module (`bezgelor_core/ai.ex`) | ✅ Done |
+| 6 | CreatureManager (`bezgelor_world/creature_manager.ex`) | ✅ Done |
+| 7 | Target Packets (`client_set_target.ex`, `server_target_update.ex`) | ✅ Done |
+| 8 | Death/Respawn Packets (`server_entity_death.ex`, `client_respawn.ex`, `server_respawn.ex`) | ✅ Done |
+| 9 | XP/Level Packets (`server_xp_gain.ex`, `server_level_up.ex`) | ✅ Done |
+| 10 | Combat Handler Updates (spell damage, death handling) | ✅ Done |
 
 ## Success Criteria
 
-- Creatures spawn in the world
-- Player can target creatures
-- Spells damage targeted creatures
-- Creatures die when health = 0
-- Player gains XP on kill
-- Player levels up when XP threshold reached
-- Creatures respawn after timer
-- Players can respawn after death
+| # | Criterion | Status |
+|---|-----------|--------|
+| 1 | Creatures spawn in the world | ✅ Done |
+| 2 | Player can target creatures | ✅ Done |
+| 3 | Spells damage targeted creatures | ✅ Done |
+| 4 | Creatures die when health = 0 | ✅ Done |
+| 5 | Player gains XP on kill | ✅ Done |
+| 6 | Player levels up when XP threshold reached | ✅ Done |
+| 7 | Creatures respawn after timer | ✅ Done |
+| 8 | Players can respawn after death | ✅ Done |
+
+## Implementation Notes
+
+**Files Implemented:**
+- `apps/bezgelor_core/lib/bezgelor_core/creature_template.ex` - Creature definitions
+- `apps/bezgelor_core/lib/bezgelor_core/ai.ex` - AI state machine
+- `apps/bezgelor_core/lib/bezgelor_core/experience.ex` - XP calculations
+- `apps/bezgelor_core/lib/bezgelor_core/loot.ex` - Loot tables
+- `apps/bezgelor_world/lib/bezgelor_world/creature_manager.ex` - Creature spawning/management
+- `apps/bezgelor_world/lib/bezgelor_world/handler/combat_handler.ex` - Combat and respawn
+- `apps/bezgelor_protocol/lib/bezgelor_protocol/packets/world/client_set_target.ex`
+- `apps/bezgelor_protocol/lib/bezgelor_protocol/packets/world/server_target_update.ex`
+- `apps/bezgelor_protocol/lib/bezgelor_protocol/packets/world/server_entity_death.ex`
+- `apps/bezgelor_protocol/lib/bezgelor_protocol/packets/world/client_respawn.ex`
+- `apps/bezgelor_protocol/lib/bezgelor_protocol/packets/world/server_respawn.ex`
+- `apps/bezgelor_protocol/lib/bezgelor_protocol/packets/world/server_xp_gain.ex`
+- `apps/bezgelor_protocol/lib/bezgelor_protocol/packets/world/server_level_up.ex`
+- `apps/bezgelor_protocol/lib/bezgelor_protocol/packets/world/server_loot_drop.ex`

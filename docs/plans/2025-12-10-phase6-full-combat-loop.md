@@ -1,5 +1,7 @@
 # Phase 6: Full Combat Loop Implementation Plan
 
+**Status:** ✅ Complete
+
 ## Goal
 
 Complete the bidirectional combat loop: players can damage and kill creatures, creatures can damage and kill players. XP is awarded, death notifications sent, and respawn mechanics work for both entity types.
@@ -1365,13 +1367,36 @@ git add -A && git commit -m "test(world): complete Phase 6 combat loop tests"
 
 ## Summary
 
-After completing all tasks:
+| Task | Description | Status |
+|------|-------------|--------|
+| 1 | Wire SpellHandler Damage to CreatureManager | ✅ Done |
+| 2 | Send ServerEntityDeath on Creature Death | ✅ Done |
+| 3 | Create Combat Broadcaster Module | ✅ Done |
+| 4 | Integrate CombatBroadcaster into SpellHandler | ✅ Done |
+| 5 | Implement Creature Attack on Players | ✅ Done |
+| 6 | Player Death Detection and Notification | ✅ Done |
+| 7 | Player Respawn Handler | ✅ Done (in CombatHandler) |
+| 8 | Run Full Test Suite | ✅ Done |
 
-1. **Player → Creature damage**: SpellHandler → CreatureManager.damage_creature() ✓
-2. **Creature death notification**: ServerEntityDeath broadcast ✓
-3. **XP rewards**: ServerXPGain sent to killer ✓
-4. **Creature → Player damage**: AI tick → apply_creature_attack() ✓
-5. **Player death notification**: ServerEntityDeath broadcast ✓
-6. **Player respawn**: RespawnHandler restores health and position ✓
+**Combat Loop Flow:**
+1. **Player → Creature damage**: SpellHandler → CreatureManager.damage_creature() ✅
+2. **Creature death notification**: ServerEntityDeath broadcast ✅
+3. **XP rewards**: ServerXPGain sent to killer ✅
+4. **Creature → Player damage**: AI tick → apply_creature_attack() ✅
+5. **Player death notification**: ServerEntityDeath broadcast ✅
+6. **Player respawn**: CombatHandler restores health and position ✅
 
-The full combat loop is now complete: players and creatures can damage each other, deaths are detected and notified, XP is awarded for kills, and respawn mechanics work.
+## Implementation Notes
+
+**Files Implemented:**
+- `apps/bezgelor_world/lib/bezgelor_world/handler/spell_handler.ex` - Spell casting and damage
+- `apps/bezgelor_world/lib/bezgelor_world/creature_manager.ex` - Creature state and AI
+- `apps/bezgelor_world/lib/bezgelor_world/combat_broadcaster.ex` - Combat event broadcasting
+- `apps/bezgelor_world/lib/bezgelor_world/handler/combat_handler.ex` - Targeting and respawn
+- `apps/bezgelor_protocol/lib/bezgelor_protocol/packets/world/server_entity_death.ex`
+- `apps/bezgelor_protocol/lib/bezgelor_protocol/packets/world/server_xp_gain.ex`
+- `apps/bezgelor_protocol/lib/bezgelor_protocol/packets/world/client_respawn.ex`
+- `apps/bezgelor_protocol/lib/bezgelor_protocol/packets/world/server_respawn.ex`
+
+**Design Deviation:**
+- RespawnHandler was not created as a separate module; respawn handling is integrated into CombatHandler
