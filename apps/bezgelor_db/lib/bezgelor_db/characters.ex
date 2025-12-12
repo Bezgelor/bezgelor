@@ -210,6 +210,66 @@ defmodule BezgelorDb.Characters do
   end
 
   @doc """
+  Add experience points to a character.
+
+  ## Returns
+
+  - `{:ok, character}` - XP added, no level up
+  - `{:ok, character, level_up: true}` - XP added and character leveled up
+  - `{:error, changeset}` - Update failed
+  """
+  @spec add_experience(Character.t(), non_neg_integer()) ::
+          {:ok, Character.t()} | {:ok, Character.t(), keyword()} | {:error, Ecto.Changeset.t()}
+  def add_experience(%Character{} = character, xp_amount) when xp_amount >= 0 do
+    new_total = character.total_xp + xp_amount
+    current_level = character.level
+
+    # Calculate if level up occurred
+    {new_level, leveled_up} = calculate_level(new_total, current_level)
+
+    changes = %{
+      total_xp: new_total,
+      level: new_level
+    }
+
+    case character
+         |> Ecto.Changeset.change(changes)
+         |> Repo.update() do
+      {:ok, updated} ->
+        if leveled_up do
+          {:ok, updated, level_up: true}
+        else
+          {:ok, updated}
+        end
+
+      {:error, changeset} ->
+        {:error, changeset}
+    end
+  end
+
+  @doc """
+  Get XP required for a given level.
+
+  WildStar XP curve: level * 1000 base, with exponential growth.
+  """
+  @spec xp_for_level(non_neg_integer()) :: non_neg_integer()
+  def xp_for_level(level) when level >= 1 do
+    # Simplified WildStar XP curve
+    round(level * 1000 * :math.pow(1.1, level - 1))
+  end
+
+  @doc """
+  Get total XP required to reach a level (cumulative).
+  """
+  @spec total_xp_for_level(non_neg_integer()) :: non_neg_integer()
+  def total_xp_for_level(1), do: 0
+  def total_xp_for_level(level) when level > 1 do
+    1..(level - 1)
+    |> Enum.map(&xp_for_level/1)
+    |> Enum.sum()
+  end
+
+  @doc """
   Get the maximum number of characters allowed per account.
   """
   @spec max_characters() :: integer()
@@ -229,6 +289,22 @@ defmodule BezgelorDb.Characters do
   end
 
   # Private functions
+
+  # Calculate new level based on total XP
+  defp calculate_level(total_xp, current_level) do
+    max_level = 50
+
+    new_level =
+      Enum.reduce_while(current_level..max_level, current_level, fn level, _acc ->
+        if total_xp >= total_xp_for_level(level + 1) do
+          {:cont, level + 1}
+        else
+          {:halt, level}
+        end
+      end)
+
+    {min(new_level, max_level), new_level > current_level}
+  end
 
   defp check_character_limit(account_id) do
     if count_characters(account_id) >= @max_characters do
