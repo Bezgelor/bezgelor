@@ -38,7 +38,9 @@ defmodule BezgelorData.Store do
     # PvP data
     :battlegrounds,
     :arenas,
-    :warplot_plugs
+    :warplot_plugs,
+    # Spawn data
+    :creature_spawns
   ]
 
   # Client API
@@ -564,6 +566,102 @@ defmodule BezgelorData.Store do
     end
   end
 
+  # Creature Spawn queries
+
+  @doc """
+  Get creature spawns for a world/zone.
+  Returns a map with creature_spawns, resource_spawns, and object_spawns.
+  """
+  @spec get_creature_spawns(non_neg_integer()) :: {:ok, map()} | :error
+  def get_creature_spawns(world_id), do: get(:creature_spawns, world_id)
+
+  @doc """
+  Get all zone spawn data.
+  """
+  @spec get_all_spawn_zones() :: [map()]
+  def get_all_spawn_zones, do: list(:creature_spawns)
+
+  @doc """
+  Get creature spawns for a specific area within a zone.
+  """
+  @spec get_spawns_in_area(non_neg_integer(), non_neg_integer()) :: [map()]
+  def get_spawns_in_area(world_id, area_id) do
+    case get_creature_spawns(world_id) do
+      {:ok, zone_data} ->
+        Enum.filter(zone_data.creature_spawns, fn spawn ->
+          spawn.area_id == area_id
+        end)
+
+      :error ->
+        []
+    end
+  end
+
+  @doc """
+  Get all spawns for a specific creature template ID across all zones.
+  """
+  @spec get_spawns_for_creature(non_neg_integer()) :: [map()]
+  def get_spawns_for_creature(creature_id) do
+    list(:creature_spawns)
+    |> Enum.flat_map(fn zone_data ->
+      Enum.filter(zone_data.creature_spawns, fn spawn ->
+        spawn.creature_id == creature_id
+      end)
+    end)
+  end
+
+  @doc """
+  Get resource spawns for a world/zone.
+  """
+  @spec get_resource_spawns(non_neg_integer()) :: [map()]
+  def get_resource_spawns(world_id) do
+    case get_creature_spawns(world_id) do
+      {:ok, zone_data} -> zone_data.resource_spawns
+      :error -> []
+    end
+  end
+
+  @doc """
+  Get object spawns for a world/zone.
+  """
+  @spec get_object_spawns(non_neg_integer()) :: [map()]
+  def get_object_spawns(world_id) do
+    case get_creature_spawns(world_id) do
+      {:ok, zone_data} -> zone_data.object_spawns
+      :error -> []
+    end
+  end
+
+  @doc """
+  Get spawn count for a world/zone.
+  """
+  @spec get_spawn_count(non_neg_integer()) :: non_neg_integer()
+  def get_spawn_count(world_id) do
+    case get_creature_spawns(world_id) do
+      {:ok, zone_data} ->
+        length(zone_data.creature_spawns) +
+          length(zone_data.resource_spawns) +
+          length(zone_data.object_spawns)
+
+      :error ->
+        0
+    end
+  end
+
+  @doc """
+  Get total spawn count across all zones.
+  """
+  @spec get_total_spawn_count() :: non_neg_integer()
+  def get_total_spawn_count do
+    list(:creature_spawns)
+    |> Enum.reduce(0, fn zone_data, acc ->
+      acc +
+        length(zone_data.creature_spawns) +
+        length(zone_data.resource_spawns) +
+        length(zone_data.object_spawns)
+    end)
+  end
+
   # Server callbacks
 
   @impl true
@@ -632,6 +730,9 @@ defmodule BezgelorData.Store do
     load_battlegrounds()
     load_arenas()
     load_warplot_plugs()
+
+    # Spawn data
+    load_creature_spawns()
 
     Logger.info("Game data loaded: #{inspect(stats())}")
   end
@@ -830,6 +931,42 @@ defmodule BezgelorData.Store do
 
       {:error, reason} ->
         Logger.warning("Failed to load warplot plugs: #{inspect(reason)}")
+    end
+  end
+
+  defp load_creature_spawns do
+    table_name = table_name(:creature_spawns)
+
+    # Clear existing data
+    :ets.delete_all_objects(table_name)
+
+    json_path = Path.join(data_directory(), "creature_spawns.json")
+
+    case load_json_raw(json_path) do
+      {:ok, data} ->
+        # Load zone spawn data, keyed by world_id
+        zone_spawns = Map.get(data, :zone_spawns, [])
+
+        for zone_data <- zone_spawns do
+          world_id = zone_data.world_id
+          :ets.insert(table_name, {world_id, zone_data})
+        end
+
+        total_creatures =
+          Enum.reduce(zone_spawns, 0, fn z, acc -> acc + length(z.creature_spawns) end)
+
+        total_resources =
+          Enum.reduce(zone_spawns, 0, fn z, acc -> acc + length(z.resource_spawns) end)
+
+        total_objects =
+          Enum.reduce(zone_spawns, 0, fn z, acc -> acc + length(z.object_spawns) end)
+
+        Logger.debug(
+          "Loaded #{length(zone_spawns)} zone spawn data (#{total_creatures} creatures, #{total_resources} resources, #{total_objects} objects)"
+        )
+
+      {:error, reason} ->
+        Logger.warning("Failed to load creature spawns: #{inspect(reason)}")
     end
   end
 
