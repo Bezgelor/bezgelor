@@ -25,6 +25,8 @@ defmodule BezgelorWorld.CreatureDeath do
   - `opts` - Options
     - `:zone_id` - Zone ID for logging (optional)
     - `:instance_id` - Instance ID for logging (optional)
+    - `:group_size` - Number of players in the group (for loot bonuses)
+    - `:class_id` - Player class ID (for class-specific equipment drops)
 
   ## Returns
 
@@ -44,7 +46,9 @@ defmodule BezgelorWorld.CreatureDeath do
     creature_id = entity.creature_id
     creature_level = template.level
 
-    loot_drops = generate_loot(creature_id, creature_level, killer_level, template)
+    # Extract loot-related options
+    loot_opts = Keyword.take(opts, [:group_size, :class_id, :creature_tier])
+    loot_drops = generate_loot(creature_id, creature_level, killer_level, template, loot_opts)
 
     # Spawn corpse entity if there's loot
     corpse_guid = spawn_corpse_if_needed(entity, loot_drops)
@@ -89,13 +93,21 @@ defmodule BezgelorWorld.CreatureDeath do
 
   Uses the data-driven loot system if creature_id is present,
   otherwise falls back to template's loot_table_id.
+
+  ## Options
+
+  - `:group_size` - Number of players in the group (for drop bonuses)
+  - `:creature_tier` - Creature tier (1-5) for equipment drops
+  - `:class_id` - Player class ID for class-specific equipment
   """
-  @spec generate_loot(non_neg_integer() | nil, non_neg_integer(), non_neg_integer(), map()) ::
+  @spec generate_loot(non_neg_integer() | nil, non_neg_integer(), non_neg_integer(), map(), Keyword.t()) ::
           [{non_neg_integer(), non_neg_integer()}]
-  def generate_loot(creature_id, creature_level, killer_level, template) do
+  def generate_loot(creature_id, creature_level, killer_level, template, opts \\ []) do
     if creature_id && creature_id > 0 do
       # Use data-driven loot system with explicit creature level
-      Loot.roll_creature_loot(creature_id, creature_level, killer_level)
+      # Pass through group_size and other options for loot bonuses
+      loot_opts = build_loot_opts(template, opts)
+      Loot.roll_creature_loot(creature_id, creature_level, killer_level, loot_opts)
     else
       # Fall back to template's loot table if no creature_id
       if template.loot_table_id do
@@ -103,6 +115,27 @@ defmodule BezgelorWorld.CreatureDeath do
       else
         []
       end
+    end
+  end
+
+  # Build loot options from template and caller options
+  defp build_loot_opts(template, opts) do
+    base_opts = []
+
+    # Add group_size if provided
+    base_opts = case Keyword.get(opts, :group_size) do
+      nil -> base_opts
+      size -> Keyword.put(base_opts, :group_size, size)
+    end
+
+    # Add creature_tier from template or options
+    creature_tier = Keyword.get(opts, :creature_tier) || Map.get(template, :tier, 1)
+    base_opts = Keyword.put(base_opts, :creature_tier, creature_tier)
+
+    # Add class_id if provided (for class-specific equipment drops)
+    case Keyword.get(opts, :class_id) do
+      nil -> base_opts
+      class_id -> Keyword.put(base_opts, :class_id, class_id)
     end
   end
 
