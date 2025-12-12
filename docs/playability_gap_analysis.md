@@ -10,10 +10,11 @@ Bezgelor is a **feature-complete game engine with minimal game content**. The ar
 | Aspect | Status |
 |--------|--------|
 | Systems Implementation | ~95% complete |
-| Content/Data | ~75% complete |
+| Content/Data | ~80% complete |
 | Populated Worlds | 7 of 7 (open world) |
 | Quests Defined | 5,194 (from client) |
 | Quest Giver Mappings | ✅ Available (creatures_full) |
+| Vendor Inventories | ✅ 881 vendors, 35,842 items |
 | Dungeons Working | 0 of 46 |
 
 ---
@@ -23,7 +24,7 @@ Bezgelor is a **feature-complete game engine with minimal game content**. The ar
 | Category | Status | Work Required |
 |----------|--------|---------------|
 | **Quest Wiring** | Data ready | Wire 5,194 quests to handlers using creature giver mappings |
-| **Vendor Inventories** | NPCs identified | Generate/mine item lists for 881 vendors |
+| **Vendor Inventories** | ✅ Generated | 881 vendors, 35,842 item listings |
 | **Loot Tables** | Framework ready | Assign creature → loot table mappings |
 | **Gathering Nodes** | System ready | Extract or generate node spawn positions |
 | **Dungeon Scripts** | DSL ready | Script 46 dungeon encounters |
@@ -50,6 +51,7 @@ The primary work is **integration**, not content creation—data exists, systems
 | **Quest Objectives** | `quest_objectives.json` | 10,031 | ✅ **Extracted from client** |
 | **Quest Rewards** | `quest_rewards.json` | 5,415 | ✅ **Extracted from client** |
 | **NPC Vendors** | `npc_vendors.json` | 881 | ✅ **Extracted from client** |
+| **Vendor Inventories** | `vendor_inventories.json` | 35,842 items | ✅ **Generated for all vendors** |
 | **Achievements** | `achievements.json` | 4,943 | ✅ **Extracted from client** |
 | **Path Missions** | `path_missions.json` | 1,064 | ✅ **Extracted from client** |
 | **Gossip/Dialogue** | `gossip_entries.json` | 10,799 | ✅ **Extracted from client** |
@@ -65,8 +67,8 @@ The primary work is **integration**, not content creation—data exists, systems
 | Category | Status | Impact |
 |----------|--------|--------|
 | ~~Quest Definitions~~ | ✅ **5,194 extracted** | Needs wiring to system |
-| ~~NPC/Vendor Data~~ | ✅ **881 vendors identified** | Needs inventory data |
-| **Vendor Inventories** | Not in client | Need to generate/mine |
+| ~~NPC/Vendor Data~~ | ✅ **881 vendors + 35,842 items** | ✅ Complete |
+| ~~Vendor Inventories~~ | ✅ **Generated** | ✅ Complete |
 | **Loot Tables** | Unassigned | No rewards |
 | **Gathering Nodes** | 0 spawns | Tradeskills broken |
 | **Dungeon Scripts** | 1 example | No PvE endgame |
@@ -97,30 +99,30 @@ The primary work is **integration**, not content creation—data exists, systems
 
 **Impact:** ~~Cannot progress~~ → Data available, needs integration.
 
-### 2. NPC/Vendor System (✅ Vendors Identified - Needs Inventory)
+### 2. NPC/Vendor System (✅ COMPLETE)
 
 **What exists:**
 - 53,137 creature templates with full metadata (`creatures_part1-4.json`)
 - Creature spawn system
 - ✅ **881 vendor NPCs identified** (`npc_vendors.json`)
+- ✅ **35,842 vendor item listings** (`vendor_inventories.json`)
 - ✅ **569 creature affiliations** (vendor types, trainers, etc.)
 - ✅ **10,799 gossip/dialogue entries** (`gossip_entries.json`)
 - ✅ **1,978 gossip sets** (`gossip_sets.json`)
 - ✅ **Creature → gossip mappings** (`gossipSetId` field in creatures_full)
 - ✅ **Creature → faction mappings** (`factionId` field in creatures_full)
 
-**Vendor types discovered:**
+**Vendor types:**
 - 162 General Goods, 87 Settler, 74 Quartermaster
 - 53 Weapons, 51 Tradeskill Goods, 48 Armor
 - 22 Cooking Trainers, 20 Ability Trainers, 15 Mount vendors
 - Plus many specialized vendors (PvP, reputation, etc.)
 
 **What's needed:**
-- Vendor inventory data (not in client - server-side)
+- ~~Vendor inventory data~~ → ✅ Generated
 - ~~Wire gossip system to NPCs~~ → `gossipSetId` mapping available
-- Generate/mine vendor item lists from community data
 
-**Impact:** ~~Cannot interact~~ → NPCs identified, need inventories.
+**Impact:** ✅ NPCs fully configured with inventories and dialogue mappings.
 
 ### 3. World Population (✅ COMPLETE for Open World)
 
