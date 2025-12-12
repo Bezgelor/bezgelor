@@ -35,6 +35,10 @@ defmodule BezgelorWorld.Application do
       BezgelorWorld.WorldManager,
       BezgelorWorld.CreatureManager,
       BezgelorWorld.BuffManager,
+      # Registry for zone instance processes
+      {Registry, keys: :unique, name: BezgelorWorld.ZoneRegistry},
+      # Registry for creature zone managers
+      {Registry, keys: :unique, name: BezgelorWorld.Creature.Registry},
       # Registry for instance processes (must start before supervisors)
       BezgelorWorld.Instance.Registry,
       # Dynamic supervisor for zone instances
