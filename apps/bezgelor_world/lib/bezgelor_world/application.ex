@@ -56,7 +56,21 @@ defmodule BezgelorWorld.Application do
       # Dynamic supervisor for battleground instances
       BezgelorWorld.PvP.BattlegroundSupervisor,
       # Battleground queue manager
-      BezgelorWorld.PvP.BattlegroundQueue
+      BezgelorWorld.PvP.BattlegroundQueue,
+      # Registry for arena instances
+      {Registry, keys: :unique, name: BezgelorWorld.PvP.ArenaRegistry},
+      # Dynamic supervisor for arena instances
+      BezgelorWorld.PvP.ArenaSupervisor,
+      # Arena queue manager
+      BezgelorWorld.PvP.ArenaQueue,
+      # Registry for warplot instances
+      {Registry, keys: :unique, name: BezgelorWorld.PvP.WarplotRegistry},
+      # Dynamic supervisor for warplot instances
+      BezgelorWorld.PvP.WarplotSupervisor,
+      # Warplot manager
+      BezgelorWorld.PvP.WarplotManager,
+      # PvP season scheduler (rating decay & season transitions)
+      BezgelorWorld.PvP.SeasonScheduler
     ]
 
     server_children =

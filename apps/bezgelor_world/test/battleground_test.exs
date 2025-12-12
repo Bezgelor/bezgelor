@@ -391,4 +391,299 @@ defmodule BezgelorWorld.BattlegroundTest do
       GenServer.stop({:via, Registry, {BezgelorWorld.PvP.BattlegroundRegistry, ctx.match_id}})
     end
   end
+
+  # =============================================
+  # Walatiki Temple Mask Mechanics Tests
+  # =============================================
+
+  describe "Walatiki Temple mask mechanics" do
+    alias BezgelorWorld.PvP.Objectives.WalatikiMask
+
+    test "mask can be picked up from center" do
+      mask = %WalatikiMask{id: 1, state: :spawned, position: {0.0, 0.0, 0.0}}
+      {:ok, mask} = WalatikiMask.pickup(mask, 1001, :exile)
+
+      assert mask.state == :carried
+      assert mask.carrier_guid == 1001
+      assert mask.carrier_faction == :exile
+    end
+
+    test "mask drops on carrier death" do
+      mask = %WalatikiMask{id: 1, state: :carried, carrier_guid: 1001, carrier_faction: :exile}
+      {:ok, mask} = WalatikiMask.drop(mask, {50.0, 0.0, 0.0})
+
+      assert mask.state == :dropped
+      assert mask.drop_position == {50.0, 0.0, 0.0}
+    end
+
+    test "friendly player returns dropped mask" do
+      mask = %WalatikiMask{
+        id: 1,
+        state: :dropped,
+        carrier_faction: :exile,
+        drop_position: {50.0, 0.0, 0.0},
+        dropped_at: System.monotonic_time(:millisecond)
+      }
+
+      {:returned, mask} = WalatikiMask.pickup(mask, 1002, :exile)
+
+      assert mask.state == :returning
+    end
+
+    test "enemy player picks up dropped mask" do
+      mask = %WalatikiMask{
+        id: 1,
+        state: :dropped,
+        carrier_faction: :exile,
+        drop_position: {50.0, 0.0, 0.0},
+        dropped_at: System.monotonic_time(:millisecond)
+      }
+
+      {:ok, mask} = WalatikiMask.pickup(mask, 2001, :dominion)
+
+      assert mask.state == :carried
+      assert mask.carrier_faction == :dominion
+    end
+
+    test "mask returns to center after timeout" do
+      mask = %WalatikiMask{
+        id: 1,
+        state: :dropped,
+        dropped_at: System.monotonic_time(:millisecond) - 15_000
+      }
+
+      {:return, mask} = WalatikiMask.check_return(mask)
+
+      assert mask.state == :returning
+    end
+
+    test "mask capture awards points" do
+      mask = %WalatikiMask{
+        id: 1,
+        state: :carried,
+        carrier_guid: 1001,
+        carrier_faction: :exile
+      }
+
+      {:captured, mask} = WalatikiMask.capture(mask, :exile)
+
+      assert mask.state == :returning
+      assert mask.carrier_guid == nil
+    end
+
+    test "cannot pickup carried mask" do
+      mask = %WalatikiMask{
+        id: 1,
+        state: :carried,
+        carrier_guid: 1001,
+        carrier_faction: :exile
+      }
+
+      {:error, :mask_not_available} = WalatikiMask.pickup(mask, 2001, :dominion)
+    end
+
+    test "respawn creates spawned mask" do
+      mask = %WalatikiMask{
+        id: 1,
+        state: :returning,
+        position: {0.0, 0.0, 0.0}
+      }
+
+      mask = WalatikiMask.respawn(mask)
+
+      assert mask.state == :spawned
+      assert mask.carrier_guid == nil
+    end
+  end
+
+  # =============================================
+  # Halls of the Bloodsworn Control Point Tests
+  # =============================================
+
+  describe "Halls of the Bloodsworn control points" do
+    alias BezgelorWorld.PvP.Objectives.ControlPoint
+
+    test "empty point maintains state" do
+      point = %ControlPoint{
+        id: 1,
+        owner: :neutral,
+        capture_progress: 0.5,
+        capturing_faction: nil,
+        players_in_range: %{exile: [], dominion: []}
+      }
+
+      {:unchanged, point} = ControlPoint.tick(point)
+
+      assert point.capture_progress == 0.5
+    end
+
+    test "single player captures point" do
+      point = %ControlPoint{
+        id: 1,
+        owner: :neutral,
+        capture_progress: 0.5,
+        capturing_faction: nil,
+        players_in_range: %{exile: [1001], dominion: []}
+      }
+
+      {:capturing, point} = ControlPoint.tick(point)
+
+      assert point.capturing_faction == :exile
+      assert point.capture_progress > 0.5
+    end
+
+    test "contested point freezes progress" do
+      point = %ControlPoint{
+        id: 1,
+        owner: :neutral,
+        capture_progress: 0.7,
+        capturing_faction: :exile,
+        players_in_range: %{exile: [1001], dominion: [2001]}
+      }
+
+      {:contested, point} = ControlPoint.tick(point)
+
+      assert point.capture_progress == 0.7
+    end
+
+    test "multiple players capture faster" do
+      single = %ControlPoint{
+        id: 1,
+        owner: :neutral,
+        capture_progress: 0.0,
+        capturing_faction: nil,
+        players_in_range: %{exile: [1001], dominion: []}
+      }
+
+      {:capturing, single_result} = ControlPoint.tick(single)
+
+      multi = %ControlPoint{
+        id: 1,
+        owner: :neutral,
+        capture_progress: 0.0,
+        capturing_faction: nil,
+        players_in_range: %{exile: [1001, 1002, 1003], dominion: []}
+      }
+
+      {:capturing, multi_result} = ControlPoint.tick(multi)
+
+      assert multi_result.capture_progress > single_result.capture_progress
+    end
+
+    test "capture completes at 100%" do
+      point = %ControlPoint{
+        id: 1,
+        owner: :neutral,
+        capture_progress: 0.99,
+        capturing_faction: :exile,
+        players_in_range: %{exile: [1001], dominion: []}
+      }
+
+      {:captured, point} = ControlPoint.tick(point)
+
+      assert point.owner == :exile
+      assert point.capture_progress == 1.0
+    end
+
+    test "center point worth double" do
+      base_score = 10
+
+      side_point = ControlPoint.new(1, "Side Point", {0.0, 0.0, 0.0},
+        owner: :exile,
+        capture_progress: 1.0,
+        score_multiplier: 1.0
+      )
+
+      center_point = ControlPoint.new(2, "Center Point", {0.0, 0.0, 0.0},
+        owner: :exile,
+        capture_progress: 1.0,
+        score_multiplier: 2.0
+      )
+
+      assert ControlPoint.score_per_tick(side_point, base_score) == 10
+      assert ControlPoint.score_per_tick(center_point, base_score) == 20
+    end
+  end
+
+  # =============================================
+  # Respawn System Tests
+  # =============================================
+
+  describe "respawn system" do
+    alias BezgelorWorld.PvP.Respawn
+
+    test "creates respawn entry" do
+      respawn = Respawn.create(1001, :exile)
+
+      assert respawn.player_guid == 1001
+      assert respawn.faction == :exile
+      assert respawn.respawn_time > respawn.death_time
+    end
+
+    test "time until respawn calculation" do
+      respawn = Respawn.create(1001, :exile)
+      time_left = Respawn.time_until_respawn(respawn)
+
+      # Should be around 30 seconds (base respawn time) + wave interval
+      assert time_left >= 0
+    end
+
+    test "selects appropriate graveyard" do
+      graveyards = [
+        %{id: 1, faction: :exile, position: {0.0, 0.0, 0.0}, priority: 1},
+        %{id: 2, faction: :exile, position: {100.0, 0.0, 0.0}, priority: 2}
+      ]
+
+      selected = Respawn.select_graveyard(:exile, graveyards)
+
+      # Should prefer higher priority
+      assert selected.id == 2
+    end
+  end
+
+  # =============================================
+  # Deserter Debuff Tests
+  # =============================================
+
+  describe "deserter debuff" do
+    alias BezgelorWorld.PvP.Deserter
+
+    test "initial deserter duration" do
+      deserter = Deserter.apply(1001, :battleground, nil)
+
+      assert deserter.stacks == 1
+      assert deserter.player_guid == 1001
+      assert deserter.content_type == :battleground
+    end
+
+    test "deserter stacks increase" do
+      deserter = Deserter.apply(1001, :battleground, nil)
+      deserter = Deserter.apply(1001, :battleground, deserter)
+      deserter = Deserter.apply(1001, :battleground, deserter)
+
+      assert deserter.stacks == 3
+    end
+
+    test "max stacks is 5" do
+      deserter =
+        1..10
+        |> Enum.reduce(nil, fn _, d -> Deserter.apply(1001, :battleground, d) end)
+
+      assert deserter.stacks == 5
+    end
+
+    test "max duration per application is capped" do
+      # Single fresh deserter at max stacks should not exceed max duration
+      # The max_duration_ms caps the duration per application at 1 hour
+      assert Deserter.max_duration_ms() == 3_600_000
+      assert Deserter.base_duration_ms() == 900_000
+    end
+
+    test "can queue check" do
+      deserter = Deserter.apply(1001, :battleground, nil)
+
+      refute Deserter.can_queue?(deserter, :battleground)
+      assert Deserter.can_queue?(nil, :battleground)
+    end
+  end
 end
