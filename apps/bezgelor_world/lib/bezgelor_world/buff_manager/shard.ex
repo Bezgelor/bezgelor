@@ -22,8 +22,7 @@ defmodule BezgelorWorld.BuffManager.Shard do
 
   @type entity_state :: %{
           effects: ActiveEffect.state(),
-          timers: %{non_neg_integer() => reference()},
-          tick_timers: %{non_neg_integer() => reference()}
+          timers: %{non_neg_integer() => reference()}
         }
 
   @type state :: %{
@@ -95,6 +94,11 @@ defmodule BezgelorWorld.BuffManager.Shard do
   def init(opts) do
     shard_id = Keyword.fetch!(opts, :shard_id)
 
+    # Register with TickScheduler for coordinated periodic effect ticking
+    if Process.whereis(BezgelorWorld.TickScheduler) do
+      BezgelorWorld.TickScheduler.register_listener(self())
+    end
+
     state = %{
       shard_id: shard_id,
       entities: %{}
@@ -109,36 +113,22 @@ defmodule BezgelorWorld.BuffManager.Shard do
     now = System.monotonic_time(:millisecond)
     entity = get_entity_state(state, entity_guid)
 
-    # Cancel existing timer for this buff if present
+    # Cancel existing expiration timer for this buff if present
     if timer_ref = Map.get(entity.timers, buff.id) do
       Process.cancel_timer(timer_ref)
-    end
-
-    # Cancel existing tick timer if present
-    if tick_ref = Map.get(entity.tick_timers, buff.id) do
-      Process.cancel_timer(tick_ref)
     end
 
     # Apply the buff
     effects = ActiveEffect.apply(entity.effects, buff, caster_guid, now)
 
-    # Schedule expiration
+    # Schedule expiration timer
     timer_ref = Process.send_after(self(), {:buff_expired, entity_guid, buff.id}, buff.duration)
     timers = Map.put(entity.timers, buff.id, timer_ref)
 
-    # Schedule first tick if this is a periodic effect
-    tick_timers =
-      if BuffDebuff.periodic?(buff) do
-        tick_ref =
-          Process.send_after(self(), {:buff_tick, entity_guid, buff.id}, buff.tick_interval)
-
-        Map.put(entity.tick_timers, buff.id, tick_ref)
-      else
-        entity.tick_timers
-      end
+    # Periodic effects are now processed by TickScheduler (no per-buff timers)
 
     # Update state
-    entity = %{entity | effects: effects, timers: timers, tick_timers: tick_timers}
+    entity = %{entity | effects: effects, timers: timers}
     state = put_entity_state(state, entity_guid, entity)
 
     Logger.debug("Shard #{state.shard_id}: Applied buff #{buff.id} to entity #{entity_guid}")
@@ -155,16 +145,10 @@ defmodule BezgelorWorld.BuffManager.Shard do
         Process.cancel_timer(timer_ref)
       end
 
-      # Cancel tick timer
-      if tick_ref = Map.get(entity.tick_timers, buff_id) do
-        Process.cancel_timer(tick_ref)
-      end
-
       # Remove buff
       effects = ActiveEffect.remove(entity.effects, buff_id)
       timers = Map.delete(entity.timers, buff_id)
-      tick_timers = Map.delete(entity.tick_timers, buff_id)
-      entity = %{entity | effects: effects, timers: timers, tick_timers: tick_timers}
+      entity = %{entity | effects: effects, timers: timers}
       state = put_entity_state(state, entity_guid, entity)
 
       Logger.debug("Shard #{state.shard_id}: Removed buff #{buff_id} from entity #{entity_guid}")
@@ -230,11 +214,6 @@ defmodule BezgelorWorld.BuffManager.Shard do
       Process.cancel_timer(ref)
     end)
 
-    # Cancel all tick timers
-    Enum.each(entity.tick_timers, fn {_id, ref} ->
-      Process.cancel_timer(ref)
-    end)
-
     state = %{state | entities: Map.delete(state.entities, entity_guid)}
     Logger.debug("Shard #{state.shard_id}: Cleared all buffs for entity #{entity_guid}")
     {:reply, :ok, state}
@@ -245,15 +224,9 @@ defmodule BezgelorWorld.BuffManager.Shard do
     entity = get_entity_state(state, entity_guid)
 
     if Map.has_key?(entity.effects, buff_id) do
-      # Cancel tick timer if present
-      if tick_ref = Map.get(entity.tick_timers, buff_id) do
-        Process.cancel_timer(tick_ref)
-      end
-
       effects = ActiveEffect.remove(entity.effects, buff_id)
       timers = Map.delete(entity.timers, buff_id)
-      tick_timers = Map.delete(entity.tick_timers, buff_id)
-      entity = %{entity | effects: effects, timers: timers, tick_timers: tick_timers}
+      entity = %{entity | effects: effects, timers: timers}
       state = put_entity_state(state, entity_guid, entity)
 
       Logger.debug("Shard #{state.shard_id}: Buff #{buff_id} expired on entity #{entity_guid}")
@@ -265,38 +238,26 @@ defmodule BezgelorWorld.BuffManager.Shard do
   end
 
   @impl true
-  def handle_info({:buff_tick, entity_guid, buff_id}, state) do
+  def handle_info({:tick, _tick_number}, state) do
+    # Coordinated tick from TickScheduler - process all periodic effects
     now = System.monotonic_time(:millisecond)
-    entity = get_entity_state(state, entity_guid)
-
-    # Check if effect is still active
-    if Map.has_key?(entity.effects, buff_id) and ActiveEffect.active?(entity.effects, buff_id, now) do
-      effect_data = Map.get(entity.effects, buff_id)
-      buff = effect_data.buff
-      caster_guid = effect_data.caster_guid
-
-      # Process the tick effect
-      process_periodic_tick(entity_guid, caster_guid, buff)
-
-      # Schedule next tick
-      tick_ref =
-        Process.send_after(self(), {:buff_tick, entity_guid, buff_id}, buff.tick_interval)
-
-      tick_timers = Map.put(entity.tick_timers, buff_id, tick_ref)
-      entity = %{entity | tick_timers: tick_timers}
-      state = put_entity_state(state, entity_guid, entity)
-
-      {:noreply, state}
-    else
-      # Effect no longer active, remove tick timer
-      tick_timers = Map.delete(entity.tick_timers, buff_id)
-      entity = %{entity | tick_timers: tick_timers}
-      state = put_entity_state(state, entity_guid, entity)
-      {:noreply, state}
-    end
+    process_all_periodic_ticks(state, now)
+    {:noreply, state}
   end
 
   # Private helpers
+
+  defp process_all_periodic_ticks(state, now) do
+    Enum.each(state.entities, fn {entity_guid, entity} ->
+      Enum.each(entity.effects, fn {buff_id, effect_data} ->
+        buff = effect_data.buff
+
+        if BuffDebuff.periodic?(buff) and ActiveEffect.active?(entity.effects, buff_id, now) do
+          process_periodic_tick(entity_guid, effect_data.caster_guid, buff)
+        end
+      end)
+    end)
+  end
 
   defp process_periodic_tick(entity_guid, caster_guid, buff) do
     if buff.is_debuff do
@@ -321,8 +282,7 @@ defmodule BezgelorWorld.BuffManager.Shard do
   defp get_entity_state(state, entity_guid) do
     Map.get(state.entities, entity_guid, %{
       effects: ActiveEffect.new(),
-      timers: %{},
-      tick_timers: %{}
+      timers: %{}
     })
   end
 
