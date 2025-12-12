@@ -8,8 +8,6 @@ defmodule BezgelorCore.Application do
   @impl true
   def start(_type, _args) do
     children = [
-      # Process registry for looking up processes by type and ID
-      BezgelorCore.ProcessRegistry,
       # PubSub for real-time event broadcasting (achievements, etc.)
       {Phoenix.PubSub, name: BezgelorCore.PubSub}
     ]

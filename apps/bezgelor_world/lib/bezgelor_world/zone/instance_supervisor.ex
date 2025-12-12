@@ -3,7 +3,8 @@ defmodule BezgelorWorld.Zone.InstanceSupervisor do
   Dynamic supervisor for zone instances.
 
   Manages the lifecycle of zone instance processes, starting and stopping
-  them on demand.
+  them on demand. Each zone instance also gets a dedicated creature manager
+  for handling creature AI in that zone.
 
   ## Usage
 
@@ -20,8 +21,9 @@ defmodule BezgelorWorld.Zone.InstanceSupervisor do
   use DynamicSupervisor
 
   alias BezgelorWorld.Zone.Instance
+  alias BezgelorWorld.Creature.ZoneManager, as: CreatureZoneManager
   alias BezgelorWorld.EventManagerSupervisor
-  alias BezgelorCore.ProcessRegistry
+  alias BezgelorWorld.ProcessLookup
 
   require Logger
 
@@ -48,6 +50,10 @@ defmodule BezgelorWorld.Zone.InstanceSupervisor do
     case DynamicSupervisor.start_child(__MODULE__, child_spec) do
       {:ok, pid} ->
         Logger.info("Started zone instance: zone=#{zone_id} instance=#{instance_id}")
+
+        # Start a per-zone creature manager for AI processing
+        start_creature_manager(zone_id, instance_id)
+
         # Also start an EventManager for this zone instance
         EventManagerSupervisor.start_manager(zone_id, instance_id)
         {:ok, pid}
@@ -62,20 +68,58 @@ defmodule BezgelorWorld.Zone.InstanceSupervisor do
     end
   end
 
+  # Start a creature manager for a zone instance
+  defp start_creature_manager(zone_id, instance_id) do
+    creature_spec = {
+      CreatureZoneManager,
+      [zone_id: zone_id, instance_id: instance_id]
+    }
+
+    case DynamicSupervisor.start_child(__MODULE__, creature_spec) do
+      {:ok, _pid} ->
+        Logger.debug("Started creature manager: zone=#{zone_id} instance=#{instance_id}")
+        :ok
+
+      {:error, {:already_started, _pid}} ->
+        :ok
+
+      {:error, reason} ->
+        Logger.error("Failed to start creature manager: #{inspect(reason)}")
+        {:error, reason}
+    end
+  end
+
   @doc """
   Stop a zone instance.
   """
   @spec stop_instance(non_neg_integer(), non_neg_integer()) :: :ok | {:error, :not_found}
   def stop_instance(zone_id, instance_id) do
-    case ProcessRegistry.whereis(:zone_instance, {zone_id, instance_id}) do
+    case ProcessLookup.whereis(BezgelorWorld.ZoneRegistry, {zone_id, instance_id}) do
       nil ->
         {:error, :not_found}
 
       pid ->
-        # Stop the EventManager first
+        # Stop the creature manager first
+        stop_creature_manager(zone_id, instance_id)
+
+        # Stop the EventManager
         EventManagerSupervisor.stop_manager(zone_id, instance_id)
+
         DynamicSupervisor.terminate_child(__MODULE__, pid)
         Logger.info("Stopped zone instance: zone=#{zone_id} instance=#{instance_id}")
+        :ok
+    end
+  end
+
+  # Stop the creature manager for a zone instance
+  defp stop_creature_manager(zone_id, instance_id) do
+    case CreatureZoneManager.whereis(zone_id, instance_id) do
+      nil ->
+        :ok
+
+      pid ->
+        DynamicSupervisor.terminate_child(__MODULE__, pid)
+        Logger.debug("Stopped creature manager: zone=#{zone_id} instance=#{instance_id}")
         :ok
     end
   end
@@ -88,7 +132,7 @@ defmodule BezgelorWorld.Zone.InstanceSupervisor do
   @spec get_or_start_instance(non_neg_integer(), non_neg_integer(), map()) ::
           {:ok, pid()} | {:error, term()}
   def get_or_start_instance(zone_id, instance_id, zone_data \\ %{}) do
-    case ProcessRegistry.whereis(:zone_instance, {zone_id, instance_id}) do
+    case ProcessLookup.whereis(BezgelorWorld.ZoneRegistry, {zone_id, instance_id}) do
       nil -> start_instance(zone_id, instance_id, zone_data)
       pid -> {:ok, pid}
     end
@@ -99,7 +143,7 @@ defmodule BezgelorWorld.Zone.InstanceSupervisor do
   """
   @spec list_instances() :: [{non_neg_integer(), non_neg_integer(), pid()}]
   def list_instances do
-    ProcessRegistry.list_with_meta(:zone_instance)
+    ProcessLookup.list_with_meta(BezgelorWorld.ZoneRegistry)
     |> Enum.map(fn {{zone_id, instance_id}, pid, _meta} ->
       {zone_id, instance_id, pid}
     end)
@@ -120,7 +164,7 @@ defmodule BezgelorWorld.Zone.InstanceSupervisor do
   """
   @spec instance_count() :: non_neg_integer()
   def instance_count do
-    ProcessRegistry.count(:zone_instance)
+    ProcessLookup.count(BezgelorWorld.ZoneRegistry)
   end
 
   @doc """

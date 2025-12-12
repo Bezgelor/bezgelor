@@ -17,7 +17,7 @@ defmodule BezgelorWorld.EventManagerSupervisor do
   use DynamicSupervisor
 
   alias BezgelorWorld.EventManager
-  alias BezgelorCore.ProcessRegistry
+  alias BezgelorWorld.ProcessLookup
 
   require Logger
 
@@ -89,7 +89,7 @@ defmodule BezgelorWorld.EventManagerSupervisor do
   """
   @spec list_managers() :: [{non_neg_integer(), non_neg_integer(), pid()}]
   def list_managers do
-    ProcessRegistry.list_with_meta(:event_manager)
+    ProcessLookup.list_with_meta(BezgelorWorld.EventRegistry)
     |> Enum.map(fn {{zone_id, instance_id}, pid, _meta} ->
       {zone_id, instance_id, pid}
     end)

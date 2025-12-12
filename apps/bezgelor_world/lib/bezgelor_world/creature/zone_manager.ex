@@ -27,7 +27,6 @@ defmodule BezgelorWorld.Creature.ZoneManager do
   require Logger
 
   alias BezgelorCore.{AI, CreatureTemplate, Entity, Loot}
-  alias BezgelorCore.ProcessRegistry
   alias BezgelorData.Store
   alias BezgelorWorld.{CombatBroadcaster, WorldManager}
   alias BezgelorWorld.Zone.Instance, as: ZoneInstance
@@ -70,7 +69,7 @@ defmodule BezgelorWorld.Creature.ZoneManager do
 
   @doc "Registry lookup for zone-specific creature manager."
   def via_tuple(zone_id, instance_id) do
-    ProcessRegistry.via(:creature_manager, {zone_id, instance_id})
+    {:via, Registry, {BezgelorWorld.Creature.Registry, {zone_id, instance_id}}}
   end
 
   @doc "Spawn a creature in a zone instance."
@@ -139,7 +138,10 @@ defmodule BezgelorWorld.Creature.ZoneManager do
   @doc "Lookup creature manager for a zone, returns nil if not running."
   @spec whereis(non_neg_integer(), non_neg_integer()) :: pid() | nil
   def whereis(zone_id, instance_id) do
-    ProcessRegistry.whereis(:creature_manager, {zone_id, instance_id})
+    case Registry.lookup(BezgelorWorld.Creature.Registry, {zone_id, instance_id}) do
+      [{pid, _}] -> pid
+      [] -> nil
+    end
   end
 
   ## Server Callbacks

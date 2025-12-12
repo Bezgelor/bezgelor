@@ -27,7 +27,7 @@ defmodule BezgelorWorld.Zone.Instance do
 
   use GenServer
 
-  alias BezgelorCore.{Entity, ProcessRegistry, SpatialGrid}
+  alias BezgelorCore.{Entity, SpatialGrid}
   alias BezgelorWorld.CreatureManager
 
   require Logger
@@ -60,7 +60,7 @@ defmodule BezgelorWorld.Zone.Instance do
   Get the registry name for a zone instance.
   """
   def via_tuple(zone_id, instance_id) do
-    {:via, Registry, {ProcessRegistry.Registry, {:zone_instance, {zone_id, instance_id}}}}
+    {:via, Registry, {BezgelorWorld.ZoneRegistry, {zone_id, instance_id}}}
   end
 
   @doc """
@@ -198,12 +198,8 @@ defmodule BezgelorWorld.Zone.Instance do
     instance_id = Keyword.fetch!(opts, :instance_id)
     zone_data = Keyword.get(opts, :zone_data, %{})
 
-    # Register in process registry
-    ProcessRegistry.register(:zone_instance, {zone_id, instance_id}, %{
-      zone_id: zone_id,
-      instance_id: instance_id,
-      zone_name: Map.get(zone_data, :name, "Unknown")
-    })
+    # Note: Registration with metadata happens via the :via tuple in start_link
+    # The Registry stores metadata as the value during registration
 
     state = %{
       zone_id: zone_id,
