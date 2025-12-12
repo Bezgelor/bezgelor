@@ -62,12 +62,16 @@ defmodule BezgelorProtocol.Handler.WorldAuthHandler do
     # Session key comes as raw bytes, need to convert to hex for comparison
     session_key_hex = Base.encode16(packet.session_key)
 
-    case Accounts.get_by_session_key(packet.email, session_key_hex) do
-      nil ->
+    case Accounts.validate_session_key(packet.email, session_key_hex) do
+      {:error, :session_not_found} ->
         Logger.debug("Invalid session for email: #{packet.email}")
         {:error, :invalid_session}
 
-      account ->
+      {:error, :session_expired} ->
+        Logger.info("Session expired for email: #{packet.email}")
+        {:error, :session_expired}
+
+      {:ok, account} ->
         # Also verify account ID matches
         if account.id == packet.account_id do
           {:ok, account}
