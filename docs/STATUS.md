@@ -361,6 +361,28 @@ All 11 phases are complete! The core server emulator is feature-complete.
 
 ---
 
+## Architecture Improvements (2025-12-12)
+
+**Security Hardening:**
+- Bcrypt password hashing with configurable rounds (min 12)
+- Constant-time session key comparison
+- TOTP 2FA support via NimbleTOTP
+- Account lockout after failed attempts
+- Proper null handling in authentication
+
+**Performance Optimizations:**
+- Secondary ETS indexes for O(1) lookups on foreign keys
+- Zone-based chat routing (local chat stays local)
+- Reduced memory allocations in packet handlers
+- Optimized inventory queries with single-query pattern
+
+**Code Quality:**
+- Protocol deviation documentation for packet formats
+- Strengthened context module validation
+- Consistent timeout handling across handlers
+
+---
+
 ## Key Directories
 
 ```
@@ -388,6 +410,7 @@ tools/
 
 ## Recent Completions
 
+- **2025-12-12:** Architecture Remediation Complete - Secondary ETS indexes, zone-based chat routing, strengthened context modules, documented protocol deviations
 - **2025-12-11:** Phase 11 PvP Complete - Battleground objectives, arenas, warplots, rating system, seasons (63 tests)
 - **2025-12-11:** Phase 7 Finalization - ClientGiftItem, ClientRedeemCode, ServerPromoCodeResult packets with handler methods
 - **2025-12-11:** Phase 10 Finalization - LockoutManager/MythicManager GenServers in supervision tree, 8 schema unit test files (226 tests)
