@@ -21,10 +21,14 @@ defmodule BezgelorCore.Entity do
   - Unique counter (low 48 bits)
   """
 
-  @type entity_type :: :player | :creature | :object | :vehicle
+  import Bitwise
+
+  @type entity_type :: :player | :creature | :object | :vehicle | :corpse
 
   @type position :: {float(), float(), float()}
   @type rotation :: {float(), float(), float()}
+
+  @type loot_item :: {non_neg_integer(), non_neg_integer()}
 
   @type t :: %__MODULE__{
           guid: non_neg_integer(),
@@ -46,7 +50,12 @@ defmodule BezgelorCore.Entity do
           target_guid: non_neg_integer() | nil,
           experience: non_neg_integer(),
           is_dead: boolean(),
-          active_effects: map()
+          active_effects: map(),
+          # Corpse-specific fields
+          loot: [loot_item()] | nil,
+          source_guid: non_neg_integer() | nil,
+          despawn_at: integer() | nil,
+          looted_by: MapSet.t() | nil
         }
 
   defstruct [
@@ -69,7 +78,12 @@ defmodule BezgelorCore.Entity do
     target_guid: nil,
     experience: 0,
     is_dead: false,
-    active_effects: %{}
+    active_effects: %{},
+    # Corpse-specific fields
+    loot: nil,
+    source_guid: nil,
+    despawn_at: nil,
+    looted_by: nil
   ]
 
   # Entity type constants for GUID encoding
@@ -77,6 +91,10 @@ defmodule BezgelorCore.Entity do
   @entity_type_creature 2
   @entity_type_object 3
   @entity_type_vehicle 4
+  @entity_type_corpse 5
+
+  # Corpse despawn time (5 minutes in milliseconds)
+  @corpse_despawn_time 300_000
 
   @doc """
   Create a player entity from character database record.
@@ -136,6 +154,93 @@ defmodule BezgelorCore.Entity do
   end
 
   @doc """
+  Create a corpse entity from a dead creature.
+
+  The corpse retains the creature's position, name, and display info,
+  and contains the specified loot items.
+
+  ## Parameters
+
+    * `creature` - The dead creature entity
+    * `loot` - List of `{item_id, quantity}` tuples
+
+  ## Returns
+
+  A new corpse entity with a unique GUID.
+  """
+  @spec create_corpse(t(), [loot_item()]) :: t()
+  def create_corpse(%__MODULE__{} = creature, loot) when is_list(loot) do
+    now = System.monotonic_time(:millisecond)
+
+    %__MODULE__{
+      guid: generate_corpse_guid(),
+      type: :corpse,
+      name: creature.name,
+      display_info: creature.display_info,
+      position: creature.position,
+      rotation: creature.rotation,
+      world_id: creature.world_id,
+      zone_id: creature.zone_id,
+      source_guid: creature.guid,
+      loot: loot,
+      despawn_at: now + @corpse_despawn_time,
+      looted_by: MapSet.new(),
+      health: 0,
+      max_health: 0,
+      is_dead: true,
+      active_effects: %{}
+    }
+  end
+
+  @doc """
+  Check if a corpse has loot available for a specific player.
+
+  Returns `true` if the corpse has loot items AND the player hasn't looted yet.
+  Returns `false` for non-corpse entities.
+  """
+  @spec has_loot_for?(t(), non_neg_integer()) :: boolean()
+  def has_loot_for?(%__MODULE__{type: :corpse, loot: loot}, _player_guid)
+      when loot == [] or loot == nil do
+    false
+  end
+
+  def has_loot_for?(%__MODULE__{type: :corpse, loot: loot, looted_by: looted_by}, player_guid) do
+    length(loot) > 0 and not MapSet.member?(looted_by || MapSet.new(), player_guid)
+  end
+
+  def has_loot_for?(%__MODULE__{}, _player_guid), do: false
+
+  @doc """
+  Take loot from a corpse for a specific player.
+
+  Returns `{updated_corpse, loot_items}` where:
+    * `updated_corpse` has the player marked as having looted
+    * `loot_items` is the list of items if first loot, or `[]` if already looted
+
+  Players can only loot a corpse once.
+  """
+  @spec take_loot(t(), non_neg_integer()) :: {t(), [loot_item()]}
+  def take_loot(%__MODULE__{type: :corpse, looted_by: looted_by} = corpse, player_guid) do
+    if MapSet.member?(looted_by || MapSet.new(), player_guid) do
+      {corpse, []}
+    else
+      updated = %{corpse | looted_by: MapSet.put(looted_by || MapSet.new(), player_guid)}
+      {updated, corpse.loot || []}
+    end
+  end
+
+  def take_loot(%__MODULE__{} = entity, _player_guid), do: {entity, []}
+
+  # Generate a unique GUID for corpse entities
+  # Uses a simple counter + timestamp approach
+  defp generate_corpse_guid do
+    # Corpse GUID format: type (5) in high bits + unique counter
+    type_bits = @entity_type_corpse <<< 60
+    unique = :erlang.unique_integer([:positive, :monotonic])
+    type_bits ||| (unique &&& 0x0FFFFFFFFFFFFFFF)
+  end
+
+  @doc """
   Update entity position.
   """
   @spec update_position(t(), position(), rotation()) :: t()
@@ -158,6 +263,7 @@ defmodule BezgelorCore.Entity do
   def type_to_int(:creature), do: @entity_type_creature
   def type_to_int(:object), do: @entity_type_object
   def type_to_int(:vehicle), do: @entity_type_vehicle
+  def type_to_int(:corpse), do: @entity_type_corpse
   def type_to_int(_), do: @entity_type_object
 
   @doc """
@@ -168,6 +274,7 @@ defmodule BezgelorCore.Entity do
   def int_to_type(@entity_type_creature), do: :creature
   def int_to_type(@entity_type_object), do: :object
   def int_to_type(@entity_type_vehicle), do: :vehicle
+  def int_to_type(@entity_type_corpse), do: :corpse
   def int_to_type(_), do: :object
 
   @doc """

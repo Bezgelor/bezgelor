@@ -25,7 +25,7 @@ defmodule BezgelorDb.Characters do
 
   import Ecto.Query
   alias BezgelorDb.Repo
-  alias BezgelorDb.Schema.{Character, CharacterAppearance}
+  alias BezgelorDb.Schema.{Character, CharacterAppearance, CharacterCurrency}
 
   @max_characters 12
   @min_name_length 3
@@ -267,6 +267,64 @@ defmodule BezgelorDb.Characters do
     1..(level - 1)
     |> Enum.map(&xp_for_level/1)
     |> Enum.sum()
+  end
+
+  # ============================================================================
+  # Currency Functions
+  # ============================================================================
+
+  @doc """
+  Add currency to a character.
+
+  ## Parameters
+
+  - `character_id` - The character ID
+  - `currency_type` - Atom like :gold, :elder_gems, :prestige, etc.
+  - `amount` - Amount to add (must be positive)
+
+  ## Returns
+
+  - `{:ok, updated_currency}` on success
+  - `{:error, :character_not_found}` if character doesn't exist
+  - `{:error, changeset}` on database error
+  """
+  @spec add_currency(integer(), atom(), non_neg_integer()) ::
+          {:ok, CharacterCurrency.t()} | {:error, :character_not_found | Ecto.Changeset.t()}
+  def add_currency(character_id, currency_type, amount)
+      when is_integer(character_id) and is_atom(currency_type) and amount >= 0 do
+    # Get or create currency record for character
+    case get_or_create_currency(character_id) do
+      {:ok, currency} ->
+        case CharacterCurrency.modify_changeset(currency, currency_type, amount) do
+          {:ok, changeset} -> Repo.update(changeset)
+          {:error, reason} -> {:error, reason}
+        end
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  @doc """
+  Get currency record for a character, creating if needed.
+  """
+  @spec get_or_create_currency(integer()) ::
+          {:ok, CharacterCurrency.t()} | {:error, :character_not_found | Ecto.Changeset.t()}
+  def get_or_create_currency(character_id) do
+    case Repo.get_by(CharacterCurrency, character_id: character_id) do
+      nil ->
+        # Check if character exists
+        if Repo.exists?(from c in Character, where: c.id == ^character_id) do
+          %CharacterCurrency{}
+          |> CharacterCurrency.changeset(%{character_id: character_id})
+          |> Repo.insert()
+        else
+          {:error, :character_not_found}
+        end
+
+      currency ->
+        {:ok, currency}
+    end
   end
 
   @doc """

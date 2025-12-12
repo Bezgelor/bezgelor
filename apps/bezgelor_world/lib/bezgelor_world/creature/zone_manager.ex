@@ -26,12 +26,10 @@ defmodule BezgelorWorld.Creature.ZoneManager do
 
   require Logger
 
-  alias BezgelorCore.{AI, CreatureTemplate, Entity, Loot}
+  alias BezgelorCore.{AI, CreatureTemplate, Entity}
+  alias BezgelorWorld.{CombatBroadcaster, CreatureDeath, WorldManager}
   alias BezgelorData.Store
-  alias BezgelorWorld.{CombatBroadcaster, WorldManager}
   alias BezgelorWorld.Zone.Instance, as: ZoneInstance
-
-  import Bitwise
 
   @type creature_state :: %{
           entity: Entity.t(),
@@ -393,52 +391,33 @@ defmodule BezgelorWorld.Creature.ZoneManager do
   end
 
   defp handle_creature_death(creature_state, entity, killer_guid, state) do
-    template = creature_state.template
+    # Get killer level for loot scaling
+    killer_level = get_killer_level(killer_guid, creature_state.template.level, state)
 
-    # Set AI to dead
-    ai = AI.set_dead(creature_state.ai)
+    # Delegate to shared death handling logic with zone context for logging
+    {result, new_creature_state} =
+      CreatureDeath.handle_death(creature_state, entity, killer_guid, killer_level,
+        zone_id: state.zone_id,
+        instance_id: state.instance_id
+      )
 
-    # Generate loot
-    loot_drops =
-      if template.loot_table_id do
-        Loot.roll(template.loot_table_id)
-      else
-        []
+    {result, new_creature_state, state}
+  end
+
+  # Get the level of the killer for loot scaling
+  # If the killer is a player, try to get their level from zone state
+  # Falls back to default_level if not found
+  defp get_killer_level(killer_guid, default_level, state) do
+    # Check if killer is a player (type bits = 1 in bits 60-63)
+    if CreatureDeath.is_player_guid?(killer_guid) do
+      # Try to get player entity from our zone state
+      case Map.get(state.entities, killer_guid) do
+        nil -> default_level
+        player_entity -> Map.get(player_entity, :level, default_level)
       end
-
-    # Calculate XP reward
-    xp_reward = template.xp_reward
-
-    # Start respawn timer
-    respawn_timer =
-      if template.respawn_time > 0 do
-        Process.send_after(self(), {:respawn_creature, entity.guid}, template.respawn_time)
-      else
-        nil
-      end
-
-    new_creature_state = %{
-      creature_state
-      | entity: entity,
-        ai: ai,
-        respawn_timer: respawn_timer
-    }
-
-    result_info = %{
-      creature_guid: entity.guid,
-      xp_reward: xp_reward,
-      loot_drops: loot_drops,
-      gold: Loot.gold_from_drops(loot_drops),
-      items: Loot.items_from_drops(loot_drops),
-      killer_guid: killer_guid,
-      reputation_rewards: template.reputation_rewards || []
-    }
-
-    Logger.debug(
-      "Zone #{state.zone_id}/#{state.instance_id}: Creature #{entity.name} (#{entity.guid}) killed by #{killer_guid}"
-    )
-
-    {{:ok, :killed, result_info}, new_creature_state, state}
+    else
+      default_level
+    end
   end
 
   defp process_ai_tick(state) do
@@ -616,7 +595,7 @@ defmodule BezgelorWorld.Creature.ZoneManager do
   # Apply creature attack damage to a target
   defp apply_creature_attack(creature_entity, template, target_guid, state) do
     # Only attack players for now
-    if is_player_guid?(target_guid) do
+    if CreatureDeath.is_player_guid?(target_guid) do
       # Roll damage from template
       damage = CreatureTemplate.roll_damage(template)
 
@@ -670,12 +649,4 @@ defmodule BezgelorWorld.Creature.ZoneManager do
 
     :ok
   end
-
-  # Check if GUID is a player (type bits = 1 in bits 60-63)
-  defp is_player_guid?(guid) when is_integer(guid) and guid > 0 do
-    type_bits = bsr(guid, 60) &&& 0xF
-    type_bits == 1
-  end
-
-  defp is_player_guid?(_), do: false
 end

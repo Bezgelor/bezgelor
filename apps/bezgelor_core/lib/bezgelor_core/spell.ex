@@ -54,7 +54,8 @@ defmodule BezgelorCore.Spell do
     aoe_radius: 0.0,
     effects: [],
     interrupt_flags: [:damage, :stun, :silence],
-    spell_school: :magic
+    spell_school: :magic,
+    hostile: false
   ]
 
   @type t :: %__MODULE__{
@@ -71,7 +72,8 @@ defmodule BezgelorCore.Spell do
           aoe_radius: float(),
           effects: list(),
           interrupt_flags: [interrupt_flag()],
-          spell_school: spell_school()
+          spell_school: spell_school(),
+          hostile: boolean()
         }
 
   # Test spells for Phase 8 (built at runtime to avoid compile-time issues)
@@ -99,7 +101,8 @@ defmodule BezgelorCore.Spell do
             school: :magic
           }
         ],
-        spell_school: :magic
+        spell_school: :magic,
+        hostile: true
       },
       2 => %__MODULE__{
         id: 2,

@@ -1,0 +1,988 @@
+{
+  "loot_tables": [
+    {
+      "id": 1,
+      "name": "Wildlife - Small",
+      "entries": [
+        {
+          "item_id": 0,
+          "chance": 100,
+          "min": 5,
+          "max": 15,
+          "type": "gold"
+        },
+        {
+          "item_id": 7540,
+          "chance": 30,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 7312,
+          "chance": 30,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 7750,
+          "chance": 30,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 178,
+          "chance": 10,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 613,
+          "chance": 10,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 7651,
+          "chance": 15,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 7579,
+          "chance": 15,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Wildlife - Medium",
+      "entries": [
+        {
+          "item_id": 0,
+          "chance": 100,
+          "min": 15,
+          "max": 40,
+          "type": "gold"
+        },
+        {
+          "item_id": 8384,
+          "chance": 40,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 7521,
+          "chance": 40,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 47647,
+          "chance": 40,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 8015,
+          "chance": 40,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 175,
+          "chance": 20,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 613,
+          "chance": 20,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 601,
+          "chance": 20,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 18536,
+          "chance": 5,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 7807,
+          "chance": 25,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 8273,
+          "chance": 25,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 38705,
+          "chance": 25,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 176,
+          "chance": 10,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 483,
+          "chance": 10,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Wildlife - Large",
+      "entries": [
+        {
+          "item_id": 0,
+          "chance": 100,
+          "min": 40,
+          "max": 100,
+          "type": "gold"
+        },
+        {
+          "item_id": 7595,
+          "chance": 50,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 8384,
+          "chance": 50,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 8012,
+          "chance": 50,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 7612,
+          "chance": 50,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 8056,
+          "chance": 50,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 488,
+          "chance": 30,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 474,
+          "chance": 30,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 175,
+          "chance": 30,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 178,
+          "chance": 30,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 50074,
+          "chance": 10,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 18536,
+          "chance": 10,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 7884,
+          "chance": 35,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 7676,
+          "chance": 35,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 7777,
+          "chance": 35,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 7986,
+          "chance": 35,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 177,
+          "chance": 20,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 7079,
+          "chance": 20,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 478,
+          "chance": 20,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 74500,
+          "chance": 5,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "name": "Humanoid - Common",
+      "entries": [
+        {
+          "item_id": 0,
+          "chance": 100,
+          "min": 20,
+          "max": 60,
+          "type": "gold"
+        },
+        {
+          "item_id": 8203,
+          "chance": 30,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 8070,
+          "chance": 30,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 47710,
+          "chance": 30,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 4868,
+          "chance": 10,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 584,
+          "chance": 10,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "name": "Humanoid - Soldier",
+      "entries": [
+        {
+          "item_id": 0,
+          "chance": 100,
+          "min": 40,
+          "max": 100,
+          "type": "gold"
+        },
+        {
+          "item_id": 29572,
+          "chance": 40,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 38640,
+          "chance": 40,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 7603,
+          "chance": 40,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 8213,
+          "chance": 40,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 584,
+          "chance": 20,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 4868,
+          "chance": 20,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "name": "Humanoid - Elite",
+      "entries": [
+        {
+          "item_id": 0,
+          "chance": 100,
+          "min": 80,
+          "max": 200,
+          "type": "gold"
+        },
+        {
+          "item_id": 47713,
+          "chance": 50,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 47712,
+          "chance": 50,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 8206,
+          "chance": 50,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 47683,
+          "chance": 50,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 7680,
+          "chance": 50,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 584,
+          "chance": 30,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 4868,
+          "chance": 30,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 85166,
+          "chance": 10,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 85174,
+          "chance": 10,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "name": "Mechanical - Basic",
+      "entries": [
+        {
+          "item_id": 0,
+          "chance": 100,
+          "min": 10,
+          "max": 30,
+          "type": "gold"
+        },
+        {
+          "item_id": 7879,
+          "chance": 35,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 8116,
+          "chance": 35,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 7946,
+          "chance": 35,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 1175,
+          "chance": 15,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 182,
+          "chance": 15,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        }
+      ]
+    },
+    {
+      "id": 21,
+      "name": "Mechanical - Advanced",
+      "entries": [
+        {
+          "item_id": 0,
+          "chance": 100,
+          "min": 30,
+          "max": 80,
+          "type": "gold"
+        },
+        {
+          "item_id": 38675,
+          "chance": 45,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 16012,
+          "chance": 45,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 7952,
+          "chance": 45,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 8163,
+          "chance": 45,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 182,
+          "chance": 25,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 183,
+          "chance": 25,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 1175,
+          "chance": 25,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        }
+      ]
+    },
+    {
+      "id": 22,
+      "name": "Mechanical - Elite",
+      "entries": [
+        {
+          "item_id": 0,
+          "chance": 100,
+          "min": 60,
+          "max": 150,
+          "type": "gold"
+        },
+        {
+          "item_id": 7764,
+          "chance": 55,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 7952,
+          "chance": 55,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 47666,
+          "chance": 55,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 8117,
+          "chance": 55,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 38675,
+          "chance": 55,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 1175,
+          "chance": 35,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 182,
+          "chance": 35,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 181,
+          "chance": 35,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 183,
+          "chance": 35,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 42677,
+          "chance": 10,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 84849,
+          "chance": 10,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        }
+      ]
+    },
+    {
+      "id": 30,
+      "name": "Elemental - Minor",
+      "entries": [
+        {
+          "item_id": 0,
+          "chance": 100,
+          "min": 15,
+          "max": 45,
+          "type": "gold"
+        },
+        {
+          "item_id": 7599,
+          "chance": 40,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 7744,
+          "chance": 40,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 7818,
+          "chance": 40,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 1890,
+          "chance": 15,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        }
+      ]
+    },
+    {
+      "id": 31,
+      "name": "Elemental - Major",
+      "entries": [
+        {
+          "item_id": 0,
+          "chance": 100,
+          "min": 45,
+          "max": 120,
+          "type": "gold"
+        },
+        {
+          "item_id": 7605,
+          "chance": 50,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 7725,
+          "chance": 50,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 7744,
+          "chance": 50,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 38658,
+          "chance": 50,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 1890,
+          "chance": 25,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 86684,
+          "chance": 5,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        }
+      ]
+    },
+    {
+      "id": 40,
+      "name": "Insect - Small",
+      "entries": [
+        {
+          "item_id": 0,
+          "chance": 100,
+          "min": 3,
+          "max": 10,
+          "type": "gold"
+        },
+        {
+          "item_id": 7853,
+          "chance": 25,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 8177,
+          "chance": 25,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 7802,
+          "chance": 25,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 303,
+          "chance": 10,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        }
+      ]
+    },
+    {
+      "id": 41,
+      "name": "Insect - Large",
+      "entries": [
+        {
+          "item_id": 0,
+          "chance": 100,
+          "min": 10,
+          "max": 30,
+          "type": "gold"
+        },
+        {
+          "item_id": 8351,
+          "chance": 35,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 8343,
+          "chance": 35,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 8177,
+          "chance": 35,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 8364,
+          "chance": 35,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 305,
+          "chance": 15,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 303,
+          "chance": 15,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        }
+      ]
+    },
+    {
+      "id": 50,
+      "name": "Undead - Common",
+      "entries": [
+        {
+          "item_id": 0,
+          "chance": 100,
+          "min": 5,
+          "max": 20,
+          "type": "gold"
+        },
+        {
+          "item_id": 38610,
+          "chance": 30,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 16011,
+          "chance": 30,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 7631,
+          "chance": 30,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 72413,
+          "chance": 10,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        }
+      ]
+    },
+    {
+      "id": 51,
+      "name": "Undead - Elite",
+      "entries": [
+        {
+          "item_id": 0,
+          "chance": 100,
+          "min": 30,
+          "max": 80,
+          "type": "gold"
+        },
+        {
+          "item_id": 7627,
+          "chance": 40,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 38744,
+          "chance": 40,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 7623,
+          "chance": 40,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 38747,
+          "chance": 40,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 477,
+          "chance": 20,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 72413,
+          "chance": 20,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        }
+      ]
+    },
+    {
+      "id": 999,
+      "name": "Empty - No Loot",
+      "entries": []
+    }
+  ]
+}

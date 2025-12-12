@@ -37,6 +37,8 @@ defmodule BezgelorWorld.Application do
       # TickScheduler must start before BuffManager (BuffManager registers with it)
       BezgelorWorld.TickScheduler,
       BezgelorWorld.BuffManager,
+      # Corpse manager for loot pickup
+      BezgelorWorld.CorpseManager,
       # Registry for zone instance processes
       {Registry, keys: :unique, name: BezgelorWorld.ZoneRegistry},
       # Registry for creature zone managers

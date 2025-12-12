@@ -3,6 +3,7 @@ defmodule BezgelorWorld.Handler.LootHandler do
   Handles loot-related packets.
 
   Processes:
+  - Corpse looting
   - Loot rolls (need/greed/pass)
   - Master loot assignments
   - Loot settings changes
@@ -10,12 +11,57 @@ defmodule BezgelorWorld.Handler.LootHandler do
 
   require Logger
 
-  alias BezgelorWorld.Loot.{LootManager, LootRules}
-  alias BezgelorProtocol.Packets.World.{
-    ServerLootRollResult,
-    ServerLootAwarded,
-    ServerLootSettings
-  }
+  alias BezgelorWorld.{CombatBroadcaster, CorpseManager}
+  alias BezgelorWorld.Loot.LootManager
+  alias BezgelorProtocol.Packets.World.ServerLootSettings
+
+  @doc """
+  Handles corpse loot request.
+
+  When a player loots a corpse:
+  1. Check if corpse exists
+  2. Check if player can loot (hasn't already)
+  3. Award loot items to player inventory
+  4. Send loot notification
+  """
+  def handle_loot_corpse(packet, state) do
+    player_guid = state.session_data[:entity_guid]
+    character_id = state.session_data[:character_id]
+    corpse_guid = packet.corpse_guid
+
+    if player_guid && character_id do
+      case CorpseManager.take_loot(corpse_guid, player_guid) do
+        {:ok, loot_items} when loot_items != [] ->
+          # Separate gold and items
+          {gold, items} = separate_gold_and_items(loot_items)
+
+          # Add items to player inventory
+          add_items_to_inventory(character_id, items)
+
+          # Add gold to player
+          if gold > 0 do
+            add_gold_to_player(character_id, gold)
+          end
+
+          # Send loot notification
+          CombatBroadcaster.send_loot_drop(player_guid, corpse_guid, gold, items)
+
+          Logger.info("Player #{player_guid} looted corpse #{corpse_guid}: #{gold} gold, #{length(items)} items")
+          {:ok, [], state}
+
+        {:ok, []} ->
+          # Already looted or empty
+          Logger.debug("Player #{player_guid} tried to loot already-looted corpse #{corpse_guid}")
+          {:ok, [], state}
+
+        {:error, :not_found} ->
+          Logger.debug("Player #{player_guid} tried to loot non-existent corpse #{corpse_guid}")
+          {:ok, [], state}
+      end
+    else
+      {:ok, [], state}
+    end
+  end
 
   @doc """
   Handles player roll response (need/greed/pass).
@@ -102,4 +148,42 @@ defmodule BezgelorWorld.Handler.LootHandler do
   defp int_to_loot_method(3), do: :master_loot
   defp int_to_loot_method(4), do: :round_robin
   defp int_to_loot_method(_), do: :personal
+
+  # Separate gold (item_id 0) from actual items
+  defp separate_gold_and_items(loot_items) do
+    {gold_entries, item_entries} = Enum.split_with(loot_items, fn {item_id, _qty} -> item_id == 0 end)
+
+    gold = Enum.reduce(gold_entries, 0, fn {_id, qty}, acc -> acc + qty end)
+    items = item_entries
+
+    {gold, items}
+  end
+
+  # Add items to player inventory
+  defp add_items_to_inventory(character_id, items) do
+    alias BezgelorDb.Inventory
+
+    Enum.each(items, fn {item_id, quantity} ->
+      case Inventory.add_item(character_id, item_id, quantity) do
+        {:ok, _} ->
+          Logger.debug("Added #{quantity}x item #{item_id} to character #{character_id}")
+
+        {:error, reason} ->
+          Logger.warning("Failed to add item #{item_id} to character #{character_id}: #{inspect(reason)}")
+      end
+    end)
+  end
+
+  # Add gold to player's currency
+  defp add_gold_to_player(character_id, gold) do
+    alias BezgelorDb.Characters
+
+    case Characters.add_currency(character_id, :gold, gold) do
+      {:ok, _} ->
+        Logger.debug("Added #{gold} gold to character #{character_id}")
+
+      {:error, reason} ->
+        Logger.warning("Failed to add gold to character #{character_id}: #{inspect(reason)}")
+    end
+  end
 end

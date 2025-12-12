@@ -70,7 +70,10 @@ defmodule BezgelorData.Store do
     :world_locations,
     :bind_points,
     # Prerequisites
-    :prerequisites
+    :prerequisites,
+    # Loot data
+    :loot_tables,
+    :creature_loot_rules
   ]
 
   # Secondary index tables for efficient lookups by foreign key
@@ -1235,6 +1238,165 @@ defmodule BezgelorData.Store do
   @spec get_prerequisite(non_neg_integer()) :: {:ok, map()} | :error
   def get_prerequisite(id), do: get(:prerequisites, id)
 
+  # Loot queries
+
+  @doc """
+  Get a loot table by ID.
+  """
+  @spec get_loot_table(non_neg_integer()) :: {:ok, map()} | :error
+  def get_loot_table(id), do: get(:loot_tables, id)
+
+  @doc """
+  Get all loot tables.
+  """
+  @spec get_all_loot_tables() :: [map()]
+  def get_all_loot_tables, do: list(:loot_tables)
+
+  @doc """
+  Get creature loot rules configuration.
+  """
+  @spec get_creature_loot_rules() :: map() | nil
+  def get_creature_loot_rules do
+    case :ets.lookup(table_name(:creature_loot_rules), :rules) do
+      [{:rules, rules}] -> rules
+      [] -> nil
+    end
+  end
+
+  @doc """
+  Get loot table override for a specific creature.
+  """
+  @spec get_creature_loot_override(non_neg_integer()) :: map() | nil
+  def get_creature_loot_override(creature_id) do
+    case :ets.lookup(table_name(:creature_loot_rules), {:override, creature_id}) do
+      [{{:override, ^creature_id}, override}] -> override
+      _ ->
+        # Try alternate key format
+        case :ets.match(table_name(:creature_loot_rules), {:override, creature_id, :"$1"}) do
+          [[override]] -> override
+          _ -> nil
+        end
+    end
+  end
+
+  @doc """
+  Get loot category tables mapping.
+  """
+  @spec get_loot_category_tables() :: map() | nil
+  def get_loot_category_tables do
+    case :ets.lookup(table_name(:creature_loot_rules), :categories) do
+      [{:categories, categories}] -> categories
+      [] -> nil
+    end
+  end
+
+  @doc """
+  Resolve loot table for a creature based on rules.
+
+  Returns the loot table ID and modifiers for a creature based on:
+  1. Direct override (if creature has a specific loot table assigned)
+  2. Rule-based resolution using race_id, tier_id, and difficulty_id
+
+  Returns {:ok, %{loot_table_id, gold_multiplier, drop_bonus}} or :error
+  """
+  @spec resolve_creature_loot(non_neg_integer()) :: {:ok, map()} | :error
+  def resolve_creature_loot(creature_id) do
+    # Check for direct override first
+    case get_creature_loot_override(creature_id) do
+      nil ->
+        # Use rule-based resolution
+        resolve_loot_by_rules(creature_id)
+
+      override ->
+        {:ok,
+         %{
+           loot_table_id: override.loot_table_id,
+           gold_multiplier: Map.get(override, :gold_multiplier, 1.0),
+           drop_bonus: Map.get(override, :drop_bonus, 0)
+         }}
+    end
+  end
+
+  defp resolve_loot_by_rules(creature_id) do
+    rules = get_creature_loot_rules()
+
+    if rules do
+      # Get creature data
+      case get(:creatures, creature_id) do
+        {:ok, creature} ->
+          race_id = creature.race_id
+          tier_id = creature.tier_id
+          difficulty_id = creature.difficulty_id
+
+          race_mappings = get_rule_map(rules, :race_mappings)
+          tier_modifiers = get_rule_map(rules, :tier_modifiers)
+          difficulty_modifiers = get_rule_map(rules, :difficulty_modifiers)
+
+          # Get race mapping (try integer key, string key, then default)
+          race_mapping = get_rule_value(race_mappings, race_id, %{base_table: 1})
+
+          base_table = get_map_value(race_mapping, :base_table, 1)
+
+          # Get tier modifier
+          tier_mod = get_rule_value(tier_modifiers, tier_id, %{})
+
+          # Get difficulty modifier
+          diff_mod = get_rule_value(difficulty_modifiers, difficulty_id, %{})
+
+          # Calculate final values
+          table_offset = get_map_value(tier_mod, :table_offset, 0)
+          final_table = base_table + table_offset
+
+          tier_gold_mult = get_map_value(tier_mod, :gold_multiplier, 1.0)
+          diff_gold_mult = get_map_value(diff_mod, :gold_multiplier, 1.0)
+          final_gold_mult = tier_gold_mult * diff_gold_mult
+
+          tier_drop_bonus = get_map_value(tier_mod, :drop_bonus, 0)
+          diff_drop_bonus = get_map_value(diff_mod, :drop_bonus, 0)
+          final_drop_bonus = tier_drop_bonus + diff_drop_bonus
+
+          {:ok,
+           %{
+             loot_table_id: final_table,
+             gold_multiplier: final_gold_mult,
+             drop_bonus: final_drop_bonus,
+             extra_table: get_map_value(tier_mod, :extra_table, nil)
+           }}
+
+        :error ->
+          # Creature not found, use default
+          {:ok, %{loot_table_id: 1, gold_multiplier: 1.0, drop_bonus: 0}}
+      end
+    else
+      # No rules loaded, use default
+      {:ok, %{loot_table_id: 1, gold_multiplier: 1.0, drop_bonus: 0}}
+    end
+  end
+
+  # Helper to get rule map, handling both atom and string keys
+  defp get_rule_map(rules, key) when is_atom(key) do
+    Map.get(rules, key) || Map.get(rules, Atom.to_string(key), %{})
+  end
+
+  # Helper to get value from rule map, trying integer, string, atom keys, then default
+  defp get_rule_value(rule_map, key, default) when is_integer(key) do
+    str_key = Integer.to_string(key)
+
+    Map.get(rule_map, key) ||
+      Map.get(rule_map, str_key) ||
+      Map.get(rule_map, String.to_atom(str_key)) ||
+      Map.get(rule_map, :default) ||
+      Map.get(rule_map, "default", default)
+  end
+
+  # Helper to get value from map, handling both atom and string keys
+  defp get_map_value(map, key, default) when is_atom(key) do
+    case Map.get(map, key) do
+      nil -> Map.get(map, Atom.to_string(key), default)
+      value -> value
+    end
+  end
+
   # Server callbacks
 
   @impl true
@@ -1350,6 +1512,13 @@ defmodule BezgelorData.Store do
 
     # Prerequisites
     load_client_table(:prerequisites, "prerequisites.json", "prerequisite")
+
+    # Loot data
+    load_loot_tables()
+    load_creature_loot_rules()
+
+    # Validate loot data
+    validate_loot_data()
 
     # Build secondary indexes
     build_all_indexes()
@@ -1677,6 +1846,84 @@ defmodule BezgelorData.Store do
       end)
 
     Logger.debug("Loaded #{total_loaded} full creature records from #{length(part_files)} parts")
+  end
+
+  defp load_loot_tables do
+    table_name = table_name(:loot_tables)
+
+    # Clear existing data
+    :ets.delete_all_objects(table_name)
+
+    json_path = Path.join(data_directory(), "loot_tables.json")
+
+    case load_json_raw(json_path) do
+      {:ok, data} ->
+        tables = Map.get(data, :loot_tables, [])
+
+        for table <- tables do
+          :ets.insert(table_name, {table.id, table})
+        end
+
+        Logger.debug("Loaded #{length(tables)} loot tables")
+
+      {:error, reason} ->
+        Logger.warning("Failed to load loot tables: #{inspect(reason)}")
+    end
+  end
+
+  defp load_creature_loot_rules do
+    table_name = table_name(:creature_loot_rules)
+
+    # Clear existing data
+    :ets.delete_all_objects(table_name)
+
+    json_path = Path.join(data_directory(), "creature_loot.json")
+
+    case load_json_raw(json_path) do
+      {:ok, data} ->
+        # Store the rules configuration
+        if rules = Map.get(data, :creature_loot_rules) do
+          :ets.insert(table_name, {:rules, rules})
+        end
+
+        # Store creature overrides
+        if overrides = Map.get(data, :creature_overrides) do
+          override_list = Map.get(overrides, :overrides, [])
+
+          for override <- override_list do
+            :ets.insert(table_name, {:override, override.creature_id, override})
+          end
+
+          :ets.insert(table_name, {:override_count, length(override_list)})
+        end
+
+        # Store category tables
+        if categories = Map.get(data, :category_tables) do
+          :ets.insert(table_name, {:categories, categories})
+        end
+
+        Logger.debug("Loaded creature loot rules")
+
+      {:error, reason} ->
+        Logger.warning("Failed to load creature loot rules: #{inspect(reason)}")
+    end
+  end
+
+  defp validate_loot_data do
+    alias BezgelorData.LootValidator
+
+    case LootValidator.validate_all() do
+      {:ok, stats} ->
+        Logger.debug(
+          "Loot data validated: #{stats.tables.table_count} tables, " <>
+            "#{stats.tables.entry_count} entries, #{stats.rules.race_mappings} race mappings"
+        )
+
+      {:error, errors} ->
+        for error <- errors do
+          Logger.warning("Loot validation error: #{error}")
+        end
+    end
   end
 
   defp load_creature_spawns do

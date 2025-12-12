@@ -27,6 +27,7 @@ defmodule BezgelorWorld.SpellManager do
   use GenServer
 
   alias BezgelorCore.{Spell, SpellEffect, Cooldown}
+  alias BezgelorWorld.CombatBroadcaster
 
   require Logger
 
@@ -115,6 +116,43 @@ defmodule BezgelorWorld.SpellManager do
   @spec clear_player(non_neg_integer()) :: :ok
   def clear_player(player_guid) do
     GenServer.cast(__MODULE__, {:clear_player, player_guid})
+  end
+
+  @doc """
+  Emit telegraph visuals for a spell.
+
+  This broadcasts telegraph packets to nearby players, showing where
+  the spell's effects will land. Called automatically for AoE spells
+  when they are cast.
+
+  ## Parameters
+
+  - `caster_guid` - Entity casting the spell
+  - `spell` - Spell struct with aoe_radius and other data
+  - `position` - Center position for the telegraph
+  - `recipient_guids` - List of player GUIDs who should see the telegraph
+  """
+  @spec emit_telegraph(non_neg_integer(), Spell.t(), {float(), float(), float()}, [non_neg_integer()]) :: :ok
+  def emit_telegraph(caster_guid, spell, position, recipient_guids) do
+    if Spell.aoe?(spell) and spell.aoe_radius > 0 do
+      # AoE spells show a circle telegraph
+      # Duration = cast time (for cast-time spells) or a brief flash (for instant)
+      duration = if spell.cast_time > 0, do: spell.cast_time, else: 500
+
+      # Enemy-hostile spells show red, friendly spells show blue
+      color = if spell.hostile, do: :red, else: :blue
+
+      CombatBroadcaster.broadcast_circle_telegraph(
+        caster_guid,
+        position,
+        spell.aoe_radius,
+        duration,
+        color,
+        recipient_guids
+      )
+    end
+
+    :ok
   end
 
   ## Server Callbacks

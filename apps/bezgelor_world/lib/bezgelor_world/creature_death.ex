@@ -1,0 +1,153 @@
+defmodule BezgelorWorld.CreatureDeath do
+  @moduledoc """
+  Shared creature death handling logic.
+
+  Extracted from creature_manager.ex and zone_manager.ex to avoid duplication.
+  Both modules delegate to these functions for consistent death handling.
+  """
+
+  alias BezgelorCore.AI
+  alias BezgelorWorld.{CorpseManager, Loot}
+
+  import Bitwise
+
+  require Logger
+
+  @doc """
+  Handle creature death and generate loot/XP rewards.
+
+  ## Parameters
+
+  - `creature_state` - Current creature state with template, entity, ai
+  - `entity` - The creature entity
+  - `killer_guid` - GUID of the killer
+  - `killer_level` - Level of the killer (for loot scaling)
+  - `opts` - Options
+    - `:zone_id` - Zone ID for logging (optional)
+    - `:instance_id` - Instance ID for logging (optional)
+
+  ## Returns
+
+  `{result, new_creature_state}` where:
+  - `result` is `{:ok, :killed, result_info}`
+  - `new_creature_state` has updated entity, ai, and respawn_timer
+  """
+  @spec handle_death(map(), map(), non_neg_integer(), non_neg_integer(), Keyword.t()) ::
+          {{:ok, :killed, map()}, map()}
+  def handle_death(creature_state, entity, killer_guid, killer_level, opts \\ []) do
+    template = creature_state.template
+
+    # Set AI to dead
+    ai = AI.set_dead(creature_state.ai)
+
+    # Generate loot using data-driven system
+    creature_id = entity.creature_id
+    creature_level = template.level
+
+    loot_drops = generate_loot(creature_id, creature_level, killer_level, template)
+
+    # Spawn corpse entity if there's loot
+    corpse_guid = spawn_corpse_if_needed(entity, loot_drops)
+
+    # Calculate XP reward
+    xp_reward = template.xp_reward
+
+    # Start respawn timer
+    respawn_timer =
+      if template.respawn_time > 0 do
+        Process.send_after(self(), {:respawn_creature, entity.guid}, template.respawn_time)
+      else
+        nil
+      end
+
+    new_creature_state = %{
+      creature_state
+      | entity: entity,
+        ai: ai,
+        respawn_timer: respawn_timer
+    }
+
+    result_info = %{
+      creature_guid: entity.guid,
+      creature_id: creature_id,
+      xp_reward: xp_reward,
+      loot_drops: loot_drops,
+      gold: Loot.gold_from_drops(loot_drops),
+      items: Loot.items_from_drops(loot_drops),
+      killer_guid: killer_guid,
+      reputation_rewards: template.reputation_rewards || [],
+      corpse_guid: corpse_guid
+    }
+
+    log_death(entity, killer_guid, opts)
+
+    {{:ok, :killed, result_info}, new_creature_state}
+  end
+
+  @doc """
+  Generate loot drops for a killed creature.
+
+  Uses the data-driven loot system if creature_id is present,
+  otherwise falls back to template's loot_table_id.
+  """
+  @spec generate_loot(non_neg_integer() | nil, non_neg_integer(), non_neg_integer(), map()) ::
+          [{non_neg_integer(), non_neg_integer()}]
+  def generate_loot(creature_id, creature_level, killer_level, template) do
+    if creature_id && creature_id > 0 do
+      # Use data-driven loot system with explicit creature level
+      Loot.roll_creature_loot(creature_id, creature_level, killer_level)
+    else
+      # Fall back to template's loot table if no creature_id
+      if template.loot_table_id do
+        Loot.roll_table(template.loot_table_id)
+      else
+        []
+      end
+    end
+  end
+
+  @doc """
+  Check if a GUID belongs to a player entity.
+
+  Player GUIDs have type bits = 1 in bits 60-63.
+  """
+  @spec is_player_guid?(non_neg_integer()) :: boolean()
+  def is_player_guid?(guid) when is_integer(guid) do
+    # Extract type from bits 60-63
+    type = guid >>> 60 &&& 0xF
+    type == 1
+  end
+
+  def is_player_guid?(_), do: false
+
+  # Log the death with optional zone context
+  defp log_death(entity, killer_guid, opts) do
+    zone_id = Keyword.get(opts, :zone_id)
+    instance_id = Keyword.get(opts, :instance_id)
+
+    if zone_id && instance_id do
+      Logger.debug(
+        "Zone #{zone_id}/#{instance_id}: Creature #{entity.name} (#{entity.guid}) killed by #{killer_guid}"
+      )
+    else
+      Logger.debug("Creature #{entity.name} (#{entity.guid}) killed by #{killer_guid}")
+    end
+  end
+
+  # Spawn a corpse entity if there's loot to pick up
+  defp spawn_corpse_if_needed(entity, loot_drops) when loot_drops == [] or is_nil(loot_drops) do
+    nil
+  end
+
+  defp spawn_corpse_if_needed(entity, loot_drops) do
+    case CorpseManager.spawn_corpse(entity, loot_drops) do
+      {:ok, corpse_guid} ->
+        Logger.debug("Spawned corpse #{corpse_guid} for creature #{entity.guid} with #{length(loot_drops)} loot items")
+        corpse_guid
+
+      {:error, reason} ->
+        Logger.warning("Failed to spawn corpse for creature #{entity.guid}: #{inspect(reason)}")
+        nil
+    end
+  end
+end

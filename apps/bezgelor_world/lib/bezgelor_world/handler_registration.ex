@@ -160,6 +160,7 @@ defmodule BezgelorWorld.HandlerRegistration do
     PacketRegistry.register(:client_loot_roll, LootHandler)
     PacketRegistry.register(:client_loot_settings, LootHandler)
     PacketRegistry.register(:client_loot_master_assign, LootHandler)
+    PacketRegistry.register(:client_loot_corpse, LootHandler)
 
     # Duels
     PacketRegistry.register(:client_duel_request, DuelHandler)

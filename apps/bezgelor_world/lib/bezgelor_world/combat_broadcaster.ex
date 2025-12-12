@@ -18,6 +18,7 @@ defmodule BezgelorWorld.CombatBroadcaster do
     ServerLootDrop,
     ServerRespawn,
     ServerSpellEffect,
+    ServerTelegraph,
     ServerXPGain
   }
 
@@ -210,6 +211,89 @@ defmodule BezgelorWorld.CombatBroadcaster do
   @spec send_buff_remove(non_neg_integer(), non_neg_integer(), atom()) :: :ok
   def send_buff_remove(target_guid, buff_id, reason) do
     broadcast_buff_remove(target_guid, buff_id, reason, [target_guid])
+  end
+
+  @doc """
+  Broadcast a telegraph to players.
+
+  Telegraphs are visual indicators showing where damage/effects will land.
+  WildStar's action combat relies heavily on telegraphs for dodging.
+
+  ## Parameters
+
+  - `packet` - A ServerTelegraph struct
+  - `recipient_guids` - List of player GUIDs to receive the telegraph
+  """
+  @spec broadcast_telegraph(ServerTelegraph.t(), [non_neg_integer()]) :: :ok
+  def broadcast_telegraph(%ServerTelegraph{} = packet, recipient_guids) do
+    writer = PacketWriter.new()
+    {:ok, writer} = ServerTelegraph.write(packet, writer)
+    packet_data = PacketWriter.to_binary(writer)
+
+    send_to_players(recipient_guids, :server_telegraph, packet_data)
+  end
+
+  @doc """
+  Create and broadcast a circle telegraph.
+
+  ## Parameters
+
+  - `caster_guid` - Entity casting the ability
+  - `position` - Center point {x, y, z}
+  - `radius` - Circle radius
+  - `duration` - How long to display in milliseconds
+  - `color` - Telegraph color (:red, :blue, :yellow, :green)
+  - `recipient_guids` - Players who should see the telegraph
+  """
+  @spec broadcast_circle_telegraph(
+          non_neg_integer(),
+          {float(), float(), float()},
+          float(),
+          non_neg_integer(),
+          atom(),
+          [non_neg_integer()]
+        ) :: :ok
+  def broadcast_circle_telegraph(caster_guid, position, radius, duration, color, recipient_guids) do
+    packet = ServerTelegraph.circle(caster_guid, position, radius, duration, color)
+    broadcast_telegraph(packet, recipient_guids)
+  end
+
+  @doc """
+  Create and broadcast a cone telegraph.
+
+  ## Parameters
+
+  - `caster_guid` - Entity casting the ability
+  - `position` - Cone origin point {x, y, z}
+  - `angle` - Cone angle in degrees
+  - `length` - Cone length from origin
+  - `rotation` - Direction the cone faces (radians)
+  - `duration` - How long to display in milliseconds
+  - `color` - Telegraph color
+  - `recipient_guids` - Players who should see the telegraph
+  """
+  @spec broadcast_cone_telegraph(
+          non_neg_integer(),
+          {float(), float(), float()},
+          float(),
+          float(),
+          float(),
+          non_neg_integer(),
+          atom(),
+          [non_neg_integer()]
+        ) :: :ok
+  def broadcast_cone_telegraph(
+        caster_guid,
+        position,
+        angle,
+        length,
+        rotation,
+        duration,
+        color,
+        recipient_guids
+      ) do
+    packet = ServerTelegraph.cone(caster_guid, position, angle, length, rotation, duration, color)
+    broadcast_telegraph(packet, recipient_guids)
   end
 
   @doc """

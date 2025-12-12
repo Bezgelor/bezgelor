@@ -62,6 +62,7 @@ defmodule BezgelorProtocol.Opcode do
   @server_cast_result 0x0404
   @client_cancel_cast 0x0405
   @server_cooldown 0x0406
+  @server_telegraph 0x0407
 
   # Target opcodes
   @client_set_target 0x0500
@@ -78,6 +79,7 @@ defmodule BezgelorProtocol.Opcode do
 
   # Loot opcodes
   @server_loot_drop 0x0530
+  @client_loot_corpse 0x0531
 
   # Mount opcodes
   @client_mount_summon 0x0600
@@ -187,6 +189,7 @@ defmodule BezgelorProtocol.Opcode do
     server_cast_result: @server_cast_result,
     client_cancel_cast: @client_cancel_cast,
     server_cooldown: @server_cooldown,
+    server_telegraph: @server_telegraph,
     # Targeting
     client_set_target: @client_set_target,
     server_target_update: @server_target_update,
@@ -199,6 +202,7 @@ defmodule BezgelorProtocol.Opcode do
     server_level_up: @server_level_up,
     # Loot
     server_loot_drop: @server_loot_drop,
+    client_loot_corpse: @client_loot_corpse,
     # Mounts
     client_mount_summon: @client_mount_summon,
     client_mount_dismiss: @client_mount_dismiss,
@@ -301,6 +305,7 @@ defmodule BezgelorProtocol.Opcode do
     server_cast_result: "ServerCastResult",
     client_cancel_cast: "ClientCancelCast",
     server_cooldown: "ServerCooldown",
+    server_telegraph: "ServerTelegraph",
     client_set_target: "ClientSetTarget",
     server_target_update: "ServerTargetUpdate",
     server_entity_death: "ServerEntityDeath",
@@ -309,6 +314,7 @@ defmodule BezgelorProtocol.Opcode do
     server_xp_gain: "ServerXPGain",
     server_level_up: "ServerLevelUp",
     server_loot_drop: "ServerLootDrop",
+    client_loot_corpse: "ClientLootCorpse",
     client_mount_summon: "ClientMountSummon",
     client_mount_dismiss: "ClientMountDismiss",
     server_mount_update: "ServerMountUpdate",
