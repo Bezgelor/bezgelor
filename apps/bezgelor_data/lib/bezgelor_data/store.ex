@@ -73,7 +73,9 @@ defmodule BezgelorData.Store do
     :prerequisites,
     # Loot data
     :loot_tables,
-    :creature_loot_rules
+    :creature_loot_rules,
+    # Harvest node loot
+    :harvest_loot
   ]
 
   # Secondary index tables for efficient lookups by foreign key
@@ -1290,6 +1292,37 @@ defmodule BezgelorData.Store do
     end
   end
 
+  # Harvest node loot queries
+
+  @doc """
+  Get harvest node loot data by creature ID.
+
+  Returns loot configuration for a harvest node including:
+  - tradeskill_id: The gathering profession (13=Mining, 15=Survivalist, 18=Relic Hunter, 20=Farming)
+  - tradeskill_name: Human-readable profession name
+  - tier: Skill tier (1-5)
+  - loot: Map with :primary and :secondary drop lists
+  """
+  @spec get_harvest_loot(non_neg_integer()) :: {:ok, map()} | :error
+  def get_harvest_loot(creature_id), do: get(:harvest_loot, creature_id)
+
+  @doc """
+  Get all harvest loot mappings.
+  """
+  @spec get_all_harvest_loot() :: [map()]
+  def get_all_harvest_loot, do: list(:harvest_loot)
+
+  @doc """
+  Get harvest loot by tradeskill ID.
+  """
+  @spec get_harvest_loot_by_tradeskill(non_neg_integer()) :: [map()]
+  def get_harvest_loot_by_tradeskill(tradeskill_id) do
+    list(:harvest_loot)
+    |> Enum.filter(fn data ->
+      Map.get(data, :tradeskill_id) == tradeskill_id
+    end)
+  end
+
   @doc """
   Resolve loot table for a creature based on rules.
 
@@ -1516,6 +1549,9 @@ defmodule BezgelorData.Store do
     # Loot data
     load_loot_tables()
     load_creature_loot_rules()
+
+    # Harvest node loot
+    load_harvest_loot()
 
     # Validate loot data
     validate_loot_data()
@@ -1906,6 +1942,38 @@ defmodule BezgelorData.Store do
 
       {:error, reason} ->
         Logger.warning("Failed to load creature loot rules: #{inspect(reason)}")
+    end
+  end
+
+  defp load_harvest_loot do
+    table_name = table_name(:harvest_loot)
+
+    # Clear existing data
+    :ets.delete_all_objects(table_name)
+
+    json_path = Path.join(data_directory(), "harvest_loot.json")
+
+    case load_json_raw(json_path) do
+      {:ok, data} ->
+        # Data is a map of creature_id (string) -> loot info
+        count =
+          Enum.reduce(data, 0, fn {key, loot_data}, acc ->
+            # Convert string key to integer
+            creature_id =
+              cond do
+                is_integer(key) -> key
+                is_binary(key) -> String.to_integer(key)
+                is_atom(key) -> key |> Atom.to_string() |> String.to_integer()
+              end
+
+            :ets.insert(table_name, {creature_id, loot_data})
+            acc + 1
+          end)
+
+        Logger.debug("Loaded #{count} harvest node loot mappings")
+
+      {:error, reason} ->
+        Logger.warning("Failed to load harvest loot: #{inspect(reason)}")
     end
   end
 

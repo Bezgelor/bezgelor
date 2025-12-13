@@ -229,31 +229,63 @@ defmodule BezgelorWorld.HarvestNodeManager do
     {{:ok, loot}, new_node_state, state}
   end
 
-  defp generate_node_loot(node_type_id) do
-    # Look up the node type to get base materials
-    case Store.get_node_type(node_type_id) do
-      {:ok, node_type} ->
-        # Generate loot based on node type
-        # Each node type has a list of possible materials with quantities
-        materials = node_type[:materials] || []
+  defp generate_node_loot(harvest_node_id) do
+    # Look up the harvest loot by creature ID
+    case Store.get_harvest_loot(harvest_node_id) do
+      {:ok, loot_data} ->
+        loot = get_map_value(loot_data, :loot, %{})
+        primary = get_map_value(loot, :primary, [])
+        secondary = get_map_value(loot, :secondary, [])
 
-        Enum.map(materials, fn mat ->
-          quantity =
-            if mat[:max_quantity] && mat[:max_quantity] > mat[:min_quantity] do
-              Enum.random(mat[:min_quantity]..mat[:max_quantity])
+        # Always generate primary drops
+        primary_loot =
+          Enum.flat_map(primary, fn drop ->
+            roll_drop(drop)
+          end)
+
+        # Roll for secondary drops (chance-based)
+        secondary_loot =
+          Enum.flat_map(secondary, fn drop ->
+            chance = get_map_value(drop, :chance, 0.0)
+
+            if :rand.uniform() <= chance do
+              roll_drop(drop)
             else
-              mat[:min_quantity] || 1
+              []
             end
+          end)
 
-          %{
-            item_id: mat[:item_id],
-            quantity: quantity
-          }
-        end)
+        primary_loot ++ secondary_loot
 
       :error ->
-        # Default fallback - raw material
-        [%{item_id: 1, quantity: 1}]
+        # Fallback - generic material
+        Logger.warning("No harvest loot found for node #{harvest_node_id}, using fallback")
+        [%{item_id: 0, name: "Unknown Resource", quantity: 1}]
+    end
+  end
+
+  # Roll a drop with quantity range
+  defp roll_drop(drop) do
+    item_id = get_map_value(drop, :item_id, 0)
+    name = get_map_value(drop, :name, "Unknown")
+    min_qty = get_map_value(drop, :min, 1)
+    max_qty = get_map_value(drop, :max, 1)
+
+    quantity =
+      if max_qty > min_qty do
+        Enum.random(min_qty..max_qty)
+      else
+        min_qty
+      end
+
+    [%{item_id: item_id, name: name, quantity: quantity}]
+  end
+
+  # Helper to handle both atom and string keys in maps (from JSON parsing)
+  defp get_map_value(map, key, default) when is_atom(key) do
+    case Map.get(map, key) do
+      nil -> Map.get(map, Atom.to_string(key), default)
+      value -> value
     end
   end
 

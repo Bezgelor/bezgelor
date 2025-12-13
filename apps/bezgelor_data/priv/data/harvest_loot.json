@@ -1,0 +1,2045 @@
+{
+  "24582": {
+    "tradeskill_id": 13,
+    "tradeskill_name": "Mining",
+    "tier": 2,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 12770,
+          "name": "Titanium Chunk",
+          "min": 4,
+          "max": 6,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14782,
+          "name": "Sapphire",
+          "min": 1,
+          "max": 3,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "26130": {
+    "tradeskill_id": 20,
+    "tradeskill_name": "Farming",
+    "tier": 1,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14400,
+          "name": "Fresh Vegetable",
+          "min": 2,
+          "max": 4,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14409,
+          "name": "Seeds",
+          "min": 1,
+          "max": 2,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "61970": {
+    "tradeskill_id": 15,
+    "tradeskill_name": "Survivalist",
+    "tier": 4,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14703,
+          "name": "Spiritwood",
+          "min": 4,
+          "max": 6,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14982,
+          "name": "Faerybloom",
+          "min": 1,
+          "max": 2,
+          "chance": 0.3
+        }
+      ]
+    }
+  },
+  "27161": {
+    "tradeskill_id": 15,
+    "tradeskill_name": "Survivalist",
+    "tier": 1,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14700,
+          "name": "Ancient Hardwood",
+          "min": 4,
+          "max": 6,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14974,
+          "name": "Bladeleaf",
+          "min": 1,
+          "max": 2,
+          "chance": 0.3
+        }
+      ]
+    }
+  },
+  "20509": {
+    "tradeskill_id": 20,
+    "tradeskill_name": "Farming",
+    "tier": 1,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14400,
+          "name": "Fresh Vegetable",
+          "min": 2,
+          "max": 4,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14409,
+          "name": "Seeds",
+          "min": 1,
+          "max": 2,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "26151": {
+    "tradeskill_id": 20,
+    "tradeskill_name": "Farming",
+    "tier": 1,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14400,
+          "name": "Fresh Vegetable",
+          "min": 2,
+          "max": 4,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14409,
+          "name": "Seeds",
+          "min": 1,
+          "max": 2,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "20528": {
+    "tradeskill_id": 20,
+    "tradeskill_name": "Farming",
+    "tier": 1,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14400,
+          "name": "Fresh Vegetable",
+          "min": 2,
+          "max": 4,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14409,
+          "name": "Seeds",
+          "min": 1,
+          "max": 2,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "31811": {
+    "tradeskill_id": 18,
+    "tradeskill_name": "Relic Hunter",
+    "tier": 4,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14238,
+          "name": "Dynamic Omni-Plasm",
+          "min": 5,
+          "max": 7,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14249,
+          "name": "Eldan Disruptor",
+          "min": 1,
+          "max": 2,
+          "chance": 0.35
+        }
+      ]
+    }
+  },
+  "31816": {
+    "tradeskill_id": 18,
+    "tradeskill_name": "Relic Hunter",
+    "tier": 5,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14239,
+          "name": "Kinetic Omni-Plasm",
+          "min": 5,
+          "max": 7,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 16127,
+          "name": "Eldan Acceleron",
+          "min": 1,
+          "max": 2,
+          "chance": 0.35
+        }
+      ]
+    }
+  },
+  "26216": {
+    "tradeskill_id": 20,
+    "tradeskill_name": "Farming",
+    "tier": 1,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14400,
+          "name": "Fresh Vegetable",
+          "min": 2,
+          "max": 4,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14409,
+          "name": "Seeds",
+          "min": 1,
+          "max": 2,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "24681": {
+    "tradeskill_id": 13,
+    "tradeskill_name": "Mining",
+    "tier": 3,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 12937,
+          "name": "Platinum Chunk",
+          "min": 4,
+          "max": 6,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14783,
+          "name": "Diamond",
+          "min": 1,
+          "max": 3,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "24682": {
+    "tradeskill_id": 13,
+    "tradeskill_name": "Mining",
+    "tier": 3,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 12937,
+          "name": "Platinum Chunk",
+          "min": 4,
+          "max": 6,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14783,
+          "name": "Diamond",
+          "min": 1,
+          "max": 3,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "27265": {
+    "tradeskill_id": 18,
+    "tradeskill_name": "Relic Hunter",
+    "tier": 2,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14236,
+          "name": "Accelerated Omni-Plasm",
+          "min": 5,
+          "max": 7,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14247,
+          "name": "Eldan Emitter",
+          "min": 1,
+          "max": 2,
+          "chance": 0.35
+        }
+      ]
+    }
+  },
+  "18563": {
+    "tradeskill_id": 13,
+    "tradeskill_name": "Mining",
+    "tier": 1,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 12542,
+          "name": "Iron Chunk",
+          "min": 4,
+          "max": 6,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14781,
+          "name": "Quartz",
+          "min": 1,
+          "max": 3,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "27267": {
+    "tradeskill_id": 18,
+    "tradeskill_name": "Relic Hunter",
+    "tier": 3,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14237,
+          "name": "Advanced Omni-Plasm",
+          "min": 5,
+          "max": 7,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14248,
+          "name": "Eldan Focuser",
+          "min": 1,
+          "max": 2,
+          "chance": 0.35
+        }
+      ]
+    }
+  },
+  "27281": {
+    "tradeskill_id": 15,
+    "tradeskill_name": "Survivalist",
+    "tier": 2,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14701,
+          "name": "Augmented Hardwood",
+          "min": 4,
+          "max": 6,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14975,
+          "name": "Pummelgranate",
+          "min": 1,
+          "max": 2,
+          "chance": 0.3
+        }
+      ]
+    }
+  },
+  "27847": {
+    "tradeskill_id": 20,
+    "tradeskill_name": "Farming",
+    "tier": 1,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14400,
+          "name": "Fresh Vegetable",
+          "min": 2,
+          "max": 4,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14409,
+          "name": "Seeds",
+          "min": 1,
+          "max": 2,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "23274": {
+    "tradeskill_id": 20,
+    "tradeskill_name": "Farming",
+    "tier": 1,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14400,
+          "name": "Fresh Vegetable",
+          "min": 2,
+          "max": 4,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14409,
+          "name": "Seeds",
+          "min": 1,
+          "max": 2,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "23275": {
+    "tradeskill_id": 20,
+    "tradeskill_name": "Farming",
+    "tier": 1,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14400,
+          "name": "Fresh Vegetable",
+          "min": 2,
+          "max": 4,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14409,
+          "name": "Seeds",
+          "min": 1,
+          "max": 2,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "23276": {
+    "tradeskill_id": 20,
+    "tradeskill_name": "Farming",
+    "tier": 1,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14400,
+          "name": "Fresh Vegetable",
+          "min": 2,
+          "max": 4,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14409,
+          "name": "Seeds",
+          "min": 1,
+          "max": 2,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "23278": {
+    "tradeskill_id": 20,
+    "tradeskill_name": "Farming",
+    "tier": 1,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14400,
+          "name": "Fresh Vegetable",
+          "min": 2,
+          "max": 4,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14409,
+          "name": "Seeds",
+          "min": 1,
+          "max": 2,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "23279": {
+    "tradeskill_id": 20,
+    "tradeskill_name": "Farming",
+    "tier": 1,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14400,
+          "name": "Fresh Vegetable",
+          "min": 2,
+          "max": 4,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14409,
+          "name": "Seeds",
+          "min": 1,
+          "max": 2,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "34032": {
+    "tradeskill_id": 13,
+    "tradeskill_name": "Mining",
+    "tier": 2,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 12770,
+          "name": "Titanium Chunk",
+          "min": 4,
+          "max": 6,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14782,
+          "name": "Sapphire",
+          "min": 1,
+          "max": 3,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "23280": {
+    "tradeskill_id": 20,
+    "tradeskill_name": "Farming",
+    "tier": 1,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14400,
+          "name": "Fresh Vegetable",
+          "min": 2,
+          "max": 4,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14409,
+          "name": "Seeds",
+          "min": 1,
+          "max": 2,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "23283": {
+    "tradeskill_id": 20,
+    "tradeskill_name": "Farming",
+    "tier": 1,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14400,
+          "name": "Fresh Vegetable",
+          "min": 2,
+          "max": 4,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14409,
+          "name": "Seeds",
+          "min": 1,
+          "max": 2,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "23284": {
+    "tradeskill_id": 20,
+    "tradeskill_name": "Farming",
+    "tier": 1,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14400,
+          "name": "Fresh Vegetable",
+          "min": 2,
+          "max": 4,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14409,
+          "name": "Seeds",
+          "min": 1,
+          "max": 2,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "23285": {
+    "tradeskill_id": 20,
+    "tradeskill_name": "Farming",
+    "tier": 1,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14400,
+          "name": "Fresh Vegetable",
+          "min": 2,
+          "max": 4,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14409,
+          "name": "Seeds",
+          "min": 1,
+          "max": 2,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "23287": {
+    "tradeskill_id": 20,
+    "tradeskill_name": "Farming",
+    "tier": 1,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14400,
+          "name": "Fresh Vegetable",
+          "min": 2,
+          "max": 4,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14409,
+          "name": "Seeds",
+          "min": 1,
+          "max": 2,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "23289": {
+    "tradeskill_id": 20,
+    "tradeskill_name": "Farming",
+    "tier": 1,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14400,
+          "name": "Fresh Vegetable",
+          "min": 2,
+          "max": 4,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14409,
+          "name": "Seeds",
+          "min": 1,
+          "max": 2,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "23291": {
+    "tradeskill_id": 20,
+    "tradeskill_name": "Farming",
+    "tier": 1,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14400,
+          "name": "Fresh Vegetable",
+          "min": 2,
+          "max": 4,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14409,
+          "name": "Seeds",
+          "min": 1,
+          "max": 2,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "23293": {
+    "tradeskill_id": 20,
+    "tradeskill_name": "Farming",
+    "tier": 1,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14400,
+          "name": "Fresh Vegetable",
+          "min": 2,
+          "max": 4,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14409,
+          "name": "Seeds",
+          "min": 1,
+          "max": 2,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "23294": {
+    "tradeskill_id": 20,
+    "tradeskill_name": "Farming",
+    "tier": 1,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14400,
+          "name": "Fresh Vegetable",
+          "min": 2,
+          "max": 4,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14409,
+          "name": "Seeds",
+          "min": 1,
+          "max": 2,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "23295": {
+    "tradeskill_id": 20,
+    "tradeskill_name": "Farming",
+    "tier": 1,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14400,
+          "name": "Fresh Vegetable",
+          "min": 2,
+          "max": 4,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14409,
+          "name": "Seeds",
+          "min": 1,
+          "max": 2,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "23296": {
+    "tradeskill_id": 20,
+    "tradeskill_name": "Farming",
+    "tier": 1,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14400,
+          "name": "Fresh Vegetable",
+          "min": 2,
+          "max": 4,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14409,
+          "name": "Seeds",
+          "min": 1,
+          "max": 2,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "26369": {
+    "tradeskill_id": 18,
+    "tradeskill_name": "Relic Hunter",
+    "tier": 1,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14235,
+          "name": "Standard Omni-Plasm",
+          "min": 5,
+          "max": 7,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14246,
+          "name": "Eldan Transformer",
+          "min": 1,
+          "max": 2,
+          "chance": 0.35
+        }
+      ]
+    }
+  },
+  "23298": {
+    "tradeskill_id": 20,
+    "tradeskill_name": "Farming",
+    "tier": 1,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14400,
+          "name": "Fresh Vegetable",
+          "min": 2,
+          "max": 4,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14409,
+          "name": "Seeds",
+          "min": 1,
+          "max": 2,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "55045": {
+    "tradeskill_id": 15,
+    "tradeskill_name": "Survivalist",
+    "tier": 3,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14702,
+          "name": "Primal Hardwood",
+          "min": 4,
+          "max": 6,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14978,
+          "name": "Goldenseed",
+          "min": 1,
+          "max": 2,
+          "chance": 0.3
+        }
+      ]
+    }
+  },
+  "34065": {
+    "tradeskill_id": 13,
+    "tradeskill_name": "Mining",
+    "tier": 3,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 12937,
+          "name": "Platinum Chunk",
+          "min": 4,
+          "max": 6,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14783,
+          "name": "Diamond",
+          "min": 1,
+          "max": 3,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "34066": {
+    "tradeskill_id": 13,
+    "tradeskill_name": "Mining",
+    "tier": 3,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 12937,
+          "name": "Platinum Chunk",
+          "min": 4,
+          "max": 6,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14783,
+          "name": "Diamond",
+          "min": 1,
+          "max": 3,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "34067": {
+    "tradeskill_id": 13,
+    "tradeskill_name": "Mining",
+    "tier": 4,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14188,
+          "name": "Xenocite Chunk",
+          "min": 4,
+          "max": 6,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14784,
+          "name": "Chrysalus",
+          "min": 1,
+          "max": 3,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "27924": {
+    "tradeskill_id": 20,
+    "tradeskill_name": "Farming",
+    "tier": 1,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14400,
+          "name": "Fresh Vegetable",
+          "min": 2,
+          "max": 4,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14409,
+          "name": "Seeds",
+          "min": 1,
+          "max": 2,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "34068": {
+    "tradeskill_id": 13,
+    "tradeskill_name": "Mining",
+    "tier": 4,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14188,
+          "name": "Xenocite Chunk",
+          "min": 4,
+          "max": 6,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14784,
+          "name": "Chrysalus",
+          "min": 1,
+          "max": 3,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "34069": {
+    "tradeskill_id": 13,
+    "tradeskill_name": "Mining",
+    "tier": 4,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14188,
+          "name": "Xenocite Chunk",
+          "min": 4,
+          "max": 6,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14784,
+          "name": "Chrysalus",
+          "min": 1,
+          "max": 3,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "27927": {
+    "tradeskill_id": 20,
+    "tradeskill_name": "Farming",
+    "tier": 1,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14400,
+          "name": "Fresh Vegetable",
+          "min": 2,
+          "max": 4,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14409,
+          "name": "Seeds",
+          "min": 1,
+          "max": 2,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "34071": {
+    "tradeskill_id": 13,
+    "tradeskill_name": "Mining",
+    "tier": 4,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14188,
+          "name": "Xenocite Chunk",
+          "min": 4,
+          "max": 6,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14784,
+          "name": "Chrysalus",
+          "min": 1,
+          "max": 3,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "34072": {
+    "tradeskill_id": 13,
+    "tradeskill_name": "Mining",
+    "tier": 5,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14667,
+          "name": "Galactium Chunk",
+          "min": 4,
+          "max": 6,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 16565,
+          "name": "Starshard",
+          "min": 1,
+          "max": 3,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "34073": {
+    "tradeskill_id": 13,
+    "tradeskill_name": "Mining",
+    "tier": 5,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14667,
+          "name": "Galactium Chunk",
+          "min": 4,
+          "max": 6,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 16565,
+          "name": "Starshard",
+          "min": 1,
+          "max": 3,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "34074": {
+    "tradeskill_id": 13,
+    "tradeskill_name": "Mining",
+    "tier": 5,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14667,
+          "name": "Galactium Chunk",
+          "min": 4,
+          "max": 6,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 16565,
+          "name": "Starshard",
+          "min": 1,
+          "max": 3,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "27932": {
+    "tradeskill_id": 20,
+    "tradeskill_name": "Farming",
+    "tier": 1,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14400,
+          "name": "Fresh Vegetable",
+          "min": 2,
+          "max": 4,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14409,
+          "name": "Seeds",
+          "min": 1,
+          "max": 2,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "24861": {
+    "tradeskill_id": 15,
+    "tradeskill_name": "Survivalist",
+    "tier": 1,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14700,
+          "name": "Ancient Hardwood",
+          "min": 4,
+          "max": 6,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14974,
+          "name": "Bladeleaf",
+          "min": 1,
+          "max": 2,
+          "chance": 0.3
+        }
+      ]
+    }
+  },
+  "35612": {
+    "tradeskill_id": 13,
+    "tradeskill_name": "Mining",
+    "tier": 1,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 12542,
+          "name": "Iron Chunk",
+          "min": 4,
+          "max": 6,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14781,
+          "name": "Quartz",
+          "min": 1,
+          "max": 3,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "34076": {
+    "tradeskill_id": 13,
+    "tradeskill_name": "Mining",
+    "tier": 5,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14667,
+          "name": "Galactium Chunk",
+          "min": 4,
+          "max": 6,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 16565,
+          "name": "Starshard",
+          "min": 1,
+          "max": 3,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "27959": {
+    "tradeskill_id": 20,
+    "tradeskill_name": "Farming",
+    "tier": 1,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14400,
+          "name": "Fresh Vegetable",
+          "min": 2,
+          "max": 4,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14409,
+          "name": "Seeds",
+          "min": 1,
+          "max": 2,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "27964": {
+    "tradeskill_id": 20,
+    "tradeskill_name": "Farming",
+    "tier": 1,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14400,
+          "name": "Fresh Vegetable",
+          "min": 2,
+          "max": 4,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14409,
+          "name": "Seeds",
+          "min": 1,
+          "max": 2,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "29503": {
+    "tradeskill_id": 15,
+    "tradeskill_name": "Survivalist",
+    "tier": 2,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14701,
+          "name": "Augmented Hardwood",
+          "min": 4,
+          "max": 6,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14975,
+          "name": "Pummelgranate",
+          "min": 1,
+          "max": 2,
+          "chance": 0.3
+        }
+      ]
+    }
+  },
+  "27968": {
+    "tradeskill_id": 13,
+    "tradeskill_name": "Mining",
+    "tier": 2,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 12770,
+          "name": "Titanium Chunk",
+          "min": 4,
+          "max": 6,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14782,
+          "name": "Sapphire",
+          "min": 1,
+          "max": 3,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "29506": {
+    "tradeskill_id": 15,
+    "tradeskill_name": "Survivalist",
+    "tier": 1,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14700,
+          "name": "Ancient Hardwood",
+          "min": 4,
+          "max": 6,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14974,
+          "name": "Bladeleaf",
+          "min": 1,
+          "max": 2,
+          "chance": 0.3
+        }
+      ]
+    }
+  },
+  "27970": {
+    "tradeskill_id": 20,
+    "tradeskill_name": "Farming",
+    "tier": 1,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14400,
+          "name": "Fresh Vegetable",
+          "min": 2,
+          "max": 4,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14409,
+          "name": "Seeds",
+          "min": 1,
+          "max": 2,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "27977": {
+    "tradeskill_id": 20,
+    "tradeskill_name": "Farming",
+    "tier": 1,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14400,
+          "name": "Fresh Vegetable",
+          "min": 2,
+          "max": 4,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14409,
+          "name": "Seeds",
+          "min": 1,
+          "max": 2,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "29515": {
+    "tradeskill_id": 15,
+    "tradeskill_name": "Survivalist",
+    "tier": 2,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14701,
+          "name": "Augmented Hardwood",
+          "min": 4,
+          "max": 6,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14975,
+          "name": "Pummelgranate",
+          "min": 1,
+          "max": 2,
+          "chance": 0.3
+        }
+      ]
+    }
+  },
+  "29518": {
+    "tradeskill_id": 15,
+    "tradeskill_name": "Survivalist",
+    "tier": 4,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14703,
+          "name": "Spiritwood",
+          "min": 4,
+          "max": 6,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14982,
+          "name": "Faerybloom",
+          "min": 1,
+          "max": 2,
+          "chance": 0.3
+        }
+      ]
+    }
+  },
+  "35673": {
+    "tradeskill_id": 13,
+    "tradeskill_name": "Mining",
+    "tier": 2,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 12770,
+          "name": "Titanium Chunk",
+          "min": 4,
+          "max": 6,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14782,
+          "name": "Sapphire",
+          "min": 1,
+          "max": 3,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "35674": {
+    "tradeskill_id": 13,
+    "tradeskill_name": "Mining",
+    "tier": 2,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 12770,
+          "name": "Titanium Chunk",
+          "min": 4,
+          "max": 6,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14782,
+          "name": "Sapphire",
+          "min": 1,
+          "max": 3,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "35675": {
+    "tradeskill_id": 13,
+    "tradeskill_name": "Mining",
+    "tier": 3,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 12937,
+          "name": "Platinum Chunk",
+          "min": 4,
+          "max": 6,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14783,
+          "name": "Diamond",
+          "min": 1,
+          "max": 3,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "35676": {
+    "tradeskill_id": 13,
+    "tradeskill_name": "Mining",
+    "tier": 3,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 12937,
+          "name": "Platinum Chunk",
+          "min": 4,
+          "max": 6,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14783,
+          "name": "Diamond",
+          "min": 1,
+          "max": 3,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "29544": {
+    "tradeskill_id": 15,
+    "tradeskill_name": "Survivalist",
+    "tier": 5,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14704,
+          "name": "Ironbark",
+          "min": 4,
+          "max": 6,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14983,
+          "name": "Coralscale",
+          "min": 1,
+          "max": 2,
+          "chance": 0.3
+        }
+      ]
+    }
+  },
+  "29548": {
+    "tradeskill_id": 15,
+    "tradeskill_name": "Survivalist",
+    "tier": 4,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14703,
+          "name": "Spiritwood",
+          "min": 4,
+          "max": 6,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14982,
+          "name": "Faerybloom",
+          "min": 1,
+          "max": 2,
+          "chance": 0.3
+        }
+      ]
+    }
+  },
+  "28014": {
+    "tradeskill_id": 20,
+    "tradeskill_name": "Farming",
+    "tier": 1,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14400,
+          "name": "Fresh Vegetable",
+          "min": 2,
+          "max": 4,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14409,
+          "name": "Seeds",
+          "min": 1,
+          "max": 2,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "19823": {
+    "tradeskill_id": 20,
+    "tradeskill_name": "Farming",
+    "tier": 1,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14400,
+          "name": "Fresh Vegetable",
+          "min": 2,
+          "max": 4,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14409,
+          "name": "Seeds",
+          "min": 1,
+          "max": 2,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "29552": {
+    "tradeskill_id": 15,
+    "tradeskill_name": "Survivalist",
+    "tier": 1,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14700,
+          "name": "Ancient Hardwood",
+          "min": 4,
+          "max": 6,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14974,
+          "name": "Bladeleaf",
+          "min": 1,
+          "max": 2,
+          "chance": 0.3
+        }
+      ]
+    }
+  },
+  "28018": {
+    "tradeskill_id": 20,
+    "tradeskill_name": "Farming",
+    "tier": 1,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14400,
+          "name": "Fresh Vegetable",
+          "min": 2,
+          "max": 4,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14409,
+          "name": "Seeds",
+          "min": 1,
+          "max": 2,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "29555": {
+    "tradeskill_id": 15,
+    "tradeskill_name": "Survivalist",
+    "tier": 5,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14704,
+          "name": "Ironbark",
+          "min": 4,
+          "max": 6,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14983,
+          "name": "Coralscale",
+          "min": 1,
+          "max": 2,
+          "chance": 0.3
+        }
+      ]
+    }
+  },
+  "28021": {
+    "tradeskill_id": 20,
+    "tradeskill_name": "Farming",
+    "tier": 1,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14400,
+          "name": "Fresh Vegetable",
+          "min": 2,
+          "max": 4,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14409,
+          "name": "Seeds",
+          "min": 1,
+          "max": 2,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "28025": {
+    "tradeskill_id": 20,
+    "tradeskill_name": "Farming",
+    "tier": 1,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14400,
+          "name": "Fresh Vegetable",
+          "min": 2,
+          "max": 4,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14409,
+          "name": "Seeds",
+          "min": 1,
+          "max": 2,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "28029": {
+    "tradeskill_id": 20,
+    "tradeskill_name": "Farming",
+    "tier": 1,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14400,
+          "name": "Fresh Vegetable",
+          "min": 2,
+          "max": 4,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14409,
+          "name": "Seeds",
+          "min": 1,
+          "max": 2,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "28036": {
+    "tradeskill_id": 20,
+    "tradeskill_name": "Farming",
+    "tier": 1,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14400,
+          "name": "Fresh Vegetable",
+          "min": 2,
+          "max": 4,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14409,
+          "name": "Seeds",
+          "min": 1,
+          "max": 2,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "20408": {
+    "tradeskill_id": 13,
+    "tradeskill_name": "Mining",
+    "tier": 2,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 12770,
+          "name": "Titanium Chunk",
+          "min": 4,
+          "max": 6,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14782,
+          "name": "Sapphire",
+          "min": 1,
+          "max": 3,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "27581": {
+    "tradeskill_id": 20,
+    "tradeskill_name": "Farming",
+    "tier": 1,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 14400,
+          "name": "Fresh Vegetable",
+          "min": 2,
+          "max": 4,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14409,
+          "name": "Seeds",
+          "min": 1,
+          "max": 2,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "24518": {
+    "tradeskill_id": 13,
+    "tradeskill_name": "Mining",
+    "tier": 1,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 12542,
+          "name": "Iron Chunk",
+          "min": 4,
+          "max": 6,
+          "chance": 1.0
+        }
+      ],
+      "secondary": [
+        {
+          "item_id": 14781,
+          "name": "Quartz",
+          "min": 1,
+          "max": 3,
+          "chance": 0.4
+        }
+      ]
+    }
+  },
+  "30796": {
+    "tradeskill_id": 0,
+    "tradeskill_name": "Generic",
+    "tier": 1,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 0,
+          "name": "Unknown Resource",
+          "min": 1,
+          "max": 3,
+          "chance": 1.0
+        }
+      ],
+      "secondary": []
+    }
+  },
+  "30798": {
+    "tradeskill_id": 0,
+    "tradeskill_name": "Generic",
+    "tier": 1,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 0,
+          "name": "Unknown Resource",
+          "min": 1,
+          "max": 3,
+          "chance": 1.0
+        }
+      ],
+      "secondary": []
+    }
+  },
+  "30799": {
+    "tradeskill_id": 0,
+    "tradeskill_name": "Generic",
+    "tier": 1,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 0,
+          "name": "Unknown Resource",
+          "min": 1,
+          "max": 3,
+          "chance": 1.0
+        }
+      ],
+      "secondary": []
+    }
+  },
+  "30872": {
+    "tradeskill_id": 0,
+    "tradeskill_name": "Generic",
+    "tier": 1,
+    "loot": {
+      "primary": [
+        {
+          "item_id": 0,
+          "name": "Unknown Resource",
+          "min": 1,
+          "max": 3,
+          "chance": 1.0
+        }
+      ],
+      "secondary": []
+    }
+  }
+}

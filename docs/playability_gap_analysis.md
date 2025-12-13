@@ -10,13 +10,14 @@ Bezgelor is a **feature-complete game engine with minimal game content**. The ar
 | Aspect | Status |
 |--------|--------|
 | Systems Implementation | ~98% complete |
-| Content/Data | ~90% complete |
+| Content/Data | ~92% complete |
 | Populated Worlds | 7 of 7 (open world) |
-| Resource Spawns | ✅ 5,015 harvest nodes |
+| Resource Spawns | ✅ 5,015 harvest nodes + 83 loot mappings |
 | Quests Defined | 5,194 (from client) |
 | Quest Giver Mappings | ✅ Available (creatures_full) |
 | Vendor Inventories | ✅ 881 vendors, 35,842 items |
 | Loot System | ✅ Real items + equipment drops + corpse pickup |
+| Gathering Loot | ✅ Mining, Survivalist, Relic Hunter, Farming |
 | Combat System | ✅ Stats, ticks, XP, telegraphs complete |
 | Dungeons Working | 0 of 46 |
 
@@ -29,7 +30,7 @@ Bezgelor is a **feature-complete game engine with minimal game content**. The ar
 | **Quest Wiring** | ✅ Wired | Handlers registered, ready for client testing |
 | **Vendor Inventories** | ✅ Generated | 881 vendors, 35,842 item listings |
 | **Loot Tables** | ✅ Complete | Real items, equipment drops, group bonuses |
-| **Gathering Nodes** | ✅ Complete | 5,015 harvest nodes extracted + wired |
+| **Gathering Nodes** | ✅ Complete | 5,015 harvest nodes + 83 loot mappings |
 | **Dungeon Scripts** | DSL ready | Script 46 dungeon encounters |
 | **Dialogue Wiring** | Data ready | Connect gossipSetId to NPC interactions |
 
@@ -61,6 +62,7 @@ The primary work is **integration**, not content creation—data exists, systems
 | **Challenges** | `challenges.json` | 643 | ✅ **Extracted from client** |
 | **World Locations** | `world_locations.json` | 33,396 | ✅ **Extracted from client** |
 | Tradeskills | Multiple files | Complete | ✅ Full system |
+| **Harvest Loot** | `harvest_loot.json` | 83 | ✅ **Node→loot mappings by profession/tier** |
 | Battlegrounds | `battlegrounds.json` | 2 | ⚠️ Limited |
 | Arenas | `arenas.json` | Configured | ⚠️ Limited |
 | Instances | `instances.json` | Framework | ⚠️ Minimal content |
@@ -197,7 +199,7 @@ The primary work is **integration**, not content creation—data exists, systems
 
 **Impact:** No PvE endgame content.
 
-### 6. Tradeskill Content (✅ 90% Complete)
+### 6. Tradeskill Content (✅ 95% Complete)
 
 **What exists:**
 - 6 crafting + 3 gathering professions
@@ -206,12 +208,22 @@ The primary work is **integration**, not content creation—data exists, systems
 - Work order templates
 - ✅ **5,015 gathering node spawns** across 3 continents
 - ✅ **HarvestNodeManager** for zone spawning and respawns
+- ✅ **Harvest node loot tables** - 83 unique nodes mapped to drops by profession/tier
+
+**Harvest loot coverage:**
+| Profession | Nodes | Drops |
+|------------|-------|-------|
+| Mining | 23 | Iron→Titanium→Platinum→Xenocite→Galactium + gems |
+| Survivalist | 13 | Ancient→Augmented→Primal→Spirit→Iron hardwood + plants |
+| Relic Hunter | 5 | Standard→Kinetic Omni-Plasm + Eldan components |
+| Farming | 38 | Vegetables + seeds |
+| Generic | 4 | Fallback for special nodes |
 
 **What's missing:**
 - Tutorial zone gathering nodes (EverstarGrove, NorthernWilds)
 - Some instance/dungeon gathering nodes
 
-**Impact:** ✅ Gathering professions now functional in main game zones.
+**Impact:** ✅ Gathering professions fully functional with real loot drops.
 
 ---
 
@@ -299,6 +311,7 @@ Options (in order of preference):
 - ✅ 5,015 harvest nodes extracted from NexusForever.WorldDatabase
 - ✅ HarvestNodeManager wired into zone spawning
 - ✅ Respawn system implemented
+- ✅ Loot tables for 83 unique node types (Mining, Survivalist, Relic Hunter, Farming)
 
 **C.3: First Dungeon**
 - Script Stormtalon's Lair completely
@@ -323,7 +336,7 @@ Options (in order of preference):
 | Loot table wiring | Medium | ✅ **COMPLETE** - Real items + equipment drops |
 | Wire quest data to system | Medium | ✅ **COMPLETE** - Handlers wired |
 | Generate vendor inventories | Medium | ✅ **COMPLETE** - 35,842 items |
-| Gathering nodes | Medium | ✅ **COMPLETE** - 5,015 nodes extracted + wired |
+| Gathering nodes | Medium | ✅ **COMPLETE** - 5,015 nodes + 83 loot mappings |
 | First dungeon complete | High | TODO |
 
 **Minimum viable "playable" (level 1-20):** 1-2 weeks focused work (data extraction complete!)
@@ -395,6 +408,7 @@ Bezgelor represents an impressive technical achievement—a complete WildStar se
 - **10,799 dialogue entries** for NPC conversations
 - **33,396 world locations** for quest directions
 - **5,015 harvest nodes** for gathering professions (extracted from WorldDatabase)
+- **83 harvest node loot mappings** by profession and tier (Mining, Survivalist, Relic Hunter, Farming)
 
 The path to playability is now much clearer:
 1. ~~Populate the world (WorldDatabase import)~~ ✅ **COMPLETE**
