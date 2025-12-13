@@ -19,7 +19,7 @@ defmodule BezgelorWorld.Handler.NpcHandler do
     ServerDialogStart,
     ServerQuestOffer
   }
-  alias BezgelorWorld.{CombatBroadcaster, Quest.PrerequisiteChecker}
+  alias BezgelorWorld.{CombatBroadcaster, GossipManager, Quest.PrerequisiteChecker}
 
   require Logger
 
@@ -198,17 +198,26 @@ defmodule BezgelorWorld.Handler.NpcHandler do
 
   @doc """
   Handle interaction with a generic NPC (gossip, trainer, etc.).
+
+  Sends a gossip packet if the NPC has a gossip set configured.
   """
   @spec handle_generic_npc(pid(), integer(), integer(), non_neg_integer()) :: :ok
-  def handle_generic_npc(_connection_pid, _character_id, creature_id, _npc_guid) do
-    # Check for gossip
+  def handle_generic_npc(connection_pid, _character_id, creature_id, _npc_guid) do
     case Store.get_creature_full(creature_id) do
       {:ok, creature} ->
         gossip_set_id = Map.get(creature, :gossipSetId)
 
         if gossip_set_id && gossip_set_id > 0 do
-          Logger.debug("NPC #{creature_id} has gossip set #{gossip_set_id}")
-          # TODO: Send gossip packet
+          # Get gossip entries and send a random one
+          entries = GossipManager.get_creature_gossip_entries(creature_id)
+
+          if entry = GossipManager.select_gossip_entry(entries, []) do
+            packet = GossipManager.build_gossip_packet(creature, entry)
+            send(connection_pid, {:send_packet, packet})
+            Logger.debug("Sent gossip from creature #{creature_id}: text_id #{entry.localizedTextId}")
+          else
+            Logger.debug("NPC #{creature_id} has gossip set #{gossip_set_id} but no valid entries")
+          end
         else
           Logger.debug("NPC #{creature_id} has no special interactions")
         end

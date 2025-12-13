@@ -1,0 +1,360 @@
+{
+  "description": "Creature spawns for instanced content (dungeons, raids, adventures)",
+  "instance_spawns": [
+    {
+      "instance_id": 1001,
+      "instance_name": "Stormtalon's Lair",
+      "trash_packs": [
+        {
+          "id": 1,
+          "name": "Entrance Patrol",
+          "creatures": [
+            {"creature_id": 60001, "position": [2480.0, 1780.0, 118.0], "count": 3},
+            {"creature_id": 60002, "position": [2490.0, 1775.0, 117.0], "count": 1}
+          ],
+          "respawn_seconds": 0,
+          "patrol_path": "entrance_patrol_1"
+        },
+        {
+          "id": 2,
+          "name": "Lightning Corridor Pack",
+          "creatures": [
+            {"creature_id": 60003, "position": [2510.0, 1810.0, 122.0], "count": 4},
+            {"creature_id": 60001, "position": [2515.0, 1815.0, 123.0], "count": 2}
+          ],
+          "respawn_seconds": 0
+        },
+        {
+          "id": 3,
+          "name": "Pre-Aethros Guards",
+          "creatures": [
+            {"creature_id": 60004, "position": [2500.0, 1820.0, 125.0], "count": 2},
+            {"creature_id": 60002, "position": [2505.0, 1825.0, 126.0], "count": 2}
+          ],
+          "respawn_seconds": 0
+        },
+        {
+          "id": 4,
+          "name": "Wind Tunnel Elementals",
+          "creatures": [
+            {"creature_id": 60005, "position": [2520.0, 1840.0, 128.0], "count": 5}
+          ],
+          "respawn_seconds": 0
+        },
+        {
+          "id": 5,
+          "name": "Storm Wing Sentinels",
+          "creatures": [
+            {"creature_id": 60006, "position": [2530.0, 1860.0, 130.0], "count": 3},
+            {"creature_id": 60003, "position": [2535.0, 1865.0, 131.0], "count": 2}
+          ],
+          "respawn_seconds": 0
+        },
+        {
+          "id": 6,
+          "name": "Pre-Final Boss Gauntlet",
+          "creatures": [
+            {"creature_id": 60001, "position": [2550.0, 1880.0, 135.0], "count": 2},
+            {"creature_id": 60002, "position": [2555.0, 1885.0, 136.0], "count": 2},
+            {"creature_id": 60004, "position": [2560.0, 1890.0, 137.0], "count": 2}
+          ],
+          "respawn_seconds": 0
+        }
+      ],
+      "creature_definitions": [
+        {"id": 60001, "name": "Stormwing Skyguard", "level": 22, "health": 8500, "type": "humanoid"},
+        {"id": 60002, "name": "Lightning Invoker", "level": 23, "health": 6500, "type": "humanoid"},
+        {"id": 60003, "name": "Storm Elemental", "level": 22, "health": 7000, "type": "elemental"},
+        {"id": 60004, "name": "Thunderclaw Raptor", "level": 21, "health": 5500, "type": "beast"},
+        {"id": 60005, "name": "Wind Wisp", "level": 20, "health": 4000, "type": "elemental"},
+        {"id": 60006, "name": "Stormwing Champion", "level": 24, "health": 15000, "type": "humanoid"}
+      ]
+    },
+    {
+      "instance_id": 1002,
+      "instance_name": "Kel Voreth",
+      "trash_packs": [
+        {
+          "id": 1,
+          "name": "Entrance Slaves",
+          "creatures": [
+            {"creature_id": 60101, "position": [980.0, 1980.0, 78.0], "count": 4},
+            {"creature_id": 60102, "position": [985.0, 1985.0, 79.0], "count": 2}
+          ],
+          "respawn_seconds": 0
+        },
+        {
+          "id": 2,
+          "name": "Forge Workers",
+          "creatures": [
+            {"creature_id": 60103, "position": [1000.0, 2000.0, 82.0], "count": 3},
+            {"creature_id": 60104, "position": [1005.0, 2005.0, 83.0], "count": 2}
+          ],
+          "respawn_seconds": 0
+        },
+        {
+          "id": 3,
+          "name": "Osun Patrol",
+          "creatures": [
+            {"creature_id": 60105, "position": [1020.0, 2020.0, 85.0], "count": 2},
+            {"creature_id": 60106, "position": [1025.0, 2025.0, 86.0], "count": 1}
+          ],
+          "respawn_seconds": 0,
+          "patrol_path": "osun_patrol_1"
+        },
+        {
+          "id": 4,
+          "name": "Sacrificial Chamber Guards",
+          "creatures": [
+            {"creature_id": 60105, "position": [1040.0, 2040.0, 88.0], "count": 3},
+            {"creature_id": 60102, "position": [1045.0, 2045.0, 89.0], "count": 3}
+          ],
+          "respawn_seconds": 0
+        },
+        {
+          "id": 5,
+          "name": "Pre-Skulltaker Pack",
+          "creatures": [
+            {"creature_id": 60106, "position": [1060.0, 2060.0, 92.0], "count": 2},
+            {"creature_id": 60105, "position": [1065.0, 2065.0, 93.0], "count": 2},
+            {"creature_id": 60104, "position": [1070.0, 2070.0, 94.0], "count": 2}
+          ],
+          "respawn_seconds": 0
+        }
+      ],
+      "creature_definitions": [
+        {"id": 60101, "name": "Enslaved Ekose", "level": 26, "health": 7000, "type": "humanoid"},
+        {"id": 60102, "name": "Osun Taskmaster", "level": 27, "health": 12000, "type": "humanoid"},
+        {"id": 60103, "name": "Forge Automaton", "level": 26, "health": 9000, "type": "mechanical"},
+        {"id": 60104, "name": "Magma Elemental", "level": 25, "health": 6500, "type": "elemental"},
+        {"id": 60105, "name": "Osun Warrior", "level": 27, "health": 11000, "type": "humanoid"},
+        {"id": 60106, "name": "Osun Champion", "level": 28, "health": 18000, "type": "humanoid"}
+      ]
+    },
+    {
+      "instance_id": 1003,
+      "instance_name": "Skullcano",
+      "trash_packs": [
+        {
+          "id": 1,
+          "name": "Marauder Scouts",
+          "creatures": [
+            {"creature_id": 60201, "position": [2980.0, 1480.0, 198.0], "count": 3},
+            {"creature_id": 60202, "position": [2985.0, 1485.0, 199.0], "count": 2}
+          ],
+          "respawn_seconds": 0
+        },
+        {
+          "id": 2,
+          "name": "Cooking Pot Guards",
+          "creatures": [
+            {"creature_id": 60203, "position": [3000.0, 1500.0, 202.0], "count": 4},
+            {"creature_id": 60201, "position": [3005.0, 1505.0, 203.0], "count": 2}
+          ],
+          "respawn_seconds": 0
+        },
+        {
+          "id": 3,
+          "name": "Thunderfoot's Pets",
+          "creatures": [
+            {"creature_id": 60204, "position": [3020.0, 1520.0, 205.0], "count": 5}
+          ],
+          "respawn_seconds": 0
+        },
+        {
+          "id": 4,
+          "name": "Volcanic Defenders",
+          "creatures": [
+            {"creature_id": 60205, "position": [3040.0, 1540.0, 208.0], "count": 3},
+            {"creature_id": 60206, "position": [3045.0, 1545.0, 209.0], "count": 2}
+          ],
+          "respawn_seconds": 0
+        },
+        {
+          "id": 5,
+          "name": "Pre-Laveka Pack",
+          "creatures": [
+            {"creature_id": 60202, "position": [3060.0, 1560.0, 212.0], "count": 2},
+            {"creature_id": 60205, "position": [3065.0, 1565.0, 213.0], "count": 2},
+            {"creature_id": 60206, "position": [3070.0, 1570.0, 214.0], "count": 1}
+          ],
+          "respawn_seconds": 0
+        }
+      ],
+      "creature_definitions": [
+        {"id": 60201, "name": "Marauder Scout", "level": 32, "health": 9000, "type": "humanoid"},
+        {"id": 60202, "name": "Marauder Brute", "level": 33, "health": 14000, "type": "humanoid"},
+        {"id": 60203, "name": "Marauder Cook", "level": 31, "health": 7500, "type": "humanoid"},
+        {"id": 60204, "name": "Volcanic Raptor", "level": 31, "health": 6000, "type": "beast"},
+        {"id": 60205, "name": "Lava Elemental", "level": 32, "health": 10000, "type": "elemental"},
+        {"id": 60206, "name": "Fire Shaman", "level": 33, "health": 8000, "type": "humanoid"}
+      ]
+    },
+    {
+      "instance_id": 1004,
+      "instance_name": "Sanctuary of the Swordmaiden",
+      "trash_packs": [
+        {
+          "id": 1,
+          "name": "Corrupted Torine",
+          "creatures": [
+            {"creature_id": 60301, "position": [480.0, 780.0, 48.0], "count": 3},
+            {"creature_id": 60302, "position": [485.0, 785.0, 49.0], "count": 2}
+          ],
+          "respawn_seconds": 0
+        },
+        {
+          "id": 2,
+          "name": "Strain Infested",
+          "creatures": [
+            {"creature_id": 60303, "position": [500.0, 800.0, 52.0], "count": 4},
+            {"creature_id": 60304, "position": [505.0, 805.0, 53.0], "count": 2}
+          ],
+          "respawn_seconds": 0
+        },
+        {
+          "id": 3,
+          "name": "Spirit Guardians",
+          "creatures": [
+            {"creature_id": 60305, "position": [520.0, 820.0, 55.0], "count": 3}
+          ],
+          "respawn_seconds": 0
+        },
+        {
+          "id": 4,
+          "name": "Moldwood Pack",
+          "creatures": [
+            {"creature_id": 60306, "position": [540.0, 840.0, 58.0], "count": 5},
+            {"creature_id": 60303, "position": [545.0, 845.0, 59.0], "count": 3}
+          ],
+          "respawn_seconds": 0
+        },
+        {
+          "id": 5,
+          "name": "Pre-Spiritmother Pack",
+          "creatures": [
+            {"creature_id": 60305, "position": [560.0, 860.0, 62.0], "count": 2},
+            {"creature_id": 60302, "position": [565.0, 865.0, 63.0], "count": 2}
+          ],
+          "respawn_seconds": 0
+        },
+        {
+          "id": 6,
+          "name": "Sanctuary Defenders",
+          "creatures": [
+            {"creature_id": 60301, "position": [580.0, 880.0, 65.0], "count": 2},
+            {"creature_id": 60302, "position": [585.0, 885.0, 66.0], "count": 2},
+            {"creature_id": 60305, "position": [590.0, 890.0, 67.0], "count": 2}
+          ],
+          "respawn_seconds": 0
+        }
+      ],
+      "creature_definitions": [
+        {"id": 60301, "name": "Corrupted Torine Warrior", "level": 50, "health": 25000, "type": "humanoid"},
+        {"id": 60302, "name": "Corrupted Torine Priestess", "level": 50, "health": 18000, "type": "humanoid"},
+        {"id": 60303, "name": "Strain Horror", "level": 50, "health": 20000, "type": "aberration"},
+        {"id": 60304, "name": "Strain Broodling", "level": 49, "health": 12000, "type": "aberration"},
+        {"id": 60305, "name": "Spirit Guardian", "level": 50, "health": 22000, "type": "elemental"},
+        {"id": 60306, "name": "Moldwood Abomination", "level": 50, "health": 15000, "type": "aberration"}
+      ]
+    },
+    {
+      "instance_id": 3001,
+      "instance_name": "Genetic Archives",
+      "trash_packs": [
+        {
+          "id": 1,
+          "name": "Experiment Chamber",
+          "creatures": [
+            {"creature_id": 60401, "position": [1980.0, 2480.0, 148.0], "count": 4},
+            {"creature_id": 60402, "position": [1985.0, 2485.0, 149.0], "count": 2}
+          ],
+          "respawn_seconds": 0
+        },
+        {
+          "id": 2,
+          "name": "Gene Splicer Lab",
+          "creatures": [
+            {"creature_id": 60403, "position": [2000.0, 2500.0, 152.0], "count": 3},
+            {"creature_id": 60404, "position": [2005.0, 2505.0, 153.0], "count": 3}
+          ],
+          "respawn_seconds": 0
+        },
+        {
+          "id": 3,
+          "name": "Phage Incubators",
+          "creatures": [
+            {"creature_id": 60405, "position": [2020.0, 2520.0, 155.0], "count": 6}
+          ],
+          "respawn_seconds": 0
+        },
+        {
+          "id": 4,
+          "name": "Augmentor Guards",
+          "creatures": [
+            {"creature_id": 60406, "position": [2040.0, 2540.0, 158.0], "count": 2},
+            {"creature_id": 60401, "position": [2045.0, 2545.0, 159.0], "count": 4}
+          ],
+          "respawn_seconds": 0
+        }
+      ],
+      "creature_definitions": [
+        {"id": 60401, "name": "Genetic Experiment", "level": 50, "health": 45000, "type": "aberration"},
+        {"id": 60402, "name": "Phageborn Monstrosity", "level": 50, "health": 60000, "type": "aberration"},
+        {"id": 60403, "name": "Gene Splicer", "level": 50, "health": 35000, "type": "mechanical"},
+        {"id": 60404, "name": "Corrupted Scientist", "level": 50, "health": 30000, "type": "humanoid"},
+        {"id": 60405, "name": "Phage Larva", "level": 50, "health": 20000, "type": "aberration"},
+        {"id": 60406, "name": "Augmented Guardian", "level": 50, "health": 80000, "type": "mechanical"}
+      ]
+    },
+    {
+      "instance_id": 3002,
+      "instance_name": "Datascape",
+      "trash_packs": [
+        {
+          "id": 1,
+          "name": "Data Corruptions",
+          "creatures": [
+            {"creature_id": 60501, "position": [3480.0, 1980.0, 198.0], "count": 5},
+            {"creature_id": 60502, "position": [3485.0, 1985.0, 199.0], "count": 3}
+          ],
+          "respawn_seconds": 0
+        },
+        {
+          "id": 2,
+          "name": "Logic Core Defenders",
+          "creatures": [
+            {"creature_id": 60503, "position": [3500.0, 2000.0, 202.0], "count": 4},
+            {"creature_id": 60504, "position": [3505.0, 2005.0, 203.0], "count": 2}
+          ],
+          "respawn_seconds": 0
+        },
+        {
+          "id": 3,
+          "name": "Glitch Manifestations",
+          "creatures": [
+            {"creature_id": 60505, "position": [3520.0, 2020.0, 205.0], "count": 8}
+          ],
+          "respawn_seconds": 0
+        },
+        {
+          "id": 4,
+          "name": "Null Sector Guards",
+          "creatures": [
+            {"creature_id": 60506, "position": [3540.0, 2040.0, 208.0], "count": 2},
+            {"creature_id": 60503, "position": [3545.0, 2045.0, 209.0], "count": 4}
+          ],
+          "respawn_seconds": 0
+        }
+      ],
+      "creature_definitions": [
+        {"id": 60501, "name": "Data Corruption", "level": 50, "health": 50000, "type": "elemental"},
+        {"id": 60502, "name": "Viral Construct", "level": 50, "health": 70000, "type": "mechanical"},
+        {"id": 60503, "name": "Logic Enforcer", "level": 50, "health": 55000, "type": "mechanical"},
+        {"id": 60504, "name": "System Administrator", "level": 50, "health": 40000, "type": "mechanical"},
+        {"id": 60505, "name": "Glitch Spawn", "level": 50, "health": 25000, "type": "elemental"},
+        {"id": 60506, "name": "Null Entity", "level": 50, "health": 100000, "type": "aberration"}
+      ]
+    }
+  ]
+}

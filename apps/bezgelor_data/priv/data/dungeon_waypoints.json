@@ -1,0 +1,191 @@
+{
+  "description": "Navigation waypoints and layout data for dungeon instances",
+  "dungeon_layouts": [
+    {
+      "instance_id": 1001,
+      "instance_name": "Stormtalon's Lair",
+      "waypoints": [
+        {"id": 1, "name": "Entrance", "position": [2500.0, 1800.0, 120.0], "type": "entrance"},
+        {"id": 2, "name": "Lightning Corridor Start", "position": [2510.0, 1810.0, 122.0], "type": "junction"},
+        {"id": 3, "name": "Aethros Chamber", "position": [2520.0, 1830.0, 125.0], "type": "boss_room"},
+        {"id": 4, "name": "Wind Tunnel", "position": [2540.0, 1850.0, 128.0], "type": "corridor"},
+        {"id": 5, "name": "Blade-Wind Chamber", "position": [2560.0, 1870.0, 132.0], "type": "boss_room"},
+        {"id": 6, "name": "Optional Path Split", "position": [2550.0, 1860.0, 130.0], "type": "junction"},
+        {"id": 7, "name": "Overseer's Alcove", "position": [2570.0, 1865.0, 131.0], "type": "boss_room"},
+        {"id": 8, "name": "Storm Ascent", "position": [2580.0, 1890.0, 138.0], "type": "corridor"},
+        {"id": 9, "name": "Stormtalon's Eyrie", "position": [2600.0, 1920.0, 145.0], "type": "boss_room"}
+      ],
+      "connections": [
+        {"from": 1, "to": 2, "type": "one_way"},
+        {"from": 2, "to": 3, "type": "bidirectional"},
+        {"from": 3, "to": 4, "type": "one_way"},
+        {"from": 4, "to": 5, "type": "bidirectional"},
+        {"from": 5, "to": 6, "type": "bidirectional"},
+        {"from": 6, "to": 7, "type": "bidirectional"},
+        {"from": 6, "to": 8, "type": "one_way"},
+        {"from": 8, "to": 9, "type": "one_way"}
+      ],
+      "minimap_data": {
+        "bounds": {"min_x": 2480, "max_x": 2620, "min_y": 1780, "max_y": 1940},
+        "floor_count": 3
+      }
+    },
+    {
+      "instance_id": 1002,
+      "instance_name": "Kel Voreth",
+      "waypoints": [
+        {"id": 1, "name": "Entrance Hall", "position": [1000.0, 2000.0, 80.0], "type": "entrance"},
+        {"id": 2, "name": "Slave Pits", "position": [1010.0, 2020.0, 82.0], "type": "corridor"},
+        {"id": 3, "name": "Grond's Arena", "position": [1030.0, 2040.0, 85.0], "type": "boss_room"},
+        {"id": 4, "name": "Forge Corridor", "position": [1040.0, 2060.0, 88.0], "type": "corridor"},
+        {"id": 5, "name": "Slavemaster's Platform", "position": [1060.0, 2080.0, 92.0], "type": "boss_room"},
+        {"id": 6, "name": "Foundry", "position": [1080.0, 2100.0, 95.0], "type": "corridor"},
+        {"id": 7, "name": "Trogun's Workshop", "position": [1100.0, 2120.0, 98.0], "type": "boss_room"},
+        {"id": 8, "name": "Ritual Chamber Approach", "position": [1120.0, 2140.0, 102.0], "type": "corridor"},
+        {"id": 9, "name": "Skulltaker's Sanctum", "position": [1150.0, 2170.0, 108.0], "type": "boss_room"}
+      ],
+      "connections": [
+        {"from": 1, "to": 2, "type": "one_way"},
+        {"from": 2, "to": 3, "type": "bidirectional"},
+        {"from": 3, "to": 4, "type": "one_way"},
+        {"from": 4, "to": 5, "type": "bidirectional"},
+        {"from": 5, "to": 6, "type": "one_way"},
+        {"from": 6, "to": 7, "type": "bidirectional"},
+        {"from": 7, "to": 8, "type": "one_way"},
+        {"from": 8, "to": 9, "type": "one_way"}
+      ],
+      "minimap_data": {
+        "bounds": {"min_x": 980, "max_x": 1170, "min_y": 1980, "max_y": 2190},
+        "floor_count": 2
+      }
+    },
+    {
+      "instance_id": 1003,
+      "instance_name": "Skullcano",
+      "waypoints": [
+        {"id": 1, "name": "Beach Landing", "position": [3000.0, 1500.0, 200.0], "type": "entrance"},
+        {"id": 2, "name": "Marauder Camp", "position": [3010.0, 1520.0, 202.0], "type": "junction"},
+        {"id": 3, "name": "Tugga's Cooking Pot", "position": [3030.0, 1540.0, 205.0], "type": "boss_room"},
+        {"id": 4, "name": "Raptor Nesting Ground", "position": [3050.0, 1560.0, 208.0], "type": "corridor"},
+        {"id": 5, "name": "Thunderfoot's Lair", "position": [3070.0, 1580.0, 212.0], "type": "boss_room"},
+        {"id": 6, "name": "Volcanic Ascent", "position": [3090.0, 1600.0, 218.0], "type": "corridor"},
+        {"id": 7, "name": "Caldera Summit", "position": [3120.0, 1630.0, 225.0], "type": "boss_room"}
+      ],
+      "connections": [
+        {"from": 1, "to": 2, "type": "one_way"},
+        {"from": 2, "to": 3, "type": "bidirectional"},
+        {"from": 3, "to": 4, "type": "one_way"},
+        {"from": 4, "to": 5, "type": "bidirectional"},
+        {"from": 5, "to": 6, "type": "one_way"},
+        {"from": 6, "to": 7, "type": "one_way"}
+      ],
+      "minimap_data": {
+        "bounds": {"min_x": 2980, "max_x": 3140, "min_y": 1480, "max_y": 1650},
+        "floor_count": 4
+      }
+    },
+    {
+      "instance_id": 1004,
+      "instance_name": "Sanctuary of the Swordmaiden",
+      "waypoints": [
+        {"id": 1, "name": "Sanctuary Gates", "position": [500.0, 800.0, 50.0], "type": "entrance"},
+        {"id": 2, "name": "Corruption Courtyard", "position": [510.0, 820.0, 52.0], "type": "corridor"},
+        {"id": 3, "name": "Rayna's Vigil", "position": [530.0, 840.0, 55.0], "type": "boss_room"},
+        {"id": 4, "name": "Garden of Shadows", "position": [550.0, 860.0, 58.0], "type": "corridor"},
+        {"id": 5, "name": "Lifeweaver's Grove", "position": [570.0, 880.0, 62.0], "type": "boss_room"},
+        {"id": 6, "name": "Optional: Moldwood Path", "position": [555.0, 870.0, 60.0], "type": "junction"},
+        {"id": 7, "name": "Moldwood Depths", "position": [540.0, 890.0, 58.0], "type": "boss_room"},
+        {"id": 8, "name": "Spirit Passage", "position": [590.0, 900.0, 65.0], "type": "corridor"},
+        {"id": 9, "name": "Spiritmother's Chamber", "position": [610.0, 920.0, 68.0], "type": "boss_room"},
+        {"id": 10, "name": "Sacred Ascent", "position": [630.0, 940.0, 72.0], "type": "corridor"},
+        {"id": 11, "name": "Swordmaiden's Throne", "position": [660.0, 970.0, 78.0], "type": "boss_room"}
+      ],
+      "connections": [
+        {"from": 1, "to": 2, "type": "one_way"},
+        {"from": 2, "to": 3, "type": "bidirectional"},
+        {"from": 3, "to": 4, "type": "one_way"},
+        {"from": 4, "to": 5, "type": "bidirectional"},
+        {"from": 5, "to": 6, "type": "bidirectional"},
+        {"from": 6, "to": 7, "type": "bidirectional"},
+        {"from": 5, "to": 8, "type": "one_way"},
+        {"from": 8, "to": 9, "type": "bidirectional"},
+        {"from": 9, "to": 10, "type": "one_way"},
+        {"from": 10, "to": 11, "type": "one_way"}
+      ],
+      "minimap_data": {
+        "bounds": {"min_x": 480, "max_x": 680, "min_y": 780, "max_y": 990},
+        "floor_count": 3
+      }
+    },
+    {
+      "instance_id": 3001,
+      "instance_name": "Genetic Archives",
+      "waypoints": [
+        {"id": 1, "name": "Archive Entry", "position": [2000.0, 2500.0, 150.0], "type": "entrance"},
+        {"id": 2, "name": "Experiment Wing Alpha", "position": [2020.0, 2520.0, 152.0], "type": "corridor"},
+        {"id": 3, "name": "Experiment X-89 Chamber", "position": [2050.0, 2550.0, 155.0], "type": "boss_room"},
+        {"id": 4, "name": "Phage Containment", "position": [2080.0, 2580.0, 158.0], "type": "corridor"},
+        {"id": 5, "name": "Kuralak's Hive", "position": [2110.0, 2610.0, 162.0], "type": "boss_room"},
+        {"id": 6, "name": "Genetic Splicing Labs", "position": [2140.0, 2640.0, 165.0], "type": "corridor"},
+        {"id": 7, "name": "Phageborn Convergence", "position": [2170.0, 2670.0, 168.0], "type": "boss_room"},
+        {"id": 8, "name": "Phagetech Wing", "position": [2200.0, 2700.0, 172.0], "type": "corridor"},
+        {"id": 9, "name": "Phagetech Prototypes", "position": [2230.0, 2730.0, 175.0], "type": "boss_room"},
+        {"id": 10, "name": "Augmentor Access", "position": [2260.0, 2760.0, 178.0], "type": "corridor"},
+        {"id": 11, "name": "Genetic Augmentor", "position": [2300.0, 2800.0, 182.0], "type": "boss_room"},
+        {"id": 12, "name": "Core Passage", "position": [2340.0, 2840.0, 186.0], "type": "corridor"},
+        {"id": 13, "name": "Dreadphage Ohmna", "position": [2400.0, 2900.0, 192.0], "type": "boss_room"}
+      ],
+      "connections": [
+        {"from": 1, "to": 2, "type": "one_way"},
+        {"from": 2, "to": 3, "type": "bidirectional"},
+        {"from": 3, "to": 4, "type": "one_way"},
+        {"from": 4, "to": 5, "type": "bidirectional"},
+        {"from": 5, "to": 6, "type": "one_way"},
+        {"from": 6, "to": 7, "type": "bidirectional"},
+        {"from": 7, "to": 8, "type": "one_way"},
+        {"from": 8, "to": 9, "type": "bidirectional"},
+        {"from": 9, "to": 10, "type": "one_way"},
+        {"from": 10, "to": 11, "type": "bidirectional"},
+        {"from": 11, "to": 12, "type": "one_way"},
+        {"from": 12, "to": 13, "type": "one_way"}
+      ],
+      "minimap_data": {
+        "bounds": {"min_x": 1980, "max_x": 2420, "min_y": 2480, "max_y": 2920},
+        "floor_count": 5
+      }
+    },
+    {
+      "instance_id": 3002,
+      "instance_name": "Datascape",
+      "waypoints": [
+        {"id": 1, "name": "Logic Core Entry", "position": [3500.0, 2000.0, 200.0], "type": "entrance"},
+        {"id": 2, "name": "System Daemons Hub", "position": [3520.0, 2020.0, 202.0], "type": "junction"},
+        {"id": 3, "name": "Gloomclaw's Domain", "position": [3550.0, 2050.0, 205.0], "type": "boss_room"},
+        {"id": 4, "name": "Data Corruption Zone", "position": [3580.0, 2080.0, 208.0], "type": "corridor"},
+        {"id": 5, "name": "Maelstrom Authority", "position": [3610.0, 2110.0, 212.0], "type": "boss_room"},
+        {"id": 6, "name": "Memory Banks", "position": [3640.0, 2140.0, 215.0], "type": "corridor"},
+        {"id": 7, "name": "Elemental Pairs", "position": [3670.0, 2170.0, 218.0], "type": "boss_room"},
+        {"id": 8, "name": "Logic Board Nexus", "position": [3700.0, 2200.0, 222.0], "type": "junction"},
+        {"id": 9, "name": "Limbo Infomatrix", "position": [3730.0, 2230.0, 225.0], "type": "boss_room"},
+        {"id": 10, "name": "Lattice Access", "position": [3760.0, 2260.0, 228.0], "type": "corridor"},
+        {"id": 11, "name": "Avatus Core", "position": [3800.0, 2300.0, 232.0], "type": "boss_room"}
+      ],
+      "connections": [
+        {"from": 1, "to": 2, "type": "one_way"},
+        {"from": 2, "to": 3, "type": "bidirectional"},
+        {"from": 3, "to": 4, "type": "one_way"},
+        {"from": 4, "to": 5, "type": "bidirectional"},
+        {"from": 5, "to": 6, "type": "one_way"},
+        {"from": 6, "to": 7, "type": "bidirectional"},
+        {"from": 7, "to": 8, "type": "one_way"},
+        {"from": 8, "to": 9, "type": "bidirectional"},
+        {"from": 9, "to": 10, "type": "one_way"},
+        {"from": 10, "to": 11, "type": "one_way"}
+      ],
+      "minimap_data": {
+        "bounds": {"min_x": 3480, "max_x": 3820, "min_y": 1980, "max_y": 2320},
+        "floor_count": 6
+      }
+    }
+  ]
+}

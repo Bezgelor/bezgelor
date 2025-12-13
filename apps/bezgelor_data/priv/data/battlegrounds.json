@@ -107,6 +107,80 @@
         "winner": {"honor": 400, "conquest": 200, "xp_percent": 7},
         "loser": {"honor": 150, "conquest": 0, "xp_percent": 3}
       }
+    },
+    {
+      "id": 4,
+      "name": "Sabotage",
+      "map_id": 1004,
+      "min_level": 30,
+      "max_level": 50,
+      "team_size": 15,
+      "min_players": 10,
+      "type": "assault_defense",
+      "duration_minutes": 25,
+      "objectives": [
+        {
+          "type": "destroy_generators",
+          "generators_to_destroy": 3,
+          "generator_health": 100000,
+          "round_time_seconds": 300
+        }
+      ],
+      "generator_locations": [
+        {"id": 1, "name": "Alpha Generator", "x": 0.0, "y": 80.0, "z": 0.0},
+        {"id": 2, "name": "Beta Generator", "x": -60.0, "y": 40.0, "z": 0.0},
+        {"id": 3, "name": "Gamma Generator", "x": 60.0, "y": 40.0, "z": 0.0}
+      ],
+      "spawn_points": {
+        "team_1": {"x": -140.0, "y": -60.0, "z": 0.0},
+        "team_2": {"x": 0.0, "y": 120.0, "z": 0.0}
+      },
+      "graveyard_locations": {
+        "team_1": {"x": -120.0, "y": -50.0, "z": 0.0},
+        "team_2": {"x": 0.0, "y": 100.0, "z": 0.0}
+      },
+      "rewards": {
+        "winner": {"honor": 450, "conquest": 225, "xp_percent": 8},
+        "loser": {"honor": 175, "conquest": 0, "xp_percent": 3}
+      }
+    },
+    {
+      "id": 5,
+      "name": "Warplot Arena",
+      "map_id": 1005,
+      "min_level": 50,
+      "max_level": 50,
+      "team_size": 40,
+      "min_players": 30,
+      "type": "warplot",
+      "duration_minutes": 45,
+      "objectives": [
+        {
+          "type": "warplot_siege",
+          "energy_to_win": 10000,
+          "energy_per_kill": 10,
+          "energy_per_generator": 50,
+          "tick_interval_seconds": 5
+        }
+      ],
+      "warplot_elements": [
+        {"type": "generator", "count": 4, "health": 500000},
+        {"type": "turret_slot", "count": 8},
+        {"type": "boss_slot", "count": 2},
+        {"type": "wall_section", "count": 12, "health": 250000}
+      ],
+      "spawn_points": {
+        "team_1": {"x": -200.0, "y": 0.0, "z": 0.0},
+        "team_2": {"x": 200.0, "y": 0.0, "z": 0.0}
+      },
+      "graveyard_locations": {
+        "team_1": {"x": -180.0, "y": 0.0, "z": 0.0},
+        "team_2": {"x": 180.0, "y": 0.0, "z": 0.0}
+      },
+      "rewards": {
+        "winner": {"honor": 800, "conquest": 500, "xp_percent": 12},
+        "loser": {"honor": 300, "conquest": 100, "xp_percent": 5}
+      }
     }
   ],
   "rated_battlegrounds": [
@@ -119,6 +193,39 @@
       "rewards": {
         "winner": {"conquest": 400, "rating_gain_base": 24},
         "loser": {"conquest": 50, "rating_loss_base": 24}
+      }
+    },
+    {
+      "id": 102,
+      "base_battleground_id": 1,
+      "name": "Rated Walatiki Temple",
+      "team_size": 10,
+      "min_rating": 0,
+      "rewards": {
+        "winner": {"conquest": 400, "rating_gain_base": 24},
+        "loser": {"conquest": 50, "rating_loss_base": 24}
+      }
+    },
+    {
+      "id": 103,
+      "base_battleground_id": 3,
+      "name": "Rated Daggerstone Pass",
+      "team_size": 15,
+      "min_rating": 1200,
+      "rewards": {
+        "winner": {"conquest": 500, "rating_gain_base": 26},
+        "loser": {"conquest": 75, "rating_loss_base": 26}
+      }
+    },
+    {
+      "id": 104,
+      "base_battleground_id": 4,
+      "name": "Rated Sabotage",
+      "team_size": 15,
+      "min_rating": 1400,
+      "rewards": {
+        "winner": {"conquest": 550, "rating_gain_base": 28},
+        "loser": {"conquest": 100, "rating_loss_base": 28}
       }
     }
   ]
