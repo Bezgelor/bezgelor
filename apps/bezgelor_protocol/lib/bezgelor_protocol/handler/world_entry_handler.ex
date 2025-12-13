@@ -3,7 +3,7 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
   Handler for ClientEnteredWorld packets.
 
   Called when the client finishes loading the world after receiving
-  ServerWorldEnter. Spawns the player entity.
+  ServerWorldEnter. Spawns the player entity and sends initial game state.
 
   ## Flow
 
@@ -11,16 +11,18 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
   2. Generate unique entity GUID
   3. Create player entity
   4. Send ServerEntityCreate to spawn the player
-  5. Mark session as in-world
+  5. Load quests and send ServerQuestList
+  6. Mark session as in-world
   """
 
   @behaviour BezgelorProtocol.Handler
 
   import Bitwise
 
-  alias BezgelorProtocol.Packets.World.ServerEntityCreate
+  alias BezgelorProtocol.Packets.World.{ServerEntityCreate, ServerQuestList}
   alias BezgelorProtocol.PacketWriter
   alias BezgelorCore.Entity
+  alias BezgelorWorld.Quest.QuestCache
 
   require Logger
 
@@ -46,22 +48,61 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
     # Build entity spawn packet
     entity_packet = ServerEntityCreate.from_entity(entity)
 
-    # Encode packet
+    # Encode entity packet
     writer = PacketWriter.new()
     {:ok, writer} = ServerEntityCreate.write(entity_packet, writer)
-    packet_data = PacketWriter.to_binary(writer)
+    entity_packet_data = PacketWriter.to_binary(writer)
+
+    # Load quests for character
+    {:ok, active_quests, completed_quest_ids} = QuestCache.load_quests_for_character(character.id)
+
+    # Build quest list packet
+    quest_list_packet = build_quest_list_packet(active_quests)
+    quest_writer = PacketWriter.new()
+    {:ok, quest_writer} = ServerQuestList.write(quest_list_packet, quest_writer)
+    quest_packet_data = PacketWriter.to_binary(quest_writer)
 
     # Update session state
     state = put_in(state.session_data[:entity_guid], guid)
     state = put_in(state.session_data[:entity], entity)
     state = put_in(state.session_data[:in_world], true)
+    state = put_in(state.session_data[:active_quests], active_quests)
+    state = put_in(state.session_data[:completed_quest_ids], completed_quest_ids)
 
     Logger.info(
       "Player '#{character.name}' (GUID: #{guid}) entered world at " <>
-        "#{inspect(entity.position)}"
+        "#{inspect(entity.position)} with #{map_size(active_quests)} quests"
     )
 
-    {:reply, :server_entity_create, packet_data, state}
+    # Schedule periodic quest persistence timer
+    send(self(), :schedule_quest_persistence)
+
+    {:reply_multi, [
+      {:server_entity_create, entity_packet_data},
+      {:server_quest_list, quest_packet_data}
+    ], state}
+  end
+
+  # Convert session quests to format expected by ServerQuestList packet
+  defp build_quest_list_packet(active_quests) do
+    quests =
+      active_quests
+      |> Map.values()
+      |> Enum.map(fn quest ->
+        # Convert session objectives to packet format
+        objectives =
+          Enum.map(quest.objectives, fn obj ->
+            %{"current" => obj.current, "target" => obj.target}
+          end)
+
+        %{
+          quest_id: quest.quest_id,
+          state: quest.state,
+          progress: %{"objectives" => objectives}
+        }
+      end)
+
+    %ServerQuestList{quests: quests}
   end
 
   # Generate a unique GUID for the entity

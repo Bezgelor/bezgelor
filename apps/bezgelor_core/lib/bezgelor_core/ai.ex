@@ -28,7 +28,8 @@ defmodule BezgelorCore.AI do
           spawn_position: {float(), float(), float()},
           last_attack_time: integer() | nil,
           combat_start_time: integer() | nil,
-          threat_table: %{non_neg_integer() => non_neg_integer()}
+          threat_table: %{non_neg_integer() => non_neg_integer()},
+          combat_participants: MapSet.t(non_neg_integer())
         }
 
   defstruct state: :idle,
@@ -36,7 +37,8 @@ defmodule BezgelorCore.AI do
             spawn_position: {0.0, 0.0, 0.0},
             last_attack_time: nil,
             combat_start_time: nil,
-            threat_table: %{}
+            threat_table: %{},
+            combat_participants: MapSet.new()
 
   @doc """
   Create new AI state for a creature.
@@ -89,12 +91,14 @@ defmodule BezgelorCore.AI do
       | state: :combat,
         target_guid: target_guid,
         combat_start_time: now,
-        threat_table: Map.put(ai.threat_table, target_guid, 100)
+        threat_table: Map.put(ai.threat_table, target_guid, 100),
+        combat_participants: MapSet.put(ai.combat_participants, target_guid)
     }
   end
 
   @doc """
   Exit combat, return to idle.
+  Clears threat and participants since combat ended without death.
   """
   @spec exit_combat(t()) :: t()
   def exit_combat(%__MODULE__{} = ai) do
@@ -103,7 +107,8 @@ defmodule BezgelorCore.AI do
       | state: :idle,
         target_guid: nil,
         combat_start_time: nil,
-        threat_table: %{}
+        threat_table: %{},
+        combat_participants: MapSet.new()
     }
   end
 
@@ -117,18 +122,21 @@ defmodule BezgelorCore.AI do
 
   @doc """
   Complete evade, return to idle at spawn.
+  Clears threat and participants since combat ended without death.
   """
   @spec complete_evade(t()) :: t()
   def complete_evade(%__MODULE__{} = ai) do
     %{
       ai
       | state: :idle,
-        threat_table: %{}
+        threat_table: %{},
+        combat_participants: MapSet.new()
     }
   end
 
   @doc """
   Set creature as dead.
+  Note: combat_participants is preserved for quest credit purposes.
   """
   @spec set_dead(t()) :: t()
   def set_dead(%__MODULE__{} = ai) do
@@ -138,24 +146,40 @@ defmodule BezgelorCore.AI do
         target_guid: nil,
         combat_start_time: nil,
         threat_table: %{}
+        # combat_participants preserved intentionally for quest credit
     }
   end
 
   @doc """
   Respawn creature (transition from dead to idle).
+  Clears combat participants for fresh combat tracking.
   """
   @spec respawn(t()) :: t()
   def respawn(%__MODULE__{} = ai) do
-    %{ai | state: :idle}
+    %{ai | state: :idle, combat_participants: MapSet.new()}
   end
 
   @doc """
-  Add threat for a target.
+  Add threat for a target. Also tracks them as a combat participant.
   """
   @spec add_threat(t(), non_neg_integer(), non_neg_integer()) :: t()
   def add_threat(%__MODULE__{} = ai, target_guid, amount) do
     new_threat = Map.get(ai.threat_table, target_guid, 0) + amount
-    %{ai | threat_table: Map.put(ai.threat_table, target_guid, new_threat)}
+
+    %{
+      ai
+      | threat_table: Map.put(ai.threat_table, target_guid, new_threat),
+        combat_participants: MapSet.put(ai.combat_participants, target_guid)
+    }
+  end
+
+  @doc """
+  Get all combat participants (entity GUIDs that dealt damage).
+  This is preserved even after death for quest credit purposes.
+  """
+  @spec get_combat_participants(t()) :: [non_neg_integer()]
+  def get_combat_participants(%__MODULE__{combat_participants: participants}) do
+    MapSet.to_list(participants)
   end
 
   @doc """

@@ -24,7 +24,6 @@ defmodule BezgelorWorld.CombatBroadcaster do
 
   alias BezgelorProtocol.PacketWriter
   alias BezgelorWorld.{EventManager, WorldManager}
-  alias BezgelorWorld.Quest.ObjectiveHandler
 
   @doc """
   Broadcast entity death to a list of player GUIDs.
@@ -302,10 +301,34 @@ defmodule BezgelorWorld.CombatBroadcaster do
   Called when a creature dies in combat. The EventManager will check if
   the creature type matches any active event objectives and update progress.
   Quest objectives for kill-type objectives are also updated.
+
+  ## Single participant (legacy)
   """
   @spec notify_creature_kill(non_neg_integer(), non_neg_integer(), non_neg_integer(), non_neg_integer()) :: :ok
   def notify_creature_kill(zone_id, instance_id, killer_character_id, creature_id) do
-    # Notify EventManager
+    notify_creature_kill_multi(zone_id, instance_id, [killer_character_id], creature_id)
+  end
+
+  @doc """
+  Notify EventManager and quest system of a creature kill with multiple participants.
+
+  All participants receive kill credit for quest objectives.
+
+  ## Parameters
+
+  - `zone_id` - Zone where the kill occurred
+  - `instance_id` - Instance where the kill occurred
+  - `participant_character_ids` - List of character IDs that participated in the kill
+  - `creature_id` - The creature that was killed
+
+  ## Example
+
+      # Notify all participants from creature death result
+      notify_creature_kill_multi(zone_id, instance_id, result.participant_character_ids, creature_id)
+  """
+  @spec notify_creature_kill_multi(non_neg_integer(), non_neg_integer(), [non_neg_integer()], non_neg_integer()) :: :ok
+  def notify_creature_kill_multi(zone_id, instance_id, participant_character_ids, creature_id) do
+    # Notify EventManager (uses first participant as "killer" for event tracking)
     manager = EventManager.via_tuple(zone_id, instance_id)
 
     case GenServer.whereis(manager) do
@@ -314,23 +337,19 @@ defmodule BezgelorWorld.CombatBroadcaster do
         :ok
 
       _pid ->
-        # Notify the EventManager of the kill
-        EventManager.report_creature_kill(manager, killer_character_id, creature_id)
+        # Notify the EventManager of the kill with first participant
+        first_participant = List.first(participant_character_ids)
+        if first_participant do
+          EventManager.report_creature_kill(manager, first_participant, creature_id)
+        end
     end
 
-    # Notify quest objective handler
-    case WorldManager.get_session_by_character(killer_character_id) do
-      nil ->
-        :ok
-
-      session ->
-        ObjectiveHandler.process_event(
-          :kill,
-          session.connection_pid,
-          killer_character_id,
-          %{creature_id: creature_id}
-        )
+    # Send game event to ALL participants for session-based quest tracking
+    for character_id <- participant_character_ids do
+      send_game_event(character_id, :kill, %{creature_id: creature_id})
     end
+
+    :ok
   end
 
   @doc """
@@ -340,18 +359,10 @@ defmodule BezgelorWorld.CombatBroadcaster do
   """
   @spec notify_item_loot(non_neg_integer(), non_neg_integer(), non_neg_integer()) :: :ok
   def notify_item_loot(character_id, item_id, count \\ 1) do
-    case WorldManager.get_session_by_character(character_id) do
-      nil ->
-        :ok
-
-      session ->
-        ObjectiveHandler.process_event(
-          :loot,
-          session.connection_pid,
-          character_id,
-          %{item_id: item_id, count: count}
-        )
-    end
+    # Send game event for each item looted
+    Enum.each(1..count, fn _ ->
+      send_game_event(character_id, :loot, %{item_id: item_id})
+    end)
   end
 
   @doc """
@@ -361,18 +372,7 @@ defmodule BezgelorWorld.CombatBroadcaster do
   """
   @spec notify_object_interact(non_neg_integer(), non_neg_integer()) :: :ok
   def notify_object_interact(character_id, object_id) do
-    case WorldManager.get_session_by_character(character_id) do
-      nil ->
-        :ok
-
-      session ->
-        ObjectiveHandler.process_event(
-          :interact,
-          session.connection_pid,
-          character_id,
-          %{object_id: object_id}
-        )
-    end
+    send_game_event(character_id, :interact, %{object_id: object_id})
   end
 
   @doc """
@@ -382,18 +382,7 @@ defmodule BezgelorWorld.CombatBroadcaster do
   """
   @spec notify_npc_talk(non_neg_integer(), non_neg_integer()) :: :ok
   def notify_npc_talk(character_id, creature_id) do
-    case WorldManager.get_session_by_character(character_id) do
-      nil ->
-        :ok
-
-      session ->
-        ObjectiveHandler.process_event(
-          :talk_npc,
-          session.connection_pid,
-          character_id,
-          %{creature_id: creature_id}
-        )
-    end
+    send_game_event(character_id, :talk_npc, %{creature_id: creature_id})
   end
 
   @doc """
@@ -402,20 +391,8 @@ defmodule BezgelorWorld.CombatBroadcaster do
   Called when a player enters a tracked location. Updates enter/explore objectives.
   """
   @spec notify_location_enter(non_neg_integer(), non_neg_integer(), non_neg_integer()) :: :ok
-  def notify_location_enter(character_id, location_id, zone_id) do
-    case WorldManager.get_session_by_character(character_id) do
-      nil ->
-        :ok
-
-      session ->
-        # Try both location_id and zone_id for objective matching
-        ObjectiveHandler.process_event(
-          :enter_location,
-          session.connection_pid,
-          character_id,
-          %{location_id: location_id, zone_id: zone_id}
-        )
-    end
+  def notify_location_enter(character_id, location_id, _zone_id) do
+    send_game_event(character_id, :enter_location, %{location_id: location_id})
   end
 
   @doc """
@@ -425,18 +402,7 @@ defmodule BezgelorWorld.CombatBroadcaster do
   """
   @spec notify_item_use(non_neg_integer(), non_neg_integer()) :: :ok
   def notify_item_use(character_id, item_id) do
-    case WorldManager.get_session_by_character(character_id) do
-      nil ->
-        :ok
-
-      session ->
-        ObjectiveHandler.process_event(
-          :use_item,
-          session.connection_pid,
-          character_id,
-          %{item_id: item_id}
-        )
-    end
+    send_game_event(character_id, :use_item, %{item_id: item_id})
   end
 
   @doc """
@@ -446,18 +412,7 @@ defmodule BezgelorWorld.CombatBroadcaster do
   """
   @spec notify_ability_use(non_neg_integer(), non_neg_integer()) :: :ok
   def notify_ability_use(character_id, spell_id) do
-    case WorldManager.get_session_by_character(character_id) do
-      nil ->
-        :ok
-
-      session ->
-        ObjectiveHandler.process_event(
-          :use_ability,
-          session.connection_pid,
-          character_id,
-          %{spell_id: spell_id}
-        )
-    end
+    send_game_event(character_id, :use_ability, %{spell_id: spell_id})
   end
 
   @doc """
@@ -466,19 +421,8 @@ defmodule BezgelorWorld.CombatBroadcaster do
   Called when a player gathers a resource node. Updates gather objectives.
   """
   @spec notify_gather(non_neg_integer(), non_neg_integer(), atom() | nil) :: :ok
-  def notify_gather(character_id, node_id, resource_type \\ nil) do
-    case WorldManager.get_session_by_character(character_id) do
-      nil ->
-        :ok
-
-      session ->
-        ObjectiveHandler.process_event(
-          :gather,
-          session.connection_pid,
-          character_id,
-          %{node_id: node_id, resource_type: resource_type}
-        )
-    end
+  def notify_gather(character_id, node_id, _resource_type \\ nil) do
+    send_game_event(character_id, :gather, %{node_id: node_id})
   end
 
   @doc """
@@ -500,6 +444,17 @@ defmodule BezgelorWorld.CombatBroadcaster do
   end
 
   # Private helpers
+
+  defp send_game_event(character_id, event_type, event_data) do
+    case WorldManager.get_session_by_character(character_id) do
+      nil ->
+        :ok
+
+      session ->
+        send(session.connection_pid, {:game_event, event_type, event_data})
+        :ok
+    end
+  end
 
   defp send_to_player(player_guid, opcode, packet_data) do
     case find_connection_for_guid(player_guid) do

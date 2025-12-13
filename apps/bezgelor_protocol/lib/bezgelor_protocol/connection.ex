@@ -33,8 +33,12 @@ defmodule BezgelorProtocol.Connection do
 
   alias BezgelorProtocol.{Framing, Opcode, PacketWriter}
   alias BezgelorCrypto.PacketCrypt
+  alias BezgelorWorld.Quest.{QuestPersistence, SessionQuestManager}
 
   @behaviour :ranch_protocol
+
+  # Persist dirty quests every 30 seconds
+  @quest_persist_interval 30_000
 
   defstruct [
     :socket,
@@ -43,7 +47,8 @@ defmodule BezgelorProtocol.Connection do
     :buffer,
     :encryption,
     :state,
-    :session_data
+    :session_data,
+    :quest_persist_timer
   ]
 
   @type connection_type :: :auth | :world
@@ -84,7 +89,11 @@ defmodule BezgelorProtocol.Connection do
       buffer: <<>>,
       encryption: nil,
       state: :connected,
-      session_data: %{}
+      session_data: %{
+        active_quests: %{},
+        completed_quest_ids: MapSet.new(),
+        quest_dirty: false
+      }
     }
 
     # Initialize encryption with auth build key
@@ -125,6 +134,43 @@ defmodule BezgelorProtocol.Connection do
   def handle_info({:tcp_error, socket, reason}, %{socket: socket} = state) do
     Logger.warning("TCP error: #{inspect(reason)}")
     {:stop, :normal, %{state | state: :disconnected}}
+  end
+
+  # Handle game events for quest progress tracking
+  def handle_info({:game_event, event_type, event_data}, state) do
+    {session_data, packets} = SessionQuestManager.process_game_event(
+      state.session_data,
+      event_type,
+      event_data
+    )
+
+    # Send any generated packets to client
+    state = %{state | session_data: session_data}
+
+    state =
+      Enum.reduce(packets, state, fn {opcode, packet_data}, acc ->
+        do_send_packet(acc, opcode, packet_data)
+      end)
+
+    {:noreply, state}
+  end
+
+  # Periodic quest persistence timer
+  def handle_info(:persist_quests, state) do
+    state = persist_dirty_quests(state)
+    # Schedule next persistence
+    timer = Process.send_after(self(), :persist_quests, @quest_persist_interval)
+    {:noreply, %{state | quest_persist_timer: timer}}
+  end
+
+  # Schedule persistence timer when entering world (only if not already scheduled)
+  def handle_info(:schedule_quest_persistence, state) do
+    if is_nil(state.quest_persist_timer) do
+      timer = Process.send_after(self(), :persist_quests, @quest_persist_interval)
+      {:noreply, %{state | quest_persist_timer: timer}}
+    else
+      {:noreply, state}
+    end
   end
 
   # Public API
@@ -239,6 +285,41 @@ defmodule BezgelorProtocol.Connection do
             Logger.warning("Handler error for #{Opcode.name(opcode_atom)}: #{inspect(reason)}")
             {:error, reason}
         end
+    end
+  end
+
+  # Terminate callback - persist quests on disconnect
+  @impl GenServer
+  def terminate(_reason, state) do
+    # Cancel the persistence timer if running
+    if state.quest_persist_timer do
+      Process.cancel_timer(state.quest_persist_timer)
+    end
+
+    # Persist any dirty quests before shutdown
+    character = get_in(state.session_data, [:character])
+
+    if character && character.id do
+      QuestPersistence.persist_on_logout(character.id, state.session_data)
+    end
+
+    :ok
+  end
+
+  # Persist dirty quests and return updated state
+  defp persist_dirty_quests(state) do
+    character = get_in(state.session_data, [:character])
+
+    if character && character.id do
+      case QuestPersistence.persist_dirty_quests(character.id, state.session_data) do
+        {:ok, _count, updated_session_data} ->
+          %{state | session_data: updated_session_data}
+
+        {:error, _reason} ->
+          state
+      end
+    else
+      state
     end
   end
 end

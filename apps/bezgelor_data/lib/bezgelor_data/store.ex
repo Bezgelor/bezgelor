@@ -104,6 +104,7 @@ defmodule BezgelorData.Store do
     # Path indexes
     :path_missions_by_episode,
     :path_missions_by_type,
+    :path_episodes_by_zone,
     # Challenge indexes
     :challenges_by_zone,
     :challenge_tiers_by_challenge,
@@ -1174,6 +1175,27 @@ defmodule BezgelorData.Store do
   @spec get_path_reward(non_neg_integer()) :: {:ok, map()} | :error
   def get_path_reward(id), do: get(:path_rewards, id)
 
+  @doc """
+  Get path episodes for a zone.
+  Uses composite index for O(1) lookup.
+  """
+  @spec get_path_episodes_for_zone(non_neg_integer(), non_neg_integer()) :: [map()]
+  def get_path_episodes_for_zone(world_id, zone_id) do
+    ids = lookup_index(:path_episodes_by_zone, {world_id, zone_id})
+    fetch_by_ids(:path_episodes, ids)
+  end
+
+  @doc """
+  Get path missions for a zone and path type.
+  Returns all missions available in the zone for the specified path.
+  """
+  @spec get_zone_path_missions(non_neg_integer(), non_neg_integer(), non_neg_integer()) :: [map()]
+  def get_zone_path_missions(world_id, zone_id, path_type) do
+    get_path_episodes_for_zone(world_id, zone_id)
+    |> Enum.filter(fn ep -> ep["pathTypeEnum"] == path_type end)
+    |> Enum.flat_map(fn ep -> get_path_missions_for_episode(ep["ID"]) end)
+  end
+
   # Challenge queries
 
   @doc """
@@ -2072,6 +2094,7 @@ defmodule BezgelorData.Store do
     # Build path indexes
     build_index(:path_missions, :path_missions_by_episode, :pathEpisodeId)
     build_index(:path_missions, :path_missions_by_type, :pathTypeEnum)
+    build_composite_index(:path_episodes, :path_episodes_by_zone, [:worldId, :worldZoneId])
 
     # Build challenge indexes
     build_index(:challenges, :challenges_by_zone, :worldZoneId)
@@ -2111,6 +2134,27 @@ defmodule BezgelorData.Store do
 
     # Insert each group into the index table
     for {key, ids} <- groups, not is_nil(key) do
+      :ets.insert(index_name, {key, ids})
+    end
+  end
+
+  # Build a composite index using multiple key fields as a tuple key
+  defp build_composite_index(source_table, index_table, key_fields) do
+    source_name = table_name(source_table)
+    index_name = index_table_name(index_table)
+
+    # Group items by a tuple of the key field values
+    groups =
+      :ets.tab2list(source_name)
+      |> Enum.group_by(
+        fn {_id, data} ->
+          Enum.map(key_fields, &Map.get(data, &1)) |> List.to_tuple()
+        end,
+        fn {id, _data} -> id end
+      )
+
+    # Insert each group into the index table
+    for {key, ids} <- groups, not Enum.any?(Tuple.to_list(key), &is_nil/1) do
       :ets.insert(index_name, {key, ids})
     end
   end

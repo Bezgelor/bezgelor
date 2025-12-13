@@ -123,6 +123,18 @@ defmodule BezgelorDb.Paths do
     |> Repo.aggregate(:count)
   end
 
+  @doc "Get list of completed mission IDs for a character."
+  @spec get_completed_missions(integer()) :: {:ok, [integer()]} | {:error, term()}
+  def get_completed_missions(character_id) do
+    ids =
+      PathMission
+      |> where([m], m.character_id == ^character_id and m.state == :completed)
+      |> select([m], m.mission_id)
+      |> Repo.all()
+
+    {:ok, ids}
+  end
+
   # Mission Operations
 
   @doc "Accept a path mission."

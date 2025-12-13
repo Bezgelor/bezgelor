@@ -1,66 +1,44 @@
-defmodule BezgelorWorld.Quest.ObjectiveHandler do
+defmodule BezgelorWorld.Quest.SessionQuestManager do
   @moduledoc """
-  Handles quest objective progress tracking and completion.
+  Session-based quest management for efficient in-memory quest tracking.
 
-  ## Objective Types
+  ## Overview
 
-  Based on analysis of quest_objectives data:
+  This module handles quest operations using session_data stored in the
+  Connection process, avoiding database queries for every game event.
 
-  | Type | Count | Description |
-  |------|-------|-------------|
-  | 38   | 2520  | Generic/script-triggered |
-  | 5    | 1556  | Enter location/zone |
-  | 12   | 1187  | Interact with object |
-  | 32   | 709   | Achieve condition |
-  | 2    | 598   | Kill specific creature |
-  | 22   | 511   | Kill creature type count |
-  | 8    | 498   | Use item |
-  | 14   | 426   | Escort/protect NPC |
-  | 3    | 350   | Collect item |
-  | 4    | 327   | Talk to NPC |
-  | 31   | 260   | Complete event |
-  | 33   | 215   | Gather resource |
-  | 17   | 199   | Use spell/ability |
-  | 25   | 152   | Explore location |
-  | 11   | 128   | Complete objective sequence |
-  | 23   | 96    | Kill elite creature |
-  | 16   | 55    | Timed event |
-  | 10   | 52    | Loot item from creature |
-  | 24   | 39    | Escort to location |
-  | 18   | 35    | Defend location |
-  | 15   | 26    | Discover point of interest |
-  | 9    | 18    | Complete dungeon event |
-  | 20   | 11    | Activate datacube/lore |
-  | 21   | 10    | Scan creature |
-  | 35   | 10    | Complete challenge |
-  | 44   | 7     | Earn achievement |
-  | 36   | 6     | Reach reputation level |
-  | 28   | 5     | Win PvP match |
-  | 37   | 4     | Reach character level |
-  | 13   | 3     | Craft item |
-  | 19   | 2     | Complete path mission |
-  | 29   | 2     | Capture objective point |
-  | 39   | 2     | Housing interaction |
-  | 40   | 2     | Mount related |
-  | 41   | 2     | Costume/appearance |
-  | 42   | 2     | Earn title |
-  | 47   | 2     | Social interaction |
-  | 48   | 2     | Guild related |
-  | 6    | ?     | Deliver item to NPC |
-  | 7    | ?     | Equip specific item |
-  | 27   | 1     | Special scripted |
-  | 46   | 1     | Earn/spend currency |
+  ## Event Processing
+
+  When a game event occurs (kill, loot, etc.), the Connection process
+  receives a `{:game_event, type, data}` message and delegates to this module.
+  We iterate through active_quests in session_data, check for matching
+  objectives, and return updated session_data.
+
+  ## Quest Lifecycle
+
+  1. Accept: `accept_quest/3` - adds to session + DB
+  2. Progress: `process_game_event/3` - updates session, marks dirty
+  3. Complete: detected via `check_quest_completable/2`
+  4. Turn-in: `turn_in_quest/3` - moves to completed, persists
 
   ## Usage
 
-      # Process a kill event
-      ObjectiveHandler.process_event(:kill, character_id, %{creature_id: 1234})
-
-      # Process location entry
-      ObjectiveHandler.process_event(:enter_location, character_id, %{location_id: 567})
+      # In Connection.handle_info
+      def handle_info({:game_event, event_type, event_data}, state) do
+        {session_data, packets} = SessionQuestManager.process_game_event(
+          state.session_data,
+          event_type,
+          event_data
+        )
+        # Send packets and update state
+      end
   """
 
+  alias BezgelorWorld.Quest.QuestCache
+  alias BezgelorDb.Quests
   alias BezgelorData.Store
+  alias BezgelorProtocol.Packets.World.{ServerQuestUpdate, ServerQuestAdd, ServerQuestRemove}
+  alias BezgelorProtocol.PacketWriter
 
   require Logger
 
@@ -134,78 +112,265 @@ defmodule BezgelorWorld.Quest.ObjectiveHandler do
   @type_generic 38             # 2520 objectives - Script-triggered
   @type_special 27             # 1 objective - Special scripted
 
+  # ============================================================================
+  # Public API
+  # ============================================================================
+
   @doc """
-  Process a game event and update relevant quest objectives.
+  Process a game event and update any matching quest objectives.
 
-  Sends the event to the Connection process for session-based tracking.
-  The Connection will delegate to SessionQuestManager.
+  Iterates through all active quests in session_data, checks each objective
+  for a match, increments progress, and builds packets to send to the client.
 
-  Events:
-  - `:kill` - Creature killed, data: %{creature_id: id}
-  - `:loot` - Item looted, data: %{item_id: id, count: n}
-  - `:interact` - Object interacted with, data: %{object_id: id}
-  - `:enter_location` - Entered a location, data: %{location_id: id, zone_id: id}
-  - `:talk_npc` - Talked to NPC, data: %{creature_id: id}
-  - `:use_item` - Used an item, data: %{item_id: id}
-  - `:use_ability` - Used an ability, data: %{spell_id: id}
-  - `:gather` - Gathered a resource, data: %{node_id: id, resource_type: type}
-  - `:deliver_item` - Item delivered to NPC, data: %{item_id: id, npc_id: id}
-  - `:equip_item` - Item equipped, data: %{item_id: id}
-  - `:craft` - Item crafted, data: %{item_id: id}
-  - `:datacube` - Datacube/lore activated, data: %{datacube_id: id}
-  - `:scan` - Creature scanned, data: %{creature_id: id}
-  - `:discover_poi` - Point of interest discovered, data: %{poi_id: id}
-  - `:escort_complete` - Escort completed, data: %{escort_id: id}
-  - `:defend_complete` - Defense completed, data: %{location_id: id}
-  - `:dungeon_complete` - Dungeon event completed, data: %{dungeon_id: id}
-  - `:sequence_step` - Objective sequence step, data: %{sequence_id: id}
-  - `:timed_complete` - Timed event completed, data: %{timer_id: id}
-  - `:path_complete` - Path mission completed, data: %{mission_id: id}
-  - `:pvp_win` - PvP victory, data: %{battleground_id: id}
-  - `:capture` - Capture point taken, data: %{point_id: id}
-  - `:challenge_complete` - Challenge completed, data: %{challenge_id: id}
-  - `:complete_event` - Public event completed, data: %{event_id: id}
-  - `:condition_met` - Condition achieved, data: %{condition_id: id}
-  - `:reputation_gain` - Reputation earned, data: %{faction_id: id, level: n}
-  - `:level_up` - Character leveled up, data: %{level: n}
-  - `:housing` - Housing interaction, data: %{housing_id: id}
-  - `:mount` - Mount used, data: %{mount_id: id}
-  - `:costume` - Costume changed, data: %{costume_id: id}
-  - `:title` - Title earned, data: %{title_id: id}
-  - `:achievement` - Achievement earned, data: %{achievement_id: id}
-  - `:currency` - Currency transaction, data: %{currency_id: id, amount: n}
-  - `:social` - Social interaction, data: %{social_type: type}
-  - `:guild` - Guild activity, data: %{guild_action: action}
-  - `:special` - Special scripted event, data: %{special_id: id}
+  ## Returns
+
+  `{updated_session_data, packets_to_send}` where packets is a list of
+  `{opcode, binary}` tuples.
   """
-  @spec process_event(atom(), pid(), non_neg_integer(), map()) :: :ok
-  def process_event(event_type, connection_pid, _character_id, event_data) do
-    # Send game event to the connection process for session-based tracking
-    # Connection.handle_info will delegate to SessionQuestManager
-    send(connection_pid, {:game_event, event_type, event_data})
-    :ok
+  @spec process_game_event(map(), atom(), map()) :: {map(), [{atom(), binary()}]}
+  def process_game_event(session_data, event_type, event_data) do
+    active_quests = session_data[:active_quests] || %{}
+
+    {updated_quests, packets} =
+      Enum.reduce(active_quests, {%{}, []}, fn {quest_id, quest}, {quests_acc, packets_acc} ->
+        {updated_quest, quest_packets} = process_quest_event(quest, event_type, event_data)
+        {Map.put(quests_acc, quest_id, updated_quest), packets_acc ++ quest_packets}
+      end)
+
+    # Check if any quests became completable
+    updated_quests = check_all_completable(updated_quests)
+
+    updated_session = Map.put(session_data, :active_quests, updated_quests)
+
+    # Mark session as dirty if we updated anything
+    updated_session =
+      if packets != [] do
+        Map.put(updated_session, :quest_dirty, true)
+      else
+        updated_session
+      end
+
+    {updated_session, packets}
   end
 
-  # Check if an event matches an objective type
+  @doc """
+  Accept a new quest for the character.
+
+  Adds the quest to both session_data and the database.
+
+  ## Returns
+
+  `{:ok, updated_session_data, packet}` or `{:error, reason}`
+  """
+  @spec accept_quest(map(), non_neg_integer(), non_neg_integer()) ::
+          {:ok, map(), {atom(), binary()}} | {:error, atom()}
+  def accept_quest(session_data, character_id, quest_id) do
+    active_quests = session_data[:active_quests] || %{}
+
+    cond do
+      Map.has_key?(active_quests, quest_id) ->
+        {:error, :already_have_quest}
+
+      map_size(active_quests) >= 25 ->
+        {:error, :quest_log_full}
+
+      true ->
+        case QuestCache.create_session_quest(quest_id) do
+          {:ok, session_quest} ->
+            # Add to session
+            updated_quests = Map.put(active_quests, quest_id, session_quest)
+            updated_session = Map.put(session_data, :active_quests, updated_quests)
+
+            # Persist to DB
+            objectives =
+              Enum.map(session_quest.objectives, fn obj ->
+                %{type: obj.type, data: obj.data, target: obj.target}
+              end)
+
+            progress = Quests.init_progress(objectives)
+            Quests.accept_quest(character_id, quest_id, progress: progress)
+
+            # Build packet
+            packet = build_quest_add_packet(session_quest)
+
+            Logger.info("Character #{character_id} accepted quest #{quest_id}")
+            {:ok, updated_session, packet}
+
+          {:error, reason} ->
+            {:error, reason}
+        end
+    end
+  end
+
+  @doc """
+  Abandon a quest.
+
+  Removes from both session_data and database.
+
+  ## Returns
+
+  `{:ok, updated_session_data, packet}` or `{:error, reason}`
+  """
+  @spec abandon_quest(map(), non_neg_integer(), non_neg_integer()) ::
+          {:ok, map(), {atom(), binary()}} | {:error, atom()}
+  def abandon_quest(session_data, character_id, quest_id) do
+    active_quests = session_data[:active_quests] || %{}
+
+    case Map.pop(active_quests, quest_id) do
+      {nil, _} ->
+        {:error, :quest_not_found}
+
+      {_quest, remaining_quests} ->
+        # Remove from session
+        updated_session = Map.put(session_data, :active_quests, remaining_quests)
+
+        # Remove from DB
+        Quests.abandon_quest(character_id, quest_id)
+
+        # Build packet
+        packet = build_quest_remove_packet(quest_id)
+
+        Logger.info("Character #{character_id} abandoned quest #{quest_id}")
+        {:ok, updated_session, packet}
+    end
+  end
+
+  @doc """
+  Turn in a completed quest.
+
+  Grants rewards, moves to completed_quest_ids, persists to DB history.
+
+  ## Returns
+
+  `{:ok, updated_session_data, packet}` or `{:error, reason}`
+  """
+  @spec turn_in_quest(map(), non_neg_integer(), non_neg_integer()) ::
+          {:ok, map(), {atom(), binary()}} | {:error, atom()}
+  def turn_in_quest(session_data, character_id, quest_id) do
+    active_quests = session_data[:active_quests] || %{}
+    completed_ids = session_data[:completed_quest_ids] || MapSet.new()
+
+    case Map.get(active_quests, quest_id) do
+      nil ->
+        {:error, :quest_not_found}
+
+      %{state: state} when state != :complete ->
+        {:error, :quest_not_complete}
+
+      quest ->
+        # Remove from active, add to completed
+        remaining_quests = Map.delete(active_quests, quest_id)
+        updated_completed = MapSet.put(completed_ids, quest_id)
+
+        updated_session =
+          session_data
+          |> Map.put(:active_quests, remaining_quests)
+          |> Map.put(:completed_quest_ids, updated_completed)
+
+        # Persist to DB (this also moves to history)
+        case Quests.turn_in_quest(character_id, quest_id) do
+          {:ok, _history} ->
+            packet = build_quest_remove_packet(quest_id)
+            Logger.info("Character #{character_id} completed quest #{quest_id}")
+            {:ok, updated_session, packet}
+
+          {:error, reason} ->
+            {:error, reason}
+        end
+    end
+  end
+
+  @doc """
+  Check if a quest has all objectives complete.
+  """
+  @spec check_quest_completable(map()) :: boolean()
+  def check_quest_completable(quest) do
+    Enum.all?(quest.objectives, fn obj ->
+      obj.current >= obj.target
+    end)
+  end
+
+  @doc """
+  Update a specific objective's progress in session.
+
+  ## Returns
+
+  Updated quest map with the objective incremented.
+  """
+  @spec update_objective(map(), non_neg_integer(), non_neg_integer()) :: map()
+  def update_objective(quest, objective_index, increment \\ 1) do
+    objectives =
+      Enum.map(quest.objectives, fn obj ->
+        if obj.index == objective_index do
+          new_current = min(obj.current + increment, obj.target)
+          %{obj | current: new_current}
+        else
+          obj
+        end
+      end)
+
+    %{quest | objectives: objectives, dirty: true}
+  end
+
+  # ============================================================================
+  # Private - Event Processing
+  # ============================================================================
+
+  defp process_quest_event(quest, event_type, event_data) do
+    # Skip completed quests
+    if quest.state == :complete do
+      {quest, []}
+    else
+      {updated_quest, packets} =
+        quest.objectives
+        |> Enum.with_index()
+        |> Enum.reduce({quest, []}, fn {obj, _idx}, {q, pkts} ->
+          if obj.current < obj.target and matches_event?(event_type, obj.type, obj.data, event_data) do
+            # Increment the objective
+            updated_q = update_objective(q, obj.index)
+            new_current = get_objective_current(updated_q, obj.index)
+
+            # Build update packet
+            packet = build_quest_update_packet(q.quest_id, q.state, obj.index, new_current)
+
+            {updated_q, pkts ++ [packet]}
+          else
+            {q, pkts}
+          end
+        end)
+
+      {updated_quest, packets}
+    end
+  end
+
+  defp get_objective_current(quest, index) do
+    case Enum.find(quest.objectives, &(&1.index == index)) do
+      nil -> 0
+      obj -> obj.current
+    end
+  end
+
+  defp check_all_completable(quests) do
+    Map.new(quests, fn {quest_id, quest} ->
+      if quest.state == :accepted and check_quest_completable(quest) do
+        {quest_id, %{quest | state: :complete}}
+      else
+        {quest_id, quest}
+      end
+    end)
+  end
+
+  # ============================================================================
+  # Private - Event Matching (from ObjectiveHandler)
+  # ============================================================================
+
   defp matches_event?(:kill, obj_type, obj_data, %{creature_id: creature_id}) do
     case obj_type do
-      @type_kill_creature ->
-        obj_data == creature_id
-
-      @type_kill_creature_type ->
-        # Check if creature matches the type
-        matches_creature_type?(creature_id, obj_data)
-
-      @type_kill_elite ->
-        # Check if creature is elite and matches
-        is_elite_creature?(creature_id) and (obj_data == 0 or obj_data == creature_id)
-
-      @type_generic ->
-        # Generic objectives might track kills
-        obj_data == creature_id
-
-      _ ->
-        false
+      @type_kill_creature -> obj_data == creature_id
+      @type_kill_creature_type -> matches_creature_type?(creature_id, obj_data)
+      @type_kill_elite -> is_elite_creature?(creature_id) and (obj_data == 0 or obj_data == creature_id)
+      @type_generic -> obj_data == creature_id
+      _ -> false
     end
   end
 
@@ -230,17 +395,7 @@ defmodule BezgelorWorld.Quest.ObjectiveHandler do
     case obj_type do
       @type_enter_location -> obj_data == location_id
       @type_explore -> obj_data == location_id
-      @type_escort_to_location -> obj_data == location_id
       @type_generic -> obj_data == location_id
-      _ -> false
-    end
-  end
-
-  defp matches_event?(:enter_location, obj_type, obj_data, %{zone_id: zone_id}) do
-    case obj_type do
-      @type_enter_location -> obj_data == zone_id
-      @type_explore -> obj_data == zone_id
-      @type_generic -> obj_data == zone_id
       _ -> false
     end
   end
@@ -432,7 +587,7 @@ defmodule BezgelorWorld.Quest.ObjectiveHandler do
   # Reputation gain
   defp matches_event?(:reputation_gain, obj_type, obj_data, %{faction_id: faction_id, level: level}) do
     case obj_type do
-      @type_reputation -> obj_data == faction_id and level >= 0
+      @type_reputation -> obj_data == faction_id and level >= get_required_rep_level(obj_data)
       @type_generic -> obj_data == faction_id
       _ -> false
     end
@@ -530,11 +685,15 @@ defmodule BezgelorWorld.Quest.ObjectiveHandler do
 
   defp matches_event?(_, _, _, _), do: false
 
-  # Helper: Check if creature matches a creature type
+  # Helper for reputation level checks
+  defp get_required_rep_level(_faction_data) do
+    # Default to level 0, can be extended to look up actual requirements
+    0
+  end
+
   defp matches_creature_type?(creature_id, type_data) do
     case Store.get_creature_full(creature_id) do
       {:ok, creature} ->
-        # type_data might be a creature group, tier, or archetype
         tier_id = Map.get(creature, :tierId) || Map.get(creature, :tier_id)
         archetype_id = Map.get(creature, :archetypeId) || Map.get(creature, :archetype_id)
         tier_id == type_data or archetype_id == type_data
@@ -544,11 +703,9 @@ defmodule BezgelorWorld.Quest.ObjectiveHandler do
     end
   end
 
-  # Helper: Check if creature is elite
   defp is_elite_creature?(creature_id) do
     case Store.get_creature_full(creature_id) do
       {:ok, creature} ->
-        # difficulty_id >= 3 typically means elite in WildStar
         difficulty_id = Map.get(creature, :difficultyId) || Map.get(creature, :difficulty_id) || 0
         difficulty_id >= 3
 
@@ -557,84 +714,44 @@ defmodule BezgelorWorld.Quest.ObjectiveHandler do
     end
   end
 
-  @doc """
-  Initialize objective progress from quest objective definitions.
+  # ============================================================================
+  # Private - Packet Building
+  # ============================================================================
 
-  Converts static objective definitions to tracking format.
-  """
-  @spec init_objectives(list(map())) :: list(map())
-  def init_objectives(objective_defs) do
-    objective_defs
-    |> Enum.with_index()
-    |> Enum.map(fn {obj_def, index} ->
-      %{
-        "index" => index,
-        "type" => obj_def[:type] || obj_def["type"],
-        "data" => obj_def[:data] || obj_def["data"],
-        "current" => 0,
-        "target" => obj_def[:count] || obj_def["count"] || 1,
-        "text_id" => obj_def[:localizedTextIdFull] || obj_def["localizedTextIdFull"]
-      }
-    end)
+  defp build_quest_update_packet(quest_id, state, objective_index, current) do
+    packet = %ServerQuestUpdate{
+      quest_id: quest_id,
+      state: state,
+      objective_index: objective_index,
+      current: current
+    }
+
+    writer = PacketWriter.new()
+    {:ok, writer} = ServerQuestUpdate.write(packet, writer)
+    {:server_quest_update, PacketWriter.to_binary(writer)}
   end
 
-  @doc """
-  Get objective type name for debugging.
-  """
-  @spec type_name(non_neg_integer()) :: String.t()
-  # Combat
-  def type_name(@type_kill_creature), do: "kill_creature"
-  def type_name(@type_kill_creature_type), do: "kill_creature_type"
-  def type_name(@type_kill_elite), do: "kill_elite"
-  # Items
-  def type_name(@type_collect_item), do: "collect_item"
-  def type_name(@type_loot_item), do: "loot_item"
-  def type_name(@type_use_item), do: "use_item"
-  def type_name(@type_deliver_item), do: "deliver_item"
-  def type_name(@type_equip_item), do: "equip_item"
-  def type_name(@type_craft_item), do: "craft_item"
-  # Interaction
-  def type_name(@type_talk_to_npc), do: "talk_to_npc"
-  def type_name(@type_interact_object), do: "interact_object"
-  def type_name(@type_activate_datacube), do: "activate_datacube"
-  def type_name(@type_scan_creature), do: "scan_creature"
-  # Location
-  def type_name(@type_enter_location), do: "enter_location"
-  def type_name(@type_explore), do: "explore"
-  def type_name(@type_discover_poi), do: "discover_poi"
-  # Escort/defense
-  def type_name(@type_escort_npc), do: "escort_npc"
-  def type_name(@type_defend_location), do: "defend_location"
-  def type_name(@type_escort_to_location), do: "escort_to_location"
-  # Ability
-  def type_name(@type_use_ability), do: "use_ability"
-  # Resource
-  def type_name(@type_gather_resource), do: "gather_resource"
-  # Event/sequence
-  def type_name(@type_complete_event), do: "complete_event"
-  def type_name(@type_achieve_condition), do: "achieve_condition"
-  def type_name(@type_objective_sequence), do: "objective_sequence"
-  def type_name(@type_complete_dungeon), do: "complete_dungeon"
-  def type_name(@type_timed_event), do: "timed_event"
-  # Path
-  def type_name(@type_path_mission), do: "path_mission"
-  # PvP/competitive
-  def type_name(@type_win_pvp), do: "win_pvp"
-  def type_name(@type_capture_point), do: "capture_point"
-  def type_name(@type_challenge), do: "challenge"
-  # Specialized
-  def type_name(@type_reputation), do: "reputation"
-  def type_name(@type_level_requirement), do: "level_requirement"
-  def type_name(@type_housing), do: "housing"
-  def type_name(@type_mount), do: "mount"
-  def type_name(@type_costume), do: "costume"
-  def type_name(@type_title), do: "title"
-  def type_name(@type_achievement), do: "achievement"
-  def type_name(@type_currency), do: "currency"
-  def type_name(@type_social), do: "social"
-  def type_name(@type_guild), do: "guild"
-  # Generic/special
-  def type_name(@type_generic), do: "generic"
-  def type_name(@type_special), do: "special"
-  def type_name(type), do: "unknown_#{type}"
+  defp build_quest_add_packet(session_quest) do
+    # Convert objectives to format expected by ServerQuestAdd
+    objectives =
+      Enum.map(session_quest.objectives, fn obj ->
+        %{target: obj.target}
+      end)
+
+    packet = %ServerQuestAdd{
+      quest_id: session_quest.quest_id,
+      objectives: objectives
+    }
+
+    writer = PacketWriter.new()
+    {:ok, writer} = ServerQuestAdd.write(packet, writer)
+    {:server_quest_add, PacketWriter.to_binary(writer)}
+  end
+
+  defp build_quest_remove_packet(quest_id) do
+    packet = %ServerQuestRemove{quest_id: quest_id}
+    writer = PacketWriter.new()
+    {:ok, writer} = ServerQuestRemove.write(packet, writer)
+    {:server_quest_remove, PacketWriter.to_binary(writer)}
+  end
 end

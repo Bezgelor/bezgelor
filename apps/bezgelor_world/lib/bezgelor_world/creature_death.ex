@@ -7,7 +7,7 @@ defmodule BezgelorWorld.CreatureDeath do
   """
 
   alias BezgelorCore.AI
-  alias BezgelorWorld.{CorpseManager, Loot}
+  alias BezgelorWorld.{CombatParticipants, CorpseManager, Loot}
 
   import Bitwise
 
@@ -33,11 +33,22 @@ defmodule BezgelorWorld.CreatureDeath do
   `{result, new_creature_state}` where:
   - `result` is `{:ok, :killed, result_info}`
   - `new_creature_state` has updated entity, ai, and respawn_timer
+  - `result_info` includes `participant_character_ids` for quest credit
   """
   @spec handle_death(map(), map(), non_neg_integer(), non_neg_integer(), Keyword.t()) ::
           {{:ok, :killed, map()}, map()}
   def handle_death(creature_state, entity, killer_guid, killer_level, opts \\ []) do
     template = creature_state.template
+    zone_id = Keyword.get(opts, :zone_id, 0)
+    instance_id = Keyword.get(opts, :instance_id, 0)
+
+    # Resolve combat participants BEFORE setting AI to dead
+    # (set_dead preserves combat_participants, but we want to be explicit)
+    participant_character_ids = CombatParticipants.resolve(
+      creature_state.ai,
+      zone_id,
+      instance_id
+    )
 
     # Set AI to dead
     ai = AI.set_dead(creature_state.ai)
@@ -80,7 +91,8 @@ defmodule BezgelorWorld.CreatureDeath do
       items: Loot.items_from_drops(loot_drops),
       killer_guid: killer_guid,
       reputation_rewards: template.reputation_rewards || [],
-      corpse_guid: corpse_guid
+      corpse_guid: corpse_guid,
+      participant_character_ids: participant_character_ids
     }
 
     log_death(entity, killer_guid, opts)

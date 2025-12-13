@@ -145,13 +145,20 @@ defmodule BezgelorWorld.Handler.SpellHandler do
         kill_info.rewards
       )
 
-      # Notify EventManager of the kill for event objective tracking
+      # Notify quest system of the kill - all combat participants receive credit
       zone_id = state.session_data[:zone_id] || 1
       instance_id = state.session_data[:zone_instance_id] || 1
-      character_id = state.session_data[:character_id]
 
-      if character_id do
-        CombatBroadcaster.notify_creature_kill(zone_id, instance_id, character_id, kill_info.creature_id)
+      # Use participant_character_ids from death result for group kill credit
+      participant_ids = kill_info.rewards[:participant_character_ids] || []
+
+      if participant_ids != [] do
+        CombatBroadcaster.notify_creature_kill_multi(
+          zone_id,
+          instance_id,
+          participant_ids,
+          kill_info.rewards.creature_id
+        )
       end
 
       Logger.info(
