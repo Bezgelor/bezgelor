@@ -1,0 +1,63 @@
+{
+  "instance_id": 4100,
+  "instance_name": "Veteran Adventures Collection",
+  "instance_type": "veteran_adventure",
+  "level": 50,
+  "group_size": 5,
+  "adventures": [
+    {
+      "adventure_id": 4101,
+      "name": "Veteran Malgrave Trail",
+      "bosses": [
+        {"boss_id": 71101, "name": "Scorchwing (Veteran)", "health": 5500000, "level": 50},
+        {"boss_id": 71102, "name": "Hellrose (Veteran)", "health": 6500000, "level": 50},
+        {"boss_id": 71103, "name": "Canimid Alpha (Veteran)", "health": 8000000, "level": 50}
+      ]
+    },
+    {
+      "adventure_id": 4102,
+      "name": "Veteran Siege of Tempest Refuge",
+      "bosses": [
+        {"boss_id": 71201, "name": "Skullcrusher (Veteran)", "health": 5000000, "level": 50},
+        {"boss_id": 71202, "name": "Stormwatcher (Veteran)", "health": 5800000, "level": 50},
+        {"boss_id": 71203, "name": "Siege Commander (Veteran)", "health": 7000000, "level": 50}
+      ]
+    },
+    {
+      "adventure_id": 4103,
+      "name": "Veteran Bay of Betrayal",
+      "bosses": [
+        {"boss_id": 71301, "name": "Captain Mordechai (Veteran)", "health": 6000000, "level": 50},
+        {"boss_id": 71302, "name": "First Mate Venko (Veteran)", "health": 5500000, "level": 50},
+        {"boss_id": 71303, "name": "The Betrayer (Veteran)", "health": 9000000, "level": 50}
+      ]
+    },
+    {
+      "adventure_id": 4104,
+      "name": "Veteran Crimelords",
+      "bosses": [
+        {"boss_id": 71401, "name": "Kingpin Kraz (Veteran)", "health": 5200000, "level": 50},
+        {"boss_id": 71402, "name": "The Collector (Veteran)", "health": 5800000, "level": 50},
+        {"boss_id": 71403, "name": "Crime Lord Supreme (Veteran)", "health": 7500000, "level": 50}
+      ]
+    },
+    {
+      "adventure_id": 4105,
+      "name": "Veteran War of the Wilds",
+      "bosses": [
+        {"boss_id": 71501, "name": "Jungle Warlord (Veteran)", "health": 6000000, "level": 50},
+        {"boss_id": 71502, "name": "Primal Guardian (Veteran)", "health": 7000000, "level": 50},
+        {"boss_id": 71503, "name": "Nature's Vengeance (Veteran)", "health": 9000000, "level": 50}
+      ]
+    },
+    {
+      "adventure_id": 4106,
+      "name": "Veteran Riot in the Void",
+      "bosses": [
+        {"boss_id": 71601, "name": "Void Warden (Veteran)", "health": 5500000, "level": 50},
+        {"boss_id": 71602, "name": "Chaos Harbinger (Veteran)", "health": 6500000, "level": 50},
+        {"boss_id": 71603, "name": "Entropy Lord (Veteran)", "health": 8500000, "level": 50}
+      ]
+    }
+  ]
+}

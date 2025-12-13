@@ -1,0 +1,317 @@
+{
+  "instance_id": 1003,
+  "instance_name": "Skullcano",
+  "level_range": {
+    "min": 30,
+    "max": 50
+  },
+  "veteran_level": 50,
+  "bosses": [
+    {
+      "boss_id": 50201,
+      "name": "Stew-Shaman Tugga",
+      "difficulty": "normal",
+      "creature_id": 50201,
+      "level": 30,
+      "order": 1,
+      "phases": [
+        {
+          "name": "phase_one",
+          "condition": {"health_above": 50},
+          "abilities": [
+            {
+              "name": "Boiling Splash",
+              "type": "telegraph",
+              "telegraph_shape": "circle",
+              "cooldown": 8000,
+              "effects": [
+                {"type": "telegraph", "shape": "circle", "radius": 8, "duration": 1500, "color": "red"},
+                {"type": "damage", "amount": 5000, "damage_type": "fire"},
+                {"type": "debuff", "name": "scalded", "duration": 6000, "stacks": 1}
+              ]
+            },
+            {
+              "name": "Throw Ingredient",
+              "type": "telegraph",
+              "telegraph_shape": "circle",
+              "cooldown": 12000,
+              "target": "random",
+              "effects": [
+                {"type": "telegraph", "shape": "circle", "radius": 5, "duration": 1200, "color": "red"},
+                {"type": "damage", "amount": 4000, "damage_type": "physical"}
+              ]
+            },
+            {
+              "name": "Stir the Pot",
+              "type": "buff",
+              "cooldown": 15000,
+              "effects": [
+                {"type": "buff", "name": "stirring", "duration": 5000}
+              ]
+            }
+          ]
+        },
+        {
+          "name": "phase_two",
+          "condition": {"health_below": 50},
+          "abilities": [
+            {
+              "name": "Toxic Stew",
+              "type": "telegraph",
+              "cooldown": 20000,
+              "effects": [
+                {"type": "telegraph", "shape": "room_wide", "duration": 3000},
+                {"type": "damage", "amount": 6000, "damage_type": "poison"},
+                {"type": "debuff", "name": "poisoned", "duration": 10000, "stacks": 2}
+              ]
+            },
+            {
+              "name": "Call Helpers",
+              "type": "spawn",
+              "cooldown": 30000,
+              "effects": [
+                {"type": "spawn", "spawn_type": "add", "creature_id": 50211, "count": 2}
+              ]
+            },
+            {
+              "name": "Explosive Cauldron",
+              "type": "telegraph",
+              "cooldown": 25000,
+              "effects": [
+                {"type": "telegraph", "shape": "circle", "radius": 12, "duration": 2500, "color": "red"},
+                {"type": "damage", "amount": 8000, "damage_type": "fire"},
+                {"type": "movement", "movement_type": "knockback", "distance": 10}
+              ]
+            }
+          ]
+        }
+      ],
+      "data_sources": ["instance_bosses.json"],
+      "data_completeness": 0.5
+    },
+    {
+      "boss_id": 50202,
+      "name": "Thunderfoot",
+      "difficulty": "normal",
+      "creature_id": 50202,
+      "level": 30,
+      "order": 2,
+      "phases": [
+        {
+          "name": "phase_one",
+          "condition": {"health_above": 40},
+          "abilities": [
+            {
+              "name": "Stomp",
+              "type": "telegraph",
+              "telegraph_shape": "circle",
+              "cooldown": 10000,
+              "effects": [
+                {"type": "telegraph", "shape": "circle", "radius": 10, "duration": 1800, "color": "red"},
+                {"type": "damage", "amount": 6000, "damage_type": "physical"},
+                {"type": "debuff", "name": "stunned", "duration": 2000}
+              ]
+            },
+            {
+              "name": "Charge",
+              "type": "movement",
+              "cooldown": 15000,
+              "target": "farthest",
+              "effects": [
+                {"type": "telegraph", "shape": "line", "width": 5, "length": 30, "duration": 1500, "color": "red"},
+                {"type": "damage", "amount": 7000, "damage_type": "physical"},
+                {"type": "movement", "movement_type": "knockback", "distance": 8}
+              ]
+            },
+            {
+              "name": "Ground Slam",
+              "type": "telegraph",
+              "cooldown": 8000,
+              "target": "tank",
+              "effects": [
+                {"type": "telegraph", "shape": "cone", "angle": 90, "length": 12, "duration": 1500, "color": "red"},
+                {"type": "damage", "amount": 8000, "damage_type": "physical"}
+              ]
+            }
+          ]
+        },
+        {
+          "name": "phase_two",
+          "condition": {"health_below": 40},
+          "abilities": [
+            {
+              "name": "Earthquake",
+              "type": "telegraph",
+              "cooldown": 25000,
+              "effects": [
+                {"type": "telegraph", "shape": "room_wide", "duration": 4000},
+                {"type": "damage", "amount": 5000, "damage_type": "physical"},
+                {"type": "movement", "movement_type": "knockback", "distance": 5, "source": "center"}
+              ]
+            },
+            {
+              "name": "Rampage",
+              "type": "buff",
+              "cooldown": 60000,
+              "effects": [
+                {"type": "buff", "name": "enraged", "duration": 15000}
+              ]
+            },
+            {
+              "name": "Aftershock",
+              "type": "telegraph",
+              "cooldown": 12000,
+              "effects": [
+                {"type": "telegraph", "shape": "circle", "radius": 15, "duration": 2000, "color": "red"},
+                {"type": "damage", "amount": 7000, "damage_type": "physical"}
+              ]
+            }
+          ]
+        }
+      ],
+      "data_sources": ["instance_bosses.json"],
+      "data_completeness": 0.5
+    },
+    {
+      "boss_id": 50203,
+      "name": "Laveka the Firesinger",
+      "difficulty": "normal",
+      "creature_id": 50203,
+      "level": 30,
+      "order": 3,
+      "phases": [
+        {
+          "name": "phase_one",
+          "condition": {"health_above": 70},
+          "abilities": [
+            {
+              "name": "Fireball",
+              "type": "telegraph",
+              "telegraph_shape": "circle",
+              "cooldown": 6000,
+              "target": "random",
+              "effects": [
+                {"type": "telegraph", "shape": "circle", "radius": 5, "duration": 1200, "color": "red"},
+                {"type": "damage", "amount": 5000, "damage_type": "fire"}
+              ]
+            },
+            {
+              "name": "Flame Totem",
+              "type": "spawn",
+              "cooldown": 20000,
+              "effects": [
+                {"type": "spawn", "spawn_type": "add", "creature_id": 50213, "count": 1}
+              ]
+            },
+            {
+              "name": "Scorch",
+              "type": "telegraph",
+              "cooldown": 10000,
+              "target": "tank",
+              "effects": [
+                {"type": "telegraph", "shape": "cone", "angle": 60, "length": 15, "duration": 1500, "color": "red"},
+                {"type": "damage", "amount": 6000, "damage_type": "fire"},
+                {"type": "debuff", "name": "burning", "duration": 8000, "stacks": 2}
+              ]
+            }
+          ]
+        },
+        {
+          "name": "phase_two",
+          "condition": {"health_between": [30, 70]},
+          "abilities": [
+            {
+              "name": "Lava Eruption",
+              "type": "telegraph",
+              "cooldown": 15000,
+              "effects": [
+                {"type": "telegraph", "shape": "circle", "radius": 8, "duration": 2000, "color": "red"},
+                {"type": "damage", "amount": 8000, "damage_type": "fire"},
+                {"type": "debuff", "name": "molten", "duration": 10000, "stacks": 1}
+              ]
+            },
+            {
+              "name": "Fire Shield",
+              "type": "buff",
+              "cooldown": 25000,
+              "effects": [
+                {"type": "buff", "name": "fire_shield", "duration": 10000}
+              ]
+            },
+            {
+              "name": "Rain of Fire",
+              "type": "telegraph",
+              "cooldown": 18000,
+              "effects": [
+                {"type": "telegraph", "shape": "circle", "radius": 6, "duration": 1500, "color": "red"},
+                {"type": "damage", "amount": 5000, "damage_type": "fire"}
+              ]
+            }
+          ]
+        },
+        {
+          "name": "phase_three",
+          "condition": {"health_below": 30},
+          "abilities": [
+            {
+              "name": "Volcanic Prison",
+              "type": "telegraph",
+              "cooldown": 30000,
+              "target": "random",
+              "effects": [
+                {"type": "telegraph", "shape": "circle", "radius": 4, "duration": 2000, "color": "purple"},
+                {"type": "debuff", "name": "imprisoned", "duration": 5000},
+                {"type": "coordination", "type": "stack", "min_players": 2, "damage": 15000}
+              ]
+            },
+            {
+              "name": "Inferno",
+              "type": "telegraph",
+              "cooldown": 40000,
+              "effects": [
+                {"type": "telegraph", "shape": "room_wide", "duration": 4000},
+                {"type": "damage", "amount": 10000, "damage_type": "fire"}
+              ]
+            },
+            {
+              "name": "Empowered Totem",
+              "type": "spawn",
+              "cooldown": 25000,
+              "effects": [
+                {"type": "spawn", "spawn_type": "add", "creature_id": 50214, "count": 2, "spread": true}
+              ]
+            }
+          ]
+        }
+      ],
+      "data_sources": ["instance_bosses.json"],
+      "data_completeness": 0.6
+    }
+  ],
+  "ability_research": {
+    "ability_names_found": [
+      "Boiling Splash",
+      "Throw Ingredient",
+      "Stir the Pot",
+      "Toxic Stew",
+      "Call Helpers",
+      "Explosive Cauldron",
+      "Stomp",
+      "Charge",
+      "Ground Slam",
+      "Earthquake",
+      "Rampage",
+      "Aftershock",
+      "Fireball",
+      "Flame Totem",
+      "Scorch",
+      "Lava Eruption",
+      "Fire Shield",
+      "Rain of Fire",
+      "Volcanic Prison",
+      "Inferno",
+      "Empowered Totem"
+    ],
+    "spell_bases_found": {}
+  }
+}

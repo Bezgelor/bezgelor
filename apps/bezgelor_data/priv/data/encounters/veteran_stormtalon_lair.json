@@ -1,0 +1,149 @@
+{
+  "instance_id": 1006,
+  "instance_name": "Veteran Stormtalon's Lair",
+  "instance_type": "veteran_dungeon",
+  "level_range": [50, 50],
+  "bosses": [
+    {
+      "boss_id": 50501,
+      "name": "Aethros (Veteran)",
+      "creature_id": 50511,
+      "health": 3500000,
+      "level": 50,
+      "enrage_timer": 480,
+      "interrupt_armor": 3,
+      "phases": [
+        {
+          "name": "phase_one",
+          "health_above": 60,
+          "emote": "The winds of destruction are at my command!",
+          "abilities": [
+            {"name": "Lightning Strike", "type": "tank_buster", "damage": 18000, "damage_type": "magic", "cooldown": 8},
+            {"name": "Tempest", "type": "telegraph", "shape": "circle", "radius": 10, "damage": 12000, "damage_type": "magic", "cooldown": 12},
+            {"name": "Cyclone", "type": "telegraph", "shape": "circle", "radius": 8, "damage": 10000, "damage_type": "magic", "cooldown": 15, "movement": {"type": "pull", "distance": 8}},
+            {"name": "Wind Slash", "type": "telegraph", "shape": "cone", "angle": 60, "length": 25, "damage": 14000, "damage_type": "magic", "cooldown": 10}
+          ]
+        },
+        {
+          "name": "phase_two",
+          "health_below": 60,
+          "inherit_phase": "phase_one",
+          "emote": "Feel the fury of the storm!",
+          "enrage_modifier": 1.4,
+          "abilities": [
+            {"name": "Eye of the Storm", "type": "telegraph", "shape": "donut", "inner_radius": 8, "outer_radius": 20, "damage": 16000, "damage_type": "magic", "cooldown": 25},
+            {"name": "Chain Lightning", "type": "coordination", "coordination_type": "spread", "min_distance": 8, "damage": 14000, "cooldown": 20},
+            {"name": "Spawn Cyclones", "type": "spawn", "creature_id": 50512, "count": 3, "cooldown": 30}
+          ]
+        }
+      ],
+      "notes": "Veteran version with Chain Lightning spread mechanic and add spawns."
+    },
+    {
+      "boss_id": 50502,
+      "name": "Blade-Wind the Invoker (Veteran)",
+      "creature_id": 50521,
+      "health": 4000000,
+      "level": 50,
+      "enrage_timer": 540,
+      "interrupt_armor": 4,
+      "phases": [
+        {
+          "name": "phase_one",
+          "health_above": 70,
+          "emote": "The blade winds answer my call!",
+          "abilities": [
+            {"name": "Blade Fury", "type": "tank_buster", "damage": 20000, "damage_type": "physical", "cooldown": 10},
+            {"name": "Wind Blade", "type": "telegraph", "shape": "line", "width": 5, "length": 35, "damage": 15000, "damage_type": "magic", "cooldown": 12},
+            {"name": "Invoke Storm", "type": "telegraph", "shape": "room_wide", "damage": 10000, "damage_type": "magic", "cooldown": 25},
+            {"name": "Cutting Winds", "type": "telegraph", "shape": "cross", "length": 30, "width": 5, "damage": 13000, "damage_type": "magic", "cooldown": 18}
+          ]
+        },
+        {
+          "name": "phase_two",
+          "health_between": [40, 70],
+          "inherit_phase": "phase_one",
+          "emote": "I summon the spirits of wind!",
+          "enrage_modifier": 1.35,
+          "abilities": [
+            {"name": "Summon Elementals", "type": "spawn", "creature_id": 50522, "count": 2, "cooldown": 30},
+            {"name": "Tornado", "type": "telegraph", "shape": "circle", "radius": 12, "damage": 14000, "damage_type": "magic", "cooldown": 20, "movement": {"type": "pull", "distance": 10}},
+            {"name": "Empowered Blades", "type": "buff", "buff_name": "empowered", "duration": 10000, "cooldown": 35}
+          ]
+        },
+        {
+          "name": "phase_three",
+          "health_below": 40,
+          "inherit_phase": "phase_two",
+          "emote": "THE FULL FURY OF THE STORM!",
+          "enrage_modifier": 1.6,
+          "abilities": [
+            {"name": "Storm Nova", "type": "telegraph", "shape": "room_wide", "damage": 16000, "damage_type": "magic", "cooldown": 30},
+            {"name": "Blade Storm", "type": "telegraph", "shape": "circle", "radius": 20, "damage": 18000, "damage_type": "magic", "cooldown": 25},
+            {"name": "Final Invocation", "type": "spawn", "spawn_type": "wave", "waves": 2, "delay": 5000, "creature_id": 50522, "count_per_wave": 2}
+          ]
+        }
+      ],
+      "notes": "Veteran version with 3 phases and elemental spawns throughout."
+    },
+    {
+      "boss_id": 50503,
+      "name": "Stormtalon (Veteran)",
+      "creature_id": 50531,
+      "health": 5000000,
+      "level": 50,
+      "enrage_timer": 600,
+      "interrupt_armor": 5,
+      "phases": [
+        {
+          "name": "phase_one",
+          "health_above": 75,
+          "emote": "SCREEEEECH! You dare enter my domain?!",
+          "abilities": [
+            {"name": "Talon Strike", "type": "tank_buster", "damage": 25000, "damage_type": "physical", "cooldown": 8},
+            {"name": "Static Charge", "type": "telegraph", "shape": "circle", "radius": 12, "damage": 15000, "damage_type": "magic", "cooldown": 15},
+            {"name": "Lightning Breath", "type": "telegraph", "shape": "cone", "angle": 90, "length": 30, "damage": 18000, "damage_type": "magic", "cooldown": 12},
+            {"name": "Wing Buffet", "type": "telegraph", "shape": "cone", "angle": 120, "length": 20, "damage": 14000, "damage_type": "physical", "cooldown": 18, "movement": {"type": "knockback", "distance": 12}}
+          ]
+        },
+        {
+          "name": "phase_two",
+          "health_between": [50, 75],
+          "inherit_phase": "phase_one",
+          "emote": "Lightning storms consume all who oppose me!",
+          "enrage_modifier": 1.3,
+          "abilities": [
+            {"name": "Storm Surge", "type": "telegraph", "shape": "room_wide", "damage": 14000, "damage_type": "magic", "cooldown": 30},
+            {"name": "Spawn Storm Elementals", "type": "spawn", "creature_id": 50532, "count": 3, "cooldown": 35},
+            {"name": "Electrocution", "type": "coordination", "coordination_type": "spread", "min_distance": 10, "damage": 16000, "cooldown": 25}
+          ]
+        },
+        {
+          "name": "phase_three",
+          "health_between": [25, 50],
+          "inherit_phase": "phase_two",
+          "emote": "THE STORM AWAKENS! FEEL TRUE POWER!",
+          "enrage_modifier": 1.5,
+          "abilities": [
+            {"name": "Thunder God", "type": "buff", "buff_name": "thunder_god", "duration": 15000, "cooldown": 45},
+            {"name": "Lightning Storm", "type": "telegraph", "shape": "room_wide", "damage": 18000, "damage_type": "magic", "cooldown": 25},
+            {"name": "Eye of Stormtalon", "type": "telegraph", "shape": "donut", "inner_radius": 8, "outer_radius": 25, "damage": 20000, "damage_type": "magic", "cooldown": 30}
+          ]
+        },
+        {
+          "name": "phase_four",
+          "health_below": 25,
+          "inherit_phase": "phase_three",
+          "emote": "I WILL REDUCE YOU TO ASH!",
+          "enrage_modifier": 1.8,
+          "abilities": [
+            {"name": "Apocalypse Storm", "type": "telegraph", "shape": "room_wide", "damage": 22000, "damage_type": "magic", "cooldown": 30},
+            {"name": "Final Thunder", "type": "telegraph", "shape": "circle", "radius": 25, "damage": 25000, "damage_type": "magic", "cooldown": 35},
+            {"name": "Mass Electrocution", "type": "coordination", "coordination_type": "stack", "min_players": 5, "damage": 60000, "cooldown": 40}
+          ]
+        }
+      ],
+      "notes": "Veteran version with 4 phases, more adds, and stack/spread mechanics."
+    }
+  ]
+}

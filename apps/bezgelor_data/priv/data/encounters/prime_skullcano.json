@@ -1,0 +1,41 @@
+{
+  "instance_id": 1301,
+  "instance_name": "Skullcano (Prime)",
+  "instance_type": "dungeon",
+  "difficulty": "prime",
+  "level": 50,
+  "group_size": 5,
+  "prime_level_range": [0, 15],
+  "bosses": [
+    {
+      "boss_id": 13101,
+      "name": "Stew-Shaman Tugga (Prime)",
+      "health": 9500000,
+      "level": 50,
+      "enrage_timer": 360000,
+      "interrupt_armor": 4,
+      "phases": 3,
+      "loot_table": 13101
+    },
+    {
+      "boss_id": 13102,
+      "name": "Thunderfoot (Prime)",
+      "health": 12000000,
+      "level": 50,
+      "enrage_timer": 420000,
+      "interrupt_armor": 4,
+      "phases": 3,
+      "loot_table": 13102
+    },
+    {
+      "boss_id": 13103,
+      "name": "Laveka the Firesinger (Prime)",
+      "health": 17000000,
+      "level": 50,
+      "enrage_timer": 600000,
+      "interrupt_armor": 5,
+      "phases": 4,
+      "loot_table": 13103
+    }
+  ]
+}

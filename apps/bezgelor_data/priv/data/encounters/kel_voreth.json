@@ -1,0 +1,226 @@
+{
+  "instance_id": 1002,
+  "instance_name": "Kel Voreth",
+  "level_range": {
+    "min": 25,
+    "max": 50
+  },
+  "veteran_level": 50,
+  "bosses": [
+    {
+      "boss_id": 50101,
+      "name": "Grond the Corpsemaker",
+      "difficulty": "normal",
+      "creature_id": 50101,
+      "level": 25,
+      "order": 1,
+      "phases": [
+        {
+          "name": "phase_one",
+          "condition": {"health_above": 70},
+          "abilities": [
+            {
+              "name": "Cleave",
+              "type": "telegraph",
+              "telegraph_shape": "cone",
+              "cooldown": 6000,
+              "target": "tank",
+              "effects": [
+                {"type": "telegraph", "shape": "cone", "angle": 120, "length": 12, "duration": 1500, "color": "red"},
+                {"type": "damage", "amount": 6000, "damage_type": "physical"}
+              ]
+            },
+            {
+              "name": "Summon Skeleton",
+              "type": "spawn",
+              "cooldown": 20000,
+              "effects": [
+                {"type": "spawn", "spawn_type": "add", "creature_id": 50111, "count": 3}
+              ]
+            }
+          ]
+        },
+        {
+          "name": "phase_two",
+          "condition": {"health_between": [30, 70]},
+          "abilities": [
+            {
+              "name": "Corpse Explosion",
+              "type": "telegraph",
+              "telegraph_shape": "circle",
+              "cooldown": 15000,
+              "effects": [
+                {"type": "telegraph", "shape": "circle", "radius": 10, "duration": 2500, "color": "red"},
+                {"type": "damage", "amount": 8000, "damage_type": "magic"}
+              ]
+            }
+          ]
+        },
+        {
+          "name": "phase_three",
+          "condition": {"health_below": 30},
+          "abilities": [
+            {
+              "name": "Bone Storm",
+              "type": "telegraph",
+              "cooldown": 30000,
+              "effects": [
+                {"type": "telegraph", "shape": "room_wide", "duration": 4000},
+                {"type": "damage", "amount": 5000, "damage_type": "physical"}
+              ]
+            }
+          ]
+        }
+      ],
+      "data_sources": ["instance_bosses.json", "texts.json"],
+      "data_completeness": 0.6
+    },
+    {
+      "boss_id": 50102,
+      "name": "Slavemaster Drokk",
+      "difficulty": "normal",
+      "creature_id": 50102,
+      "level": 25,
+      "order": 2,
+      "phases": [
+        {
+          "name": "phase_one",
+          "condition": {"health_above": 50},
+          "abilities": [
+            {
+              "name": "Lash",
+              "type": "damage",
+              "cooldown": 5000,
+              "target": "tank",
+              "effects": [
+                {"type": "damage", "amount": 5000, "damage_type": "physical"},
+                {"type": "debuff", "name": "bleeding", "duration": 8000, "stacks": 1}
+              ]
+            },
+            {
+              "name": "Chain Pull",
+              "type": "movement",
+              "cooldown": 12000,
+              "target": "farthest",
+              "effects": [
+                {"type": "telegraph", "shape": "line", "width": 3, "length": 30, "duration": 1500, "color": "purple"},
+                {"type": "movement", "movement_type": "pull", "distance": 25},
+                {"type": "damage", "amount": 4000, "damage_type": "physical"}
+              ]
+            }
+          ]
+        },
+        {
+          "name": "phase_two",
+          "condition": {"health_below": 50},
+          "abilities": [
+            {
+              "name": "Whip Frenzy",
+              "type": "telegraph",
+              "cooldown": 8000,
+              "effects": [
+                {"type": "telegraph", "shape": "circle", "radius": 12, "duration": 2000, "color": "red"},
+                {"type": "damage", "amount": 7000, "damage_type": "physical"}
+              ]
+            },
+            {
+              "name": "Enrage",
+              "type": "buff",
+              "cooldown": 60000,
+              "effects": [
+                {"type": "buff", "name": "enraged", "duration": 20000}
+              ]
+            }
+          ]
+        }
+      ],
+      "data_sources": ["instance_bosses.json"],
+      "data_completeness": 0.5
+    },
+    {
+      "boss_id": 50103,
+      "name": "Forgemaster Trogun",
+      "difficulty": "normal",
+      "creature_id": 50103,
+      "level": 25,
+      "order": 3,
+      "phases": [
+        {
+          "name": "phase_one",
+          "condition": {"health_above": 60},
+          "abilities": [
+            {
+              "name": "Hammer Slam",
+              "type": "telegraph",
+              "cooldown": 10000,
+              "target": "tank",
+              "effects": [
+                {"type": "telegraph", "shape": "circle", "radius": 6, "duration": 2000, "color": "red"},
+                {"type": "damage", "amount": 12000, "damage_type": "physical"}
+              ]
+            },
+            {
+              "name": "Molten Spray",
+              "type": "telegraph",
+              "cooldown": 15000,
+              "effects": [
+                {"type": "telegraph", "shape": "cone", "angle": 90, "length": 18, "duration": 2000, "color": "red"},
+                {"type": "damage", "amount": 8000, "damage_type": "fire"},
+                {"type": "debuff", "name": "burning", "duration": 6000, "stacks": 2}
+              ]
+            }
+          ]
+        },
+        {
+          "name": "phase_two",
+          "condition": {"health_between": [30, 60]},
+          "abilities": [
+            {
+              "name": "Summon Construct",
+              "type": "spawn",
+              "cooldown": 25000,
+              "effects": [
+                {"type": "spawn", "spawn_type": "add", "creature_id": 50113, "count": 2}
+              ]
+            }
+          ]
+        },
+        {
+          "name": "phase_three",
+          "condition": {"health_below": 30},
+          "abilities": [
+            {
+              "name": "Superheated",
+              "type": "buff",
+              "cooldown": 45000,
+              "effects": [
+                {"type": "buff", "name": "superheated", "duration": 30000},
+                {"type": "telegraph", "shape": "room_wide", "duration": 3000},
+                {"type": "damage", "amount": 6000, "damage_type": "fire"}
+              ]
+            }
+          ]
+        }
+      ],
+      "data_sources": ["instance_bosses.json"],
+      "data_completeness": 0.6
+    }
+  ],
+  "ability_research": {
+    "ability_names_found": [
+      "Cleave",
+      "Summon Skeleton",
+      "Corpse Explosion",
+      "Bone Storm",
+      "Lash",
+      "Chain Pull",
+      "Whip Frenzy",
+      "Enrage",
+      "Hammer Slam",
+      "Molten Spray",
+      "Summon Construct",
+      "Superheated"
+    ],
+    "spell_bases_found": {}
+  }
+}

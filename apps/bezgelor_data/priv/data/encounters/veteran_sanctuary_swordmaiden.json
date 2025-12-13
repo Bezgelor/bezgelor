@@ -1,0 +1,53 @@
+{
+  "instance_id": 1009,
+  "instance_name": "Veteran Sanctuary of the Swordmaiden",
+  "instance_type": "veteran_dungeon",
+  "level_range": [50, 50],
+  "bosses": [
+    {
+      "boss_id": 50801,
+      "name": "Rayna Darkspeaker (Veteran)",
+      "creature_id": 50811,
+      "health": 3600000,
+      "level": 50,
+      "enrage_timer": 480,
+      "interrupt_armor": 3
+    },
+    {
+      "boss_id": 50802,
+      "name": "Ondu Lifeweaver (Veteran)",
+      "creature_id": 50821,
+      "health": 4000000,
+      "level": 50,
+      "enrage_timer": 540,
+      "interrupt_armor": 4
+    },
+    {
+      "boss_id": 50803,
+      "name": "Moldwood Overlord (Veteran)",
+      "creature_id": 50831,
+      "health": 4400000,
+      "level": 50,
+      "enrage_timer": 540,
+      "interrupt_armor": 4
+    },
+    {
+      "boss_id": 50804,
+      "name": "Spiritmother Selene (Veteran)",
+      "creature_id": 50841,
+      "health": 4800000,
+      "level": 50,
+      "enrage_timer": 600,
+      "interrupt_armor": 5
+    },
+    {
+      "boss_id": 50805,
+      "name": "The Swordmaiden (Veteran)",
+      "creature_id": 50851,
+      "health": 6000000,
+      "level": 50,
+      "enrage_timer": 660,
+      "interrupt_armor": 5
+    }
+  ]
+}

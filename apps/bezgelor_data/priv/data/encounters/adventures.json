@@ -1,0 +1,69 @@
+{
+  "instance_id": 4000,
+  "instance_name": "Adventures Collection",
+  "instance_type": "adventure",
+  "level_range": [15, 50],
+  "group_size": 5,
+  "adventures": [
+    {
+      "adventure_id": 4001,
+      "name": "The Malgrave Trail",
+      "level_range": [25, 50],
+      "bosses": [
+        {"boss_id": 70101, "name": "Scorchwing", "health": 2500000, "level": 35},
+        {"boss_id": 70102, "name": "Hellrose", "health": 3000000, "level": 35},
+        {"boss_id": 70103, "name": "Canimid Alpha", "health": 3500000, "level": 35}
+      ]
+    },
+    {
+      "adventure_id": 4002,
+      "name": "The Siege of Tempest Refuge",
+      "level_range": [15, 50],
+      "bosses": [
+        {"boss_id": 70201, "name": "Skullcrusher", "health": 2000000, "level": 25},
+        {"boss_id": 70202, "name": "Stormwatcher", "health": 2500000, "level": 25},
+        {"boss_id": 70203, "name": "Siege Commander", "health": 3000000, "level": 25}
+      ]
+    },
+    {
+      "adventure_id": 4003,
+      "name": "Bay of Betrayal",
+      "level_range": [30, 50],
+      "bosses": [
+        {"boss_id": 70301, "name": "Captain Mordechai", "health": 2800000, "level": 40},
+        {"boss_id": 70302, "name": "First Mate Venko", "health": 2500000, "level": 40},
+        {"boss_id": 70303, "name": "The Betrayer", "health": 4000000, "level": 40}
+      ]
+    },
+    {
+      "adventure_id": 4004,
+      "name": "Crimelords Adventure",
+      "level_range": [25, 50],
+      "bosses": [
+        {"boss_id": 70401, "name": "Kingpin Kraz", "health": 2200000, "level": 30},
+        {"boss_id": 70402, "name": "The Collector", "health": 2500000, "level": 30},
+        {"boss_id": 70403, "name": "Crime Lord Supreme", "health": 3200000, "level": 30}
+      ]
+    },
+    {
+      "adventure_id": 4005,
+      "name": "War of the Wilds Adventure",
+      "level_range": [35, 50],
+      "bosses": [
+        {"boss_id": 70501, "name": "Jungle Warlord", "health": 2600000, "level": 40},
+        {"boss_id": 70502, "name": "Primal Guardian", "health": 3000000, "level": 40},
+        {"boss_id": 70503, "name": "Nature's Vengeance", "health": 3800000, "level": 40}
+      ]
+    },
+    {
+      "adventure_id": 4006,
+      "name": "Riot in the Void Adventure",
+      "level_range": [30, 50],
+      "bosses": [
+        {"boss_id": 70601, "name": "Void Warden", "health": 2400000, "level": 35},
+        {"boss_id": 70602, "name": "Chaos Harbinger", "health": 2800000, "level": 35},
+        {"boss_id": 70603, "name": "Entropy Lord", "health": 3500000, "level": 35}
+      ]
+    }
+  ]
+}

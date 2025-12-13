@@ -1,0 +1,40 @@
+{
+  "instance_id": 2100,
+  "instance_name": "Expeditions Collection",
+  "instance_type": "expedition",
+  "level_range": [15, 50],
+  "expeditions": [
+    {
+      "expedition_id": 2101,
+      "name": "Riot in the Void",
+      "bosses": [
+        {"boss_id": 51001, "name": "Void Terror", "health": 800000, "level": 35},
+        {"boss_id": 51002, "name": "Chaos Lord", "health": 1200000, "level": 35}
+      ]
+    },
+    {
+      "expedition_id": 2102,
+      "name": "War of the Wilds",
+      "bosses": [
+        {"boss_id": 51101, "name": "Jungle Beast", "health": 900000, "level": 40},
+        {"boss_id": 51102, "name": "Alpha Predator", "health": 1400000, "level": 40}
+      ]
+    },
+    {
+      "expedition_id": 2103,
+      "name": "Crimelords of Whitevale",
+      "bosses": [
+        {"boss_id": 51201, "name": "Redmoon Enforcer", "health": 700000, "level": 30},
+        {"boss_id": 51202, "name": "Crime Boss Gorax", "health": 1100000, "level": 30}
+      ]
+    },
+    {
+      "expedition_id": 2104,
+      "name": "Fragment Zero",
+      "bosses": [
+        {"boss_id": 51301, "name": "Eldan Construct", "health": 1000000, "level": 45},
+        {"boss_id": 51302, "name": "Prime Artificial", "health": 1500000, "level": 45}
+      ]
+    }
+  ]
+}

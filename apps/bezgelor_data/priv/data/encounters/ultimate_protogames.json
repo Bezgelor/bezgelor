@@ -1,0 +1,185 @@
+{
+  "instance_id": 1005,
+  "instance_name": "Ultimate Protogames",
+  "instance_type": "dungeon",
+  "level_range": [50, 50],
+  "bosses": [
+    {
+      "boss_id": 50401,
+      "name": "Wrathbone",
+      "creature_id": 50411,
+      "health": 2200000,
+      "level": 50,
+      "enrage_timer": 420,
+      "interrupt_armor": 2,
+      "phases": [
+        {
+          "name": "phase_one",
+          "health_above": 50,
+          "emote": "WRATHBONE SMASH PUNY CONTESTANTS!",
+          "abilities": [
+            {"name": "Bone Crush", "type": "tank_buster", "damage": 12000, "damage_type": "physical", "cooldown": 8},
+            {"name": "Ground Pound", "type": "telegraph", "shape": "circle", "radius": 10, "damage": 8000, "damage_type": "physical", "cooldown": 12},
+            {"name": "Skeletal Charge", "type": "telegraph", "shape": "line", "width": 5, "length": 30, "damage": 10000, "damage_type": "physical", "cooldown": 18, "movement": {"type": "knockback", "distance": 10}},
+            {"name": "Bone Spikes", "type": "telegraph", "shape": "circle", "radius": 6, "damage": 7000, "damage_type": "physical", "cooldown": 15}
+          ]
+        },
+        {
+          "name": "phase_two",
+          "health_below": 50,
+          "inherit_phase": "phase_one",
+          "emote": "WRATHBONE GETTING ANGRY NOW!",
+          "enrage_modifier": 1.3,
+          "abilities": [
+            {"name": "Bone Storm", "type": "telegraph", "shape": "room_wide", "damage": 9000, "damage_type": "physical", "cooldown": 25},
+            {"name": "Summon Skeletons", "type": "spawn", "creature_id": 50412, "count": 4, "cooldown": 30},
+            {"name": "Enraged Smash", "type": "telegraph", "shape": "cone", "angle": 120, "length": 15, "damage": 12000, "damage_type": "physical", "cooldown": 20}
+          ]
+        }
+      ],
+      "notes": "Skeletal boss with physical damage focus. Kill adds quickly."
+    },
+    {
+      "boss_id": 50402,
+      "name": "Robo-Tank",
+      "creature_id": 50421,
+      "health": 2400000,
+      "level": 50,
+      "enrage_timer": 480,
+      "interrupt_armor": 3,
+      "phases": [
+        {
+          "name": "phase_one",
+          "health_above": 60,
+          "emote": "INITIATING COMBAT PROTOCOLS. TARGET ACQUIRED.",
+          "abilities": [
+            {"name": "Tank Cannon", "type": "tank_buster", "damage": 14000, "damage_type": "fire", "cooldown": 10},
+            {"name": "Missile Barrage", "type": "telegraph", "shape": "circle", "radius": 8, "damage": 9000, "damage_type": "fire", "cooldown": 15},
+            {"name": "Flamethrower", "type": "telegraph", "shape": "cone", "angle": 60, "length": 25, "damage": 11000, "damage_type": "fire", "cooldown": 18},
+            {"name": "Tread Marks", "type": "telegraph", "shape": "line", "width": 8, "length": 35, "damage": 10000, "damage_type": "physical", "cooldown": 20}
+          ]
+        },
+        {
+          "name": "phase_two",
+          "health_between": [30, 60],
+          "inherit_phase": "phase_one",
+          "emote": "DEPLOYING SECONDARY WEAPONS SYSTEMS.",
+          "enrage_modifier": 1.25,
+          "abilities": [
+            {"name": "Deploy Turrets", "type": "spawn", "creature_id": 50422, "count": 2, "cooldown": 35},
+            {"name": "Carpet Bomb", "type": "telegraph", "shape": "room_wide", "damage": 10000, "damage_type": "fire", "cooldown": 30},
+            {"name": "Lock On", "type": "telegraph", "shape": "circle", "radius": 5, "damage": 13000, "damage_type": "fire", "cooldown": 12}
+          ]
+        },
+        {
+          "name": "phase_three",
+          "health_below": 30,
+          "inherit_phase": "phase_two",
+          "emote": "CRITICAL DAMAGE DETECTED. ENGAGING OVERDRIVE.",
+          "enrage_modifier": 1.5,
+          "abilities": [
+            {"name": "Overdrive", "type": "buff", "buff_name": "overdrive", "duration": 15000, "cooldown": 45},
+            {"name": "Nuclear Option", "type": "telegraph", "shape": "circle", "radius": 20, "damage": 15000, "damage_type": "fire", "cooldown": 35},
+            {"name": "Rapid Fire", "type": "telegraph", "shape": "cone", "angle": 45, "length": 30, "damage": 8000, "damage_type": "fire", "cooldown": 8}
+          ]
+        }
+      ],
+      "notes": "Mechanical boss with fire damage. Destroy turrets quickly."
+    },
+    {
+      "boss_id": 50403,
+      "name": "Proto-Commander",
+      "creature_id": 50431,
+      "health": 2600000,
+      "level": 50,
+      "enrage_timer": 540,
+      "interrupt_armor": 3,
+      "phases": [
+        {
+          "name": "phase_one",
+          "health_above": 65,
+          "emote": "Attention contestants! The Commander is here!",
+          "abilities": [
+            {"name": "Command Strike", "type": "tank_buster", "damage": 13000, "damage_type": "physical", "cooldown": 10},
+            {"name": "Rally Troops", "type": "spawn", "creature_id": 50432, "count": 3, "cooldown": 25},
+            {"name": "Tactical Laser", "type": "telegraph", "shape": "line", "width": 4, "length": 35, "damage": 10000, "damage_type": "magic", "cooldown": 15},
+            {"name": "Grenade Volley", "type": "telegraph", "shape": "circle", "radius": 8, "damage": 8000, "damage_type": "fire", "cooldown": 12}
+          ]
+        },
+        {
+          "name": "phase_two",
+          "health_between": [35, 65],
+          "inherit_phase": "phase_one",
+          "emote": "Time to escalate! BRING IN THE HEAVY ARTILLERY!",
+          "enrage_modifier": 1.3,
+          "abilities": [
+            {"name": "Artillery Strike", "type": "telegraph", "shape": "room_wide", "damage": 10000, "damage_type": "fire", "cooldown": 30},
+            {"name": "Deploy Shield", "type": "buff", "buff_name": "shielded", "duration": 8000, "cooldown": 35},
+            {"name": "Tactical Retreat", "type": "movement", "movement_type": "teleport", "cooldown": 40},
+            {"name": "Suppression Fire", "type": "telegraph", "shape": "cone", "angle": 90, "length": 30, "damage": 11000, "damage_type": "physical", "cooldown": 18}
+          ]
+        },
+        {
+          "name": "phase_three",
+          "health_below": 35,
+          "inherit_phase": "phase_two",
+          "emote": "FINAL PROTOCOL ENGAGED! ALL UNITS ATTACK!",
+          "enrage_modifier": 1.5,
+          "abilities": [
+            {"name": "Mass Deployment", "type": "spawn", "spawn_type": "wave", "waves": 2, "delay": 5000, "creature_id": 50432, "count_per_wave": 4},
+            {"name": "Orbital Strike", "type": "telegraph", "shape": "circle", "radius": 15, "damage": 14000, "damage_type": "fire", "cooldown": 25},
+            {"name": "Last Stand", "type": "buff", "buff_name": "last_stand", "duration": 20000, "cooldown": 60}
+          ]
+        }
+      ],
+      "notes": "Military-themed boss. Kill adds to reduce incoming damage."
+    },
+    {
+      "boss_id": 50404,
+      "name": "Malgrave Mauler",
+      "creature_id": 50441,
+      "health": 3000000,
+      "level": 50,
+      "enrage_timer": 600,
+      "interrupt_armor": 4,
+      "phases": [
+        {
+          "name": "phase_one",
+          "health_above": 70,
+          "emote": "WELCOME TO THE ULTIMATE CHALLENGE!",
+          "abilities": [
+            {"name": "Mauling Strike", "type": "tank_buster", "damage": 15000, "damage_type": "physical", "cooldown": 8},
+            {"name": "Desert Storm", "type": "telegraph", "shape": "circle", "radius": 12, "damage": 9000, "damage_type": "physical", "cooldown": 15},
+            {"name": "Sand Blast", "type": "telegraph", "shape": "cone", "angle": 60, "length": 25, "damage": 10000, "damage_type": "physical", "cooldown": 12},
+            {"name": "Quicksand", "type": "telegraph", "shape": "circle", "radius": 8, "damage": 6000, "damage_type": "physical", "cooldown": 20, "debuff": {"name": "slowed", "duration": 4000}}
+          ]
+        },
+        {
+          "name": "phase_two",
+          "health_between": [40, 70],
+          "inherit_phase": "phase_one",
+          "emote": "LET'S TURN UP THE HEAT!",
+          "enrage_modifier": 1.3,
+          "abilities": [
+            {"name": "Heat Wave", "type": "telegraph", "shape": "room_wide", "damage": 8000, "damage_type": "fire", "cooldown": 25},
+            {"name": "Summon Scorpions", "type": "spawn", "creature_id": 50442, "count": 3, "cooldown": 30},
+            {"name": "Scorching Slam", "type": "telegraph", "shape": "circle", "radius": 15, "damage": 12000, "damage_type": "fire", "cooldown": 20}
+          ]
+        },
+        {
+          "name": "phase_three",
+          "health_below": 40,
+          "inherit_phase": "phase_two",
+          "emote": "TIME FOR THE GRAND FINALE!",
+          "enrage_modifier": 1.5,
+          "abilities": [
+            {"name": "Malgrave Madness", "type": "telegraph", "shape": "room_wide", "damage": 12000, "damage_type": "physical", "cooldown": 30},
+            {"name": "Sandstorm", "type": "telegraph", "shape": "donut", "inner_radius": 5, "outer_radius": 20, "damage": 14000, "damage_type": "physical", "cooldown": 25},
+            {"name": "Final Mauling", "type": "telegraph", "shape": "cone", "angle": 120, "length": 20, "damage": 16000, "damage_type": "physical", "cooldown": 18}
+          ]
+        }
+      ],
+      "notes": "Desert-themed final boss. Complex mechanics requiring positioning."
+    }
+  ]
+}

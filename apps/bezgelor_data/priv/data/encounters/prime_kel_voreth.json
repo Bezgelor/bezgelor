@@ -1,0 +1,41 @@
+{
+  "instance_id": 1201,
+  "instance_name": "Kel Voreth (Prime)",
+  "instance_type": "dungeon",
+  "difficulty": "prime",
+  "level": 50,
+  "group_size": 5,
+  "prime_level_range": [0, 15],
+  "bosses": [
+    {
+      "boss_id": 12101,
+      "name": "Grond the Corpsemaker (Prime)",
+      "health": 9000000,
+      "level": 50,
+      "enrage_timer": 360000,
+      "interrupt_armor": 4,
+      "phases": 3,
+      "loot_table": 12101
+    },
+    {
+      "boss_id": 12102,
+      "name": "Slavemaster Drokk (Prime)",
+      "health": 11000000,
+      "level": 50,
+      "enrage_timer": 420000,
+      "interrupt_armor": 4,
+      "phases": 3,
+      "loot_table": 12102
+    },
+    {
+      "boss_id": 12103,
+      "name": "Forgemaster Trogun (Prime)",
+      "health": 16000000,
+      "level": 50,
+      "enrage_timer": 600000,
+      "interrupt_armor": 5,
+      "phases": 4,
+      "loot_table": 12103
+    }
+  ]
+}

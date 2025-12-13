@@ -1,0 +1,30 @@
+{
+  "instance_id": 6000,
+  "instance_name": "Protostar Academy",
+  "instance_type": "tutorial_dungeon",
+  "level_range": [10, 15],
+  "group_size": 5,
+  "bosses": [
+    {
+      "boss_id": 90001,
+      "name": "Training Construct Alpha",
+      "health": 150000,
+      "level": 10,
+      "difficulty": "tutorial"
+    },
+    {
+      "boss_id": 90002,
+      "name": "Protobot 3000",
+      "health": 200000,
+      "level": 12,
+      "difficulty": "tutorial"
+    },
+    {
+      "boss_id": 90003,
+      "name": "Chief Instructor Maximillion",
+      "health": 300000,
+      "level": 15,
+      "difficulty": "tutorial"
+    }
+  ]
+}

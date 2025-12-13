@@ -1,0 +1,61 @@
+{
+  "instance_id": 1401,
+  "instance_name": "Sanctuary of the Swordmaiden (Prime)",
+  "instance_type": "dungeon",
+  "difficulty": "prime",
+  "level": 50,
+  "group_size": 5,
+  "prime_level_range": [0, 15],
+  "bosses": [
+    {
+      "boss_id": 14101,
+      "name": "Rayna Darkspeaker (Prime)",
+      "health": 8000000,
+      "level": 50,
+      "enrage_timer": 300000,
+      "interrupt_armor": 4,
+      "phases": 3,
+      "loot_table": 14101
+    },
+    {
+      "boss_id": 14102,
+      "name": "Ondu Lifeweaver (Prime)",
+      "health": 9000000,
+      "level": 50,
+      "enrage_timer": 360000,
+      "interrupt_armor": 4,
+      "phases": 3,
+      "loot_table": 14102
+    },
+    {
+      "boss_id": 14103,
+      "name": "Moldwood Overlord (Prime)",
+      "health": 10000000,
+      "level": 50,
+      "enrage_timer": 360000,
+      "interrupt_armor": 4,
+      "phases": 3,
+      "loot_table": 14103
+    },
+    {
+      "boss_id": 14104,
+      "name": "Spiritmother Selene (Prime)",
+      "health": 12000000,
+      "level": 50,
+      "enrage_timer": 420000,
+      "interrupt_armor": 5,
+      "phases": 3,
+      "loot_table": 14104
+    },
+    {
+      "boss_id": 14105,
+      "name": "The Swordmaiden (Prime)",
+      "health": 20000000,
+      "level": 50,
+      "enrage_timer": 720000,
+      "interrupt_armor": 6,
+      "phases": 5,
+      "loot_table": 14105
+    }
+  ]
+}

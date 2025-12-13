@@ -1,0 +1,244 @@
+{
+  "instance_id": 3001,
+  "instance_name": "Genetic Archives",
+  "level_range": {
+    "min": 50,
+    "max": 50
+  },
+  "type": "raid",
+  "group_size": 20,
+  "bosses": [
+    {
+      "boss_id": 60001,
+      "name": "Experiment X-89",
+      "difficulty": "raid",
+      "creature_id": 60001,
+      "level": 50,
+      "order": 1,
+      "phases": [
+        {
+          "name": "phase_one",
+          "condition": {"health_above": 75},
+          "abilities": [
+            {"name": "Corruption", "type": "debuff", "cooldown": 8000, "target": "random"},
+            {"name": "Repugnant Spew", "type": "telegraph", "cooldown": 15000, "telegraph_shape": "cone"}
+          ]
+        },
+        {
+          "name": "phase_two",
+          "condition": {"health_between": [50, 75]},
+          "abilities": [
+            {"name": "Small Bombs", "type": "telegraph", "cooldown": 20000},
+            {"name": "Shattering Shockwave", "type": "telegraph", "cooldown": 25000}
+          ]
+        },
+        {
+          "name": "phase_three",
+          "condition": {"health_between": [25, 50]},
+          "abilities": [
+            {"name": "Big Bomb", "type": "coordination", "cooldown": 45000},
+            {"name": "Resurgence", "type": "buff", "cooldown": 60000}
+          ]
+        },
+        {
+          "name": "phase_four",
+          "condition": {"health_below": 25},
+          "abilities": [
+            {"name": "Strain Overload", "type": "buff", "cooldown": 30000},
+            {"name": "Final Mutation", "type": "buff", "cooldown": 0}
+          ]
+        }
+      ],
+      "data_sources": ["instance_bosses.json"],
+      "data_completeness": 0.5
+    },
+    {
+      "boss_id": 60002,
+      "name": "Kuralak the Defiler",
+      "difficulty": "raid",
+      "creature_id": 60002,
+      "level": 50,
+      "order": 2,
+      "phases": [
+        {
+          "name": "phase_one",
+          "condition": {"health_above": 80},
+          "abilities": [
+            {"name": "Siphon", "type": "channel", "cooldown": 12000},
+            {"name": "Chromosome Corruption", "type": "debuff", "cooldown": 18000}
+          ]
+        },
+        {
+          "name": "phase_two",
+          "condition": {"health_between": [50, 80]},
+          "abilities": [
+            {"name": "Spawn Eggs", "type": "spawn", "cooldown": 25000},
+            {"name": "DNA Siphon", "type": "coordination", "cooldown": 30000}
+          ]
+        },
+        {
+          "name": "phase_three",
+          "condition": {"health_between": [20, 50]},
+          "abilities": [
+            {"name": "Genetic Torrent", "type": "telegraph", "cooldown": 35000},
+            {"name": "Vanish", "type": "buff", "cooldown": 60000}
+          ]
+        },
+        {
+          "name": "phase_four",
+          "condition": {"health_below": 20},
+          "abilities": [
+            {"name": "Final Form", "type": "buff", "cooldown": 0}
+          ]
+        }
+      ],
+      "data_sources": ["instance_bosses.json"],
+      "data_completeness": 0.5
+    },
+    {
+      "boss_id": 60003,
+      "name": "Phagetech Prototypes",
+      "difficulty": "raid",
+      "creature_id": 60003,
+      "level": 50,
+      "order": 3,
+      "phases": [
+        {
+          "name": "phase_one",
+          "condition": {"health_above": 60},
+          "abilities": [
+            {"name": "Prototype Alpha Strike", "type": "damage", "cooldown": 10000, "target": "tank"},
+            {"name": "Prototype Beta Beam", "type": "telegraph", "cooldown": 15000}
+          ]
+        },
+        {
+          "name": "phase_two",
+          "condition": {"health_below": 60},
+          "abilities": [
+            {"name": "Synchronize", "type": "buff", "cooldown": 40000},
+            {"name": "Combined Assault", "type": "telegraph", "cooldown": 30000}
+          ]
+        }
+      ],
+      "data_sources": ["instance_bosses.json"],
+      "data_completeness": 0.4
+    },
+    {
+      "boss_id": 60004,
+      "name": "Genetic Monstrosity",
+      "difficulty": "raid",
+      "creature_id": 60004,
+      "level": 50,
+      "order": 4,
+      "phases": [
+        {
+          "name": "phase_one",
+          "condition": {"health_above": 70},
+          "abilities": [
+            {"name": "Genetic Mutation", "type": "debuff", "cooldown": 15000},
+            {"name": "Monstrous Cleave", "type": "telegraph", "cooldown": 8000}
+          ]
+        },
+        {
+          "name": "phase_two",
+          "condition": {"health_between": [30, 70]},
+          "abilities": [
+            {"name": "Hulking Smash", "type": "telegraph", "cooldown": 12000},
+            {"name": "Spawn Mutants", "type": "spawn", "cooldown": 30000}
+          ]
+        },
+        {
+          "name": "phase_three",
+          "condition": {"health_below": 30},
+          "abilities": [
+            {"name": "Genetic Overload", "type": "telegraph", "cooldown": 20000},
+            {"name": "Final Mutation", "type": "buff", "cooldown": 0}
+          ]
+        }
+      ],
+      "data_sources": ["instance_bosses.json"],
+      "data_completeness": 0.5
+    },
+    {
+      "boss_id": 60005,
+      "name": "Phageborn Convergence",
+      "difficulty": "raid",
+      "creature_id": 60005,
+      "level": 50,
+      "order": 5,
+      "phases": [
+        {
+          "name": "phase_one",
+          "condition": {"health_above": 60},
+          "abilities": [
+            {"name": "Converging Strike", "type": "telegraph", "cooldown": 10000},
+            {"name": "Phage Bolt", "type": "telegraph", "cooldown": 6000}
+          ]
+        },
+        {
+          "name": "phase_two",
+          "condition": {"health_below": 60},
+          "abilities": [
+            {"name": "Convergence", "type": "coordination", "cooldown": 40000},
+            {"name": "Phageborn Eruption", "type": "telegraph", "cooldown": 25000}
+          ]
+        }
+      ],
+      "data_sources": ["instance_bosses.json"],
+      "data_completeness": 0.4
+    },
+    {
+      "boss_id": 60006,
+      "name": "Dreadphage Ohmna",
+      "difficulty": "raid",
+      "creature_id": 60006,
+      "level": 50,
+      "order": 6,
+      "phases": [
+        {
+          "name": "phase_one",
+          "condition": {"health_above": 75},
+          "abilities": [
+            {"name": "Genetic Assault", "type": "telegraph", "cooldown": 8000},
+            {"name": "Tentacle Slam", "type": "telegraph", "cooldown": 12000}
+          ]
+        },
+        {
+          "name": "phase_two",
+          "condition": {"health_between": [50, 75]},
+          "abilities": [
+            {"name": "Spawn Tentacles", "type": "spawn", "cooldown": 30000},
+            {"name": "Devour", "type": "coordination", "cooldown": 45000}
+          ]
+        },
+        {
+          "name": "phase_three",
+          "condition": {"health_between": [25, 50]},
+          "abilities": [
+            {"name": "Genetic Storm", "type": "telegraph", "cooldown": 20000},
+            {"name": "Phase Transition", "type": "buff", "cooldown": 60000}
+          ]
+        },
+        {
+          "name": "phase_four",
+          "condition": {"health_below": 25},
+          "abilities": [
+            {"name": "Final Absorption", "type": "buff", "cooldown": 0},
+            {"name": "Extinction Protocol", "type": "telegraph", "cooldown": 15000}
+          ]
+        }
+      ],
+      "data_sources": ["instance_bosses.json"],
+      "data_completeness": 0.5
+    }
+  ],
+  "ability_research": {
+    "ability_names_found": [
+      "Corruption", "Repugnant Spew", "Small Bombs", "Shattering Shockwave", "Big Bomb",
+      "Siphon", "Chromosome Corruption", "Spawn Eggs", "DNA Siphon", "Genetic Torrent",
+      "Prototype Alpha Strike", "Prototype Beta Beam", "Synchronize", "Combined Assault",
+      "Genetic Mutation", "Monstrous Cleave", "Converging Strike", "Genetic Assault", "Tentacle Slam"
+    ],
+    "spell_bases_found": {}
+  }
+}

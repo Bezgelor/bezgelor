@@ -1,0 +1,462 @@
+{
+  "instance_id": 1004,
+  "instance_name": "Sanctuary of the Swordmaiden",
+  "level_range": {
+    "min": 35,
+    "max": 50
+  },
+  "veteran_level": 50,
+  "bosses": [
+    {
+      "boss_id": 50301,
+      "name": "Rayna Darkspeaker",
+      "difficulty": "normal",
+      "creature_id": 50301,
+      "level": 35,
+      "order": 1,
+      "phases": [
+        {
+          "name": "phase_one",
+          "condition": {"health_above": 50},
+          "abilities": [
+            {
+              "name": "Shadow Bolt",
+              "type": "telegraph",
+              "cooldown": 5000,
+              "target": "random",
+              "effects": [
+                {"type": "telegraph", "shape": "circle", "radius": 4, "duration": 1000, "color": "purple"},
+                {"type": "damage", "amount": 4000, "damage_type": "magic"}
+              ]
+            },
+            {
+              "name": "Dark Nova",
+              "type": "telegraph",
+              "cooldown": 15000,
+              "effects": [
+                {"type": "telegraph", "shape": "circle", "radius": 10, "duration": 2000, "color": "purple"},
+                {"type": "damage", "amount": 6000, "damage_type": "magic"}
+              ]
+            },
+            {
+              "name": "Shadow Strike",
+              "type": "damage",
+              "cooldown": 8000,
+              "target": "tank",
+              "effects": [
+                {"type": "damage", "amount": 5000, "damage_type": "magic"},
+                {"type": "debuff", "name": "shadow_wound", "duration": 6000, "stacks": 1}
+              ]
+            }
+          ]
+        },
+        {
+          "name": "phase_two",
+          "condition": {"health_below": 50},
+          "abilities": [
+            {
+              "name": "Shadow Clone",
+              "type": "spawn",
+              "cooldown": 25000,
+              "effects": [
+                {"type": "spawn", "spawn_type": "add", "creature_id": 50311, "count": 2}
+              ]
+            },
+            {
+              "name": "Enveloping Darkness",
+              "type": "telegraph",
+              "cooldown": 30000,
+              "effects": [
+                {"type": "telegraph", "shape": "room_wide", "duration": 4000},
+                {"type": "damage", "amount": 5000, "damage_type": "magic"},
+                {"type": "debuff", "name": "blinded", "duration": 5000}
+              ]
+            },
+            {
+              "name": "Shadow Link",
+              "type": "coordination",
+              "cooldown": 20000,
+              "target": "random",
+              "effects": [
+                {"type": "telegraph", "shape": "circle", "radius": 5, "duration": 2000, "color": "purple"},
+                {"type": "coordination", "type": "spread", "min_distance": 8, "damage": 12000}
+              ]
+            }
+          ]
+        }
+      ],
+      "data_sources": ["instance_bosses.json"],
+      "data_completeness": 0.5
+    },
+    {
+      "boss_id": 50302,
+      "name": "Ondu Lifeweaver",
+      "difficulty": "normal",
+      "creature_id": 50302,
+      "level": 35,
+      "order": 2,
+      "phases": [
+        {
+          "name": "phase_one",
+          "condition": {"health_above": 40},
+          "abilities": [
+            {
+              "name": "Life Drain",
+              "type": "channel",
+              "cooldown": 10000,
+              "target": "random",
+              "effects": [
+                {"type": "telegraph", "shape": "line", "width": 4, "length": 20, "duration": 3000, "color": "green"},
+                {"type": "damage", "amount": 3000, "damage_type": "magic"},
+                {"type": "buff", "name": "life_steal", "duration": 3000}
+              ]
+            },
+            {
+              "name": "Summon Guardian",
+              "type": "spawn",
+              "cooldown": 25000,
+              "effects": [
+                {"type": "spawn", "spawn_type": "add", "creature_id": 50312, "count": 1}
+              ]
+            },
+            {
+              "name": "Nature's Touch",
+              "type": "telegraph",
+              "cooldown": 12000,
+              "target": "tank",
+              "effects": [
+                {"type": "telegraph", "shape": "cone", "angle": 60, "length": 12, "duration": 1500, "color": "green"},
+                {"type": "damage", "amount": 5000, "damage_type": "magic"}
+              ]
+            }
+          ]
+        },
+        {
+          "name": "phase_two",
+          "condition": {"health_below": 40},
+          "abilities": [
+            {
+              "name": "Mass Regeneration",
+              "type": "buff",
+              "cooldown": 35000,
+              "interruptible": true,
+              "effects": [
+                {"type": "buff", "name": "regenerating", "duration": 10000}
+              ]
+            },
+            {
+              "name": "Nature's Wrath",
+              "type": "telegraph",
+              "cooldown": 20000,
+              "effects": [
+                {"type": "telegraph", "shape": "circle", "radius": 12, "duration": 2500, "color": "green"},
+                {"type": "damage", "amount": 7000, "damage_type": "magic"},
+                {"type": "debuff", "name": "rooted", "duration": 3000}
+              ]
+            },
+            {
+              "name": "Empowered Guardian",
+              "type": "spawn",
+              "cooldown": 30000,
+              "effects": [
+                {"type": "spawn", "spawn_type": "add", "creature_id": 50313, "count": 2, "spread": true}
+              ]
+            }
+          ]
+        }
+      ],
+      "data_sources": ["instance_bosses.json"],
+      "data_completeness": 0.5
+    },
+    {
+      "boss_id": 50303,
+      "name": "Moldwood Overlord",
+      "difficulty": "normal",
+      "creature_id": 50303,
+      "level": 35,
+      "order": 3,
+      "is_optional": true,
+      "phases": [
+        {
+          "name": "phase_one",
+          "condition": {"health_above": 50},
+          "abilities": [
+            {
+              "name": "Spore Cloud",
+              "type": "telegraph",
+              "cooldown": 12000,
+              "effects": [
+                {"type": "telegraph", "shape": "circle", "radius": 8, "duration": 2000, "color": "green"},
+                {"type": "damage", "amount": 4000, "damage_type": "poison"},
+                {"type": "debuff", "name": "spored", "duration": 8000, "stacks": 1}
+              ]
+            },
+            {
+              "name": "Root Grasp",
+              "type": "telegraph",
+              "cooldown": 18000,
+              "target": "random",
+              "effects": [
+                {"type": "telegraph", "shape": "circle", "radius": 5, "duration": 1500, "color": "green"},
+                {"type": "debuff", "name": "rooted", "duration": 4000},
+                {"type": "damage", "amount": 3000, "damage_type": "physical"}
+              ]
+            },
+            {
+              "name": "Fungal Slam",
+              "type": "telegraph",
+              "cooldown": 8000,
+              "target": "tank",
+              "effects": [
+                {"type": "telegraph", "shape": "cone", "angle": 90, "length": 10, "duration": 1500, "color": "green"},
+                {"type": "damage", "amount": 6000, "damage_type": "physical"}
+              ]
+            }
+          ]
+        },
+        {
+          "name": "phase_two",
+          "condition": {"health_below": 50},
+          "abilities": [
+            {
+              "name": "Toxic Spores",
+              "type": "telegraph",
+              "cooldown": 15000,
+              "effects": [
+                {"type": "telegraph", "shape": "room_wide", "duration": 3000},
+                {"type": "damage", "amount": 5000, "damage_type": "poison"},
+                {"type": "debuff", "name": "poisoned", "duration": 10000, "stacks": 2}
+              ]
+            },
+            {
+              "name": "Fungal Growth",
+              "type": "spawn",
+              "cooldown": 25000,
+              "effects": [
+                {"type": "spawn", "spawn_type": "add", "creature_id": 50314, "count": 3, "spread": true}
+              ]
+            }
+          ]
+        }
+      ],
+      "data_sources": ["instance_bosses.json"],
+      "data_completeness": 0.4
+    },
+    {
+      "boss_id": 50304,
+      "name": "Spiritmother Selene",
+      "difficulty": "normal",
+      "creature_id": 50304,
+      "level": 35,
+      "order": 4,
+      "phases": [
+        {
+          "name": "phase_one",
+          "condition": {"health_above": 60},
+          "abilities": [
+            {
+              "name": "Spirit Lance",
+              "type": "telegraph",
+              "cooldown": 8000,
+              "target": "random",
+              "effects": [
+                {"type": "telegraph", "shape": "line", "width": 3, "length": 25, "duration": 1500, "color": "blue"},
+                {"type": "damage", "amount": 5000, "damage_type": "magic"}
+              ]
+            },
+            {
+              "name": "Ethereal Chains",
+              "type": "telegraph",
+              "cooldown": 20000,
+              "target": "random",
+              "effects": [
+                {"type": "telegraph", "shape": "circle", "radius": 6, "duration": 2000, "color": "blue"},
+                {"type": "debuff", "name": "chained", "duration": 5000},
+                {"type": "coordination", "type": "stack", "min_players": 2, "damage": 10000}
+              ]
+            },
+            {
+              "name": "Spirit Slash",
+              "type": "telegraph",
+              "cooldown": 6000,
+              "target": "tank",
+              "effects": [
+                {"type": "telegraph", "shape": "cone", "angle": 60, "length": 12, "duration": 1200, "color": "blue"},
+                {"type": "damage", "amount": 6000, "damage_type": "magic"}
+              ]
+            }
+          ]
+        },
+        {
+          "name": "phase_two",
+          "condition": {"health_below": 60},
+          "abilities": [
+            {
+              "name": "Phase Shift",
+              "type": "buff",
+              "cooldown": 30000,
+              "effects": [
+                {"type": "buff", "name": "ethereal", "duration": 8000}
+              ]
+            },
+            {
+              "name": "Spirit Storm",
+              "type": "telegraph",
+              "cooldown": 25000,
+              "effects": [
+                {"type": "telegraph", "shape": "room_wide", "duration": 4000},
+                {"type": "damage", "amount": 6000, "damage_type": "magic"},
+                {"type": "debuff", "name": "spirit_touched", "duration": 10000, "stacks": 1}
+              ]
+            },
+            {
+              "name": "Summon Spirits",
+              "type": "spawn",
+              "cooldown": 35000,
+              "effects": [
+                {"type": "spawn", "spawn_type": "add", "creature_id": 50315, "count": 3, "spread": true}
+              ]
+            }
+          ]
+        }
+      ],
+      "data_sources": ["instance_bosses.json"],
+      "data_completeness": 0.5
+    },
+    {
+      "boss_id": 50305,
+      "name": "The Swordmaiden",
+      "difficulty": "normal",
+      "creature_id": 50305,
+      "level": 35,
+      "order": 5,
+      "phases": [
+        {
+          "name": "phase_one",
+          "condition": {"health_above": 70},
+          "abilities": [
+            {
+              "name": "Blade Dance",
+              "type": "telegraph",
+              "cooldown": 10000,
+              "effects": [
+                {"type": "telegraph", "shape": "cone", "angle": 120, "length": 15, "duration": 2000, "color": "red"},
+                {"type": "damage", "amount": 7000, "damage_type": "physical"}
+              ]
+            },
+            {
+              "name": "Whirlwind Strike",
+              "type": "telegraph",
+              "cooldown": 18000,
+              "effects": [
+                {"type": "telegraph", "shape": "circle", "radius": 12, "duration": 2500, "color": "red"},
+                {"type": "damage", "amount": 6000, "damage_type": "physical"}
+              ]
+            },
+            {
+              "name": "Thrust",
+              "type": "telegraph",
+              "cooldown": 6000,
+              "target": "tank",
+              "effects": [
+                {"type": "telegraph", "shape": "line", "width": 3, "length": 15, "duration": 1200, "color": "red"},
+                {"type": "damage", "amount": 8000, "damage_type": "physical"}
+              ]
+            }
+          ]
+        },
+        {
+          "name": "phase_two",
+          "condition": {"health_between": [40, 70]},
+          "abilities": [
+            {
+              "name": "Summon Swords",
+              "type": "spawn",
+              "cooldown": 30000,
+              "effects": [
+                {"type": "spawn", "spawn_type": "add", "creature_id": 50316, "count": 3, "spread": true}
+              ]
+            },
+            {
+              "name": "Blessing of Steel",
+              "type": "buff",
+              "cooldown": 40000,
+              "effects": [
+                {"type": "buff", "name": "steel_blessing", "duration": 15000}
+              ]
+            },
+            {
+              "name": "Cross Slash",
+              "type": "telegraph",
+              "cooldown": 15000,
+              "effects": [
+                {"type": "telegraph", "shape": "cross", "length": 20, "width": 4, "duration": 2000, "color": "red"},
+                {"type": "damage", "amount": 8000, "damage_type": "physical"}
+              ]
+            }
+          ]
+        },
+        {
+          "name": "phase_three",
+          "condition": {"health_between": [15, 40]},
+          "abilities": [
+            {
+              "name": "Maiden's Fury",
+              "type": "telegraph",
+              "cooldown": 20000,
+              "effects": [
+                {"type": "telegraph", "shape": "circle", "radius": 6, "duration": 1500, "color": "red"},
+                {"type": "damage", "amount": 7000, "damage_type": "physical"}
+              ]
+            },
+            {
+              "name": "Holy Ground",
+              "type": "telegraph",
+              "cooldown": 35000,
+              "effects": [
+                {"type": "telegraph", "shape": "donut", "inner_radius": 8, "outer_radius": 20, "duration": 3000, "color": "red"},
+                {"type": "damage", "amount": 10000, "damage_type": "physical"}
+              ]
+            }
+          ]
+        },
+        {
+          "name": "phase_four",
+          "condition": {"health_below": 15},
+          "abilities": [
+            {
+              "name": "Final Judgment",
+              "type": "buff",
+              "cooldown": 45000,
+              "effects": [
+                {"type": "buff", "name": "enraged", "duration": 30000}
+              ]
+            },
+            {
+              "name": "Divine Wrath",
+              "type": "telegraph",
+              "cooldown": 15000,
+              "effects": [
+                {"type": "telegraph", "shape": "room_wide", "duration": 4000},
+                {"type": "damage", "amount": 8000, "damage_type": "physical"}
+              ]
+            }
+          ]
+        }
+      ],
+      "data_sources": ["instance_bosses.json"],
+      "data_completeness": 0.6
+    }
+  ],
+  "ability_research": {
+    "ability_names_found": [
+      "Shadow Bolt", "Dark Nova", "Shadow Clone", "Enveloping Darkness",
+      "Life Drain", "Summon Guardian", "Mass Regeneration", "Nature's Wrath",
+      "Spore Cloud", "Root Grasp",
+      "Spirit Lance", "Ethereal Chains", "Phase Shift", "Spirit Storm",
+      "Blade Dance", "Whirlwind Strike", "Summon Swords", "Blessing of Steel",
+      "Maiden's Fury", "Holy Ground", "Final Judgment", "Divine Wrath"
+    ],
+    "spell_bases_found": {}
+  }
+}

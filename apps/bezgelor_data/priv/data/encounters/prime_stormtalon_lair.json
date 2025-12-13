@@ -1,0 +1,41 @@
+{
+  "instance_id": 1101,
+  "instance_name": "Stormtalon's Lair (Prime)",
+  "instance_type": "dungeon",
+  "difficulty": "prime",
+  "level": 50,
+  "group_size": 5,
+  "prime_level_range": [0, 15],
+  "bosses": [
+    {
+      "boss_id": 11101,
+      "name": "Aethros (Prime)",
+      "health": 8500000,
+      "level": 50,
+      "enrage_timer": 360000,
+      "interrupt_armor": 4,
+      "phases": 3,
+      "loot_table": 11101
+    },
+    {
+      "boss_id": 11102,
+      "name": "Blade-Wind the Invoker (Prime)",
+      "health": 10000000,
+      "level": 50,
+      "enrage_timer": 420000,
+      "interrupt_armor": 4,
+      "phases": 3,
+      "loot_table": 11102
+    },
+    {
+      "boss_id": 11103,
+      "name": "Stormtalon (Prime)",
+      "health": 15000000,
+      "level": 50,
+      "enrage_timer": 540000,
+      "interrupt_armor": 5,
+      "phases": 4,
+      "loot_table": 11103
+    }
+  ]
+}

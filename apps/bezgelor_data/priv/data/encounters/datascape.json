@@ -1,0 +1,409 @@
+{
+  "instance_id": 2001,
+  "instance_name": "Datascape",
+  "instance_type": "raid_40",
+  "level_range": [50, 50],
+  "bosses": [
+    {
+      "boss_id": 70001,
+      "name": "System Daemons",
+      "creature_id": 70011,
+      "health": 120000000,
+      "level": 50,
+      "enrage_timer": 900,
+      "interrupt_armor": 6,
+      "phases": [
+        {
+          "name": "phase_one",
+          "health_above": 70,
+          "emote": "BINARY TERROR INITIATING. PREPARE FOR DELETION.",
+          "abilities": [
+            {"name": "Binary Strike", "type": "tank_buster", "damage": 60000, "damage_type": "physical", "cooldown": 10},
+            {"name": "Data Corruption", "type": "telegraph", "shape": "circle", "radius": 10, "damage": 40000, "damage_type": "magic", "cooldown": 15},
+            {"name": "Null Beam", "type": "telegraph", "shape": "line", "width": 8, "length": 50, "damage": 50000, "damage_type": "magic", "cooldown": 20},
+            {"name": "System Link", "type": "coordination", "coordination_type": "spread", "min_distance": 10, "damage": 70000, "cooldown": 25},
+            {"name": "Probe Spawn", "type": "spawn", "creature_id": 70012, "count": 4, "cooldown": 30}
+          ]
+        },
+        {
+          "name": "phase_two",
+          "health_between": [40, 70],
+          "inherit_phase": "phase_one",
+          "emote": "SYNCHRONIZING ATTACK PROTOCOLS.",
+          "enrage_modifier": 1.3,
+          "abilities": [
+            {"name": "Disconnect", "type": "telegraph", "shape": "room_wide", "damage": 55000, "damage_type": "magic", "cooldown": 40},
+            {"name": "Purge", "type": "telegraph", "shape": "cross", "length": 40, "width": 10, "damage": 60000, "damage_type": "magic", "cooldown": 30},
+            {"name": "Defrag", "type": "debuff", "debuff_name": "fragmented", "duration": 15000, "cooldown": 25}
+          ]
+        },
+        {
+          "name": "phase_three",
+          "health_below": 40,
+          "inherit_phase": "phase_two",
+          "emote": "CRITICAL ERROR. INITIATING PURGE PROTOCOL.",
+          "enrage_modifier": 1.5,
+          "abilities": [
+            {"name": "System Crash", "type": "telegraph", "shape": "room_wide", "damage": 70000, "damage_type": "magic", "cooldown": 35},
+            {"name": "Blue Screen", "type": "coordination", "coordination_type": "soak", "damage": 150000, "cooldown": 45},
+            {"name": "Total Wipe", "type": "telegraph", "shape": "room_wide", "damage": 80000, "damage_type": "magic", "cooldown": 60}
+          ]
+        }
+      ],
+      "notes": "Dual boss fight requiring split raid. Keep Binary and Null at similar health."
+    },
+    {
+      "boss_id": 70002,
+      "name": "Gloomclaw",
+      "creature_id": 70021,
+      "health": 140000000,
+      "level": 50,
+      "enrage_timer": 960,
+      "interrupt_armor": 7,
+      "phases": [
+        {
+          "name": "phase_one",
+          "health_above": 65,
+          "emote": "The darkness shall consume you all!",
+          "abilities": [
+            {"name": "Shadow Slash", "type": "tank_buster", "damage": 70000, "damage_type": "shadow", "cooldown": 8},
+            {"name": "Creeping Darkness", "type": "telegraph", "shape": "circle", "radius": 12, "damage": 45000, "damage_type": "shadow", "cooldown": 12},
+            {"name": "Gloom Beam", "type": "telegraph", "shape": "line", "width": 6, "length": 45, "damage": 55000, "damage_type": "shadow", "cooldown": 18},
+            {"name": "Terror Spawn", "type": "spawn", "creature_id": 70022, "count": 3, "cooldown": 35}
+          ]
+        },
+        {
+          "name": "phase_two",
+          "health_between": [35, 65],
+          "inherit_phase": "phase_one",
+          "emote": "Cower before the shadow!",
+          "enrage_modifier": 1.25,
+          "abilities": [
+            {"name": "Eclipse", "type": "telegraph", "shape": "room_wide", "damage": 50000, "damage_type": "shadow", "cooldown": 45},
+            {"name": "Fear Pulse", "type": "telegraph", "shape": "circle", "radius": 20, "damage": 40000, "damage_type": "shadow", "cooldown": 20, "movement": {"type": "knockback", "distance": 15}},
+            {"name": "Shadow Rift", "type": "spawn", "spawn_type": "portal", "creature_id": 70023, "count": 2, "cooldown": 40}
+          ]
+        },
+        {
+          "name": "phase_three",
+          "health_below": 35,
+          "inherit_phase": "phase_two",
+          "emote": "EMBRACE THE VOID!",
+          "enrage_modifier": 1.5,
+          "abilities": [
+            {"name": "Void Eruption", "type": "telegraph", "shape": "room_wide", "damage": 65000, "damage_type": "shadow", "cooldown": 30},
+            {"name": "Consume Light", "type": "debuff", "debuff_name": "lightless", "duration": 20000, "stacks": 3, "cooldown": 25},
+            {"name": "Annihilation", "type": "telegraph", "shape": "room_wide", "damage": 90000, "damage_type": "shadow", "cooldown": 50}
+          ]
+        }
+      ],
+      "notes": "Shadow-themed boss. Manage darkness stacks and portal spawns."
+    },
+    {
+      "boss_id": 70003,
+      "name": "Maelstrom Authority",
+      "creature_id": 70031,
+      "health": 160000000,
+      "level": 50,
+      "enrage_timer": 1020,
+      "interrupt_armor": 8,
+      "phases": [
+        {
+          "name": "phase_one",
+          "health_above": 70,
+          "emote": "THE STORM ANSWERS TO ME!",
+          "abilities": [
+            {"name": "Lightning Conduit", "type": "tank_buster", "damage": 75000, "damage_type": "magic", "cooldown": 10},
+            {"name": "Storm Surge", "type": "telegraph", "shape": "circle", "radius": 15, "damage": 50000, "damage_type": "magic", "cooldown": 14},
+            {"name": "Chain Lightning", "type": "coordination", "coordination_type": "spread", "min_distance": 8, "damage": 60000, "cooldown": 20},
+            {"name": "Wind Wall", "type": "telegraph", "shape": "line", "width": 10, "length": 60, "damage": 55000, "damage_type": "magic", "cooldown": 25, "movement": {"type": "knockback", "distance": 20}}
+          ]
+        },
+        {
+          "name": "phase_two",
+          "health_between": [40, 70],
+          "inherit_phase": "phase_one",
+          "emote": "FEEL THE TEMPEST'S WRATH!",
+          "enrage_modifier": 1.3,
+          "abilities": [
+            {"name": "Tornado", "type": "spawn", "spawn_type": "hazard", "creature_id": 70032, "count": 3, "cooldown": 35},
+            {"name": "Eye of the Storm", "type": "telegraph", "shape": "donut", "inner_radius": 10, "outer_radius": 30, "damage": 80000, "damage_type": "magic", "cooldown": 40},
+            {"name": "Static Field", "type": "debuff", "debuff_name": "static", "duration": 12000, "stacks": 5, "cooldown": 18}
+          ]
+        },
+        {
+          "name": "phase_three",
+          "health_below": 40,
+          "inherit_phase": "phase_two",
+          "emote": "BECOME ONE WITH THE MAELSTROM!",
+          "enrage_modifier": 1.6,
+          "abilities": [
+            {"name": "Category Five", "type": "telegraph", "shape": "room_wide", "damage": 70000, "damage_type": "magic", "cooldown": 35},
+            {"name": "Supercell", "type": "telegraph", "shape": "circle", "radius": 25, "damage": 90000, "damage_type": "magic", "cooldown": 45},
+            {"name": "Perfect Storm", "type": "telegraph", "shape": "room_wide", "damage": 100000, "damage_type": "magic", "cooldown": 60}
+          ]
+        }
+      ],
+      "notes": "Storm boss with heavy raid-wide damage. Stack and spread mechanics."
+    },
+    {
+      "boss_id": 70004,
+      "name": "Limbo Infomatrix",
+      "creature_id": 70041,
+      "health": 150000000,
+      "level": 50,
+      "enrage_timer": 1080,
+      "interrupt_armor": 8,
+      "phases": [
+        {
+          "name": "phase_one",
+          "health_above": 75,
+          "emote": "PROCESSING... THREAT DETECTED.",
+          "abilities": [
+            {"name": "Data Stream", "type": "tank_buster", "damage": 65000, "damage_type": "magic", "cooldown": 12},
+            {"name": "Matrix Cage", "type": "telegraph", "shape": "circle", "radius": 8, "damage": 40000, "damage_type": "magic", "cooldown": 20},
+            {"name": "Logic Bomb", "type": "coordination", "coordination_type": "stack", "min_players": 5, "damage": 120000, "cooldown": 30},
+            {"name": "Spawn Processes", "type": "spawn", "creature_id": 70042, "count": 6, "cooldown": 40}
+          ]
+        },
+        {
+          "name": "phase_two",
+          "health_between": [50, 75],
+          "inherit_phase": "phase_one",
+          "emote": "ENGAGING COMBAT SUBROUTINES.",
+          "enrage_modifier": 1.2,
+          "abilities": [
+            {"name": "Firewall", "type": "telegraph", "shape": "line", "width": 15, "length": 50, "damage": 60000, "damage_type": "fire", "cooldown": 25},
+            {"name": "Virus Upload", "type": "debuff", "debuff_name": "infected", "duration": 30000, "cooldown": 45},
+            {"name": "Memory Leak", "type": "telegraph", "shape": "room_wide", "damage": 35000, "damage_type": "magic", "cooldown": 20}
+          ]
+        },
+        {
+          "name": "phase_three",
+          "health_between": [25, 50],
+          "inherit_phase": "phase_two",
+          "emote": "SECURITY PROTOCOL ALPHA ENGAGED.",
+          "enrage_modifier": 1.4,
+          "abilities": [
+            {"name": "Cascade Failure", "type": "telegraph", "shape": "room_wide", "damage": 55000, "damage_type": "magic", "cooldown": 30},
+            {"name": "Root Access", "type": "coordination", "coordination_type": "spread", "min_distance": 12, "damage": 80000, "cooldown": 35},
+            {"name": "System Restore", "type": "buff", "buff_name": "restoring", "duration": 15000, "cooldown": 60}
+          ]
+        },
+        {
+          "name": "phase_four",
+          "health_below": 25,
+          "inherit_phase": "phase_three",
+          "emote": "INITIATING KERNEL PANIC!",
+          "enrage_modifier": 1.7,
+          "abilities": [
+            {"name": "Blue Screen of Death", "type": "telegraph", "shape": "room_wide", "damage": 75000, "damage_type": "magic", "cooldown": 40},
+            {"name": "Core Dump", "type": "telegraph", "shape": "circle", "radius": 20, "damage": 100000, "damage_type": "magic", "cooldown": 50},
+            {"name": "Format All", "type": "telegraph", "shape": "room_wide", "damage": 120000, "damage_type": "magic", "cooldown": 75}
+          ]
+        }
+      ],
+      "notes": "Digital themed boss. Manage virus debuffs and process adds."
+    },
+    {
+      "boss_id": 70005,
+      "name": "Elemental Pairs - Earth",
+      "creature_id": 70051,
+      "health": 100000000,
+      "level": 50,
+      "enrage_timer": 720,
+      "interrupt_armor": 5,
+      "phases": [
+        {
+          "name": "phase_one",
+          "health_above": 50,
+          "emote": "THE EARTH TREMBLES!",
+          "abilities": [
+            {"name": "Boulder Smash", "type": "tank_buster", "damage": 70000, "damage_type": "physical", "cooldown": 10},
+            {"name": "Fissure", "type": "telegraph", "shape": "line", "width": 8, "length": 40, "damage": 50000, "damage_type": "physical", "cooldown": 15},
+            {"name": "Earthquake", "type": "telegraph", "shape": "room_wide", "damage": 40000, "damage_type": "physical", "cooldown": 25},
+            {"name": "Rock Wall", "type": "telegraph", "shape": "line", "width": 5, "length": 30, "damage": 35000, "damage_type": "physical", "cooldown": 20}
+          ]
+        },
+        {
+          "name": "phase_two",
+          "health_below": 50,
+          "inherit_phase": "phase_one",
+          "emote": "FEEL THE MOUNTAIN'S FURY!",
+          "enrage_modifier": 1.4,
+          "abilities": [
+            {"name": "Landslide", "type": "telegraph", "shape": "cone", "angle": 90, "length": 35, "damage": 65000, "damage_type": "physical", "cooldown": 20, "movement": {"type": "knockback", "distance": 15}},
+            {"name": "Spawn Golems", "type": "spawn", "creature_id": 70052, "count": 4, "cooldown": 40},
+            {"name": "Tectonic Shift", "type": "telegraph", "shape": "room_wide", "damage": 60000, "damage_type": "physical", "cooldown": 35}
+          ]
+        }
+      ],
+      "notes": "First of elemental pairs. Kill with Life element within 20 seconds."
+    },
+    {
+      "boss_id": 70006,
+      "name": "Elemental Pairs - Life",
+      "creature_id": 70061,
+      "health": 100000000,
+      "level": 50,
+      "enrage_timer": 720,
+      "interrupt_armor": 5,
+      "phases": [
+        {
+          "name": "phase_one",
+          "health_above": 50,
+          "emote": "LIFE FINDS A WAY!",
+          "abilities": [
+            {"name": "Vine Lash", "type": "tank_buster", "damage": 60000, "damage_type": "nature", "cooldown": 10},
+            {"name": "Entangle", "type": "telegraph", "shape": "circle", "radius": 10, "damage": 40000, "damage_type": "nature", "cooldown": 15, "debuff": {"name": "rooted", "duration": 4000}},
+            {"name": "Photosynthesis", "type": "buff", "buff_name": "regenerating", "duration": 10000, "cooldown": 30},
+            {"name": "Seed Burst", "type": "telegraph", "shape": "circle", "radius": 8, "damage": 35000, "damage_type": "nature", "cooldown": 18}
+          ]
+        },
+        {
+          "name": "phase_two",
+          "health_below": 50,
+          "inherit_phase": "phase_one",
+          "emote": "GROWTH CANNOT BE STOPPED!",
+          "enrage_modifier": 1.4,
+          "abilities": [
+            {"name": "Overgrowth", "type": "telegraph", "shape": "room_wide", "damage": 50000, "damage_type": "nature", "cooldown": 25},
+            {"name": "Spawn Lashers", "type": "spawn", "creature_id": 70062, "count": 5, "cooldown": 35},
+            {"name": "Nature's Wrath", "type": "telegraph", "shape": "circle", "radius": 25, "damage": 70000, "damage_type": "nature", "cooldown": 40}
+          ]
+        }
+      ],
+      "notes": "Second of elemental pairs. Kill with Earth element within 20 seconds."
+    },
+    {
+      "boss_id": 70007,
+      "name": "Elemental Pairs - Logic",
+      "creature_id": 70071,
+      "health": 100000000,
+      "level": 50,
+      "enrage_timer": 720,
+      "interrupt_armor": 5,
+      "phases": [
+        {
+          "name": "phase_one",
+          "health_above": 50,
+          "emote": "CALCULATING OPTIMAL DESTRUCTION.",
+          "abilities": [
+            {"name": "Data Spike", "type": "tank_buster", "damage": 65000, "damage_type": "magic", "cooldown": 10},
+            {"name": "Binary Blast", "type": "telegraph", "shape": "circle", "radius": 10, "damage": 45000, "damage_type": "magic", "cooldown": 14},
+            {"name": "Calculation", "type": "buff", "buff_name": "calculating", "duration": 8000, "cooldown": 25},
+            {"name": "Debug", "type": "telegraph", "shape": "line", "width": 6, "length": 35, "damage": 40000, "damage_type": "magic", "cooldown": 18}
+          ]
+        },
+        {
+          "name": "phase_two",
+          "health_below": 50,
+          "inherit_phase": "phase_one",
+          "emote": "LOGIC DICTATES YOUR DESTRUCTION.",
+          "enrage_modifier": 1.4,
+          "abilities": [
+            {"name": "System Overload", "type": "telegraph", "shape": "room_wide", "damage": 55000, "damage_type": "magic", "cooldown": 30},
+            {"name": "Spawn Constructs", "type": "spawn", "creature_id": 70072, "count": 4, "cooldown": 40},
+            {"name": "Fatal Error", "type": "coordination", "coordination_type": "spread", "min_distance": 10, "damage": 80000, "cooldown": 35}
+          ]
+        }
+      ],
+      "notes": "Third of elemental pairs. Kill with Fire element within 20 seconds."
+    },
+    {
+      "boss_id": 70008,
+      "name": "Elemental Pairs - Fire",
+      "creature_id": 70081,
+      "health": 100000000,
+      "level": 50,
+      "enrage_timer": 720,
+      "interrupt_armor": 5,
+      "phases": [
+        {
+          "name": "phase_one",
+          "health_above": 50,
+          "emote": "BURN IN ETERNAL FLAMES!",
+          "abilities": [
+            {"name": "Flame Strike", "type": "tank_buster", "damage": 70000, "damage_type": "fire", "cooldown": 10},
+            {"name": "Inferno", "type": "telegraph", "shape": "circle", "radius": 12, "damage": 50000, "damage_type": "fire", "cooldown": 15},
+            {"name": "Pyroblast", "type": "telegraph", "shape": "line", "width": 6, "length": 40, "damage": 55000, "damage_type": "fire", "cooldown": 18},
+            {"name": "Heat Wave", "type": "debuff", "debuff_name": "burning", "duration": 8000, "stacks": 3, "cooldown": 20}
+          ]
+        },
+        {
+          "name": "phase_two",
+          "health_below": 50,
+          "inherit_phase": "phase_one",
+          "emote": "THE FLAMES CONSUME ALL!",
+          "enrage_modifier": 1.4,
+          "abilities": [
+            {"name": "Firestorm", "type": "telegraph", "shape": "room_wide", "damage": 55000, "damage_type": "fire", "cooldown": 30},
+            {"name": "Spawn Embers", "type": "spawn", "creature_id": 70082, "count": 6, "cooldown": 35},
+            {"name": "Conflagration", "type": "telegraph", "shape": "circle", "radius": 20, "damage": 75000, "damage_type": "fire", "cooldown": 40}
+          ]
+        }
+      ],
+      "notes": "Fourth of elemental pairs. Kill with Logic element within 20 seconds."
+    },
+    {
+      "boss_id": 70009,
+      "name": "Avatus",
+      "creature_id": 70091,
+      "health": 200000000,
+      "level": 50,
+      "enrage_timer": 1200,
+      "interrupt_armor": 10,
+      "phases": [
+        {
+          "name": "phase_one",
+          "health_above": 75,
+          "emote": "I AM THE ARCHITECT OF YOUR DESTRUCTION!",
+          "abilities": [
+            {"name": "Architect's Wrath", "type": "tank_buster", "damage": 90000, "damage_type": "physical", "cooldown": 10},
+            {"name": "Digital Annihilation", "type": "telegraph", "shape": "circle", "radius": 15, "damage": 60000, "damage_type": "magic", "cooldown": 15},
+            {"name": "Reality Shift", "type": "telegraph", "shape": "room_wide", "damage": 50000, "damage_type": "magic", "cooldown": 30},
+            {"name": "Spawn Constructs", "type": "spawn", "creature_id": 70092, "count": 4, "cooldown": 35}
+          ]
+        },
+        {
+          "name": "phase_two",
+          "health_between": [50, 75],
+          "inherit_phase": "phase_one",
+          "emote": "YOU ARE NOTHING BUT DATA TO BE DELETED!",
+          "enrage_modifier": 1.3,
+          "abilities": [
+            {"name": "Digital Divide", "type": "telegraph", "shape": "cross", "length": 50, "width": 10, "damage": 70000, "damage_type": "magic", "cooldown": 25},
+            {"name": "Corruption Matrix", "type": "telegraph", "shape": "room_wide", "damage": 45000, "damage_type": "magic", "cooldown": 20},
+            {"name": "Data Fragment", "type": "coordination", "coordination_type": "stack", "min_players": 8, "damage": 200000, "cooldown": 40}
+          ]
+        },
+        {
+          "name": "phase_three",
+          "health_between": [25, 50],
+          "inherit_phase": "phase_two",
+          "emote": "THE DATASCAPE BENDS TO MY WILL!",
+          "enrage_modifier": 1.5,
+          "abilities": [
+            {"name": "Big Bang", "type": "telegraph", "shape": "room_wide", "damage": 75000, "damage_type": "magic", "cooldown": 35},
+            {"name": "Oblivion Beam", "type": "telegraph", "shape": "line", "width": 12, "length": 60, "damage": 100000, "damage_type": "magic", "cooldown": 30},
+            {"name": "Digital Storm", "type": "telegraph", "shape": "circle", "radius": 25, "damage": 65000, "damage_type": "magic", "cooldown": 25, "movement": {"type": "pull", "distance": 10}}
+          ]
+        },
+        {
+          "name": "phase_four",
+          "health_below": 25,
+          "inherit_phase": "phase_three",
+          "emote": "THIS CANNOT BE! I AM AVATUS! I AM PERFECTION!",
+          "enrage_modifier": 1.8,
+          "abilities": [
+            {"name": "Omega Protocol", "type": "telegraph", "shape": "room_wide", "damage": 90000, "damage_type": "magic", "cooldown": 40},
+            {"name": "System Purge", "type": "telegraph", "shape": "room_wide", "damage": 100000, "damage_type": "magic", "cooldown": 50},
+            {"name": "Delete All", "type": "coordination", "coordination_type": "soak", "damage": 300000, "cooldown": 60},
+            {"name": "Final Calculation", "type": "telegraph", "shape": "room_wide", "damage": 150000, "damage_type": "magic", "cooldown": 90}
+          ]
+        }
+      ],
+      "notes": "Final boss of Datascape. Complex multi-phase fight with digital theme. Requires mastery of all previous mechanics."
+    }
+  ]
+}

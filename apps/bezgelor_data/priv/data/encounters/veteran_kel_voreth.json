@@ -1,0 +1,146 @@
+{
+  "instance_id": 1007,
+  "instance_name": "Veteran Kel Voreth",
+  "instance_type": "veteran_dungeon",
+  "level_range": [50, 50],
+  "bosses": [
+    {
+      "boss_id": 50601,
+      "name": "Grond the Corpsemaker (Veteran)",
+      "creature_id": 50611,
+      "health": 3800000,
+      "level": 50,
+      "enrage_timer": 480,
+      "interrupt_armor": 3,
+      "phases": [
+        {
+          "name": "phase_one",
+          "health_above": 60,
+          "emote": "Fresh meat for the corpse pile!",
+          "abilities": [
+            {"name": "Corpse Cleave", "type": "tank_buster", "damage": 20000, "damage_type": "physical", "cooldown": 8},
+            {"name": "Gore", "type": "telegraph", "shape": "cone", "angle": 90, "length": 20, "damage": 15000, "damage_type": "physical", "cooldown": 12},
+            {"name": "Corpse Throw", "type": "telegraph", "shape": "circle", "radius": 8, "damage": 12000, "damage_type": "physical", "cooldown": 15},
+            {"name": "Raise Dead", "type": "spawn", "creature_id": 50612, "count": 2, "cooldown": 20}
+          ]
+        },
+        {
+          "name": "phase_two",
+          "health_below": 60,
+          "inherit_phase": "phase_one",
+          "emote": "MORE BODIES FOR THE PILE!",
+          "enrage_modifier": 1.4,
+          "abilities": [
+            {"name": "Mass Corpses", "type": "spawn", "spawn_type": "wave", "waves": 2, "delay": 5000, "creature_id": 50612, "count_per_wave": 3},
+            {"name": "Corpse Explosion", "type": "telegraph", "shape": "room_wide", "damage": 14000, "damage_type": "physical", "cooldown": 30},
+            {"name": "Enraged Cleave", "type": "telegraph", "shape": "cone", "angle": 180, "length": 25, "damage": 18000, "damage_type": "physical", "cooldown": 18}
+          ]
+        }
+      ]
+    },
+    {
+      "boss_id": 50602,
+      "name": "Slavemaster Drokk (Veteran)",
+      "creature_id": 50621,
+      "health": 4200000,
+      "level": 50,
+      "enrage_timer": 540,
+      "interrupt_armor": 4,
+      "phases": [
+        {
+          "name": "phase_one",
+          "health_above": 65,
+          "emote": "You will serve or you will DIE!",
+          "abilities": [
+            {"name": "Slave Driver", "type": "tank_buster", "damage": 22000, "damage_type": "physical", "cooldown": 10},
+            {"name": "Shock Chain", "type": "coordination", "coordination_type": "spread", "min_distance": 8, "damage": 16000, "cooldown": 18},
+            {"name": "Whip Crack", "type": "telegraph", "shape": "line", "width": 5, "length": 30, "damage": 14000, "damage_type": "physical", "cooldown": 12},
+            {"name": "Summon Slaves", "type": "spawn", "creature_id": 50622, "count": 3, "cooldown": 25}
+          ]
+        },
+        {
+          "name": "phase_two",
+          "health_between": [35, 65],
+          "inherit_phase": "phase_one",
+          "emote": "Work harder, slaves!",
+          "enrage_modifier": 1.3,
+          "abilities": [
+            {"name": "Mass Punishment", "type": "telegraph", "shape": "room_wide", "damage": 12000, "damage_type": "physical", "cooldown": 28},
+            {"name": "Shackle", "type": "debuff", "debuff_name": "shackled", "duration": 6000, "cooldown": 20},
+            {"name": "Charged Whip", "type": "telegraph", "shape": "cross", "length": 30, "width": 5, "damage": 16000, "damage_type": "magic", "cooldown": 22}
+          ]
+        },
+        {
+          "name": "phase_three",
+          "health_below": 35,
+          "inherit_phase": "phase_two",
+          "emote": "NO ONE ESCAPES THE SLAVEMASTER!",
+          "enrage_modifier": 1.6,
+          "abilities": [
+            {"name": "Final Punishment", "type": "telegraph", "shape": "room_wide", "damage": 18000, "damage_type": "physical", "cooldown": 30},
+            {"name": "Slave Uprising", "type": "spawn", "spawn_type": "wave", "waves": 2, "delay": 4000, "creature_id": 50622, "count_per_wave": 4},
+            {"name": "Execute", "type": "telegraph", "shape": "circle", "radius": 15, "damage": 22000, "damage_type": "physical", "cooldown": 25}
+          ]
+        }
+      ]
+    },
+    {
+      "boss_id": 50603,
+      "name": "Forgemaster Trogun (Veteran)",
+      "creature_id": 50631,
+      "health": 5500000,
+      "level": 50,
+      "enrage_timer": 600,
+      "interrupt_armor": 5,
+      "phases": [
+        {
+          "name": "phase_one",
+          "health_above": 75,
+          "emote": "The forge burns eternal!",
+          "abilities": [
+            {"name": "Forge Hammer", "type": "tank_buster", "damage": 28000, "damage_type": "physical", "cooldown": 8},
+            {"name": "Molten Slag", "type": "telegraph", "shape": "circle", "radius": 10, "damage": 16000, "damage_type": "fire", "cooldown": 12},
+            {"name": "Heat Wave", "type": "telegraph", "shape": "room_wide", "damage": 12000, "damage_type": "fire", "cooldown": 25},
+            {"name": "Anvil Strike", "type": "telegraph", "shape": "cone", "angle": 90, "length": 25, "damage": 18000, "damage_type": "physical", "cooldown": 15}
+          ]
+        },
+        {
+          "name": "phase_two",
+          "health_between": [50, 75],
+          "inherit_phase": "phase_one",
+          "emote": "Feel the heat of creation!",
+          "enrage_modifier": 1.3,
+          "abilities": [
+            {"name": "Summon Constructs", "type": "spawn", "creature_id": 50632, "count": 2, "cooldown": 30},
+            {"name": "Forge Fire", "type": "telegraph", "shape": "circle", "radius": 15, "damage": 18000, "damage_type": "fire", "cooldown": 20},
+            {"name": "Tempered Steel", "type": "buff", "buff_name": "tempered", "duration": 12000, "cooldown": 35}
+          ]
+        },
+        {
+          "name": "phase_three",
+          "health_between": [25, 50],
+          "inherit_phase": "phase_two",
+          "emote": "THE FORGE CONSUMES ALL!",
+          "enrage_modifier": 1.5,
+          "abilities": [
+            {"name": "Volcanic Eruption", "type": "telegraph", "shape": "room_wide", "damage": 16000, "damage_type": "fire", "cooldown": 28},
+            {"name": "Lava Pool", "type": "telegraph", "shape": "circle", "radius": 12, "damage": 20000, "damage_type": "fire", "cooldown": 22},
+            {"name": "Mass Constructs", "type": "spawn", "creature_id": 50632, "count": 4, "cooldown": 35}
+          ]
+        },
+        {
+          "name": "phase_four",
+          "health_below": 25,
+          "inherit_phase": "phase_three",
+          "emote": "MY MASTERPIECE... DESTRUCTION!",
+          "enrage_modifier": 1.8,
+          "abilities": [
+            {"name": "Apocalypse Forge", "type": "telegraph", "shape": "room_wide", "damage": 22000, "damage_type": "fire", "cooldown": 30},
+            {"name": "Final Forging", "type": "telegraph", "shape": "circle", "radius": 25, "damage": 25000, "damage_type": "fire", "cooldown": 35},
+            {"name": "Molten Core", "type": "coordination", "coordination_type": "stack", "min_players": 5, "damage": 70000, "cooldown": 40}
+          ]
+        }
+      ]
+    }
+  ]
+}

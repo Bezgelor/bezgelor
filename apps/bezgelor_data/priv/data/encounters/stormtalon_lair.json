@@ -1,0 +1,300 @@
+{
+  "instance_id": 12785,
+  "instance_name": "Stormtalon's Lair",
+  "level_range": {
+    "min": 17,
+    "max": 20
+  },
+  "prime_level": 50,
+  "bosses": [
+    {
+      "boss_id": 17160,
+      "name": "Blade-Wind the Invoker",
+      "difficulty": "normal",
+      "creature_id": 17160,
+      "level": 20,
+      "tier_id": 1,
+      "difficulty_id": 12,
+      "action_set_id": 0,
+      "direct_spells": [],
+      "phases": [],
+      "abilities": [],
+      "data_sources": [
+        "client_data"
+      ],
+      "data_completeness": 0.3
+    },
+    {
+      "boss_id": 17163,
+      "name": "Stormtalon",
+      "difficulty": "normal",
+      "creature_id": 17163,
+      "level": 20,
+      "tier_id": 1,
+      "difficulty_id": 12,
+      "action_set_id": 211,
+      "direct_spells": [],
+      "phases": [],
+      "abilities": [],
+      "data_sources": [
+        "client_data"
+      ],
+      "data_completeness": 0.3
+    },
+    {
+      "boss_id": 17166,
+      "name": "Aethros",
+      "difficulty": "normal",
+      "creature_id": 17166,
+      "level": 20,
+      "tier_id": 1,
+      "difficulty_id": 12,
+      "action_set_id": 0,
+      "direct_spells": [],
+      "phases": [],
+      "abilities": [],
+      "data_sources": [
+        "client_data"
+      ],
+      "data_completeness": 0.3
+    },
+    {
+      "boss_id": 32703,
+      "name": "Aethros",
+      "difficulty": "prime",
+      "creature_id": 32703,
+      "level": 50,
+      "tier_id": 5,
+      "difficulty_id": 12,
+      "action_set_id": 0,
+      "direct_spells": [],
+      "phases": [],
+      "abilities": [],
+      "data_sources": [
+        "client_data"
+      ],
+      "data_completeness": 0.3
+    },
+    {
+      "boss_id": 33406,
+      "name": "Stormtalon",
+      "difficulty": "prime",
+      "creature_id": 33406,
+      "level": 50,
+      "tier_id": 5,
+      "difficulty_id": 12,
+      "action_set_id": 211,
+      "direct_spells": [],
+      "phases": [],
+      "abilities": [],
+      "data_sources": [
+        "client_data"
+      ],
+      "data_completeness": 0.3
+    }
+  ],
+  "ability_research": {
+    "ability_names_found": [
+      "Static Wave",
+      "Lightning Storm",
+      "Thunder Cross",
+      "Electrostatic Pulse",
+      "Manifest Cyclone",
+      "Torrent",
+      "Gust of Aethros"
+    ],
+    "spell_bases_found": {
+      "Static Wave": [
+        13106,
+        23994,
+        24239
+      ],
+      "Lightning Storm": [
+        14432,
+        24058
+      ],
+      "Thunder Cross": [
+        23168
+      ],
+      "Electrostatic Pulse": [
+        23423,
+        31148
+      ],
+      "Manifest Cyclone": [
+        24209
+      ]
+    }
+  },
+  "telegraph_reference": {
+    "shape_definitions": {
+      "circle": "param00=radius",
+      "cone": "param00=start_radius, param01=end_radius, param02=angle_degrees",
+      "long_cone": "param00=start_radius, param01=end_radius, param02=angle_degrees",
+      "rectangle": "param00=width, param01=height, param02=length",
+      "square": "param00=size, param01=height, param02=length",
+      "pie": "param01=radius, param02=angle_degrees (donut)"
+    },
+    "samples": [
+      {
+        "id": 1,
+        "shape": "circle",
+        "param00": 5.0,
+        "param01": 5.0,
+        "param02": 45.0,
+        "duration_ms": 1500
+      },
+      {
+        "id": 2,
+        "shape": "long_cone",
+        "param00": 6.0,
+        "param01": 8.0,
+        "param02": 6.0,
+        "duration_ms": 1500
+      },
+      {
+        "id": 3,
+        "shape": "square",
+        "param00": 6.0,
+        "param01": 8.0,
+        "param02": 12.0,
+        "duration_ms": 6000
+      },
+      {
+        "id": 4,
+        "shape": "rectangle",
+        "param00": 10.0,
+        "param01": 45.0,
+        "param02": 35.0,
+        "duration_ms": 6000
+      },
+      {
+        "id": 5,
+        "shape": "cone",
+        "param00": 10.0,
+        "param01": 20.0,
+        "param02": 0.0,
+        "duration_ms": 6000
+      },
+      {
+        "id": 6,
+        "shape": "circle",
+        "param00": 4.0,
+        "param01": 4.0,
+        "param02": 8.0,
+        "duration_ms": 6000
+      },
+      {
+        "id": 7,
+        "shape": "long_cone",
+        "param00": 10.0,
+        "param01": 4.0,
+        "param02": 4.0,
+        "duration_ms": 9000
+      },
+      {
+        "id": 8,
+        "shape": "circle",
+        "param00": 7.5,
+        "param01": 0.0,
+        "param02": 0.0,
+        "duration_ms": 2000
+      },
+      {
+        "id": 9,
+        "shape": "rectangle",
+        "param00": 0.0,
+        "param01": 5.0,
+        "param02": 45.0,
+        "duration_ms": 2266
+      },
+      {
+        "id": 10,
+        "shape": "long_cone",
+        "param00": 4.0,
+        "param01": 10.0,
+        "param02": 4.0,
+        "duration_ms": 2500
+      },
+      {
+        "id": 16,
+        "shape": "rectangle",
+        "param00": 2.0,
+        "param01": 5.0,
+        "param02": 45.0,
+        "duration_ms": 0
+      },
+      {
+        "id": 58,
+        "shape": "custom",
+        "param00": 3.0,
+        "param01": 10.0,
+        "param02": 15.5,
+        "duration_ms": 3000
+      },
+      {
+        "id": 101,
+        "shape": "pie",
+        "param00": 10.0,
+        "param01": 45.0,
+        "param02": 35.0,
+        "duration_ms": 6000
+      },
+      {
+        "id": 107,
+        "shape": "custom",
+        "param00": 1.0,
+        "param01": 10.0,
+        "param02": 8.0,
+        "duration_ms": 0
+      },
+      {
+        "id": 125,
+        "shape": "custom",
+        "param00": 3.0,
+        "param01": 20.0,
+        "param02": 29.0,
+        "duration_ms": 0
+      },
+      {
+        "id": 132,
+        "shape": "line",
+        "param00": 3.0,
+        "param01": 27.0,
+        "param02": 20.0,
+        "duration_ms": 0
+      },
+      {
+        "id": 139,
+        "shape": "line",
+        "param00": 1.0,
+        "param01": 26.0,
+        "param02": 30.0,
+        "duration_ms": 0
+      },
+      {
+        "id": 141,
+        "shape": "line",
+        "param00": 1.0,
+        "param01": 26.0,
+        "param02": 30.0,
+        "duration_ms": 0
+      },
+      {
+        "id": 182,
+        "shape": "cone",
+        "param00": 5.0,
+        "param01": 10.0,
+        "param02": 0.0,
+        "duration_ms": 0
+      },
+      {
+        "id": 246,
+        "shape": "square",
+        "param00": 1.0,
+        "param01": 15.0,
+        "param02": 11.0,
+        "duration_ms": 1700
+      }
+    ]
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "instance_id": 5000,
+  "instance_name": "World Bosses Collection",
+  "instance_type": "world_boss",
+  "level_range": [15, 50],
+  "group_size": [20, 40],
+  "world_bosses": [
+    {
+      "boss_id": 80001,
+      "name": "Metal Maw Prime",
+      "zone": "Galeras",
+      "health": 50000000,
+      "level": 25,
+      "respawn_timer": 14400000
+    },
+    {
+      "boss_id": 80002,
+      "name": "King Honeygrave",
+      "zone": "Auroria",
+      "health": 55000000,
+      "level": 30,
+      "respawn_timer": 14400000
+    },
+    {
+      "boss_id": 80003,
+      "name": "Zoetic",
+      "zone": "Wilderrun",
+      "health": 65000000,
+      "level": 35,
+      "respawn_timer": 14400000
+    },
+    {
+      "boss_id": 80004,
+      "name": "Grendelus the Guardian",
+      "zone": "Farside",
+      "health": 75000000,
+      "level": 40,
+      "respawn_timer": 14400000
+    },
+    {
+      "boss_id": 80005,
+      "name": "Kraggar",
+      "zone": "Malgrave",
+      "health": 80000000,
+      "level": 45,
+      "respawn_timer": 14400000
+    },
+    {
+      "boss_id": 80006,
+      "name": "Dreadwatcher Tyrix",
+      "zone": "Grimvault",
+      "health": 100000000,
+      "level": 50,
+      "respawn_timer": 14400000
+    }
+  ]
+}

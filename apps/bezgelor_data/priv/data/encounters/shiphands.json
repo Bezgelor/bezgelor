@@ -1,0 +1,73 @@
+{
+  "instance_id": 3000,
+  "instance_name": "Shiphands Collection",
+  "instance_type": "shiphand",
+  "level_range": [6, 50],
+  "group_size": [1, 2],
+  "shiphands": [
+    {
+      "shiphand_id": 3001,
+      "name": "Fragment of Sorrow",
+      "level_range": [6, 14],
+      "bosses": [
+        {"boss_id": 60101, "name": "Sorrow Guardian", "health": 50000, "level": 12}
+      ]
+    },
+    {
+      "shiphand_id": 3002,
+      "name": "Deep Space Exploration",
+      "level_range": [8, 16],
+      "bosses": [
+        {"boss_id": 60201, "name": "Void Anomaly", "health": 55000, "level": 14}
+      ]
+    },
+    {
+      "shiphand_id": 3003,
+      "name": "Infestation",
+      "level_range": [12, 20],
+      "bosses": [
+        {"boss_id": 60301, "name": "Brood Mother", "health": 75000, "level": 18}
+      ]
+    },
+    {
+      "shiphand_id": 3004,
+      "name": "Outpost M-13",
+      "level_range": [16, 24],
+      "bosses": [
+        {"boss_id": 60401, "name": "M-13 Prototype", "health": 90000, "level": 22}
+      ]
+    },
+    {
+      "shiphand_id": 3005,
+      "name": "Space Madness",
+      "level_range": [22, 30],
+      "bosses": [
+        {"boss_id": 60501, "name": "Corrupted Crewman", "health": 110000, "level": 28}
+      ]
+    },
+    {
+      "shiphand_id": 3006,
+      "name": "Rage Logic Terror From Beyond",
+      "level_range": [28, 36],
+      "bosses": [
+        {"boss_id": 60601, "name": "Logic Horror", "health": 150000, "level": 34}
+      ]
+    },
+    {
+      "shiphand_id": 3007,
+      "name": "Gauntlet",
+      "level_range": [35, 50],
+      "bosses": [
+        {"boss_id": 60701, "name": "Arena Champion", "health": 200000, "level": 45}
+      ]
+    },
+    {
+      "shiphand_id": 3008,
+      "name": "Abandoned Eldan Test Lab",
+      "level_range": [40, 50],
+      "bosses": [
+        {"boss_id": 60801, "name": "Eldan Experiment", "health": 250000, "level": 48}
+      ]
+    }
+  ]
+}

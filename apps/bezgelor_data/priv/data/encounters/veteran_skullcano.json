@@ -1,0 +1,134 @@
+{
+  "instance_id": 1008,
+  "instance_name": "Veteran Skullcano",
+  "instance_type": "veteran_dungeon",
+  "level_range": [50, 50],
+  "bosses": [
+    {
+      "boss_id": 50701,
+      "name": "Stew-Shaman Tugga (Veteran)",
+      "creature_id": 50711,
+      "health": 3500000,
+      "level": 50,
+      "enrage_timer": 480,
+      "interrupt_armor": 3,
+      "phases": [
+        {
+          "name": "phase_one",
+          "health_above": 50,
+          "emote": "Time to make the ULTIMATE stew!",
+          "abilities": [
+            {"name": "Boiling Splash", "type": "telegraph", "shape": "circle", "radius": 10, "damage": 14000, "damage_type": "fire", "cooldown": 10},
+            {"name": "Stew Ladle", "type": "tank_buster", "damage": 18000, "damage_type": "physical", "cooldown": 8},
+            {"name": "Summon Ingredients", "type": "spawn", "creature_id": 50712, "count": 3, "cooldown": 25},
+            {"name": "Spice Bomb", "type": "telegraph", "shape": "circle", "radius": 8, "damage": 12000, "damage_type": "fire", "cooldown": 15}
+          ]
+        },
+        {
+          "name": "phase_two",
+          "health_below": 50,
+          "inherit_phase": "phase_one",
+          "emote": "Secret ingredient time!",
+          "enrage_modifier": 1.4,
+          "abilities": [
+            {"name": "Toxic Stew", "type": "telegraph", "shape": "room_wide", "damage": 12000, "damage_type": "poison", "cooldown": 28},
+            {"name": "Explosive Recipe", "type": "telegraph", "shape": "circle", "radius": 15, "damage": 18000, "damage_type": "fire", "cooldown": 22},
+            {"name": "Helper Horde", "type": "spawn", "spawn_type": "wave", "waves": 2, "delay": 4000, "creature_id": 50712, "count_per_wave": 3}
+          ]
+        }
+      ]
+    },
+    {
+      "boss_id": 50702,
+      "name": "Thunderfoot (Veteran)",
+      "creature_id": 50721,
+      "health": 4000000,
+      "level": 50,
+      "enrage_timer": 540,
+      "interrupt_armor": 4,
+      "phases": [
+        {
+          "name": "phase_one",
+          "health_above": 60,
+          "emote": "THUNDERFOOT CRUSH!",
+          "abilities": [
+            {"name": "Seismic Stomp", "type": "telegraph", "shape": "circle", "radius": 12, "damage": 16000, "damage_type": "physical", "cooldown": 12},
+            {"name": "Gore Charge", "type": "telegraph", "shape": "line", "width": 6, "length": 35, "damage": 14000, "damage_type": "physical", "cooldown": 15, "movement": {"type": "knockback", "distance": 12}},
+            {"name": "Thunder Strike", "type": "tank_buster", "damage": 22000, "damage_type": "physical", "cooldown": 10},
+            {"name": "Stampede", "type": "coordination", "coordination_type": "spread", "min_distance": 8, "damage": 15000, "cooldown": 20}
+          ]
+        },
+        {
+          "name": "phase_two",
+          "health_between": [30, 60],
+          "inherit_phase": "phase_one",
+          "emote": "THE GROUND SHAKES!",
+          "enrage_modifier": 1.35,
+          "abilities": [
+            {"name": "Earthquake", "type": "telegraph", "shape": "room_wide", "damage": 14000, "damage_type": "physical", "cooldown": 25},
+            {"name": "Boulder Throw", "type": "telegraph", "shape": "circle", "radius": 10, "damage": 18000, "damage_type": "physical", "cooldown": 18},
+            {"name": "Summon Pack", "type": "spawn", "creature_id": 50722, "count": 4, "cooldown": 30}
+          ]
+        },
+        {
+          "name": "phase_three",
+          "health_below": 30,
+          "inherit_phase": "phase_two",
+          "emote": "THUNDERFOOT RAGE!",
+          "enrage_modifier": 1.6,
+          "abilities": [
+            {"name": "Ultimate Stomp", "type": "telegraph", "shape": "room_wide", "damage": 20000, "damage_type": "physical", "cooldown": 30},
+            {"name": "Primal Fury", "type": "buff", "buff_name": "primal_fury", "duration": 15000, "cooldown": 40},
+            {"name": "Fissure", "type": "telegraph", "shape": "line", "width": 8, "length": 40, "damage": 22000, "damage_type": "physical", "cooldown": 20}
+          ]
+        }
+      ]
+    },
+    {
+      "boss_id": 50703,
+      "name": "Laveka the Firesinger (Veteran)",
+      "creature_id": 50731,
+      "health": 5000000,
+      "level": 50,
+      "enrage_timer": 600,
+      "interrupt_armor": 5,
+      "phases": [
+        {
+          "name": "phase_one",
+          "health_above": 70,
+          "emote": "The volcano sings my song of destruction!",
+          "abilities": [
+            {"name": "Flame Bolt", "type": "telegraph", "shape": "line", "width": 5, "length": 30, "damage": 16000, "damage_type": "fire", "cooldown": 10},
+            {"name": "Volcanic Burst", "type": "telegraph", "shape": "circle", "radius": 12, "damage": 18000, "damage_type": "fire", "cooldown": 15},
+            {"name": "Fire Totem", "type": "spawn", "creature_id": 50732, "count": 2, "cooldown": 25},
+            {"name": "Searing Breath", "type": "telegraph", "shape": "cone", "angle": 90, "length": 25, "damage": 20000, "damage_type": "fire", "cooldown": 18}
+          ]
+        },
+        {
+          "name": "phase_two",
+          "health_between": [40, 70],
+          "inherit_phase": "phase_one",
+          "emote": "Feel the volcano's fury!",
+          "enrage_modifier": 1.35,
+          "abilities": [
+            {"name": "Eruption", "type": "telegraph", "shape": "room_wide", "damage": 16000, "damage_type": "fire", "cooldown": 28},
+            {"name": "Lava Wave", "type": "telegraph", "shape": "line", "width": 10, "length": 40, "damage": 20000, "damage_type": "fire", "cooldown": 20},
+            {"name": "Fire Dance", "type": "buff", "buff_name": "fire_dancing", "duration": 10000, "cooldown": 35}
+          ]
+        },
+        {
+          "name": "phase_three",
+          "health_below": 40,
+          "inherit_phase": "phase_two",
+          "emote": "BURN IN THE VOLCANO'S EMBRACE!",
+          "enrage_modifier": 1.6,
+          "abilities": [
+            {"name": "Volcanic Apocalypse", "type": "telegraph", "shape": "room_wide", "damage": 22000, "damage_type": "fire", "cooldown": 30},
+            {"name": "Magma Pool", "type": "telegraph", "shape": "circle", "radius": 20, "damage": 25000, "damage_type": "fire", "cooldown": 25},
+            {"name": "Final Song", "type": "coordination", "coordination_type": "stack", "min_players": 5, "damage": 75000, "cooldown": 40}
+          ]
+        }
+      ]
+    }
+  ]
+}
