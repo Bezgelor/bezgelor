@@ -148,6 +148,18 @@ defmodule BezgelorProtocol.Opcode do
   @client_mail_delete 0x0915
   @client_mail_return 0x0916
 
+  # Dialogue opcodes
+  @server_dialog_start 0x0357
+  @server_dialog_end 0x0358
+  @client_dialog_opened 0x0356
+  @server_chat_npc 0x01C6
+
+  # NPC interaction opcode
+  @client_npc_interact 0x07EA
+
+  # Quest opcodes
+  @server_quest_offer 0x0351
+
   # Mapping from atom to integer
   @opcode_map %{
     # Auth (STS Server - port 6600)
@@ -263,7 +275,16 @@ defmodule BezgelorProtocol.Opcode do
     client_mail_take_attachments: @client_mail_take_attachments,
     client_mail_take_gold: @client_mail_take_gold,
     client_mail_delete: @client_mail_delete,
-    client_mail_return: @client_mail_return
+    client_mail_return: @client_mail_return,
+    # Dialogue
+    server_dialog_start: @server_dialog_start,
+    server_dialog_end: @server_dialog_end,
+    client_dialog_opened: @client_dialog_opened,
+    server_chat_npc: @server_chat_npc,
+    # NPC interaction
+    client_npc_interact: @client_npc_interact,
+    # Quests
+    server_quest_offer: @server_quest_offer
   }
 
   # Reverse mapping from integer to atom
@@ -372,7 +393,16 @@ defmodule BezgelorProtocol.Opcode do
     client_mail_take_attachments: "ClientMailTakeAttachments",
     client_mail_take_gold: "ClientMailTakeGold",
     client_mail_delete: "ClientMailDelete",
-    client_mail_return: "ClientMailReturn"
+    client_mail_return: "ClientMailReturn",
+    # Dialogue
+    server_dialog_start: "ServerDialogStart",
+    server_dialog_end: "ServerDialogEnd",
+    client_dialog_opened: "ClientDialogOpened",
+    server_chat_npc: "ServerChatNPC",
+    # NPC interaction
+    client_npc_interact: "ClientNpcInteract",
+    # Quests
+    server_quest_offer: "ServerQuestOffer"
   }
 
   @type t :: atom()
