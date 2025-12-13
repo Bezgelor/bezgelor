@@ -21,6 +21,23 @@ defmodule BezgelorPortalWeb.Router do
 
     get "/", PageController, :home
 
+    # Feature pages
+    get "/features", FeatureController, :index
+    get "/features/races", FeatureController, :races
+    get "/features/classes", FeatureController, :classes
+    get "/features/combat", FeatureController, :combat
+    get "/features/housing", FeatureController, :housing
+    get "/features/paths", FeatureController, :paths
+    get "/features/dungeons", FeatureController, :dungeons
+
+    # Content pages
+    get "/about", ContentController, :about
+    get "/terms", ContentController, :terms
+    get "/privacy", ContentController, :privacy
+    get "/download", ContentController, :download
+    get "/community", ContentController, :community
+    get "/news", ContentController, :news
+
     # Auth routes
     live "/login", LoginLive, :index
     live "/register", RegisterLive, :index

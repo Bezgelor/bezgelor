@@ -1,0 +1,234 @@
+<Layouts.gaming flash={@flash} current_account={@current_account}>
+  <!-- Hero Section -->
+  <section class="hero-gaming gaming-bg-hero" style="min-height: 60vh;">
+    <div class="gaming-starfield"></div>
+    <div class="gaming-mesh"></div>
+
+    <div class="hero-gaming-content">
+      <h1 class="hero-gaming-title text-4xl md:text-6xl">
+        <span class="text-white">Game</span>
+        <span class="text-gradient-cyan text-glow-pulse">Features</span>
+      </h1>
+      <p class="hero-gaming-subtitle">
+        Discover everything that makes WildStar a unique MMORPG experience.
+      </p>
+    </div>
+  </section>
+
+  <!-- Features Grid -->
+  <section class="section-gaming" style="background: var(--gaming-bg-dark);">
+    <div class="max-w-7xl mx-auto">
+      <!-- Races -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-20 items-center animate-on-scroll">
+        <div class="screenshot-placeholder rounded-lg" style="aspect-ratio: 16/9;">
+          <span class="screenshot-placeholder-icon">👽</span>
+          <span>Races Screenshot</span>
+        </div>
+        <div>
+          <h2 class="text-3xl font-bold text-white mb-4">
+            <span class="text-glow-cyan">Playable Races</span>
+          </h2>
+          <p class="text-white/70 mb-6 text-lg">
+            Choose your allegiance between two warring factions on Nexus. The Exiles are scrappy
+            survivors fighting for a new home, while the Dominion seeks to claim the planet for
+            their galactic empire.
+          </p>
+          <div class="flex flex-wrap gap-2 mb-6">
+            <span class="px-3 py-1 rounded-full bg-blue-500/20 text-blue-400 text-sm">Human</span>
+            <span class="px-3 py-1 rounded-full bg-green-500/20 text-green-400 text-sm">Aurin</span>
+            <span class="px-3 py-1 rounded-full bg-orange-500/20 text-orange-400 text-sm">Granok</span>
+            <span class="px-3 py-1 rounded-full bg-purple-500/20 text-purple-400 text-sm">Mordesh</span>
+            <span class="px-3 py-1 rounded-full bg-red-500/20 text-red-400 text-sm">Cassian</span>
+            <span class="px-3 py-1 rounded-full bg-yellow-500/20 text-yellow-400 text-sm">Draken</span>
+            <span class="px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-400 text-sm">Mechari</span>
+            <span class="px-3 py-1 rounded-full bg-pink-500/20 text-pink-400 text-sm">Chua</span>
+          </div>
+          <a href="/features/races" class="btn-gaming">Learn More</a>
+        </div>
+      </div>
+
+      <!-- Classes -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-20 items-center animate-on-scroll">
+        <div class="order-2 lg:order-1">
+          <h2 class="text-3xl font-bold text-white mb-4">
+            <span class="text-glow-magenta">Combat Classes</span>
+          </h2>
+          <p class="text-white/70 mb-6 text-lg">
+            Master one of six distinct classes, each offering unique combat mechanics and
+            the ability to fill multiple roles. Every class can DPS, with some able to tank or heal.
+          </p>
+          <div class="grid grid-cols-2 gap-4 mb-6">
+            <div class="flex items-center gap-2 text-white/80">
+              <span class="text-2xl">⚔️</span> Warrior
+            </div>
+            <div class="flex items-center gap-2 text-white/80">
+              <span class="text-2xl">🔫</span> Spellslinger
+            </div>
+            <div class="flex items-center gap-2 text-white/80">
+              <span class="text-2xl">🛡️</span> Stalker
+            </div>
+            <div class="flex items-center gap-2 text-white/80">
+              <span class="text-2xl">🔧</span> Engineer
+            </div>
+            <div class="flex items-center gap-2 text-white/80">
+              <span class="text-2xl">✨</span> Esper
+            </div>
+            <div class="flex items-center gap-2 text-white/80">
+              <span class="text-2xl">💚</span> Medic
+            </div>
+          </div>
+          <a href="/features/classes" class="btn-gaming btn-gaming-magenta">Learn More</a>
+        </div>
+        <div class="screenshot-placeholder rounded-lg order-1 lg:order-2" style="aspect-ratio: 16/9;">
+          <span class="screenshot-placeholder-icon">⚔️</span>
+          <span>Classes Screenshot</span>
+        </div>
+      </div>
+
+      <!-- Combat -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-20 items-center animate-on-scroll">
+        <div class="screenshot-placeholder rounded-lg" style="aspect-ratio: 16/9;">
+          <span class="screenshot-placeholder-icon">💥</span>
+          <span>Combat Screenshot</span>
+        </div>
+        <div>
+          <h2 class="text-3xl font-bold text-white mb-4">
+            <span class="text-glow-orange">Action Combat</span>
+          </h2>
+          <p class="text-white/70 mb-6 text-lg">
+            WildStar's telegraph system revolutionized MMO combat. Every ability is skill-shot based,
+            requiring you to aim, dodge, and position yourself strategically. No tab-targeting here!
+          </p>
+          <ul class="space-y-2 mb-6 text-white/70">
+            <li class="flex items-center gap-2">
+              <span class="text-[var(--gaming-cyan)]">▸</span> Skill-shot based abilities
+            </li>
+            <li class="flex items-center gap-2">
+              <span class="text-[var(--gaming-cyan)]">▸</span> Visual telegraph indicators
+            </li>
+            <li class="flex items-center gap-2">
+              <span class="text-[var(--gaming-cyan)]">▸</span> Active dodging and movement
+            </li>
+            <li class="flex items-center gap-2">
+              <span class="text-[var(--gaming-cyan)]">▸</span> Limited Action Set system
+            </li>
+          </ul>
+          <a href="/features/combat" class="btn-gaming" style="border-color: var(--gaming-orange); color: var(--gaming-orange);">Learn More</a>
+        </div>
+      </div>
+
+      <!-- Housing -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-20 items-center animate-on-scroll">
+        <div class="order-2 lg:order-1">
+          <h2 class="text-3xl font-bold text-white mb-4">
+            <span class="text-glow-purple">Player Housing</span>
+          </h2>
+          <p class="text-white/70 mb-6 text-lg">
+            Build your dream home on your personal sky plot. WildStar's housing system is widely
+            considered one of the best in any MMO, with incredible customization depth.
+          </p>
+          <ul class="space-y-2 mb-6 text-white/70">
+            <li class="flex items-center gap-2">
+              <span class="text-[var(--gaming-purple)]">▸</span> Personal sky plot
+            </li>
+            <li class="flex items-center gap-2">
+              <span class="text-[var(--gaming-purple)]">▸</span> Thousands of decor items
+            </li>
+            <li class="flex items-center gap-2">
+              <span class="text-[var(--gaming-purple)]">▸</span> Functional FABkits
+            </li>
+            <li class="flex items-center gap-2">
+              <span class="text-[var(--gaming-purple)]">▸</span> Neighbor visits
+            </li>
+          </ul>
+          <a href="/features/housing" class="btn-gaming" style="border-color: var(--gaming-purple); color: var(--gaming-purple);">Learn More</a>
+        </div>
+        <div class="screenshot-placeholder rounded-lg order-1 lg:order-2" style="aspect-ratio: 16/9;">
+          <span class="screenshot-placeholder-icon">🏠</span>
+          <span>Housing Screenshot</span>
+        </div>
+      </div>
+
+      <!-- Paths -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-20 items-center animate-on-scroll">
+        <div class="screenshot-placeholder rounded-lg" style="aspect-ratio: 16/9;">
+          <span class="screenshot-placeholder-icon">🧭</span>
+          <span>Paths Screenshot</span>
+        </div>
+        <div>
+          <h2 class="text-3xl font-bold text-white mb-4">
+            <span class="text-gradient-fire">Path System</span>
+          </h2>
+          <p class="text-white/70 mb-6 text-lg">
+            Choose a Path that matches your playstyle for bonus content throughout the game.
+            Each Path offers unique missions, abilities, and rewards.
+          </p>
+          <div class="grid grid-cols-2 gap-4 mb-6">
+            <div class="card-gaming p-4">
+              <h4 class="font-bold text-[var(--gaming-cyan)] mb-1">Explorer</h4>
+              <p class="text-sm text-white/60">Discover hidden areas and secrets</p>
+            </div>
+            <div class="card-gaming p-4">
+              <h4 class="font-bold text-[var(--gaming-orange)] mb-1">Soldier</h4>
+              <p class="text-sm text-white/60">Combat challenges and holdouts</p>
+            </div>
+            <div class="card-gaming p-4">
+              <h4 class="font-bold text-[var(--gaming-green)] mb-1">Scientist</h4>
+              <p class="text-sm text-white/60">Scan and research the world</p>
+            </div>
+            <div class="card-gaming p-4">
+              <h4 class="font-bold text-[var(--gaming-purple)] mb-1">Settler</h4>
+              <p class="text-sm text-white/60">Build infrastructure and buffs</p>
+            </div>
+          </div>
+          <a href="/features/paths" class="btn-gaming btn-gaming-magenta">Learn More</a>
+        </div>
+      </div>
+
+      <!-- Dungeons -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center animate-on-scroll">
+        <div class="order-2 lg:order-1">
+          <h2 class="text-3xl font-bold text-white mb-4">
+            <span class="text-glow-cyan">Dungeons & Raids</span>
+          </h2>
+          <p class="text-white/70 mb-6 text-lg">
+            Challenge yourself with WildStar's legendary PvE content. From 5-player dungeons
+            to epic 20 and 40-player raids, the difficulty and rewards are unmatched.
+          </p>
+          <div class="space-y-3 mb-6">
+            <div class="flex items-center justify-between text-white/70 p-3 rounded bg-white/5">
+              <span>Adventures</span>
+              <span class="text-[var(--gaming-cyan)]">5 Players</span>
+            </div>
+            <div class="flex items-center justify-between text-white/70 p-3 rounded bg-white/5">
+              <span>Dungeons</span>
+              <span class="text-[var(--gaming-cyan)]">5 Players</span>
+            </div>
+            <div class="flex items-center justify-between text-white/70 p-3 rounded bg-white/5">
+              <span>Raids</span>
+              <span class="text-[var(--gaming-magenta)]">20-40 Players</span>
+            </div>
+          </div>
+          <a href="/features/dungeons" class="btn-gaming">Learn More</a>
+        </div>
+        <div class="screenshot-placeholder rounded-lg order-1 lg:order-2" style="aspect-ratio: 16/9;">
+          <span class="screenshot-placeholder-icon">🐉</span>
+          <span>Dungeons Screenshot</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="section-gaming gaming-bg-hero relative" style="padding: 6rem 2rem;">
+    <div class="gaming-mesh"></div>
+    <div class="max-w-3xl mx-auto text-center relative z-10 animate-on-scroll">
+      <h2 class="text-3xl md:text-4xl font-bold text-white mb-6">
+        Ready to Experience It All?
+      </h2>
+      <a href="/register" class="btn-gaming btn-gaming-primary btn-shimmer text-lg px-10 py-4">
+        Create Your Account
+      </a>
+    </div>
+  </section>
+</Layouts.gaming>

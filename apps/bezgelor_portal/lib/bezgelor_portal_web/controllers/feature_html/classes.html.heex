@@ -1,0 +1,187 @@
+<Layouts.gaming flash={@flash} current_account={@current_account}>
+  <!-- Hero -->
+  <section class="hero-gaming gaming-bg-hero" style="min-height: 50vh;">
+    <div class="gaming-starfield"></div>
+    <div class="gaming-mesh"></div>
+    <div class="hero-gaming-content">
+      <h1 class="hero-gaming-title text-4xl md:text-5xl">
+        <span class="text-gradient-fire text-glow-pulse">Combat Classes</span>
+      </h1>
+      <p class="hero-gaming-subtitle">
+        Six unique classes, each with distinct mechanics and multiple role options.
+      </p>
+    </div>
+  </section>
+
+  <!-- Classes -->
+  <section class="section-gaming" style="background: var(--gaming-bg-dark);">
+    <div class="max-w-6xl mx-auto">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 stagger-children">
+        <!-- Warrior -->
+        <div class="card-gaming overflow-hidden">
+          <div class="p-6 border-b border-white/10" style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), transparent);">
+            <div class="flex items-center gap-4">
+              <span class="text-5xl">⚔️</span>
+              <div>
+                <h3 class="text-2xl font-bold text-red-400">Warrior</h3>
+                <div class="flex gap-2 mt-1">
+                  <span class="text-xs px-2 py-0.5 rounded bg-red-500/30 text-red-300">DPS</span>
+                  <span class="text-xs px-2 py-0.5 rounded bg-blue-500/30 text-blue-300">Tank</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="p-6">
+            <p class="text-white/70 mb-4">
+              Heavy-armored melee powerhouses wielding massive two-handed swords. Warriors build Kinetic Energy
+              through attacks and unleash devastating Kinetic abilities. They excel at cleaving through enemies
+              and can absorb tremendous damage when tanking.
+            </p>
+            <div class="text-sm text-white/50">
+              <strong class="text-white/70">Resource:</strong> Kinetic Energy
+            </div>
+          </div>
+        </div>
+
+        <!-- Spellslinger -->
+        <div class="card-gaming overflow-hidden">
+          <div class="p-6 border-b border-white/10" style="background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), transparent);">
+            <div class="flex items-center gap-4">
+              <span class="text-5xl">🔫</span>
+              <div>
+                <h3 class="text-2xl font-bold text-purple-400">Spellslinger</h3>
+                <div class="flex gap-2 mt-1">
+                  <span class="text-xs px-2 py-0.5 rounded bg-red-500/30 text-red-300">DPS</span>
+                  <span class="text-xs px-2 py-0.5 rounded bg-green-500/30 text-green-300">Healer</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="p-6">
+            <p class="text-white/70 mb-4">
+              Dual-pistol wielding gunslingers who blend magic with marksmanship. Spellslingers use Spell Surge
+              to empower their abilities, trading sustained damage for powerful burst windows. They're mobile
+              and deadly, with strong support healing capabilities.
+            </p>
+            <div class="text-sm text-white/50">
+              <strong class="text-white/70">Resource:</strong> Spell Power + Spell Surge
+            </div>
+          </div>
+        </div>
+
+        <!-- Stalker -->
+        <div class="card-gaming overflow-hidden">
+          <div class="p-6 border-b border-white/10" style="background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), transparent);">
+            <div class="flex items-center gap-4">
+              <span class="text-5xl">🗡️</span>
+              <div>
+                <h3 class="text-2xl font-bold text-green-400">Stalker</h3>
+                <div class="flex gap-2 mt-1">
+                  <span class="text-xs px-2 py-0.5 rounded bg-red-500/30 text-red-300">DPS</span>
+                  <span class="text-xs px-2 py-0.5 rounded bg-blue-500/30 text-blue-300">Tank</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="p-6">
+            <p class="text-white/70 mb-4">
+              Stealthy assassins with nano-enhanced claws. Stalkers use Suit Power for their abilities and
+              can enter stealth for devastating opener attacks. They're highly mobile and can evasion-tank
+              through deflection and self-healing.
+            </p>
+            <div class="text-sm text-white/50">
+              <strong class="text-white/70">Resource:</strong> Suit Power
+            </div>
+          </div>
+        </div>
+
+        <!-- Engineer -->
+        <div class="card-gaming overflow-hidden">
+          <div class="p-6 border-b border-white/10" style="background: linear-gradient(135deg, rgba(249, 115, 22, 0.2), transparent);">
+            <div class="flex items-center gap-4">
+              <span class="text-5xl">🔧</span>
+              <div>
+                <h3 class="text-2xl font-bold text-orange-400">Engineer</h3>
+                <div class="flex gap-2 mt-1">
+                  <span class="text-xs px-2 py-0.5 rounded bg-red-500/30 text-red-300">DPS</span>
+                  <span class="text-xs px-2 py-0.5 rounded bg-blue-500/30 text-blue-300">Tank</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="p-6">
+            <p class="text-white/70 mb-4">
+              Heavy armor ranged combatants with deployable bots. Engineers manage Volatility - building it up
+              for powerful abilities while avoiding overload. Their combat bots provide additional damage,
+              tanking, and utility.
+            </p>
+            <div class="text-sm text-white/50">
+              <strong class="text-white/70">Resource:</strong> Volatility
+            </div>
+          </div>
+        </div>
+
+        <!-- Esper -->
+        <div class="card-gaming overflow-hidden">
+          <div class="p-6 border-b border-white/10" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), transparent);">
+            <div class="flex items-center gap-4">
+              <span class="text-5xl">✨</span>
+              <div>
+                <h3 class="text-2xl font-bold text-blue-400">Esper</h3>
+                <div class="flex gap-2 mt-1">
+                  <span class="text-xs px-2 py-0.5 rounded bg-red-500/30 text-red-300">DPS</span>
+                  <span class="text-xs px-2 py-0.5 rounded bg-green-500/30 text-green-300">Healer</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="p-6">
+            <p class="text-white/70 mb-4">
+              Psychic warriors wielding psionic blades and illusions. Espers build Psi Points through builders
+              and spend them on powerful finishers. They're light armor casters with strong burst damage
+              and exceptional healing throughput.
+            </p>
+            <div class="text-sm text-white/50">
+              <strong class="text-white/70">Resource:</strong> Psi Points
+            </div>
+          </div>
+        </div>
+
+        <!-- Medic -->
+        <div class="card-gaming overflow-hidden">
+          <div class="p-6 border-b border-white/10" style="background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), transparent);">
+            <div class="flex items-center gap-4">
+              <span class="text-5xl">💚</span>
+              <div>
+                <h3 class="text-2xl font-bold text-cyan-400">Medic</h3>
+                <div class="flex gap-2 mt-1">
+                  <span class="text-xs px-2 py-0.5 rounded bg-red-500/30 text-red-300">DPS</span>
+                  <span class="text-xs px-2 py-0.5 rounded bg-green-500/30 text-green-300">Healer</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="p-6">
+            <p class="text-white/70 mb-4">
+              Close-range healers and damage dealers using resonators. Medics use Actuators as their resource
+              and must stay in medium range to be effective. They excel at AoE healing and have strong
+              sustained damage potential.
+            </p>
+            <div class="text-sm text-white/50">
+              <strong class="text-white/70">Resource:</strong> Actuators
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="section-gaming gaming-bg-hero relative" style="padding: 5rem 2rem;">
+    <div class="gaming-mesh"></div>
+    <div class="max-w-3xl mx-auto text-center relative z-10">
+      <a href="/features" class="btn-gaming mr-4">Back to Features</a>
+      <a href="/register" class="btn-gaming btn-gaming-primary btn-shimmer">Choose Your Class</a>
+    </div>
+  </section>
+</Layouts.gaming>

@@ -2,13 +2,9 @@ defmodule BezgelorPortalWeb.PageController do
   use BezgelorPortalWeb, :controller
 
   @doc """
-  Redirect to dashboard if logged in, otherwise to login.
+  Renders the gaming homepage.
   """
   def home(conn, _params) do
-    if conn.assigns[:current_account] do
-      redirect(conn, to: ~p"/dashboard")
-    else
-      redirect(conn, to: ~p"/login")
-    end
+    render(conn, :home, current_account: conn.assigns[:current_account])
   end
 end

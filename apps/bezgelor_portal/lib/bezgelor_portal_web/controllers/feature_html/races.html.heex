@@ -1,0 +1,228 @@
+<Layouts.gaming flash={@flash} current_account={@current_account}>
+  <!-- Hero -->
+  <section class="hero-gaming gaming-bg-hero" style="min-height: 50vh;">
+    <div class="gaming-starfield"></div>
+    <div class="gaming-mesh"></div>
+    <div class="hero-gaming-content">
+      <h1 class="hero-gaming-title text-4xl md:text-5xl">
+        <span class="text-gradient-cyan text-glow-pulse">Playable Races</span>
+      </h1>
+      <p class="hero-gaming-subtitle">
+        Eight unique races across two factions battle for control of Nexus.
+      </p>
+    </div>
+  </section>
+
+  <!-- Factions -->
+  <section class="section-gaming" style="background: var(--gaming-bg-dark);">
+    <div class="max-w-6xl mx-auto">
+      <!-- Exiles -->
+      <div class="mb-20">
+        <div class="section-header animate-on-scroll">
+          <h2 class="section-title text-white">
+            The <span class="text-blue-400">Exiles</span>
+          </h2>
+          <div class="section-divider" style="background: linear-gradient(90deg, #3B82F6, #60A5FA);"></div>
+          <p class="section-subtitle">
+            Scrappy survivors and rebels fighting to make Nexus their new home.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 stagger-children">
+          <!-- Human -->
+          <div class="card-gaming p-6">
+            <div class="flex items-start gap-4">
+              <div class="w-20 h-20 rounded-lg bg-blue-500/20 flex items-center justify-center text-4xl shrink-0">
+                👤
+              </div>
+              <div>
+                <h3 class="text-xl font-bold text-blue-400 mb-2">Human</h3>
+                <p class="text-white/70 text-sm mb-3">
+                  Resilient and adaptable, Humans fled their homeworld and now seek a new beginning on Nexus.
+                  They're natural leaders and can be any class.
+                </p>
+                <div class="flex flex-wrap gap-2">
+                  <span class="text-xs px-2 py-1 rounded bg-white/10 text-white/60">All Classes</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Aurin -->
+          <div class="card-gaming p-6">
+            <div class="flex items-start gap-4">
+              <div class="w-20 h-20 rounded-lg bg-green-500/20 flex items-center justify-center text-4xl shrink-0">
+                🌿
+              </div>
+              <div>
+                <h3 class="text-xl font-bold text-green-400 mb-2">Aurin</h3>
+                <p class="text-white/70 text-sm mb-3">
+                  Forest dwellers with a deep connection to nature. Their homeworld was destroyed by the Dominion,
+                  making them fierce protectors of their new home.
+                </p>
+                <div class="flex flex-wrap gap-2">
+                  <span class="text-xs px-2 py-1 rounded bg-white/10 text-white/60">Esper</span>
+                  <span class="text-xs px-2 py-1 rounded bg-white/10 text-white/60">Spellslinger</span>
+                  <span class="text-xs px-2 py-1 rounded bg-white/10 text-white/60">Stalker</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Granok -->
+          <div class="card-gaming p-6">
+            <div class="flex items-start gap-4">
+              <div class="w-20 h-20 rounded-lg bg-orange-500/20 flex items-center justify-center text-4xl shrink-0">
+                🪨
+              </div>
+              <div>
+                <h3 class="text-xl font-bold text-orange-400 mb-2">Granok</h3>
+                <p class="text-white/70 text-sm mb-3">
+                  Living rock creatures who love nothing more than a good fight and a strong drink.
+                  They were exiled from their own people for using forbidden technology.
+                </p>
+                <div class="flex flex-wrap gap-2">
+                  <span class="text-xs px-2 py-1 rounded bg-white/10 text-white/60">Warrior</span>
+                  <span class="text-xs px-2 py-1 rounded bg-white/10 text-white/60">Engineer</span>
+                  <span class="text-xs px-2 py-1 rounded bg-white/10 text-white/60">Medic</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Mordesh -->
+          <div class="card-gaming p-6">
+            <div class="flex items-start gap-4">
+              <div class="w-20 h-20 rounded-lg bg-purple-500/20 flex items-center justify-center text-4xl shrink-0">
+                💀
+              </div>
+              <div>
+                <h3 class="text-xl font-bold text-purple-400 mb-2">Mordesh</h3>
+                <p class="text-white/70 text-sm mb-3">
+                  Once elegant scientists, now undead beings fighting off a degenerative disease.
+                  They seek a cure on Nexus while serving as brilliant alchemists and warriors.
+                </p>
+                <div class="flex flex-wrap gap-2">
+                  <span class="text-xs px-2 py-1 rounded bg-white/10 text-white/60">Warrior</span>
+                  <span class="text-xs px-2 py-1 rounded bg-white/10 text-white/60">Spellslinger</span>
+                  <span class="text-xs px-2 py-1 rounded bg-white/10 text-white/60">Stalker</span>
+                  <span class="text-xs px-2 py-1 rounded bg-white/10 text-white/60">Engineer</span>
+                  <span class="text-xs px-2 py-1 rounded bg-white/10 text-white/60">Medic</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dominion -->
+      <div>
+        <div class="section-header animate-on-scroll">
+          <h2 class="section-title text-white">
+            The <span class="text-red-400">Dominion</span>
+          </h2>
+          <div class="section-divider" style="background: linear-gradient(90deg, #EF4444, #F87171);"></div>
+          <p class="section-subtitle">
+            A galactic empire claiming Nexus as their divine birthright.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 stagger-children">
+          <!-- Cassian -->
+          <div class="card-gaming p-6">
+            <div class="flex items-start gap-4">
+              <div class="w-20 h-20 rounded-lg bg-red-500/20 flex items-center justify-center text-4xl shrink-0">
+                👑
+              </div>
+              <div>
+                <h3 class="text-xl font-bold text-red-400 mb-2">Cassian</h3>
+                <p class="text-white/70 text-sm mb-3">
+                  The noble founders of the Dominion, Cassians believe they are chosen by the Eldan
+                  to rule the galaxy. Proud, sophisticated, and utterly convinced of their superiority.
+                </p>
+                <div class="flex flex-wrap gap-2">
+                  <span class="text-xs px-2 py-1 rounded bg-white/10 text-white/60">All Classes</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Draken -->
+          <div class="card-gaming p-6">
+            <div class="flex items-start gap-4">
+              <div class="w-20 h-20 rounded-lg bg-yellow-500/20 flex items-center justify-center text-4xl shrink-0">
+                🐲
+              </div>
+              <div>
+                <h3 class="text-xl font-bold text-yellow-400 mb-2">Draken</h3>
+                <p class="text-white/70 text-sm mb-3">
+                  Savage warriors from a brutal homeworld, the Draken live for the hunt and glory in battle.
+                  They serve the Dominion as elite shock troops.
+                </p>
+                <div class="flex flex-wrap gap-2">
+                  <span class="text-xs px-2 py-1 rounded bg-white/10 text-white/60">Warrior</span>
+                  <span class="text-xs px-2 py-1 rounded bg-white/10 text-white/60">Spellslinger</span>
+                  <span class="text-xs px-2 py-1 rounded bg-white/10 text-white/60">Stalker</span>
+                  <span class="text-xs px-2 py-1 rounded bg-white/10 text-white/60">Medic</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Mechari -->
+          <div class="card-gaming p-6">
+            <div class="flex items-start gap-4">
+              <div class="w-20 h-20 rounded-lg bg-cyan-500/20 flex items-center justify-center text-4xl shrink-0">
+                🤖
+              </div>
+              <div>
+                <h3 class="text-xl font-bold text-cyan-400 mb-2">Mechari</h3>
+                <p class="text-white/70 text-sm mb-3">
+                  Sentient robots created by the Eldan to serve the Dominion. Logical, efficient, and
+                  deadly, they serve as spies, assassins, and enforcers.
+                </p>
+                <div class="flex flex-wrap gap-2">
+                  <span class="text-xs px-2 py-1 rounded bg-white/10 text-white/60">Warrior</span>
+                  <span class="text-xs px-2 py-1 rounded bg-white/10 text-white/60">Stalker</span>
+                  <span class="text-xs px-2 py-1 rounded bg-white/10 text-white/60">Engineer</span>
+                  <span class="text-xs px-2 py-1 rounded bg-white/10 text-white/60">Medic</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Chua -->
+          <div class="card-gaming p-6">
+            <div class="flex items-start gap-4">
+              <div class="w-20 h-20 rounded-lg bg-pink-500/20 flex items-center justify-center text-4xl shrink-0">
+                🐹
+              </div>
+              <div>
+                <h3 class="text-xl font-bold text-pink-400 mb-2">Chua</h3>
+                <p class="text-white/70 text-sm mb-3">
+                  Small, furry, and dangerously brilliant. The Chua are mad scientists who create
+                  wonderful and terrible inventions. Ethics? Never heard of it.
+                </p>
+                <div class="flex flex-wrap gap-2">
+                  <span class="text-xs px-2 py-1 rounded bg-white/10 text-white/60">Esper</span>
+                  <span class="text-xs px-2 py-1 rounded bg-white/10 text-white/60">Spellslinger</span>
+                  <span class="text-xs px-2 py-1 rounded bg-white/10 text-white/60">Engineer</span>
+                  <span class="text-xs px-2 py-1 rounded bg-white/10 text-white/60">Medic</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="section-gaming gaming-bg-hero relative" style="padding: 5rem 2rem;">
+    <div class="gaming-mesh"></div>
+    <div class="max-w-3xl mx-auto text-center relative z-10">
+      <a href="/features" class="btn-gaming mr-4">Back to Features</a>
+      <a href="/register" class="btn-gaming btn-gaming-primary btn-shimmer">Choose Your Race</a>
+    </div>
+  </section>
+</Layouts.gaming>

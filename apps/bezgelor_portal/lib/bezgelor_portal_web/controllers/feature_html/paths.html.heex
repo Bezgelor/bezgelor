@@ -1,0 +1,175 @@
+<Layouts.gaming flash={@flash} current_account={@current_account}>
+  <!-- Hero -->
+  <section class="hero-gaming gaming-bg-hero" style="min-height: 50vh;">
+    <div class="gaming-starfield"></div>
+    <div class="gaming-mesh"></div>
+    <div class="hero-gaming-content">
+      <h1 class="hero-gaming-title text-4xl md:text-5xl">
+        <span class="text-gradient-fire text-glow-pulse">Path System</span>
+      </h1>
+      <p class="hero-gaming-subtitle">
+        Choose a playstyle that matches how you like to experience MMOs.
+      </p>
+    </div>
+  </section>
+
+  <!-- Content -->
+  <section class="section-gaming" style="background: var(--gaming-bg-dark);">
+    <div class="max-w-5xl mx-auto">
+      <div class="text-center mb-12 animate-on-scroll">
+        <p class="text-white/70 text-lg max-w-3xl mx-auto">
+          In addition to your class, you choose a Path at character creation. Your Path gives you
+          bonus content throughout the entire game - unique missions, abilities, and rewards that
+          cater to your preferred playstyle.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 stagger-children">
+        <!-- Explorer -->
+        <div class="card-gaming overflow-hidden">
+          <div class="p-6 border-b border-white/10" style="background: linear-gradient(135deg, rgba(0, 240, 255, 0.2), transparent);">
+            <div class="flex items-center gap-4">
+              <div class="w-16 h-16 rounded-full bg-[var(--gaming-cyan)]/30 flex items-center justify-center">
+                <span class="text-3xl">🧭</span>
+              </div>
+              <div>
+                <h3 class="text-2xl font-bold text-[var(--gaming-cyan)]">Explorer</h3>
+                <p class="text-white/60">"I want to see everything!"</p>
+              </div>
+            </div>
+          </div>
+          <div class="p-6">
+            <p class="text-white/70 mb-4">
+              For players who love discovering hidden secrets, climbing to impossible places,
+              and charting the unknown. Explorers find areas others never will.
+            </p>
+            <h4 class="font-bold text-white mb-2">Mission Types:</h4>
+            <ul class="space-y-1 text-white/60 text-sm mb-4">
+              <li>• Cartography - Map hidden areas</li>
+              <li>• Exploration - Find secret locations</li>
+              <li>• Scavenger Hunts - Collect hidden items</li>
+              <li>• Surveillance - Scout enemy positions</li>
+            </ul>
+            <h4 class="font-bold text-white mb-2">Unique Abilities:</h4>
+            <ul class="space-y-1 text-white/60 text-sm">
+              <li>• Air Brakes - Slow falling speed</li>
+              <li>• Safe Fall - Reduce fall damage</li>
+              <li>• Translocate Beacons - Instant travel points</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Soldier -->
+        <div class="card-gaming overflow-hidden">
+          <div class="p-6 border-b border-white/10" style="background: linear-gradient(135deg, rgba(255, 107, 0, 0.2), transparent);">
+            <div class="flex items-center gap-4">
+              <div class="w-16 h-16 rounded-full bg-[var(--gaming-orange)]/30 flex items-center justify-center">
+                <span class="text-3xl">⚔️</span>
+              </div>
+              <div>
+                <h3 class="text-2xl font-bold text-[var(--gaming-orange)]">Soldier</h3>
+                <p class="text-white/60">"I want to kill everything!"</p>
+              </div>
+            </div>
+          </div>
+          <div class="p-6">
+            <p class="text-white/70 mb-4">
+              For players who want more combat, more explosions, and more glory. Soldiers
+              get bonus combat challenges and holdout missions throughout the world.
+            </p>
+            <h4 class="font-bold text-white mb-2">Mission Types:</h4>
+            <ul class="space-y-1 text-white/60 text-sm mb-4">
+              <li>• Holdouts - Defend against waves</li>
+              <li>• Assassinations - Kill priority targets</li>
+              <li>• Demolition - Blow stuff up</li>
+              <li>• SWAT - Rescue hostages</li>
+            </ul>
+            <h4 class="font-bold text-white mb-2">Unique Abilities:</h4>
+            <ul class="space-y-1 text-white/60 text-sm">
+              <li>• Bail Out! - Emergency extraction</li>
+              <li>• Combat Supply Drop - Weapons cache</li>
+              <li>• Back into the Fray - Combat resurrection</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Scientist -->
+        <div class="card-gaming overflow-hidden">
+          <div class="p-6 border-b border-white/10" style="background: linear-gradient(135deg, rgba(0, 255, 136, 0.2), transparent);">
+            <div class="flex items-center gap-4">
+              <div class="w-16 h-16 rounded-full bg-[var(--gaming-green)]/30 flex items-center justify-center">
+                <span class="text-3xl">🔬</span>
+              </div>
+              <div>
+                <h3 class="text-2xl font-bold text-[var(--gaming-green)]">Scientist</h3>
+                <p class="text-white/60">"I want to know everything!"</p>
+              </div>
+            </div>
+          </div>
+          <div class="p-6">
+            <p class="text-white/70 mb-4">
+              For players who love lore, puzzles, and understanding how things work. Scientists
+              scan the world and unlock its secrets through research.
+            </p>
+            <h4 class="font-bold text-white mb-2">Mission Types:</h4>
+            <ul class="space-y-1 text-white/60 text-sm mb-4">
+              <li>• Analysis - Scan creatures and objects</li>
+              <li>• Archaeology - Uncover ancient secrets</li>
+              <li>• Biology - Study local wildlife</li>
+              <li>• Botany - Catalog plant life</li>
+            </ul>
+            <h4 class="font-bold text-white mb-2">Unique Abilities:</h4>
+            <ul class="space-y-1 text-white/60 text-sm">
+              <li>• Scanbot - Automated scanning</li>
+              <li>• Summon Group - Teleport allies</li>
+              <li>• Create Portal - Group transportation</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Settler -->
+        <div class="card-gaming overflow-hidden">
+          <div class="p-6 border-b border-white/10" style="background: linear-gradient(135deg, rgba(157, 0, 255, 0.2), transparent);">
+            <div class="flex items-center gap-4">
+              <div class="w-16 h-16 rounded-full bg-[var(--gaming-purple)]/30 flex items-center justify-center">
+                <span class="text-3xl">🏗️</span>
+              </div>
+              <div>
+                <h3 class="text-2xl font-bold text-[var(--gaming-purple)]">Settler</h3>
+                <p class="text-white/60">"I want to build everything!"</p>
+              </div>
+            </div>
+          </div>
+          <div class="p-6">
+            <p class="text-white/70 mb-4">
+              For players who want to help others and build up the world. Settlers create
+              infrastructure that provides buffs and services to all players.
+            </p>
+            <h4 class="font-bold text-white mb-2">Mission Types:</h4>
+            <ul class="space-y-1 text-white/60 text-sm mb-4">
+              <li>• Infrastructure - Build stations</li>
+              <li>• Civil Service - Help NPCs</li>
+              <li>• Supply Cache - Gather resources</li>
+              <li>• Public Service - Expand towns</li>
+            </ul>
+            <h4 class="font-bold text-white mb-2">Unique Abilities:</h4>
+            <ul class="space-y-1 text-white/60 text-sm">
+              <li>• Buff Stations - Area buffs for all</li>
+              <li>• Mailbox - Portable mail access</li>
+              <li>• Vendbot - Portable vendor</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="section-gaming gaming-bg-hero relative" style="padding: 5rem 2rem;">
+    <div class="gaming-mesh"></div>
+    <div class="max-w-3xl mx-auto text-center relative z-10">
+      <a href="/features" class="btn-gaming mr-4">Back to Features</a>
+      <a href="/register" class="btn-gaming btn-gaming-primary btn-shimmer">Choose Your Path</a>
+    </div>
+  </section>
+</Layouts.gaming>

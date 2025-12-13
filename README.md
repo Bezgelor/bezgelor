@@ -50,30 +50,126 @@ Bezgelor is an Elixir umbrella application that emulates WildStar game servers u
 
 - Elixir 1.15+
 - PostgreSQL 14+ (configured on port 5433)
+- Docker & Docker Compose (for database)
 - WildStar game client data files
 
-## Setup
+## Quick Start
 
 ```bash
-# Install dependencies
-mix deps.get
+# 1. Start the database
+docker compose up -d
 
-# Create and migrate database
-mix ecto.create
+# 2. Install dependencies and setup database
+mix deps.get
+mix ecto.setup
+
+# 3. Start all servers with the web portal
+iex -S mix phx.server
+```
+
+That's it! The portal is at **http://localhost:4001** and all game servers are running.
+
+## Running the Server
+
+### Services Overview
+
+When you start the server, the following services come online:
+
+| Service | Port | Description |
+|---------|------|-------------|
+| Portal (Website) | 4001 | Player dashboard & admin console |
+| Auth Server (STS) | 6600 | Client authentication |
+| Realm Server | 23115 | Character selection |
+| World Server | 24000 | Game world |
+| PostgreSQL | 5433 | Database (via Docker) |
+
+### Start Commands
+
+```bash
+# Full stack with live reload (recommended for development)
+iex -S mix phx.server
+
+# Full stack without interactive shell
+mix phx.server
+
+# Servers only (no portal live reload)
+mix run --no-halt
+
+# With named node (for distributed/clustering)
+iex --sname bezgelor -S mix phx.server
+```
+
+### Database Management
+
+```bash
+# Start PostgreSQL container
+docker compose up -d
+
+# Stop PostgreSQL container
+docker compose down
+
+# View container status
+docker compose ps
+
+# First-time setup (create, migrate, seed)
+mix ecto.setup
+
+# Reset database (drop, create, migrate, seed)
+mix ecto.reset
+
+# Run pending migrations only
 mix ecto.migrate
 
-# Run the server
-iex -S mix
+# Rollback last migration
+mix ecto.rollback
 ```
+
+### Verifying Services
+
+In the IEx shell, you can verify all applications are running:
+
+```elixir
+# List all started applications
+Application.started_applications()
+
+# Check specific servers are listening
+:gen_tcp.connect(~c"localhost", 6600, [])   # Auth
+:gen_tcp.connect(~c"localhost", 23115, [])  # Realm
+:gen_tcp.connect(~c"localhost", 24000, [])  # World
+```
+
+### Connecting a Game Client
+
+1. Configure your WildStar client's `ClientConfig.ini`:
+   ```ini
+   [Network]
+   Server = localhost
+   Port = 6600
+   ```
+
+2. Create an account at http://localhost:4001/register
+
+3. Launch `WildStar64.exe` and log in
 
 ## Configuration
 
-Environment variables:
-- `POSTGRES_DB` - Database name
-- `POSTGRES_USER` - Database user
-- `POSTGRES_PASSWORD` - Database password
-- `POSTGRES_HOST` - Database host (default: localhost)
-- `POSTGRES_PORT` - Database port (default: 5433)
+### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `POSTGRES_DB` | bezgelor_dev | Database name |
+| `POSTGRES_USER` | bezgelor | Database user |
+| `POSTGRES_PASSWORD` | bezgelor_dev | Database password |
+| `POSTGRES_HOST` | localhost | Database host |
+| `POSTGRES_PORT` | 5433 | Database port |
+
+### Config Files
+
+- `config/config.exs` - Base configuration
+- `config/dev.exs` - Development overrides
+- `config/test.exs` - Test environment
+- `config/prod.exs` - Production settings
+- `config/runtime.exs` - Runtime configuration (env vars)
 
 ## Testing
 

@@ -1,0 +1,208 @@
+<Layouts.gaming flash={@flash} current_account={@current_account}>
+  <!-- Hero -->
+  <section class="hero-gaming gaming-bg-hero" style="min-height: 50vh;">
+    <div class="gaming-starfield"></div>
+    <div class="gaming-mesh"></div>
+    <div class="hero-gaming-content">
+      <h1 class="hero-gaming-title text-4xl md:text-5xl">
+        <span class="text-glow-orange text-glow-pulse">Download</span>
+        <span class="text-white">& Play</span>
+      </h1>
+      <p class="hero-gaming-subtitle">
+        Get started with Bezgelor in just a few minutes.
+      </p>
+    </div>
+  </section>
+
+  <!-- Download Section -->
+  <section class="section-gaming" style="background: var(--gaming-bg-dark);">
+    <div class="max-w-4xl mx-auto">
+      <!-- Download Button -->
+      <div class="text-center mb-12 animate-on-scroll">
+        <div class="card-gaming p-8 inline-block">
+          <div class="text-6xl mb-4">📥</div>
+          <h2 class="text-2xl font-bold text-white mb-2">WildStar Client</h2>
+          <p class="text-white/60 mb-4">Version 1.7.8 Build 16042 • ~30GB</p>
+          <a href="#" class="btn-gaming btn-gaming-primary btn-shimmer text-lg px-8 py-3">
+            Download Client
+          </a>
+          <p class="text-white/40 text-sm mt-4">
+            Torrent and direct download available
+          </p>
+        </div>
+      </div>
+
+      <!-- Setup Guide -->
+      <div id="setup" class="mb-12">
+        <h2 class="text-3xl font-bold text-white mb-8 text-center animate-on-scroll">
+          <span class="text-glow-cyan">Setup Guide</span>
+        </h2>
+
+        <div class="space-y-6 stagger-children">
+          <!-- Step 1 -->
+          <div class="card-gaming p-6">
+            <div class="flex items-start gap-4">
+              <div class="w-12 h-12 rounded-full bg-[var(--gaming-cyan)]/20 flex items-center justify-center text-xl font-bold text-[var(--gaming-cyan)] shrink-0">
+                1
+              </div>
+              <div>
+                <h3 class="text-xl font-bold text-white mb-2">Download the Client</h3>
+                <p class="text-white/70">
+                  Download the WildStar client using the button above. You can use either the
+                  torrent (recommended for faster speeds) or the direct download link.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 2 -->
+          <div class="card-gaming p-6">
+            <div class="flex items-start gap-4">
+              <div class="w-12 h-12 rounded-full bg-[var(--gaming-magenta)]/20 flex items-center justify-center text-xl font-bold text-[var(--gaming-magenta)] shrink-0">
+                2
+              </div>
+              <div>
+                <h3 class="text-xl font-bold text-white mb-2">Extract the Files</h3>
+                <p class="text-white/70">
+                  Extract the downloaded archive to your preferred location. We recommend a path
+                  without spaces (e.g., <code class="text-[var(--gaming-cyan)]">C:\Games\WildStar</code>).
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 3 -->
+          <div class="card-gaming p-6">
+            <div class="flex items-start gap-4">
+              <div class="w-12 h-12 rounded-full bg-[var(--gaming-orange)]/20 flex items-center justify-center text-xl font-bold text-[var(--gaming-orange)] shrink-0">
+                3
+              </div>
+              <div>
+                <h3 class="text-xl font-bold text-white mb-2">Create an Account</h3>
+                <p class="text-white/70 mb-2">
+                  <a href="/register" class="text-[var(--gaming-cyan)] hover:underline">Register for a free account</a>
+                  on our website. You'll use these credentials to log into the game.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 4 -->
+          <div class="card-gaming p-6">
+            <div class="flex items-start gap-4">
+              <div class="w-12 h-12 rounded-full bg-[var(--gaming-purple)]/20 flex items-center justify-center text-xl font-bold text-[var(--gaming-purple)] shrink-0">
+                4
+              </div>
+              <div>
+                <h3 class="text-xl font-bold text-white mb-2">Configure the Launcher</h3>
+                <p class="text-white/70 mb-2">
+                  Edit the <code class="text-[var(--gaming-cyan)]">ClientConfig.ini</code> file in your WildStar folder:
+                </p>
+                <pre class="bg-black/50 p-4 rounded text-sm text-white/80 overflow-x-auto">
+[Network]
+Server = bezgelor.com
+Port = 6600</pre>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 5 -->
+          <div class="card-gaming p-6">
+            <div class="flex items-start gap-4">
+              <div class="w-12 h-12 rounded-full bg-[var(--gaming-green)]/20 flex items-center justify-center text-xl font-bold text-[var(--gaming-green)] shrink-0">
+                5
+              </div>
+              <div>
+                <h3 class="text-xl font-bold text-white mb-2">Launch & Play!</h3>
+                <p class="text-white/70">
+                  Run <code class="text-[var(--gaming-cyan)]">WildStar64.exe</code> and log in with your
+                  Bezgelor account credentials. Welcome to Nexus!
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- System Requirements -->
+      <div class="mb-12 animate-on-scroll">
+        <h2 class="text-3xl font-bold text-white mb-8 text-center">
+          <span class="text-glow-magenta">System Requirements</span>
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="card-gaming p-6">
+            <h3 class="text-lg font-bold text-[var(--gaming-cyan)] mb-4">Minimum</h3>
+            <ul class="space-y-2 text-white/70 text-sm">
+              <li><strong class="text-white">OS:</strong> Windows 7/8/10/11 (64-bit)</li>
+              <li><strong class="text-white">CPU:</strong> Intel Core 2 Duo 2.4GHz</li>
+              <li><strong class="text-white">RAM:</strong> 4 GB</li>
+              <li><strong class="text-white">GPU:</strong> NVIDIA GeForce 8800 GT / AMD Radeon HD 3850</li>
+              <li><strong class="text-white">Storage:</strong> 30 GB</li>
+              <li><strong class="text-white">DirectX:</strong> Version 9.0c</li>
+            </ul>
+          </div>
+          <div class="card-gaming p-6">
+            <h3 class="text-lg font-bold text-[var(--gaming-orange)] mb-4">Recommended</h3>
+            <ul class="space-y-2 text-white/70 text-sm">
+              <li><strong class="text-white">OS:</strong> Windows 10/11 (64-bit)</li>
+              <li><strong class="text-white">CPU:</strong> Intel Core i5 or better</li>
+              <li><strong class="text-white">RAM:</strong> 8 GB</li>
+              <li><strong class="text-white">GPU:</strong> NVIDIA GeForce GTX 960 / AMD Radeon RX 560</li>
+              <li><strong class="text-white">Storage:</strong> 30 GB SSD</li>
+              <li><strong class="text-white">DirectX:</strong> Version 11</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- FAQ -->
+      <div id="faq" class="animate-on-scroll">
+        <h2 class="text-3xl font-bold text-white mb-8 text-center">
+          <span class="text-gradient-fire">FAQ</span>
+        </h2>
+
+        <div class="space-y-4">
+          <div class="card-gaming p-6">
+            <h3 class="text-lg font-bold text-white mb-2">Is Bezgelor free to play?</h3>
+            <p class="text-white/70">
+              Yes! Bezgelor is completely free to play with no subscriptions or microtransactions.
+            </p>
+          </div>
+
+          <div class="card-gaming p-6">
+            <h3 class="text-lg font-bold text-white mb-2">Is this legal?</h3>
+            <p class="text-white/70">
+              We operate in a legal gray area common to game preservation projects. We do not
+              distribute copyrighted game assets - you must obtain the client yourself.
+            </p>
+          </div>
+
+          <div class="card-gaming p-6">
+            <h3 class="text-lg font-bold text-white mb-2">Will my old characters be available?</h3>
+            <p class="text-white/70">
+              No, characters from the original WildStar servers cannot be transferred. You'll
+              start fresh on Bezgelor.
+            </p>
+          </div>
+
+          <div class="card-gaming p-6">
+            <h3 class="text-lg font-bold text-white mb-2">What content is available?</h3>
+            <p class="text-white/70">
+              We're actively developing the server. Check our Discord for current status updates
+              on available content.
+            </p>
+          </div>
+
+          <div class="card-gaming p-6">
+            <h3 class="text-lg font-bold text-white mb-2">I'm having connection issues!</h3>
+            <p class="text-white/70">
+              Make sure your ClientConfig.ini is correctly configured and that your firewall
+              isn't blocking the game. Join our Discord for support.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</Layouts.gaming>

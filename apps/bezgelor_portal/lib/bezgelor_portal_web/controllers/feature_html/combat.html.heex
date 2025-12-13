@@ -1,0 +1,163 @@
+<Layouts.gaming flash={@flash} current_account={@current_account}>
+  <!-- Hero -->
+  <section class="hero-gaming gaming-bg-hero" style="min-height: 50vh;">
+    <div class="gaming-starfield"></div>
+    <div class="gaming-mesh"></div>
+    <div class="hero-gaming-content">
+      <h1 class="hero-gaming-title text-4xl md:text-5xl">
+        <span class="text-glow-orange text-glow-pulse">Action Combat</span>
+      </h1>
+      <p class="hero-gaming-subtitle">
+        Skill-based telegraph combat where positioning and timing are everything.
+      </p>
+    </div>
+  </section>
+
+  <!-- Content -->
+  <section class="section-gaming" style="background: var(--gaming-bg-dark);">
+    <div class="max-w-5xl mx-auto">
+      <!-- Telegraph System -->
+      <div class="mb-16 animate-on-scroll">
+        <h2 class="text-3xl font-bold text-white mb-6 text-center">
+          The <span class="text-glow-cyan">Telegraph System</span>
+        </h2>
+        <div class="card-gaming p-8">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div>
+              <p class="text-white/70 mb-4">
+                Every ability in WildStar displays a visual telegraph on the ground, showing exactly
+                where it will hit. This applies to both player abilities and enemy attacks.
+              </p>
+              <ul class="space-y-3 text-white/70">
+                <li class="flex items-start gap-3">
+                  <span class="text-[var(--gaming-cyan)] mt-1">▸</span>
+                  <span><strong class="text-white">Blue telegraphs</strong> are friendly abilities - stand in them for heals and buffs</span>
+                </li>
+                <li class="flex items-start gap-3">
+                  <span class="text-[var(--gaming-orange)] mt-1">▸</span>
+                  <span><strong class="text-white">Orange telegraphs</strong> show your own attacks - aim them at enemies</span>
+                </li>
+                <li class="flex items-start gap-3">
+                  <span class="text-[var(--gaming-magenta)] mt-1">▸</span>
+                  <span><strong class="text-white">Red telegraphs</strong> are enemy attacks - dodge out of them!</span>
+                </li>
+              </ul>
+            </div>
+            <div class="screenshot-placeholder rounded-lg">
+              <span class="screenshot-placeholder-icon">🎯</span>
+              <span>Telegraph Screenshot</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Active Dodging -->
+      <div class="mb-16 animate-on-scroll">
+        <h2 class="text-3xl font-bold text-white mb-6 text-center">
+          <span class="text-glow-magenta">Active Dodging</span>
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="card-gaming p-6 text-center">
+            <div class="text-4xl mb-4">🏃</div>
+            <h3 class="text-lg font-bold text-white mb-2">Double Tap</h3>
+            <p class="text-white/60 text-sm">
+              Double-tap a movement key to perform a quick dash in that direction,
+              letting you dodge through attacks.
+            </p>
+          </div>
+          <div class="card-gaming p-6 text-center">
+            <div class="text-4xl mb-4">⚡</div>
+            <h3 class="text-lg font-bold text-white mb-2">Dash Tokens</h3>
+            <p class="text-white/60 text-sm">
+              You have a limited number of dash tokens that regenerate over time.
+              Manage them wisely in combat!
+            </p>
+          </div>
+          <div class="card-gaming p-6 text-center">
+            <div class="text-4xl mb-4">🛡️</div>
+            <h3 class="text-lg font-bold text-white mb-2">I-Frames</h3>
+            <p class="text-white/60 text-sm">
+              During a dash, you're briefly invulnerable. Time your dodges to avoid
+              even the most devastating attacks.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Limited Action Set -->
+      <div class="mb-16 animate-on-scroll">
+        <h2 class="text-3xl font-bold text-white mb-6 text-center">
+          <span class="text-gradient-fire">Limited Action Set</span>
+        </h2>
+        <div class="card-gaming p-8">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+            <div class="screenshot-placeholder rounded-lg">
+              <span class="screenshot-placeholder-icon">🎮</span>
+              <span>Action Bar Screenshot</span>
+            </div>
+            <div>
+              <p class="text-white/70 mb-4">
+                While each class has dozens of abilities, you can only equip 8 at a time on your
+                Limited Action Set (LAS). This creates meaningful choices about your build.
+              </p>
+              <ul class="space-y-2 text-white/70">
+                <li class="flex items-center gap-2">
+                  <span class="text-[var(--gaming-cyan)]">▸</span>
+                  8 ability slots to customize
+                </li>
+                <li class="flex items-center gap-2">
+                  <span class="text-[var(--gaming-cyan)]">▸</span>
+                  Ability tier upgrades with AMP points
+                </li>
+                <li class="flex items-center gap-2">
+                  <span class="text-[var(--gaming-cyan)]">▸</span>
+                  Swap loadouts between encounters
+                </li>
+                <li class="flex items-center gap-2">
+                  <span class="text-[var(--gaming-cyan)]">▸</span>
+                  No rotation - react to situations
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Interrupt Armor -->
+      <div class="animate-on-scroll">
+        <h2 class="text-3xl font-bold text-white mb-6 text-center">
+          <span class="text-glow-purple">Interrupt Armor</span>
+        </h2>
+        <div class="card-gaming p-8">
+          <p class="text-white/70 mb-6 text-center max-w-2xl mx-auto">
+            Many enemies have Interrupt Armor - a shield that must be broken before they can be
+            stunned or interrupted. Coordinate with your team to break IA and stop deadly attacks!
+          </p>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="p-4 rounded bg-white/5 text-center">
+              <div class="text-2xl font-bold text-[var(--gaming-cyan)] mb-1">0 IA</div>
+              <p class="text-white/60 text-sm">Normal mobs - interrupt freely</p>
+            </div>
+            <div class="p-4 rounded bg-white/5 text-center">
+              <div class="text-2xl font-bold text-[var(--gaming-orange)] mb-1">1-2 IA</div>
+              <p class="text-white/60 text-sm">Elites - coordinate interrupts</p>
+            </div>
+            <div class="p-4 rounded bg-white/5 text-center">
+              <div class="text-2xl font-bold text-[var(--gaming-magenta)] mb-1">3+ IA</div>
+              <p class="text-white/60 text-sm">Bosses - team effort required</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="section-gaming gaming-bg-hero relative" style="padding: 5rem 2rem;">
+    <div class="gaming-mesh"></div>
+    <div class="max-w-3xl mx-auto text-center relative z-10">
+      <a href="/features" class="btn-gaming mr-4">Back to Features</a>
+      <a href="/register" class="btn-gaming btn-gaming-primary btn-shimmer">Start Fighting</a>
+    </div>
+  </section>
+</Layouts.gaming>

@@ -1,0 +1,149 @@
+<Layouts.gaming flash={@flash} current_account={@current_account}>
+  <!-- Hero -->
+  <section class="hero-gaming gaming-bg-hero" style="min-height: 40vh;">
+    <div class="gaming-starfield"></div>
+    <div class="gaming-mesh"></div>
+    <div class="hero-gaming-content">
+      <h1 class="hero-gaming-title text-4xl md:text-5xl">
+        <span class="text-glow-magenta text-glow-pulse">News</span>
+        <span class="text-white">& Updates</span>
+      </h1>
+      <p class="hero-gaming-subtitle">
+        Stay informed about server updates, patches, and community events.
+      </p>
+    </div>
+  </section>
+
+  <!-- News List -->
+  <section class="section-gaming" style="background: var(--gaming-bg-dark);">
+    <div class="max-w-4xl mx-auto">
+      <div class="space-y-8 stagger-children">
+        <!-- News Item 1 -->
+        <article class="card-gaming overflow-hidden">
+          <div class="md:flex">
+            <div class="md:w-1/3 screenshot-placeholder" style="min-height: 200px;">
+              <span class="screenshot-placeholder-icon">📢</span>
+              <span>News Image</span>
+            </div>
+            <div class="p-6 md:w-2/3">
+              <div class="flex items-center gap-3 text-sm mb-3">
+                <span class="px-3 py-1 rounded-full bg-[var(--gaming-cyan)]/20 text-[var(--gaming-cyan)]">
+                  Announcement
+                </span>
+                <span class="text-white/50">December 12, 2024</span>
+              </div>
+              <h2 class="text-2xl font-bold text-white mb-3">
+                Welcome to Bezgelor!
+              </h2>
+              <p class="text-white/70 mb-4">
+                We're excited to announce the official launch of the Bezgelor website and portal.
+                This marks a major milestone in our journey to bring WildStar back to life.
+              </p>
+              <a href="#" class="text-[var(--gaming-cyan)] hover:underline">Read more →</a>
+            </div>
+          </div>
+        </article>
+
+        <!-- News Item 2 -->
+        <article class="card-gaming overflow-hidden">
+          <div class="md:flex">
+            <div class="md:w-1/3 screenshot-placeholder" style="min-height: 200px;">
+              <span class="screenshot-placeholder-icon">🔧</span>
+              <span>News Image</span>
+            </div>
+            <div class="p-6 md:w-2/3">
+              <div class="flex items-center gap-3 text-sm mb-3">
+                <span class="px-3 py-1 rounded-full bg-[var(--gaming-orange)]/20 text-[var(--gaming-orange)]">
+                  Development
+                </span>
+                <span class="text-white/50">December 2024</span>
+              </div>
+              <h2 class="text-2xl font-bold text-white mb-3">
+                Quest System Implementation Complete
+              </h2>
+              <p class="text-white/70 mb-4">
+                Over 5,000 quests have been wired up with objective tracking, rewards, and quest chains.
+                The leveling experience is now fully functional from 1-50.
+              </p>
+              <a href="#" class="text-[var(--gaming-cyan)] hover:underline">Read more →</a>
+            </div>
+          </div>
+        </article>
+
+        <!-- News Item 3 -->
+        <article class="card-gaming overflow-hidden">
+          <div class="md:flex">
+            <div class="md:w-1/3 screenshot-placeholder" style="min-height: 200px;">
+              <span class="screenshot-placeholder-icon">⚔️</span>
+              <span>News Image</span>
+            </div>
+            <div class="p-6 md:w-2/3">
+              <div class="flex items-center gap-3 text-sm mb-3">
+                <span class="px-3 py-1 rounded-full bg-[var(--gaming-magenta)]/20 text-[var(--gaming-magenta)]">
+                  Content
+                </span>
+                <span class="text-white/50">December 2024</span>
+              </div>
+              <h2 class="text-2xl font-bold text-white mb-3">
+                All 100 Boss Encounters Scripted
+              </h2>
+              <p class="text-white/70 mb-4">
+                From Stormtalon's Lair to Datascape, all dungeon and raid boss encounters now have
+                complete AI scripts with proper mechanics, phases, and abilities.
+              </p>
+              <a href="#" class="text-[var(--gaming-cyan)] hover:underline">Read more →</a>
+            </div>
+          </div>
+        </article>
+
+        <!-- News Item 4 -->
+        <article class="card-gaming overflow-hidden">
+          <div class="md:flex">
+            <div class="md:w-1/3 screenshot-placeholder" style="min-height: 200px;">
+              <span class="screenshot-placeholder-icon">🎉</span>
+              <span>News Image</span>
+            </div>
+            <div class="p-6 md:w-2/3">
+              <div class="flex items-center gap-3 text-sm mb-3">
+                <span class="px-3 py-1 rounded-full bg-[var(--gaming-purple)]/20 text-[var(--gaming-purple)]">
+                  Community
+                </span>
+                <span class="text-white/50">Coming Soon</span>
+              </div>
+              <h2 class="text-2xl font-bold text-white mb-3">
+                Community Events Planned
+              </h2>
+              <p class="text-white/70 mb-4">
+                We're planning exciting community events including leveling races, housing contests,
+                and dungeon speedruns. Stay tuned for announcements!
+              </p>
+              <a href="#" class="text-[var(--gaming-cyan)] hover:underline">Read more →</a>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <!-- Load More -->
+      <div class="text-center mt-12 animate-on-scroll">
+        <button class="btn-gaming btn-gaming-magenta" disabled>
+          More News Coming Soon
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Subscribe Section -->
+  <section class="section-gaming gaming-bg-hero relative" style="padding: 5rem 2rem;">
+    <div class="gaming-mesh"></div>
+    <div class="max-w-2xl mx-auto text-center relative z-10 animate-on-scroll">
+      <h2 class="text-2xl font-bold text-white mb-4">Stay Updated</h2>
+      <p class="text-white/70 mb-6">
+        Join our Discord to receive instant notifications about updates, patches, and events.
+      </p>
+      <a href="https://discord.gg/bezgelor" target="_blank" rel="noopener"
+         class="btn-gaming btn-gaming-primary btn-shimmer">
+        Join Discord
+      </a>
+    </div>
+  </section>
+</Layouts.gaming>

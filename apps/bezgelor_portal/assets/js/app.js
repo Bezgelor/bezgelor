@@ -60,6 +60,219 @@ liveSocket.connect()
 // >> liveSocket.disableLatencySim()
 window.liveSocket = liveSocket
 
+// ============================================
+// GAMING WEBSITE ANIMATIONS
+// ============================================
+
+// Scroll-triggered animations using Intersection Observer
+const initScrollAnimations = () => {
+  const animatedElements = document.querySelectorAll('.animate-on-scroll, .stagger-children')
+
+  if (animatedElements.length === 0) return
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible')
+        // Optionally unobserve after animation
+        // observer.unobserve(entry.target)
+      }
+    })
+  }, {
+    threshold: 0.1,
+    rootMargin: '0px 0px -50px 0px'
+  })
+
+  animatedElements.forEach(el => observer.observe(el))
+}
+
+// Navbar scroll behavior - adds 'scrolled' class when scrolled
+const initNavbarScroll = () => {
+  const navbar = document.querySelector('.navbar-gaming')
+  if (!navbar) return
+
+  const handleScroll = () => {
+    if (window.scrollY > 50) {
+      navbar.classList.add('scrolled')
+    } else {
+      navbar.classList.remove('scrolled')
+    }
+  }
+
+  window.addEventListener('scroll', handleScroll, { passive: true })
+  handleScroll() // Check initial state
+}
+
+// Parallax effect for floating elements
+const initParallax = () => {
+  const floatElements = document.querySelectorAll('.hero-float')
+  if (floatElements.length === 0) return
+
+  window.addEventListener('mousemove', (e) => {
+    const x = (e.clientX / window.innerWidth - 0.5) * 2
+    const y = (e.clientY / window.innerHeight - 0.5) * 2
+
+    floatElements.forEach((el, index) => {
+      const speed = (index + 1) * 10
+      el.style.transform = `translate(${x * speed}px, ${y * speed}px)`
+    })
+  }, { passive: true })
+}
+
+// Smooth scroll for anchor links
+const initSmoothScroll = () => {
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function(e) {
+      const targetId = this.getAttribute('href')
+      if (targetId === '#') return
+
+      const target = document.querySelector(targetId)
+      if (target) {
+        e.preventDefault()
+        target.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        })
+      }
+    })
+  })
+}
+
+// Counter animation for stats
+const initCounterAnimation = () => {
+  const counters = document.querySelectorAll('[data-counter]')
+  if (counters.length === 0) return
+
+  const animateCounter = (el) => {
+    const target = parseInt(el.getAttribute('data-counter'))
+    const duration = 2000
+    const step = target / (duration / 16)
+    let current = 0
+
+    const update = () => {
+      current += step
+      if (current < target) {
+        el.textContent = Math.floor(current).toLocaleString()
+        requestAnimationFrame(update)
+      } else {
+        el.textContent = target.toLocaleString()
+      }
+    }
+
+    update()
+  }
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        animateCounter(entry.target)
+        observer.unobserve(entry.target)
+      }
+    })
+  }, { threshold: 0.5 })
+
+  counters.forEach(counter => observer.observe(counter))
+}
+
+// Glitch effect on hover (for glitch-hover elements)
+const initGlitchEffect = () => {
+  const glitchElements = document.querySelectorAll('.glitch-hover')
+  glitchElements.forEach(el => {
+    el.addEventListener('mouseenter', () => {
+      el.classList.add('glitching')
+      setTimeout(() => el.classList.remove('glitching'), 300)
+    })
+  })
+}
+
+// Back to top button
+const initBackToTop = () => {
+  const btn = document.getElementById('back-to-top')
+  if (!btn) return
+
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 500) {
+      btn.classList.add('visible')
+    } else {
+      btn.classList.remove('visible')
+    }
+  }, { passive: true })
+
+  btn.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  })
+}
+
+// Magnetic hover effect for buttons
+const initMagneticButtons = () => {
+  const buttons = document.querySelectorAll('.btn-gaming')
+
+  buttons.forEach(btn => {
+    btn.addEventListener('mousemove', (e) => {
+      const rect = btn.getBoundingClientRect()
+      const x = e.clientX - rect.left - rect.width / 2
+      const y = e.clientY - rect.top - rect.height / 2
+
+      btn.style.transform = `translate(${x * 0.1}px, ${y * 0.1}px)`
+    })
+
+    btn.addEventListener('mouseleave', () => {
+      btn.style.transform = ''
+    })
+  })
+}
+
+// Tilt effect for cards
+const initCardTilt = () => {
+  const cards = document.querySelectorAll('.card-gaming.tilt')
+
+  cards.forEach(card => {
+    card.addEventListener('mousemove', (e) => {
+      const rect = card.getBoundingClientRect()
+      const x = (e.clientX - rect.left) / rect.width
+      const y = (e.clientY - rect.top) / rect.height
+
+      const rotateX = (y - 0.5) * -10
+      const rotateY = (x - 0.5) * 10
+
+      card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`
+    })
+
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = ''
+    })
+  })
+}
+
+// Initialize all gaming animations on DOM ready
+document.addEventListener('DOMContentLoaded', () => {
+  initScrollAnimations()
+  initNavbarScroll()
+  initParallax()
+  initSmoothScroll()
+  initCounterAnimation()
+  initGlitchEffect()
+  initBackToTop()
+  initMagneticButtons()
+  initCardTilt()
+})
+
+// Re-initialize after LiveView navigation
+window.addEventListener('phx:page-loading-stop', () => {
+  // Small delay to ensure DOM is updated
+  setTimeout(() => {
+    initScrollAnimations()
+    initNavbarScroll()
+    initParallax()
+    initSmoothScroll()
+    initCounterAnimation()
+    initGlitchEffect()
+    initBackToTop()
+    initMagneticButtons()
+    initCardTilt()
+  }, 100)
+})
+
 // The lines below enable quality of life phoenix_live_reload
 // development features:
 //

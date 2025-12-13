@@ -1,0 +1,121 @@
+<Layouts.gaming flash={@flash} current_account={@current_account}>
+  <!-- Hero -->
+  <section class="hero-gaming gaming-bg-hero" style="min-height: 40vh;">
+    <div class="gaming-starfield"></div>
+    <div class="gaming-mesh"></div>
+    <div class="hero-gaming-content">
+      <h1 class="hero-gaming-title text-4xl md:text-5xl">
+        <span class="text-white">About</span>
+        <span class="text-gradient-cyan text-glow-pulse">Bezgelor</span>
+      </h1>
+    </div>
+  </section>
+
+  <!-- Content -->
+  <section class="section-gaming" style="background: var(--gaming-bg-dark);">
+    <div class="max-w-4xl mx-auto">
+      <!-- Mission -->
+      <div class="card-gaming p-8 mb-8 animate-on-scroll">
+        <h2 class="text-2xl font-bold text-white mb-4">Our Mission</h2>
+        <p class="text-white/70 mb-4">
+          Bezgelor is a fan-made WildStar server emulator project dedicated to preserving and reviving
+          one of the most unique MMORPGs ever created. When NCSOFT shut down WildStar in November 2018,
+          a vibrant community lost access to a game they loved.
+        </p>
+        <p class="text-white/70">
+          Our goal is to recreate the WildStar experience as faithfully as possible, allowing players
+          to once again explore Planet Nexus, battle alongside friends, and build incredible housing plots.
+        </p>
+      </div>
+
+      <!-- Team -->
+      <div id="team" class="card-gaming p-8 mb-8 animate-on-scroll">
+        <h2 class="text-2xl font-bold text-white mb-4">The Team</h2>
+        <p class="text-white/70 mb-4">
+          Bezgelor is developed by a small team of passionate WildStar fans and software engineers.
+          We're dedicated to creating a high-quality, stable server experience.
+        </p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="p-4 rounded bg-white/5">
+            <h4 class="font-bold text-[var(--gaming-cyan)]">Core Development</h4>
+            <p class="text-white/60 text-sm">Server architecture, game systems, networking</p>
+          </div>
+          <div class="p-4 rounded bg-white/5">
+            <h4 class="font-bold text-[var(--gaming-cyan)]">Data Engineering</h4>
+            <p class="text-white/60 text-sm">Game data extraction, database design</p>
+          </div>
+          <div class="p-4 rounded bg-white/5">
+            <h4 class="font-bold text-[var(--gaming-cyan)]">Web Development</h4>
+            <p class="text-white/60 text-sm">Portal, API, community tools</p>
+          </div>
+          <div class="p-4 rounded bg-white/5">
+            <h4 class="font-bold text-[var(--gaming-cyan)]">Community</h4>
+            <p class="text-white/60 text-sm">Support, moderation, events</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Open Source -->
+      <div id="open-source" class="card-gaming p-8 mb-8 animate-on-scroll">
+        <h2 class="text-2xl font-bold text-white mb-4">Open Source</h2>
+        <p class="text-white/70 mb-4">
+          Bezgelor is built on open-source technology and we believe in transparency and community
+          collaboration. Our server is written in Elixir, leveraging the BEAM VM for exceptional
+          concurrency and fault tolerance.
+        </p>
+        <div class="flex flex-wrap gap-4">
+          <a href="https://github.com/bezgelor" target="_blank" rel="noopener"
+             class="btn-gaming text-sm">
+            View on GitHub
+          </a>
+          <a href="https://github.com/bezgelor/bezgelor/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener"
+             class="btn-gaming btn-gaming-magenta text-sm">
+            Contribute
+          </a>
+        </div>
+      </div>
+
+      <!-- Credits -->
+      <div id="credits" class="card-gaming p-8 mb-8 animate-on-scroll">
+        <h2 class="text-2xl font-bold text-white mb-4">Credits & Acknowledgments</h2>
+        <ul class="space-y-3 text-white/70">
+          <li class="flex items-start gap-2">
+            <span class="text-[var(--gaming-cyan)]">▸</span>
+            <span><strong class="text-white">Carbine Studios</strong> - For creating WildStar, one of the most innovative MMOs</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-[var(--gaming-cyan)]">▸</span>
+            <span><strong class="text-white">NexusForever</strong> - The original C# WildStar emulator that inspired this project</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-[var(--gaming-cyan)]">▸</span>
+            <span><strong class="text-white">WildStar Community</strong> - For keeping the spirit alive</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-[var(--gaming-cyan)]">▸</span>
+            <span><strong class="text-white">Contributors</strong> - Everyone who has helped with code, testing, and feedback</span>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Contact -->
+      <div id="contact" class="card-gaming p-8 animate-on-scroll">
+        <h2 class="text-2xl font-bold text-white mb-4">Contact</h2>
+        <p class="text-white/70 mb-4">
+          The best way to reach us is through our Discord server. For bug reports and feature
+          requests, please use our GitHub issues.
+        </p>
+        <div class="flex flex-wrap gap-4">
+          <a href="https://discord.gg/bezgelor" target="_blank" rel="noopener"
+             class="btn-gaming text-sm">
+            Join Discord
+          </a>
+          <a href="https://github.com/bezgelor/bezgelor/issues" target="_blank" rel="noopener"
+             class="btn-gaming text-sm">
+            Report Issue
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+</Layouts.gaming>
