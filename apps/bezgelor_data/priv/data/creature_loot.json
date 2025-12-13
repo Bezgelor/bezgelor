@@ -4,7 +4,7 @@
     "race_mappings": {
       "_description": "Maps creature race_id to base loot table and category",
       "0": {
-        "base_table": 999,
+        "base_table": 1000,
         "category": "object",
         "gold_multiplier": 1.0,
         "drop_bonus": 0

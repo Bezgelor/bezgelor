@@ -85347,6 +85347,603 @@
           "respawn_time_ms": 60000
         }
       ]
+    },
+    {
+      "world_id": 990,
+      "zone_name": "EverstarGrove",
+      "harvest_spawns": [
+        {
+          "id": 1,
+          "harvest_node_id": 1,
+          "position": [
+            -250.0,
+            -906.0,
+            -3420.0
+          ],
+          "rotation": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "area_id": 1416,
+          "display_info": 23825,
+          "respawn_time_ms": 60000
+        },
+        {
+          "id": 2,
+          "harvest_node_id": 1,
+          "position": [
+            -660.0,
+            -950.0,
+            -3530.0
+          ],
+          "rotation": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "area_id": 1416,
+          "display_info": 23825,
+          "respawn_time_ms": 60000
+        },
+        {
+          "id": 3,
+          "harvest_node_id": 101,
+          "position": [
+            -320.0,
+            -949.0,
+            -2755.0
+          ],
+          "rotation": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "area_id": 1415,
+          "display_info": 23825,
+          "respawn_time_ms": 45000
+        },
+        {
+          "id": 4,
+          "harvest_node_id": 101,
+          "position": [
+            165.0,
+            -937.0,
+            -3530.0
+          ],
+          "rotation": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "area_id": 1419,
+          "display_info": 23825,
+          "respawn_time_ms": 45000
+        },
+        {
+          "id": 5,
+          "harvest_node_id": 103,
+          "position": [
+            -305.0,
+            -947.0,
+            -2975.0
+          ],
+          "rotation": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "area_id": 1415,
+          "display_info": 23825,
+          "respawn_time_ms": 50000
+        },
+        {
+          "id": 6,
+          "harvest_node_id": 103,
+          "position": [
+            275.0,
+            -947.0,
+            -3480.0
+          ],
+          "rotation": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "area_id": 1419,
+          "display_info": 23825,
+          "respawn_time_ms": 50000
+        }
+      ]
+    },
+    {
+      "world_id": 426,
+      "zone_name": "NorthernWilds",
+      "harvest_spawns": [
+        {
+          "id": 1,
+          "harvest_node_id": 1,
+          "position": [
+            4415.0,
+            -745.0,
+            -5505.0
+          ],
+          "rotation": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "area_id": 597,
+          "display_info": 23825,
+          "respawn_time_ms": 60000
+        },
+        {
+          "id": 2,
+          "harvest_node_id": 1,
+          "position": [
+            4635.0,
+            -734.0,
+            -5420.0
+          ],
+          "rotation": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "area_id": 597,
+          "display_info": 23825,
+          "respawn_time_ms": 60000
+        },
+        {
+          "id": 3,
+          "harvest_node_id": 101,
+          "position": [
+            4450.0,
+            -741.0,
+            -5435.0
+          ],
+          "rotation": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "area_id": 597,
+          "display_info": 23825,
+          "respawn_time_ms": 45000
+        },
+        {
+          "id": 4,
+          "harvest_node_id": 101,
+          "position": [
+            4580.0,
+            -732.0,
+            -5590.0
+          ],
+          "rotation": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "area_id": 597,
+          "display_info": 23825,
+          "respawn_time_ms": 45000
+        },
+        {
+          "id": 5,
+          "harvest_node_id": 103,
+          "position": [
+            4600.0,
+            -739.0,
+            -5455.0
+          ],
+          "rotation": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "area_id": 597,
+          "display_info": 23825,
+          "respawn_time_ms": 50000
+        },
+        {
+          "id": 6,
+          "harvest_node_id": 103,
+          "position": [
+            4380.0,
+            -740.0,
+            -5515.0
+          ],
+          "rotation": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "area_id": 597,
+          "display_info": 23825,
+          "respawn_time_ms": 50000
+        }
+      ]
+    },
+    {
+      "world_id": 1001,
+      "zone_name": "StormtalonsLair",
+      "harvest_spawns": [
+        {
+          "id": 1,
+          "harvest_node_id": 2,
+          "position": [
+            2480.0,
+            1790.0,
+            125.0
+          ],
+          "rotation": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "area_id": 0,
+          "display_info": 23825,
+          "respawn_time_ms": 120000
+        },
+        {
+          "id": 2,
+          "harvest_node_id": 2,
+          "position": [
+            2520.0,
+            1810.0,
+            115.0
+          ],
+          "rotation": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "area_id": 0,
+          "display_info": 23825,
+          "respawn_time_ms": 120000
+        },
+        {
+          "id": 3,
+          "harvest_node_id": 101,
+          "position": [
+            2490.0,
+            1820.0,
+            118.0
+          ],
+          "rotation": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "area_id": 0,
+          "display_info": 23825,
+          "respawn_time_ms": 90000
+        },
+        {
+          "id": 4,
+          "harvest_node_id": 103,
+          "position": [
+            2510.0,
+            1780.0,
+            122.0
+          ],
+          "rotation": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "area_id": 0,
+          "display_info": 23825,
+          "respawn_time_ms": 90000
+        },
+        {
+          "id": 5,
+          "harvest_node_id": 201,
+          "position": [
+            2505.0,
+            1805.0,
+            120.0
+          ],
+          "rotation": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "area_id": 0,
+          "display_info": 23825,
+          "respawn_time_ms": 300000
+        }
+      ]
+    },
+    {
+      "world_id": 1002,
+      "zone_name": "KelVoreth",
+      "harvest_spawns": [
+        {
+          "id": 1,
+          "harvest_node_id": 2,
+          "position": [
+            980.0,
+            1990.0,
+            85.0
+          ],
+          "rotation": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "area_id": 0,
+          "display_info": 23825,
+          "respawn_time_ms": 120000
+        },
+        {
+          "id": 2,
+          "harvest_node_id": 2,
+          "position": [
+            1020.0,
+            2010.0,
+            75.0
+          ],
+          "rotation": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "area_id": 0,
+          "display_info": 23825,
+          "respawn_time_ms": 120000
+        },
+        {
+          "id": 3,
+          "harvest_node_id": 101,
+          "position": [
+            990.0,
+            2020.0,
+            78.0
+          ],
+          "rotation": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "area_id": 0,
+          "display_info": 23825,
+          "respawn_time_ms": 90000
+        },
+        {
+          "id": 4,
+          "harvest_node_id": 103,
+          "position": [
+            1010.0,
+            1980.0,
+            82.0
+          ],
+          "rotation": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "area_id": 0,
+          "display_info": 23825,
+          "respawn_time_ms": 90000
+        },
+        {
+          "id": 5,
+          "harvest_node_id": 201,
+          "position": [
+            1005.0,
+            2005.0,
+            80.0
+          ],
+          "rotation": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "area_id": 0,
+          "display_info": 23825,
+          "respawn_time_ms": 300000
+        }
+      ]
+    },
+    {
+      "world_id": 1003,
+      "zone_name": "Skullcano",
+      "harvest_spawns": [
+        {
+          "id": 1,
+          "harvest_node_id": 3,
+          "position": [
+            2980.0,
+            1490.0,
+            205.0
+          ],
+          "rotation": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "area_id": 0,
+          "display_info": 23825,
+          "respawn_time_ms": 150000
+        },
+        {
+          "id": 2,
+          "harvest_node_id": 3,
+          "position": [
+            3020.0,
+            1510.0,
+            195.0
+          ],
+          "rotation": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "area_id": 0,
+          "display_info": 23825,
+          "respawn_time_ms": 150000
+        },
+        {
+          "id": 3,
+          "harvest_node_id": 101,
+          "position": [
+            2990.0,
+            1520.0,
+            198.0
+          ],
+          "rotation": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "area_id": 0,
+          "display_info": 23825,
+          "respawn_time_ms": 90000
+        },
+        {
+          "id": 4,
+          "harvest_node_id": 103,
+          "position": [
+            3010.0,
+            1480.0,
+            202.0
+          ],
+          "rotation": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "area_id": 0,
+          "display_info": 23825,
+          "respawn_time_ms": 90000
+        },
+        {
+          "id": 5,
+          "harvest_node_id": 201,
+          "position": [
+            3005.0,
+            1505.0,
+            200.0
+          ],
+          "rotation": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "area_id": 0,
+          "display_info": 23825,
+          "respawn_time_ms": 300000
+        }
+      ]
+    },
+    {
+      "world_id": 1004,
+      "zone_name": "SanctuaryOfTheSwordmaiden",
+      "harvest_spawns": [
+        {
+          "id": 1,
+          "harvest_node_id": 3,
+          "position": [
+            480.0,
+            790.0,
+            55.0
+          ],
+          "rotation": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "area_id": 0,
+          "display_info": 23825,
+          "respawn_time_ms": 150000
+        },
+        {
+          "id": 2,
+          "harvest_node_id": 3,
+          "position": [
+            520.0,
+            810.0,
+            45.0
+          ],
+          "rotation": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "area_id": 0,
+          "display_info": 23825,
+          "respawn_time_ms": 150000
+        },
+        {
+          "id": 3,
+          "harvest_node_id": 101,
+          "position": [
+            490.0,
+            820.0,
+            48.0
+          ],
+          "rotation": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "area_id": 0,
+          "display_info": 23825,
+          "respawn_time_ms": 90000
+        },
+        {
+          "id": 4,
+          "harvest_node_id": 103,
+          "position": [
+            510.0,
+            780.0,
+            52.0
+          ],
+          "rotation": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "area_id": 0,
+          "display_info": 23825,
+          "respawn_time_ms": 90000
+        },
+        {
+          "id": 5,
+          "harvest_node_id": 201,
+          "position": [
+            505.0,
+            805.0,
+            50.0
+          ],
+          "rotation": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "area_id": 0,
+          "display_info": 23825,
+          "respawn_time_ms": 300000
+        },
+        {
+          "id": 6,
+          "harvest_node_id": 202,
+          "position": [
+            500.0,
+            800.0,
+            50.0
+          ],
+          "rotation": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "area_id": 0,
+          "display_info": 23825,
+          "respawn_time_ms": 600000
+        }
+      ]
     }
   ]
 }

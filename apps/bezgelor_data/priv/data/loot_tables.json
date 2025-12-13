@@ -983,6 +983,939 @@
       "id": 999,
       "name": "Empty - No Loot",
       "entries": []
+    },
+    {
+      "id": 1000,
+      "name": "Chest - Common",
+      "entries": [
+        {
+          "item_id": 0,
+          "chance": 100,
+          "min": 50,
+          "max": 150,
+          "type": "gold"
+        },
+        {
+          "item_id": 7540,
+          "chance": 50,
+          "min": 1,
+          "max": 2,
+          "type": "item"
+        },
+        {
+          "item_id": 7312,
+          "chance": 50,
+          "min": 1,
+          "max": 2,
+          "type": "item"
+        },
+        {
+          "item_id": 178,
+          "chance": 30,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 613,
+          "chance": 30,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        }
+      ]
+    },
+    {
+      "id": 1001,
+      "name": "Chest - Uncommon",
+      "entries": [
+        {
+          "item_id": 0,
+          "chance": 100,
+          "min": 100,
+          "max": 300,
+          "type": "gold"
+        },
+        {
+          "item_id": 8384,
+          "chance": 60,
+          "min": 1,
+          "max": 2,
+          "type": "item"
+        },
+        {
+          "item_id": 7521,
+          "chance": 60,
+          "min": 1,
+          "max": 2,
+          "type": "item"
+        },
+        {
+          "item_id": 175,
+          "chance": 40,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 176,
+          "chance": 40,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 18536,
+          "chance": 15,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        }
+      ]
+    },
+    {
+      "id": 1002,
+      "name": "Chest - Rare",
+      "entries": [
+        {
+          "item_id": 0,
+          "chance": 100,
+          "min": 200,
+          "max": 500,
+          "type": "gold"
+        },
+        {
+          "item_id": 47713,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 47712,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 8206,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 177,
+          "chance": 50,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 85166,
+          "chance": 20,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 74500,
+          "chance": 10,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        }
+      ]
+    },
+    {
+      "id": 100101,
+      "name": "Boss - Aethros",
+      "entries": [
+        {
+          "item_id": 0,
+          "chance": 100,
+          "min": 200,
+          "max": 400,
+          "type": "gold"
+        },
+        {
+          "item_id": 81440,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81445,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81450,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81455,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81460,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        }
+      ]
+    },
+    {
+      "id": 100102,
+      "name": "Boss - Blade-Wind the Invoker",
+      "entries": [
+        {
+          "item_id": 0,
+          "chance": 100,
+          "min": 200,
+          "max": 400,
+          "type": "gold"
+        },
+        {
+          "item_id": 81465,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81470,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81475,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81480,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81485,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        }
+      ]
+    },
+    {
+      "id": 100103,
+      "name": "Boss - Overseer Drift-Catcher",
+      "entries": [
+        {
+          "item_id": 0,
+          "chance": 100,
+          "min": 150,
+          "max": 300,
+          "type": "gold"
+        },
+        {
+          "item_id": 81490,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81495,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81500,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81505,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        }
+      ]
+    },
+    {
+      "id": 100104,
+      "name": "Boss - Stormtalon",
+      "entries": [
+        {
+          "item_id": 0,
+          "chance": 100,
+          "min": 300,
+          "max": 500,
+          "type": "gold"
+        },
+        {
+          "item_id": 81510,
+          "chance": 100,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81515,
+          "chance": 100,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81520,
+          "chance": 100,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81525,
+          "chance": 100,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81530,
+          "chance": 100,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81535,
+          "chance": 100,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        }
+      ]
+    },
+    {
+      "id": 100201,
+      "name": "Boss - Grond the Corpsemaker",
+      "entries": [
+        {
+          "item_id": 0,
+          "chance": 100,
+          "min": 250,
+          "max": 450,
+          "type": "gold"
+        },
+        {
+          "item_id": 81540,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81545,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81550,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81555,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81560,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        }
+      ]
+    },
+    {
+      "id": 100202,
+      "name": "Boss - Slavemaster Drokk",
+      "entries": [
+        {
+          "item_id": 0,
+          "chance": 100,
+          "min": 250,
+          "max": 450,
+          "type": "gold"
+        },
+        {
+          "item_id": 81565,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81570,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81575,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81580,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81585,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        }
+      ]
+    },
+    {
+      "id": 100203,
+      "name": "Boss - Forgemaster Trogun",
+      "entries": [
+        {
+          "item_id": 0,
+          "chance": 100,
+          "min": 250,
+          "max": 450,
+          "type": "gold"
+        },
+        {
+          "item_id": 81590,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81595,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81600,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81605,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81610,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        }
+      ]
+    },
+    {
+      "id": 100204,
+      "name": "Boss - Skulltaker Mordechai",
+      "entries": [
+        {
+          "item_id": 0,
+          "chance": 100,
+          "min": 350,
+          "max": 600,
+          "type": "gold"
+        },
+        {
+          "item_id": 81615,
+          "chance": 100,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81620,
+          "chance": 100,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81625,
+          "chance": 100,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81630,
+          "chance": 100,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81635,
+          "chance": 100,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81640,
+          "chance": 100,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        }
+      ]
+    },
+    {
+      "id": 100301,
+      "name": "Boss - Stew-Shaman Tugga",
+      "entries": [
+        {
+          "item_id": 0,
+          "chance": 100,
+          "min": 300,
+          "max": 500,
+          "type": "gold"
+        },
+        {
+          "item_id": 81645,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81650,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81655,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81660,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81665,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        }
+      ]
+    },
+    {
+      "id": 100302,
+      "name": "Boss - Thunderfoot",
+      "entries": [
+        {
+          "item_id": 0,
+          "chance": 100,
+          "min": 300,
+          "max": 500,
+          "type": "gold"
+        },
+        {
+          "item_id": 81670,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81675,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81680,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81685,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81690,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        }
+      ]
+    },
+    {
+      "id": 100303,
+      "name": "Boss - Laveka the Firesinger",
+      "entries": [
+        {
+          "item_id": 0,
+          "chance": 100,
+          "min": 400,
+          "max": 700,
+          "type": "gold"
+        },
+        {
+          "item_id": 81695,
+          "chance": 100,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81700,
+          "chance": 100,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81705,
+          "chance": 100,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81710,
+          "chance": 100,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81715,
+          "chance": 100,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81720,
+          "chance": 100,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        }
+      ]
+    },
+    {
+      "id": 100401,
+      "name": "Boss - Rayna Darkspeaker",
+      "entries": [
+        {
+          "item_id": 0,
+          "chance": 100,
+          "min": 350,
+          "max": 600,
+          "type": "gold"
+        },
+        {
+          "item_id": 81725,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81730,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81735,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81740,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81745,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        }
+      ]
+    },
+    {
+      "id": 100402,
+      "name": "Boss - Ondu Lifeweaver",
+      "entries": [
+        {
+          "item_id": 0,
+          "chance": 100,
+          "min": 350,
+          "max": 600,
+          "type": "gold"
+        },
+        {
+          "item_id": 81750,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81755,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81760,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81765,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81770,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        }
+      ]
+    },
+    {
+      "id": 100403,
+      "name": "Boss - Moldwood Overlord",
+      "entries": [
+        {
+          "item_id": 0,
+          "chance": 100,
+          "min": 300,
+          "max": 500,
+          "type": "gold"
+        },
+        {
+          "item_id": 81775,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81780,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81785,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81790,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        }
+      ]
+    },
+    {
+      "id": 100404,
+      "name": "Boss - Spiritmother Selene",
+      "entries": [
+        {
+          "item_id": 0,
+          "chance": 100,
+          "min": 350,
+          "max": 600,
+          "type": "gold"
+        },
+        {
+          "item_id": 81795,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81800,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81805,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81810,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81815,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        }
+      ]
+    },
+    {
+      "id": 100405,
+      "name": "Boss - The Swordmaiden",
+      "entries": [
+        {
+          "item_id": 0,
+          "chance": 100,
+          "min": 500,
+          "max": 900,
+          "type": "gold"
+        },
+        {
+          "item_id": 81820,
+          "chance": 100,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81825,
+          "chance": 100,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81830,
+          "chance": 100,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81835,
+          "chance": 100,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81840,
+          "chance": 100,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81845,
+          "chance": 100,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 81850,
+          "chance": 100,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        }
+      ]
     }
   ]
 }

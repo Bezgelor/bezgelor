@@ -12,7 +12,7 @@ Bezgelor is a **feature-complete WildStar server emulator** with comprehensive g
 | Systems Implementation | ✅ 100% complete |
 | Content/Data | ✅ ~100% complete |
 | Populated Worlds | 7 of 7 (open world) |
-| Resource Spawns | ✅ 5,015 harvest nodes + 83 loot mappings |
+| Resource Spawns | ✅ 5,037 harvest nodes + 83 loot mappings |
 | Quests Defined | ✅ 5,194 (from client) |
 | Quest Objective Types | ✅ 40 of 40 implemented |
 | Quest Giver Mappings | ✅ Available (creatures_full) |
@@ -34,7 +34,7 @@ Bezgelor is a **feature-complete WildStar server emulator** with comprehensive g
 | **Quest System** | ✅ Complete | 5,194 quests, 40 objective types, handlers wired |
 | **Vendor Inventories** | ✅ Complete | 881 vendors, 35,842 item listings |
 | **Loot Tables** | ✅ Complete | Real items, equipment drops, group bonuses |
-| **Gathering Nodes** | ✅ Complete | 5,015 harvest nodes + 83 loot mappings |
+| **Gathering Nodes** | ✅ Complete | 5,037 harvest nodes + 83 loot mappings |
 | **Dungeon Scripts** | ✅ Complete | 100 boss scripts for all 46 instances |
 | **Dialogue Wiring** | ✅ Complete | Click-dialogue + ambient gossip implemented |
 | **Path Missions** | ✅ Complete | 1,064 missions, 26 types, all 4 paths wired |
@@ -154,7 +154,7 @@ All major systems are complete. Optional improvements:
 - 3,436 zone definitions with full metadata
 - 41,056 creature spawns across all 7 open world continents
 - 2,921 object spawns
-- ✅ **5,015 harvest/resource node spawns** (extracted from NexusForever.WorldDatabase)
+- ✅ **5,037 harvest/resource node spawns** (extracted + tutorial zones + dungeons)
 - Full import from NexusForever.WorldDatabase
 
 **World coverage:**
@@ -163,8 +163,8 @@ All major systems are complete. Optional improvements:
 | 51 | Alizar (Exile) | Algoroc, Celestion, Galeras, Thayd, Whitevale | 20,229 | 1,833 | 1,898 |
 | 22 | Olyssia (Dominion) | Auroria, Deradune, Ellevar, Illium, Wilderrun | 996 | 30 | 1,619 |
 | 1061 | Isigrol (Max-level) | Blighthaven, Malgrave, SouthernGrimvault, TheDefile, WesternGrimvault | 17,990 | 986 | 1,498 |
-| 990 | EverstarGrove | Tutorial area | 1,107 | 49 | 0 |
-| 426 | NorthernWilds | Tutorial area | 590 | 23 | 0 |
+| 990 | EverstarGrove | Tutorial area | 1,107 | 49 | 6 |
+| 426 | NorthernWilds | Tutorial area | 590 | 23 | 6 |
 | 870 | CrimsonIsle | Dominion starter | 47 | 0 | 0 |
 | 1387 | LevianBay | Shiphand area | 97 | 0 | 0 |
 
@@ -173,7 +173,7 @@ All major systems are complete. Optional improvements:
 
 **Impact:** Open world is now populated. Players can explore, combat creatures, and gather resources.
 
-### 4. Loot System (✅ 85% Complete)
+### 4. Loot System (✅ 100% Complete)
 
 **What exists:**
 - ✅ Loot generation framework with level scaling
@@ -183,6 +183,8 @@ All major systems are complete. Optional improvements:
 - ✅ Equipment drop system with tier-based chances (Tier 1-5)
 - ✅ Group loot bonus wiring (0% solo → +23% raid)
 - ✅ Gold amounts validated against quest reward economy
+- ✅ **Boss loot tables** - 16 dungeon boss tables with iLevel-appropriate unique drops
+- ✅ **Chest/container loot** - 3 chest tiers (Common/Uncommon/Rare), race 0 objects mapped
 
 **Equipment drop chances by creature tier:**
 | Tier | Type | Green | Blue | Purple | Orange |
@@ -193,11 +195,15 @@ All major systems are complete. Optional improvements:
 | 4 | Elite | 10% | 5% | 1% | - |
 | 5 | Boss | - | 50% | 20% | 1% |
 
-**What's missing:**
-- Boss-specific unique drops
-- Chest/container loot
+**Boss loot tables by dungeon:**
+| Dungeon | Level | Bosses | Drop Rate |
+|---------|-------|--------|-----------|
+| Stormtalon's Lair | 40 | 4 | 70% (final 100%) |
+| Kel Voreth | 44 | 4 | 70% (final 100%) |
+| Skullcano | 50 | 3 | 70% (final 100%) |
+| Sanctuary of the Swordmaiden | 60 | 5 | 70% (final 100%) |
 
-**Impact:** ✅ Creatures now drop appropriate loot with real items and equipment.
+**Impact:** ✅ Complete loot system with creature drops, boss uniques, and container loot.
 
 ### 5. Dungeon/Instance Content (✅ 100% Complete)
 
@@ -237,16 +243,18 @@ All major systems are complete. Optional improvements:
 
 **Impact:** ✅ Full PvE endgame content available.
 
-### 6. Tradeskill Content (✅ 95% Complete)
+### 6. Tradeskill Content (✅ 100% Complete)
 
 **What exists:**
 - 6 crafting + 3 gathering professions
 - Schematics, talents, additives
 - Coordinate-based crafting system
 - Work order templates
-- ✅ **5,015 gathering node spawns** across 3 continents
+- ✅ **5,015+ gathering node spawns** across all zones
 - ✅ **HarvestNodeManager** for zone spawning and respawns
 - ✅ **Harvest node loot tables** - 83 unique nodes mapped to drops by profession/tier
+- ✅ **Tutorial zone nodes** - EverstarGrove + NorthernWilds (Copper/Herb/Cloth)
+- ✅ **Dungeon gathering nodes** - All 4 dungeons with level-appropriate nodes
 
 **Harvest loot coverage:**
 | Profession | Nodes | Drops |
@@ -257,11 +265,14 @@ All major systems are complete. Optional improvements:
 | Farming | 38 | Vegetables + seeds |
 | Generic | 4 | Fallback for special nodes |
 
-**What's missing:**
-- Tutorial zone gathering nodes (EverstarGrove, NorthernWilds)
-- Some instance/dungeon gathering nodes
+**Zone coverage:**
+| Zone Type | Zones | Node Types |
+|-----------|-------|------------|
+| Open World | 15 | All professions by region level |
+| Tutorial | 2 | Copper Deposit, Herb Patch, Cloth Fiber |
+| Dungeons | 4 | Iron/Titanium + Eldan Relics + Caches |
 
-**Impact:** ✅ Gathering professions fully functional with real loot drops.
+**Impact:** ✅ Gathering professions fully functional everywhere players can go.
 
 ### 7. Dialogue System (✅ COMPLETE)
 
