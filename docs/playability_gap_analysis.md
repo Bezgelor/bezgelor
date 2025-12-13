@@ -368,7 +368,7 @@ Tool: tools/spawn_importer/nexusforever_converter.py
 - ✅ Real item IDs from client data (2,845 loot items)
 - ✅ Equipment drops by creature tier (1-5)
 - ✅ Group loot bonus wiring
-- TODO: Boss-specific unique drops
+- ✅ Boss-specific unique drops (16 dungeon + 6 GA + 9 DS raid bosses)
 
 ### Phase B: Quest Foundation ✅ COMPLETE
 

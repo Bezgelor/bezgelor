@@ -1916,6 +1916,887 @@
           "type": "item"
         }
       ]
+    },
+    {
+      "id": 300101,
+      "name": "Raid Boss - Experiment X-89",
+      "entries": [
+        {
+          "item_id": 0,
+          "chance": 100,
+          "min": 800,
+          "max": 1200,
+          "type": "gold"
+        },
+        {
+          "item_id": 1711,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 1744,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 1649,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 1650,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 447,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 545,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        }
+      ]
+    },
+    {
+      "id": 300102,
+      "name": "Raid Boss - Kuralak the Defiler",
+      "entries": [
+        {
+          "item_id": 0,
+          "chance": 100,
+          "min": 900,
+          "max": 1400,
+          "type": "gold"
+        },
+        {
+          "item_id": 1745,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 1746,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 1676,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 1678,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 1251,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 1699,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        }
+      ]
+    },
+    {
+      "id": 300103,
+      "name": "Raid Boss - Phagetech Prototypes",
+      "entries": [
+        {
+          "item_id": 0,
+          "chance": 100,
+          "min": 900,
+          "max": 1400,
+          "type": "gold"
+        },
+        {
+          "item_id": 1750,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 1749,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 1700,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 1710,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 1723,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        }
+      ]
+    },
+    {
+      "id": 300104,
+      "name": "Raid Boss - Genetic Monstrosity",
+      "entries": [
+        {
+          "item_id": 0,
+          "chance": 100,
+          "min": 1000,
+          "max": 1500,
+          "type": "gold"
+        },
+        {
+          "item_id": 14130,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 14147,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 14370,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 14372,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 14375,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 14387,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        }
+      ]
+    },
+    {
+      "id": 300105,
+      "name": "Raid Boss - Phageborn Convergence",
+      "entries": [
+        {
+          "item_id": 0,
+          "chance": 100,
+          "min": 1000,
+          "max": 1500,
+          "type": "gold"
+        },
+        {
+          "item_id": 14441,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 14561,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 8540,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 11773,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 11774,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 11772,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        }
+      ]
+    },
+    {
+      "id": 300106,
+      "name": "Raid Boss - Dreadphage Ohmna",
+      "entries": [
+        {
+          "item_id": 0,
+          "chance": 100,
+          "min": 1500,
+          "max": 2500,
+          "type": "gold"
+        },
+        {
+          "item_id": 16487,
+          "chance": 100,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 16500,
+          "chance": 100,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 16512,
+          "chance": 100,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 16073,
+          "chance": 100,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 16488,
+          "chance": 100,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 16501,
+          "chance": 100,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 16486,
+          "chance": 100,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 16499,
+          "chance": 100,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        }
+      ]
+    },
+    {
+      "id": 300201,
+      "name": "Raid Boss - System Daemons",
+      "entries": [
+        {
+          "item_id": 0,
+          "chance": 100,
+          "min": 1200,
+          "max": 1800,
+          "type": "gold"
+        },
+        {
+          "item_id": 16070,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 16537,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 17266,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 17280,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 17294,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 15436,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        }
+      ]
+    },
+    {
+      "id": 300202,
+      "name": "Raid Boss - Gloomclaw",
+      "entries": [
+        {
+          "item_id": 0,
+          "chance": 100,
+          "min": 1300,
+          "max": 1900,
+          "type": "gold"
+        },
+        {
+          "item_id": 16541,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 17267,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 17281,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 17295,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 15437,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 15477,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        }
+      ]
+    },
+    {
+      "id": 300203,
+      "name": "Raid Boss - Maelstrom Authority",
+      "entries": [
+        {
+          "item_id": 0,
+          "chance": 100,
+          "min": 1300,
+          "max": 1900,
+          "type": "gold"
+        },
+        {
+          "item_id": 16072,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 16536,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 17265,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 17279,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 17293,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 15434,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        }
+      ]
+    },
+    {
+      "id": 300204,
+      "name": "Raid Boss - Elemental Pairs",
+      "entries": [
+        {
+          "item_id": 0,
+          "chance": 100,
+          "min": 1400,
+          "max": 2000,
+          "type": "gold"
+        },
+        {
+          "item_id": 16542,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 17268,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 17282,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 17296,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 15475,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 15650,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        }
+      ]
+    },
+    {
+      "id": 300205,
+      "name": "Raid Boss - Limbo Infomatrix",
+      "entries": [
+        {
+          "item_id": 0,
+          "chance": 100,
+          "min": 1400,
+          "max": 2000,
+          "type": "gold"
+        },
+        {
+          "item_id": 16543,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 17269,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 17285,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 17297,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 15439,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 15478,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        }
+      ]
+    },
+    {
+      "id": 300206,
+      "name": "Raid Boss - Visceralus",
+      "entries": [
+        {
+          "item_id": 0,
+          "chance": 100,
+          "min": 1500,
+          "max": 2100,
+          "type": "gold"
+        },
+        {
+          "item_id": 16544,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 17270,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 17286,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 17298,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 15440,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 15479,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 12314,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        }
+      ]
+    },
+    {
+      "id": 300207,
+      "name": "Raid Boss - Pyrobane",
+      "entries": [
+        {
+          "item_id": 0,
+          "chance": 100,
+          "min": 1500,
+          "max": 2100,
+          "type": "gold"
+        },
+        {
+          "item_id": 17313,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 17314,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 17315,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 17316,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 15441,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 15480,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 12317,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        }
+      ]
+    },
+    {
+      "id": 300208,
+      "name": "Raid Boss - Aileron",
+      "entries": [
+        {
+          "item_id": 0,
+          "chance": 100,
+          "min": 1600,
+          "max": 2200,
+          "type": "gold"
+        },
+        {
+          "item_id": 15652,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 15808,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 16148,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 15653,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 15809,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 16077,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 13313,
+          "chance": 70,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        }
+      ]
+    },
+    {
+      "id": 300209,
+      "name": "Raid Boss - Avatus",
+      "entries": [
+        {
+          "item_id": 0,
+          "chance": 100,
+          "min": 2500,
+          "max": 4000,
+          "type": "gold"
+        },
+        {
+          "item_id": 15807,
+          "chance": 100,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 16062,
+          "chance": 100,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 15654,
+          "chance": 100,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 15810,
+          "chance": 100,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 16190,
+          "chance": 100,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 15655,
+          "chance": 100,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 16040,
+          "chance": 100,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 16191,
+          "chance": 100,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 15656,
+          "chance": 100,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        },
+        {
+          "item_id": 16042,
+          "chance": 100,
+          "min": 1,
+          "max": 1,
+          "type": "item"
+        }
+      ]
     }
   ]
 }

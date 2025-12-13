@@ -56,15 +56,11 @@ Bezgelor is an Elixir umbrella application that emulates WildStar game servers u
 ## Quick Start
 
 ```bash
-# 1. Start the database
-docker compose up -d
+# First time setup
+./scripts/setup.sh
 
-# 2. Install dependencies and setup database
-mix deps.get
-mix ecto.setup
-
-# 3. Start all servers with the web portal
-iex -S mix phx.server
+# Start all servers
+./scripts/start.sh
 ```
 
 That's it! The portal is at **http://localhost:4001** and all game servers are running.
@@ -83,7 +79,18 @@ When you start the server, the following services come online:
 | World Server | 24000 | Game world |
 | PostgreSQL | 5433 | Database (via Docker) |
 
-### Start Commands
+### Scripts
+
+| Script | Description |
+|--------|-------------|
+| `./scripts/setup.sh` | First-time setup: database + deps + migrations |
+| `./scripts/start.sh` | Start all servers (interactive) |
+| `./scripts/start-bg.sh` | Start all servers in background |
+| `./scripts/stop.sh` | Stop all services |
+| `./scripts/reset-db.sh` | Reset database (drop + create + migrate + seed) |
+| `./scripts/db-up.sh` | Start just the database |
+
+### Manual Start Commands
 
 ```bash
 # Full stack with live reload (recommended for development)
