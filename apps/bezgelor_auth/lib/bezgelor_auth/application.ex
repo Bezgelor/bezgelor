@@ -35,9 +35,6 @@ defmodule BezgelorAuth.Application do
         Logger.info("Starting Auth Server on port #{port}")
 
         [
-          # Start the packet registry
-          BezgelorProtocol.PacketRegistry,
-
           # Start the TCP listener for auth connections
           {BezgelorProtocol.TcpListener,
            port: port,

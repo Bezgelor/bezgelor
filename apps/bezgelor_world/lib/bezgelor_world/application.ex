@@ -92,9 +92,6 @@ defmodule BezgelorWorld.Application do
         Logger.info("Starting World Server on port #{port}")
 
         [
-          # Start the packet registry if not already running
-          BezgelorProtocol.PacketRegistry,
-
           # Start the TCP listener for world connections
           {BezgelorProtocol.TcpListener,
            port: port,

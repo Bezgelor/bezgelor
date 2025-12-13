@@ -8,8 +8,7 @@ defmodule BezgelorProtocol.Application do
   @impl true
   def start(_type, _args) do
     children = [
-      # Starts a worker by calling: BezgelorProtocol.Worker.start_link(arg)
-      # {BezgelorProtocol.Worker, arg}
+      BezgelorProtocol.PacketRegistry
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
