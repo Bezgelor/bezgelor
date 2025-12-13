@@ -16,6 +16,7 @@ defmodule BezgelorWorld.Handler.NpcHandler do
   alias BezgelorProtocol.PacketReader
   alias BezgelorProtocol.Packets.World.{
     ClientNpcInteract,
+    ServerDialogStart,
     ServerQuestOffer
   }
   alias BezgelorWorld.{CombatBroadcaster, Quest.PrerequisiteChecker}
@@ -51,31 +52,58 @@ defmodule BezgelorWorld.Handler.NpcHandler do
   @doc """
   Handle NPC interaction packet.
 
-  Determines NPC type and responds appropriately.
+  Routes based on interaction event type:
+  - 37: Dialogue - sends ServerDialogStart for client-side dialogue UI
+  - 49: Vendor - opens shop interface
+  - Other: Falls back to NPC type-based routing
   """
   @spec handle_interact(pid(), integer(), ClientNpcInteract.t(), map()) :: :ok
   def handle_interact(connection_pid, character_id, %ClientNpcInteract{} = packet, session_data) do
     npc_guid = packet.npc_guid
-
-    # Extract creature ID from GUID (implementation-specific)
     creature_id = extract_creature_id(npc_guid, session_data)
 
-    cond do
-      is_nil(creature_id) ->
-        Logger.warning("Could not extract creature ID from GUID #{npc_guid}")
-        :ok
+    # Notify quest system for talk_to_npc objectives
+    if creature_id do
+      CombatBroadcaster.notify_npc_talk(character_id, creature_id)
+    end
 
+    # Route based on interaction event type
+    case packet.event do
+      37 ->
+        # Dialogue - just send dialog start, client handles the rest
+        send_dialog_start(connection_pid, npc_guid)
+
+      49 ->
+        # Vendor
+        if creature_id, do: handle_vendor(connection_pid, character_id, creature_id, npc_guid)
+
+      _ ->
+        # Fallback to legacy type-based routing for other events
+        if creature_id do
+          handle_by_npc_type(connection_pid, character_id, creature_id, npc_guid)
+        else
+          Logger.warning("Could not extract creature ID from GUID #{npc_guid}")
+        end
+    end
+
+    :ok
+  end
+
+  defp send_dialog_start(connection_pid, npc_guid) do
+    packet = %ServerDialogStart{dialog_unit_id: npc_guid, unused: false}
+    send(connection_pid, {:send_packet, packet})
+    Logger.debug("Sent DialogStart for NPC #{npc_guid}")
+  end
+
+  defp handle_by_npc_type(connection_pid, character_id, creature_id, npc_guid) do
+    cond do
       Store.creature_quest_giver?(creature_id) ->
-        # Notify quest system of NPC talk (for talk_to_npc objectives)
-        CombatBroadcaster.notify_npc_talk(character_id, creature_id)
         handle_quest_giver(connection_pid, character_id, creature_id, npc_guid)
 
       Store.get_vendor_by_creature(creature_id) != :error ->
-        CombatBroadcaster.notify_npc_talk(character_id, creature_id)
         handle_vendor(connection_pid, character_id, creature_id, npc_guid)
 
       true ->
-        CombatBroadcaster.notify_npc_talk(character_id, creature_id)
         handle_generic_npc(connection_pid, character_id, creature_id, npc_guid)
     end
   end
