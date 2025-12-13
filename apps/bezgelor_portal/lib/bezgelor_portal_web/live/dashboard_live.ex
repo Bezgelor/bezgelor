@@ -26,13 +26,15 @@ defmodule BezgelorPortalWeb.DashboardLive do
 
   def render(assigns) do
     ~H"""
-    <div class="space-y-6">
-      <div>
-        <h1 class="text-3xl font-bold">Welcome back!</h1>
-        <p class="text-base-content/70 mt-1">{@current_account.email}</p>
+    <div class="max-w-6xl mx-auto">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h1 class="text-2xl font-bold">Dashboard</h1>
+          <p class="text-base-content/70">Welcome back, {@current_account.email}</p>
+        </div>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <.dashboard_card
           title="Characters"
           description="View and manage your characters"
@@ -57,7 +59,7 @@ defmodule BezgelorPortalWeb.DashboardLive do
         />
       </div>
 
-      <div :if={length(@roles) > 0} class="mt-8">
+      <div :if={length(@roles) > 0} class="mt-6">
         <h2 class="text-xl font-semibold mb-4">Your Roles</h2>
         <div class="flex flex-wrap gap-2">
           <span :for={role <- @roles} class="badge badge-lg badge-primary">

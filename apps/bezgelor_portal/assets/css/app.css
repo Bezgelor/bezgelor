@@ -290,7 +290,6 @@
 .btn-gaming:hover {
   color: var(--gaming-bg-dark);
   box-shadow: var(--gaming-glow-cyan);
-  transform: translateY(-2px);
 }
 
 .btn-gaming:hover::before {
@@ -375,7 +374,6 @@
 }
 
 .card-gaming:hover {
-  transform: translateY(-8px) scale(1.02);
   box-shadow:
     0 20px 40px rgba(0, 0, 0, 0.4),
     0 0 30px rgba(0, 240, 255, 0.2);
@@ -649,7 +647,6 @@
 
 .footer-gaming-section a:hover {
   color: var(--gaming-cyan);
-  transform: translateX(5px);
 }
 
 .footer-gaming-bottom {
@@ -683,7 +680,6 @@
   border-color: var(--gaming-cyan);
   color: var(--gaming-cyan);
   box-shadow: var(--gaming-glow-cyan);
-  transform: translateY(-3px);
 }
 
 /* ============================================
@@ -822,6 +818,13 @@
     0 20px 40px rgba(0, 0, 0, 0.5),
     inset 0 1px 0 rgba(255, 255, 255, 0.05);
   position: relative;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+/* Override card-gaming hover transform - keep flat, just show border glow */
+.auth-card:hover {
+  transform: none;
 }
 
 .auth-card::before {
@@ -902,7 +905,6 @@
 
 .auth-card button[type="submit"]:hover,
 .auth-card .btn-primary:hover {
-  transform: translateY(-2px);
   box-shadow: var(--gaming-glow-cyan);
 }
 
@@ -993,12 +995,21 @@
   appearance: none;
   width: 1.25rem;
   height: 1.25rem;
+  min-width: 1.25rem;
   border: 2px solid rgba(0, 240, 255, 0.5);
   border-radius: 0.25rem;
   background: rgba(0, 0, 0, 0.4);
   cursor: pointer;
   position: relative;
   transition: all 0.3s ease;
+}
+
+/* Checkbox label text wrapping */
+.auth-card .label-text {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  flex: 1;
+  min-width: 0;
 }
 
 .auth-card input[type="checkbox"]:checked {
@@ -1101,7 +1112,6 @@
 }
 
 #back-to-top:hover {
-  transform: translateY(-3px);
   box-shadow: var(--gaming-glow-cyan);
 }
 
@@ -1109,11 +1119,7 @@
   content: '↑';
 }
 
-/* Card tilt effect base */
-.card-gaming.tilt {
-  transition: transform 0.1s ease;
-  transform-style: preserve-3d;
-}
+/* Card tilt effect disabled - keeping flat design */
 
 /* Hover glow effect for interactive elements */
 .hover-glow {

@@ -47,6 +47,11 @@ defmodule BezgelorPortalWeb.Live.Hooks do
     socket = assign_current_account(socket, session)
 
     if socket.assigns.current_account do
+      socket =
+        socket
+        |> assign_server_status()
+        |> maybe_schedule_status_refresh()
+
       {:cont, socket}
     else
       socket =
@@ -107,5 +112,36 @@ defmodule BezgelorPortalWeb.Live.Hooks do
   defp has_admin_access?(account) do
     permissions = Authorization.get_account_permissions(account)
     length(permissions) > 0
+  end
+
+  # Server status helpers
+  @status_refresh_interval :timer.seconds(30)
+
+  defp assign_server_status(socket) do
+    assign(socket, :server_status, fetch_server_status())
+  end
+
+  defp maybe_schedule_status_refresh(socket) do
+    if connected?(socket) do
+      attach_hook(socket, :server_status_refresh, :handle_info, &handle_status_refresh/2)
+      |> tap(fn _ -> Process.send_after(self(), :refresh_server_status, @status_refresh_interval) end)
+    else
+      socket
+    end
+  end
+
+  defp handle_status_refresh(:refresh_server_status, socket) do
+    Process.send_after(self(), :refresh_server_status, @status_refresh_interval)
+    {:cont, assign(socket, :server_status, fetch_server_status())}
+  end
+
+  defp handle_status_refresh(_msg, socket), do: {:cont, socket}
+
+  defp fetch_server_status do
+    try do
+      BezgelorWorld.Portal.server_status()
+    rescue
+      _ -> %{online_players: 0, maintenance_mode: false, uptime_seconds: 0}
+    end
   end
 end

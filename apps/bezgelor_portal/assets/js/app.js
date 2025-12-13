@@ -203,45 +203,14 @@ const initBackToTop = () => {
   })
 }
 
-// Magnetic hover effect for buttons
+// Magnetic hover effect for buttons - DISABLED for flat design
 const initMagneticButtons = () => {
-  const buttons = document.querySelectorAll('.btn-gaming')
-
-  buttons.forEach(btn => {
-    btn.addEventListener('mousemove', (e) => {
-      const rect = btn.getBoundingClientRect()
-      const x = e.clientX - rect.left - rect.width / 2
-      const y = e.clientY - rect.top - rect.height / 2
-
-      btn.style.transform = `translate(${x * 0.1}px, ${y * 0.1}px)`
-    })
-
-    btn.addEventListener('mouseleave', () => {
-      btn.style.transform = ''
-    })
-  })
+  // Disabled - keeping buttons flat without movement
 }
 
-// Tilt effect for cards
+// Tilt effect for cards - DISABLED for flat design
 const initCardTilt = () => {
-  const cards = document.querySelectorAll('.card-gaming.tilt')
-
-  cards.forEach(card => {
-    card.addEventListener('mousemove', (e) => {
-      const rect = card.getBoundingClientRect()
-      const x = (e.clientX - rect.left) / rect.width
-      const y = (e.clientY - rect.top) / rect.height
-
-      const rotateX = (y - 0.5) * -10
-      const rotateY = (x - 0.5) * 10
-
-      card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`
-    })
-
-    card.addEventListener('mouseleave', () => {
-      card.style.transform = ''
-    })
-  })
+  // Disabled - keeping cards flat without 3D tilt
 }
 
 // Initialize all gaming animations on DOM ready

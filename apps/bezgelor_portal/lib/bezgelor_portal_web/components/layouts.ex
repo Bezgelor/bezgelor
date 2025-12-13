@@ -21,7 +21,7 @@ defmodule BezgelorPortalWeb.Layouts do
       </Layouts.app>
 
   """
-  attr :flash, :map, required: true, doc: "the map of flash messages"
+  attr :flash, :map, default: %{}, doc: "the map of flash messages"
   attr :current_account, :map, default: nil, doc: "the currently logged-in account"
   attr :has_admin_access, :boolean, default: false, doc: "whether user has any admin permissions"
 
@@ -29,16 +29,23 @@ defmodule BezgelorPortalWeb.Layouts do
     default: nil,
     doc: "the current [scope](https://hexdocs.pm/phoenix/scopes.html)"
 
-  slot :inner_block, required: true
+  attr :server_status, :map, default: nil, doc: "server status for navbar display"
+  attr :inner_content, :any, default: nil, doc: "content when used as a layout"
+  slot :inner_block, doc: "content when used as a component"
 
   def app(assigns) do
+    assigns = assign_new(assigns, :flash, fn -> %{} end)
     ~H"""
     <div class="min-h-screen flex flex-col">
-      <.navbar current_account={@current_account} has_admin_access={@has_admin_access} />
+      <.navbar current_account={@current_account} has_admin_access={@has_admin_access} server_status={@server_status} />
 
       <main class="flex-1 px-4 py-8 sm:px-6 lg:px-8">
         <div class="mx-auto max-w-7xl">
-          {render_slot(@inner_block)}
+          <%= if @inner_content do %>
+            {@inner_content}
+          <% else %>
+            {render_slot(@inner_block)}
+          <% end %>
         </div>
       </main>
 
@@ -56,14 +63,15 @@ defmodule BezgelorPortalWeb.Layouts do
   @doc """
   Renders the admin layout with sidebar navigation.
   """
-  attr :flash, :map, required: true, doc: "the map of flash messages"
+  attr :flash, :map, default: %{}, doc: "the map of flash messages"
   attr :current_account, :map, default: nil, doc: "the currently logged-in account"
   attr :permissions, :list, default: [], doc: "list of permission keys the user has"
   attr :page_title, :string, default: nil, doc: "the current page title for breadcrumb"
-
-  slot :inner_block, required: true
+  attr :inner_content, :any, default: nil, doc: "content when used as a layout"
+  slot :inner_block, doc: "content when used as a component"
 
   def admin(assigns) do
+    assigns = assign_new(assigns, :flash, fn -> %{} end)
     ~H"""
     <div class="min-h-screen flex flex-col">
       <.navbar current_account={@current_account} has_admin_access={true} />
@@ -79,7 +87,11 @@ defmodule BezgelorPortalWeb.Layouts do
                 <li>{@page_title}</li>
               </ul>
             </nav>
-            {render_slot(@inner_block)}
+            <%= if @inner_content do %>
+              {@inner_content}
+            <% else %>
+              {render_slot(@inner_block)}
+            <% end %>
           </div>
         </main>
       </div>
@@ -94,32 +106,55 @@ defmodule BezgelorPortalWeb.Layouts do
   """
   attr :current_account, :map, default: nil
   attr :has_admin_access, :boolean, default: false
+  attr :server_status, :map, default: nil
 
   def navbar(assigns) do
     ~H"""
     <header class="navbar bg-base-100 shadow-sm px-4 sm:px-6 lg:px-8">
+      <!-- Left: Logo -->
       <div class="flex-1">
         <a href="/" class="flex items-center gap-2">
           <span class="text-xl font-bold text-primary">Bezgelor</span>
         </a>
       </div>
-      <div class="flex-none">
-        <ul class="flex items-center space-x-2">
+
+      <!-- Center: Server Status (if available) -->
+      <div :if={@server_status} class="hidden sm:flex items-center gap-2 absolute left-1/2 -translate-x-1/2">
+        <%= if @server_status[:maintenance_mode] do %>
+          <div class="badge badge-warning gap-1.5">
+            <span class="size-2 rounded-full bg-warning-content animate-pulse"></span>
+            <span>Maintenance</span>
+          </div>
+        <% else %>
+          <div class="badge badge-success gap-1.5">
+            <span class="size-2 rounded-full bg-success-content animate-pulse"></span>
+            <span>Online</span>
+          </div>
+        <% end %>
+        <div class="badge badge-ghost gap-1.5">
+          <.icon name="hero-users-micro" class="size-3" />
+          <span>{@server_status[:online_players] || 0}</span>
+        </div>
+      </div>
+
+      <!-- Right: Navigation -->
+      <div class="flex-1 flex justify-end">
+        <ul class="flex items-center space-x-1">
           <li>
-            <a href="/dashboard" class="btn btn-ghost btn-sm">Dashboard</a>
+            <a href="/dashboard" class="btn btn-ghost">Dashboard</a>
           </li>
           <li>
-            <a href="/characters" class="btn btn-ghost btn-sm">Characters</a>
+            <a href="/characters" class="btn btn-ghost">Characters</a>
           </li>
           <li :if={@has_admin_access}>
-            <a href="/admin" class="btn btn-ghost btn-sm">
+            <a href="/admin" class="btn btn-ghost">
               <.icon name="hero-shield-check-micro" class="size-4" />
               <span class="hidden sm:inline">Admin</span>
             </a>
           </li>
           <%= if @current_account do %>
             <li class="dropdown dropdown-end">
-              <div tabindex="0" role="button" class="btn btn-ghost btn-sm">
+              <div tabindex="0" role="button" class="btn btn-ghost">
                 <span class="hidden sm:inline">{@current_account.email}</span>
                 <.icon name="hero-chevron-down-micro" class="size-4" />
               </div>
@@ -128,7 +163,7 @@ defmodule BezgelorPortalWeb.Layouts do
                 class="dropdown-content menu bg-base-100 rounded-box z-10 w-52 p-2 shadow-lg"
               >
                 <li><a href="/settings">Account Settings</a></li>
-                <li class="divider"></li>
+                <hr class="my-1 border-base-300" />
                 <li><a href="/logout">Log out</a></li>
               </ul>
             </li>
@@ -290,17 +325,27 @@ defmodule BezgelorPortalWeb.Layouts do
   Features the bombastic WildStar-inspired gaming aesthetic with animated
   backgrounds, glowing effects, and gaming-styled forms.
 
+  Can be used either as a LiveView layout (receives @inner_content) or
+  as a component (receives @inner_block slot).
+
   ## Examples
 
+      # As a LiveView layout:
+      {:ok, socket, layout: {BezgelorPortalWeb.Layouts, :auth}}
+
+      # As a component:
       <Layouts.auth flash={@flash}>
         <h1>Login</h1>
       </Layouts.auth>
 
   """
-  attr :flash, :map, required: true, doc: "the map of flash messages"
-  slot :inner_block, required: true
+  attr :flash, :map, default: %{}, doc: "the map of flash messages"
+  attr :inner_content, :any, default: nil, doc: "content when used as a layout"
+  slot :inner_block, doc: "content when used as a component"
 
   def auth(assigns) do
+    # Ensure flash has a default value
+    assigns = assign_new(assigns, :flash, fn -> %{} end)
     ~H"""
     <div class="gaming-bg min-h-screen flex flex-col">
       <!-- Animated background elements -->
@@ -321,22 +366,26 @@ defmodule BezgelorPortalWeb.Layouts do
       <main class="flex-1 flex flex-col items-center justify-center px-4 py-8 relative z-10">
         <div class="w-full max-w-md">
           <!-- Logo and title -->
-          <div class="text-center mb-8 animate-on-scroll">
+          <div class="text-center mb-8">
             <a href="/" class="inline-block">
               <h1 class="text-4xl font-bold text-glow-cyan text-glow-pulse">BEZGELOR</h1>
             </a>
             <p class="text-white/60 mt-2">Your gateway to Nexus awaits</p>
           </div>
 
-          <!-- Auth card -->
-          <div class="card-gaming auth-card animate-on-scroll" style="animation-delay: 0.1s;">
+          <!-- Auth card - no animate-on-scroll to prevent LiveView patch issues -->
+          <div class="card-gaming auth-card">
             <div class="p-8">
-              {render_slot(@inner_block)}
+              <%= if @inner_content do %>
+                {@inner_content}
+              <% else %>
+                {render_slot(@inner_block)}
+              <% end %>
             </div>
           </div>
 
           <!-- Footer links -->
-          <div class="text-center mt-6 space-y-3 animate-on-scroll" style="animation-delay: 0.2s;">
+          <div class="text-center mt-6 space-y-3">
             <div class="flex items-center justify-center gap-4 text-sm">
               <a href="/terms" class="text-white/50 hover:text-[var(--gaming-cyan)] transition-colors">
                 Terms
@@ -449,17 +498,23 @@ defmodule BezgelorPortalWeb.Layouts do
   This layout features the bombastic WildStar-inspired gaming aesthetic
   with animated backgrounds, glowing effects, and full gaming footer.
   """
-  attr :flash, :map, required: true, doc: "the map of flash messages"
+  attr :flash, :map, default: %{}, doc: "the map of flash messages"
   attr :current_account, :map, default: nil, doc: "the currently logged-in account"
-  slot :inner_block, required: true
+  attr :inner_content, :any, default: nil, doc: "content when used as a layout"
+  slot :inner_block, doc: "content when used as a component"
 
   def gaming(assigns) do
+    assigns = assign_new(assigns, :flash, fn -> %{} end)
     ~H"""
     <div class="gaming-bg min-h-screen flex flex-col">
       <.gaming_navbar current_account={@current_account} />
 
       <main class="flex-1">
-        {render_slot(@inner_block)}
+        <%= if @inner_content do %>
+          {@inner_content}
+        <% else %>
+          {render_slot(@inner_block)}
+        <% end %>
       </main>
 
       <.gaming_footer />

@@ -37,7 +37,7 @@ defmodule BezgelorPortalWeb.TotpVerifyLive do
                error: nil,
                show_backup: false,
                remaining_backup_codes: remaining_codes
-             ), layout: {BezgelorPortalWeb.Layouts, :auth}}
+             )}
           else
             {:ok,
              socket

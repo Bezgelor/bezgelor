@@ -45,10 +45,15 @@ defmodule BezgelorPortalWeb.SettingsLive do
 
   def render(assigns) do
     ~H"""
-    <div class="container mx-auto max-w-4xl px-4 py-8">
-      <h1 class="text-3xl font-bold mb-8">Account Settings</h1>
+    <div class="max-w-6xl mx-auto">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h1 class="text-2xl font-bold">Account Settings</h1>
+          <p class="text-base-content/70">Manage your profile and security</p>
+        </div>
+      </div>
 
-      <div class="tabs tabs-boxed mb-8">
+      <div class="tabs tabs-boxed mb-6">
         <button
           class={["tab", @active_tab == "profile" && "tab-active"]}
           phx-click="switch_tab"

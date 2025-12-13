@@ -7,23 +7,40 @@ defmodule BezgelorPortalWeb.RegisterLive do
   use BezgelorPortalWeb, :live_view
 
   alias BezgelorDb.Accounts
-  alias BezgelorPortal.{Auth, Notifier, RateLimiter}
+  alias BezgelorPortal.{Notifier, RateLimiter}
 
   @min_password_length 8
 
-  def mount(_params, _session, socket) do
-    # Redirect if already logged in
-    if Auth.logged_in?(socket) do
+  require Logger
+
+  def mount(_params, session, socket) do
+    Logger.debug("RegisterLive mount called, connected=#{connected?(socket)}")
+
+    # Redirect if already logged in (session is a map in LiveView, not a Plug.Conn)
+    if session["current_account_id"] do
       {:ok, push_navigate(socket, to: ~p"/dashboard")}
     else
-      changeset = registration_changeset(%{})
+      # Use a simple map for the initial form to avoid changeset issues
+      # Include terms_accepted to preserve checkbox state during validation
+      form = to_form(%{"email" => "", "password" => "", "password_confirmation" => "", "terms_accepted" => "false"}, as: :registration)
+
+      # Store client IP during mount for rate limiting (can only access connect_info in mount)
+      client_ip = if connected?(socket) do
+        case get_connect_info(socket, :peer_data) do
+          %{address: addr} -> format_ip(addr)
+          _ -> "unknown"
+        end
+      else
+        "unknown"
+      end
 
       {:ok,
        assign(socket,
-         form: to_form(changeset, as: :registration),
+         form: form,
          password_strength: nil,
-         check_errors: false
-       ), layout: {BezgelorPortalWeb.Layouts, :auth}}
+         check_errors: false,
+         client_ip: client_ip
+       )}
     end
   end
 
@@ -65,11 +82,13 @@ defmodule BezgelorPortalWeb.RegisterLive do
       />
 
       <div class="form-control">
-        <label class="label cursor-pointer justify-start gap-3">
+        <label class="label cursor-pointer justify-start gap-3 items-start">
           <input
             type="checkbox"
             name="registration[terms_accepted]"
-            class="checkbox checkbox-primary"
+            value="true"
+            checked={@form[:terms_accepted].value == "true"}
+            class="checkbox checkbox-primary mt-0.5 flex-shrink-0"
             required
           />
           <span class="label-text">
@@ -168,25 +187,40 @@ defmodule BezgelorPortalWeb.RegisterLive do
   end
 
   def handle_event("validate", %{"registration" => params}, socket) do
-    changeset =
-      params
-      |> registration_changeset()
-      |> Map.put(:action, :validate)
+    Logger.debug("RegisterLive validate called with params: #{inspect(params)}")
+
+    # Ensure terms_accepted has a value (browsers don't send unchecked checkboxes)
+    params = Map.put_new(params, "terms_accepted", "false")
+
+    # Only use changeset validation if check_errors is true (after submit attempt)
+    # Otherwise just update the form values
+    form = if socket.assigns.check_errors do
+      changeset =
+        params
+        |> registration_changeset()
+        |> Map.put(:action, :validate)
+      to_form(changeset, as: :registration)
+    else
+      to_form(params, as: :registration)
+    end
 
     password_strength = calculate_password_strength(params["password"] || "")
 
-    {:noreply,
-     assign(socket,
-       form: to_form(changeset, as: :registration),
-       password_strength: password_strength
-     )}
+    {:noreply, assign(socket, form: form, password_strength: password_strength)}
+  end
+
+  # Catch-all for validate to prevent crashes
+  def handle_event("validate", params, socket) do
+    Logger.warning("RegisterLive validate catch-all called with: #{inspect(params)}")
+    {:noreply, socket}
   end
 
   def handle_event("register", %{"registration" => params}, socket) do
-    # Check rate limit first
-    client_ip = get_connect_info(socket, :peer_data)[:address] |> format_ip()
+    # Ensure terms_accepted has a value (browsers don't send unchecked checkboxes)
+    params = Map.put_new(params, "terms_accepted", "false")
 
-    case RateLimiter.check_registration(client_ip) do
+    # Check rate limit first (client_ip stored during mount)
+    case RateLimiter.check_registration(socket.assigns.client_ip) do
       :ok ->
         do_register(params, socket)
 
@@ -243,7 +277,7 @@ defmodule BezgelorPortalWeb.RegisterLive do
       email: :string,
       password: :string,
       password_confirmation: :string,
-      terms_accepted: :boolean
+      terms_accepted: :string
     }
 
     {%{}, types}
@@ -257,6 +291,17 @@ defmodule BezgelorPortalWeb.RegisterLive do
       message: "must be at least #{@min_password_length} characters"
     )
     |> validate_password_confirmation()
+    |> validate_terms_accepted()
+  end
+
+  defp validate_terms_accepted(changeset) do
+    terms = Ecto.Changeset.get_field(changeset, :terms_accepted)
+
+    if terms == "true" do
+      changeset
+    else
+      Ecto.Changeset.add_error(changeset, :terms_accepted, "must be accepted")
+    end
   end
 
   defp validate_password_confirmation(changeset) do

@@ -38,13 +38,28 @@ defmodule BezgelorPortalWeb.Router do
     get "/community", ContentController, :community
     get "/news", ContentController, :news
 
-    # Auth routes
-    live "/login", LoginLive, :index
-    live "/register", RegisterLive, :index
-    live "/auth/totp-verify", TotpVerifyLive, :index
+    # Auth callback (not LiveView)
+    get "/auth/callback", AuthController, :callback
+  end
+
+  # Auth LiveView routes with auth layout
+  live_session :auth,
+    layout: {BezgelorPortalWeb.Layouts, :auth} do
+    scope "/", BezgelorPortalWeb do
+      pipe_through :browser
+
+      live "/login", LoginLive, :index
+      live "/register", RegisterLive, :index
+      live "/auth/totp-verify", TotpVerifyLive, :index
+    end
+  end
+
+  # Remaining public routes
+  scope "/", BezgelorPortalWeb do
+    pipe_through :browser
+
     get "/verify/:token", VerificationController, :verify
     get "/verify-email-change/:token", EmailChangeController, :verify
-    get "/auth/callback", AuthController, :callback
     delete "/logout", AuthController, :logout
     get "/logout", AuthController, :logout  # Also allow GET for simple links
   end

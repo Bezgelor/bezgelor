@@ -18,7 +18,7 @@ defmodule BezgelorPortalWeb.LoginLive do
       {:ok, push_navigate(socket, to: ~p"/dashboard")}
     else
       form = to_form(%{"email" => "", "password" => ""}, as: :login)
-      {:ok, assign(socket, form: form, error: nil), layout: {BezgelorPortalWeb.Layouts, :auth}}
+      {:ok, assign(socket, form: form, error: nil)}
     end
   end
 
