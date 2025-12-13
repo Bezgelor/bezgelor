@@ -31,17 +31,33 @@ defmodule BezgelorWorld.Zone.Manager do
   """
   @spec initialize_zones() :: :ok
   def initialize_zones do
-    zones = BezgelorData.list_zones()
+    # Only start zones that have spawn data (from NexusForever WorldDatabase)
+    spawn_zones = BezgelorData.Store.get_all_spawn_zones()
 
-    for zone <- zones do
-      # Skip dungeons - they're created on demand
-      unless Map.get(zone, :is_dungeon, false) do
-        # Create instance 1 for each open world zone
-        {:ok, _pid} = InstanceSupervisor.start_instance(zone.id, 1, zone)
+    started =
+      for zone_data <- spawn_zones do
+        zone_id = zone_data.world_id
+        zone_name = zone_data.zone_name
+
+        # Get zone metadata if available, otherwise create minimal stub
+        zone =
+          case BezgelorData.get_zone(zone_id) do
+            {:ok, z} -> z
+            :error -> %{id: zone_id, name: zone_name}
+          end
+
+        case InstanceSupervisor.start_instance(zone_id, 1, zone) do
+          {:ok, _pid} ->
+            Logger.info("Started zone instance: zone=#{zone_id} (#{zone_name})")
+            1
+
+          {:error, reason} ->
+            Logger.warning("Failed to start zone #{zone_id}: #{inspect(reason)}")
+            0
+        end
       end
-    end
 
-    Logger.info("Initialized #{length(zones)} zone templates")
+    Logger.info("Initialized #{Enum.sum(started)} zone instances from spawn data")
     :ok
   rescue
     # BezgelorData may not be started yet, or no zones defined
