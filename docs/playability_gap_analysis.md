@@ -32,7 +32,7 @@ Bezgelor is a **feature-complete game engine with minimal game content**. The ar
 | **Loot Tables** | ✅ Complete | Real items, equipment drops, group bonuses |
 | **Gathering Nodes** | ✅ Complete | 5,015 harvest nodes + 83 loot mappings |
 | **Dungeon Scripts** | DSL ready | Script 46 dungeon encounters |
-| **Dialogue Wiring** | Data ready | Connect gossipSetId to NPC interactions |
+| **Dialogue Wiring** | ✅ Complete | Click-dialogue + ambient gossip implemented |
 
 The primary work is **integration**, not content creation—data exists, systems exist, they need connection.
 
@@ -77,7 +77,7 @@ The primary work is **integration**, not content creation—data exists, systems
 | ~~Loot Tables~~ | ✅ **Real items + equipment** | ✅ Complete |
 | ~~Gathering Nodes~~ | ✅ **5,015 nodes extracted** | ✅ Complete |
 | **Dungeon Scripts** | 1 example | No PvE endgame |
-| ~~Dialogue Trees~~ | ✅ **10,799 entries extracted** | Needs wiring |
+| ~~Dialogue Trees~~ | ✅ **10,799 entries extracted** | ✅ Wired to NPCs |
 
 ---
 
@@ -254,7 +254,7 @@ The primary work is **integration**, not content creation—data exists, systems
 | ~~7~~ | ~~Dialogue System~~ | ~~NPCs silent~~ | ~~Medium~~ | ✅ **EXTRACTED** - 10,799 gossip entries |
 | ~~8~~ | ~~Achievement System~~ | ~~No progress sense~~ | ~~Medium~~ | ✅ **EXTRACTED** - 4,943 achievements |
 | ~~9~~ | ~~Path Mission Content~~ | ~~Paths empty~~ | ~~Medium~~ | ✅ **EXTRACTED** - 1,064 path missions |
-| 7 | **Wire Dialogue to NPCs** | Data exists, needs integration | Low | Link gossip sets |
+| ~~7~~ | ~~**Wire Dialogue to NPCs**~~ | ✅ **Complete** | ~~Low~~ | ✅ Click + ambient gossip |
 | 8 | **Wire Achievements** | Data exists, needs triggers | Medium | Map to game events |
 | 9 | **Wire Path Missions** | Data exists, needs integration | Medium | Map to locations |
 | 10 | **Additional Battlegrounds** | Limited PvP | Medium | Manual creation |
