@@ -10,7 +10,7 @@ Bezgelor is a **feature-complete game engine with minimal game content**. The ar
 | Aspect | Status |
 |--------|--------|
 | Systems Implementation | ~98% complete |
-| Content/Data | ~92% complete |
+| Content/Data | ~93% complete |
 | Populated Worlds | 7 of 7 (open world) |
 | Resource Spawns | ✅ 5,015 harvest nodes + 83 loot mappings |
 | Quests Defined | 5,194 (from client) |
@@ -19,6 +19,7 @@ Bezgelor is a **feature-complete game engine with minimal game content**. The ar
 | Loot System | ✅ Real items + equipment drops + corpse pickup |
 | Gathering Loot | ✅ Mining, Survivalist, Relic Hunter, Farming |
 | Combat System | ✅ Stats, ticks, XP, telegraphs complete |
+| Dialogue System | ✅ 10,799 gossip entries wired to NPCs |
 | Dungeons Working | 0 of 46 |
 
 ---
@@ -224,6 +225,39 @@ The primary work is **integration**, not content creation—data exists, systems
 - Some instance/dungeon gathering nodes
 
 **Impact:** ✅ Gathering professions fully functional with real loot drops.
+
+### 7. Dialogue System (✅ COMPLETE)
+
+**What exists:**
+- ✅ **10,799 gossip entries** with localized text IDs (`gossip_entries.json`)
+- ✅ **1,978 gossip sets** with proximity/cooldown settings (`gossip_sets.json`)
+- ✅ **Creature → gossipSetId mappings** in creatures_full data
+- ✅ **ServerDialogStart packet** - Opens dialogue UI when clicking NPCs
+- ✅ **ServerChatNpc packet** - NPC ambient chat with localized text IDs
+- ✅ **ClientNpcInteract event types** - Routes dialogue (37), vendor (49), taxi (48)
+- ✅ **NpcHandler routing** - Event 37 → ServerDialogStart
+- ✅ **GossipManager module** - Proximity triggering, cooldowns, entry selection
+
+**Proximity system:**
+| gossipProximityEnum | Range | Behavior |
+|---------------------|-------|----------|
+| 0 | N/A | Click-only, no ambient gossip |
+| 1 | 15 units | Close range ambient chat |
+| 2 | 30 units | Medium range ambient chat |
+
+**Implementation flow:**
+1. Player clicks NPC → `ClientNpcInteract` with event=37
+2. `NpcHandler` routes to `send_dialog_start()`
+3. `ServerDialogStart` sent with NPC GUID
+4. Client looks up `gossipSetId` locally and displays dialogue
+
+**Ambient gossip flow:**
+1. `GossipManager.should_trigger_proximity?/4` checks range + cooldown
+2. `GossipManager.select_gossip_entry/2` picks random valid entry
+3. `GossipManager.build_gossip_packet/2` creates `ServerChatNpc`
+4. Packet sent → client displays chat bubble
+
+**Impact:** ✅ NPCs display dialogue when clicked and can speak ambient lines.
 
 ---
 
