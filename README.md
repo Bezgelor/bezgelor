@@ -147,16 +147,25 @@ Application.started_applications()
 
 ### Connecting a Game Client
 
-1. Configure your WildStar client's `ClientConfig.ini`:
-   ```ini
-   [Network]
-   Server = localhost
-   Port = 6600
+WildStar requires a special launcher to connect to private servers:
+
+1. Download the **NexusForever ClientConnector** from the [releases page](https://github.com/NexusForever/NexusForever/releases)
+
+2. Copy the ClientConnector files to your WildStar `Client64` folder
+
+3. Create an account at http://localhost:4001/register
+
+4. Run `NexusForever.ClientConnector.exe` **as Administrator**
+
+5. When prompted, enter:
+   ```
+   Server: localhost
+   Language: en
    ```
 
-2. Create an account at http://localhost:4001/register
+6. Log in with your Bezgelor account credentials
 
-3. Launch `WildStar64.exe` and log in
+The connector saves your settings to `config.json`. To change servers, delete this file and run again.
 
 ## Configuration
 

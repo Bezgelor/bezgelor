@@ -94,14 +94,16 @@
                 4
               </div>
               <div>
-                <h3 class="text-xl font-bold text-white mb-2">Configure the Launcher</h3>
-                <p class="text-white/70 mb-2">
-                  Edit the <code class="text-[var(--gaming-cyan)]">ClientConfig.ini</code> file in your WildStar folder:
+                <h3 class="text-xl font-bold text-white mb-2">Download the Client Connector</h3>
+                <p class="text-white/70 mb-3">
+                  WildStar requires a special launcher to connect to private servers. Download the
+                  <strong class="text-white">NexusForever ClientConnector</strong> from the
+                  <a href="https://github.com/NexusForever/NexusForever/releases" target="_blank" rel="noopener" class="text-[var(--gaming-cyan)] hover:underline">NexusForever releases page</a>.
                 </p>
-                <pre class="bg-black/50 p-4 rounded text-sm text-white/80 overflow-x-auto">
-[Network]
-Server = bezgelor.com
-Port = 6600</pre>
+                <p class="text-white/70 mb-2">
+                  Copy the <code class="text-[var(--gaming-cyan)]">ClientConnector</code> files into your WildStar
+                  <code class="text-[var(--gaming-cyan)]">Client64</code> folder.
+                </p>
               </div>
             </div>
           </div>
@@ -113,10 +115,35 @@ Port = 6600</pre>
                 5
               </div>
               <div>
-                <h3 class="text-xl font-bold text-white mb-2">Launch & Play!</h3>
+                <h3 class="text-xl font-bold text-white mb-2">Launch & Connect</h3>
+                <p class="text-white/70 mb-3">
+                  Run <code class="text-[var(--gaming-cyan)]">NexusForever.ClientConnector.exe</code> <strong class="text-white">as Administrator</strong>.
+                  When prompted, enter the server address:
+                </p>
+                <pre class="bg-black/50 p-4 rounded text-sm text-white/80 overflow-x-auto mb-3">Server: bezgelor.com
+Language: en</pre>
+                <p class="text-white/70 mb-2">
+                  <span class="text-[var(--gaming-orange)]">For local testing:</span> Use <code class="text-[var(--gaming-cyan)]">localhost</code> instead of bezgelor.com.
+                </p>
                 <p class="text-white/70">
-                  Run <code class="text-[var(--gaming-cyan)]">WildStar64.exe</code> and log in with your
-                  Bezgelor account credentials. Welcome to Nexus!
+                  The connector saves your settings to <code class="text-[var(--gaming-cyan)]">config.json</code>.
+                  To change servers later, delete this file and run again.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 6 -->
+          <div class="card-gaming p-6">
+            <div class="flex items-start gap-4">
+              <div class="w-12 h-12 rounded-full bg-[var(--gaming-cyan)]/20 flex items-center justify-center text-xl font-bold text-[var(--gaming-cyan)] shrink-0">
+                6
+              </div>
+              <div>
+                <h3 class="text-xl font-bold text-white mb-2">Play!</h3>
+                <p class="text-white/70">
+                  Log in with your Bezgelor account credentials. The server name should appear in the
+                  top-right corner of the login screen. Welcome to Nexus!
                 </p>
               </div>
             </div>
@@ -197,8 +224,18 @@ Port = 6600</pre>
           <div class="card-gaming p-6">
             <h3 class="text-lg font-bold text-white mb-2">I'm having connection issues!</h3>
             <p class="text-white/70">
-              Make sure your ClientConfig.ini is correctly configured and that your firewall
-              isn't blocking the game. Join our Discord for support.
+              Make sure you're using the <strong class="text-white">NexusForever ClientConnector</strong> (not running WildStar64.exe directly),
+              that you ran it <strong class="text-white">as Administrator</strong>, and that your firewall
+              isn't blocking the game. For local servers, use <code class="text-[var(--gaming-cyan)]">localhost</code> as the server address.
+              Join our Discord for support.
+            </p>
+          </div>
+
+          <div class="card-gaming p-6">
+            <h3 class="text-lg font-bold text-white mb-2">How do I change the server address?</h3>
+            <p class="text-white/70">
+              Delete the <code class="text-[var(--gaming-cyan)]">config.json</code> file in your Client64 folder,
+              then run the ClientConnector again. It will prompt you for a new server address.
             </p>
           </div>
         </div>
