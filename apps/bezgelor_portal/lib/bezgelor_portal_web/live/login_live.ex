@@ -12,9 +12,9 @@ defmodule BezgelorPortalWeb.LoginLive do
 
   alias BezgelorPortal.{Auth, TOTP}
 
-  def mount(_params, _session, socket) do
-    # Check if already logged in
-    if Auth.logged_in?(socket) do
+  def mount(_params, session, socket) do
+    # Check if already logged in (session is a map in LiveView, not a Plug.Conn)
+    if session["current_account_id"] do
       {:ok, push_navigate(socket, to: ~p"/dashboard")}
     else
       form = to_form(%{"email" => "", "password" => ""}, as: :login)

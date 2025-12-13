@@ -2027,6 +2027,10 @@ defmodule BezgelorData.Store do
 
     json_path = Path.join(data_directory(), "creature_spawns.json")
 
+    # Also load harvest spawns from separate file
+    harvest_path = Path.join(data_directory(), "harvest_spawns.json")
+    harvest_by_world = load_harvest_spawns(harvest_path)
+
     case load_json_raw(json_path) do
       {:ok, data} ->
         # Load zone spawn data, keyed by world_id
@@ -2034,14 +2038,21 @@ defmodule BezgelorData.Store do
 
         for zone_data <- zone_spawns do
           world_id = zone_data.world_id
-          :ets.insert(table_name, {world_id, zone_data})
+
+          # Merge harvest spawns into resource_spawns
+          harvest_spawns = Map.get(harvest_by_world, world_id, [])
+          merged_zone_data = Map.put(zone_data, :resource_spawns, harvest_spawns)
+
+          :ets.insert(table_name, {world_id, merged_zone_data})
         end
 
         total_creatures =
           Enum.reduce(zone_spawns, 0, fn z, acc -> acc + length(z.creature_spawns) end)
 
         total_resources =
-          Enum.reduce(zone_spawns, 0, fn z, acc -> acc + length(z.resource_spawns) end)
+          Enum.reduce(zone_spawns, 0, fn z, acc ->
+            acc + length(Map.get(harvest_by_world, z.world_id, []))
+          end)
 
         total_objects =
           Enum.reduce(zone_spawns, 0, fn z, acc -> acc + length(z.object_spawns) end)
@@ -2052,6 +2063,25 @@ defmodule BezgelorData.Store do
 
       {:error, reason} ->
         Logger.warning("Failed to load creature spawns: #{inspect(reason)}")
+    end
+  end
+
+  # Load harvest spawns from separate file and merge by world_id
+  defp load_harvest_spawns(path) do
+    case load_json_raw(path) do
+      {:ok, data} ->
+        zone_spawns = Map.get(data, :zone_spawns, [])
+
+        # Multiple zones can have the same world_id, so merge their spawns
+        Enum.reduce(zone_spawns, %{}, fn zone_data, acc ->
+          world_id = zone_data.world_id
+          spawns = Map.get(zone_data, :harvest_spawns, [])
+          existing = Map.get(acc, world_id, [])
+          Map.put(acc, world_id, existing ++ spawns)
+        end)
+
+      {:error, _reason} ->
+        %{}
     end
   end
 

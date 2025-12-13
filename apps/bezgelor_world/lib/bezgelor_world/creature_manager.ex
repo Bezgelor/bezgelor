@@ -560,20 +560,12 @@ defmodule BezgelorWorld.CreatureManager do
     [x, y, z] = spawn_def.position
     position = {x, y, z}
 
-    case CreatureTemplate.get(creature_id) do
-      nil ->
-        {:error, :template_not_found}
+    case get_creature_template(creature_id, spawn_def) do
+      {:error, reason} ->
+        {:error, reason}
 
-      template ->
+      {:ok, template, display_info} ->
         guid = WorldManager.generate_guid(:creature)
-
-        # Use display_info from spawn if provided, otherwise from template
-        display_info =
-          if spawn_def[:display_info] && spawn_def.display_info > 0 do
-            spawn_def.display_info
-          else
-            template.display_info
-          end
 
         entity = %Entity{
           guid: guid,
@@ -600,10 +592,160 @@ defmodule BezgelorWorld.CreatureManager do
         }
 
         Logger.debug(
-          "Spawned creature #{template.name} (#{guid}) at #{inspect(position)} from spawn def #{spawn_def.id}"
+          "Spawned creature #{template.name} (#{guid}) at #{inspect(position)} from creature_id #{spawn_def.creature_id}"
         )
 
         {:ok, guid, creature_state}
+    end
+  end
+
+  # Get creature template - first try hardcoded test templates, then BezgelorData
+  defp get_creature_template(creature_id, spawn_def) do
+    case CreatureTemplate.get(creature_id) do
+      nil ->
+        # Fall back to BezgelorData
+        case BezgelorData.get_creature(creature_id) do
+          {:ok, creature_data} ->
+            build_template_from_data(creature_id, creature_data, spawn_def)
+
+          :error ->
+            {:error, :template_not_found}
+        end
+
+      template ->
+        # Use display_info from spawn if provided, otherwise from template
+        display_info =
+          if spawn_def[:display_info] && spawn_def.display_info > 0 do
+            spawn_def.display_info
+          else
+            template.display_info
+          end
+
+        {:ok, template, display_info}
+    end
+  end
+
+  # Build a CreatureTemplate-compatible struct from BezgelorData creature
+  defp build_template_from_data(creature_id, creature_data, spawn_def) do
+    # Get creature name from text data
+    name = get_creature_name(creature_data)
+
+    # Calculate stats based on tier/difficulty (simplified)
+    tier_id = Map.get(creature_data, :tier_id, 1)
+    difficulty_id = Map.get(creature_data, :difficulty_id, 1)
+
+    # Base level from zone or default (levels scale with tier)
+    level = tier_to_level(tier_id)
+
+    # Health scales with tier and difficulty
+    max_health = calculate_max_health(tier_id, difficulty_id, level)
+
+    # Damage scales with level
+    {damage_min, damage_max} = calculate_damage(level, difficulty_id)
+
+    # Determine AI type from archetype
+    ai_type = archetype_to_ai_type(Map.get(creature_data, :archetype_id, 0))
+
+    # Build the template struct
+    template = %CreatureTemplate{
+      id: creature_id,
+      name: name,
+      level: level,
+      max_health: max_health,
+      faction: :hostile,
+      display_info: Map.get(creature_data, :display_group_id, 0),
+      ai_type: ai_type,
+      aggro_range: if(ai_type == :aggressive, do: 15.0, else: 0.0),
+      leash_range: 40.0,
+      respawn_time: 60_000,
+      xp_reward: level * 10,
+      loot_table_id: nil,
+      damage_min: damage_min,
+      damage_max: damage_max,
+      attack_speed: 2000
+    }
+
+    # Use display_info from spawn if provided
+    display_info =
+      if spawn_def[:display_info] && spawn_def.display_info > 0 do
+        spawn_def.display_info
+      else
+        template.display_info
+      end
+
+    {:ok, template, display_info}
+  end
+
+  defp get_creature_name(creature_data) do
+    name_text_id = Map.get(creature_data, :name_text_id, 0)
+
+    case BezgelorData.get_text(name_text_id) do
+      {:ok, text} -> text
+      :error -> "Creature #{Map.get(creature_data, :id, 0)}"
+    end
+  end
+
+  # Convert tier to approximate level (simplified)
+  defp tier_to_level(tier_id) do
+    case tier_id do
+      1 -> Enum.random(1..10)
+      2 -> Enum.random(10..20)
+      3 -> Enum.random(20..35)
+      4 -> Enum.random(35..50)
+      _ -> Enum.random(1..50)
+    end
+  end
+
+  # Calculate max health based on tier, difficulty, and level
+  defp calculate_max_health(tier_id, difficulty_id, level) do
+    base_health = 50 + level * 20
+
+    tier_mult =
+      case tier_id do
+        1 -> 1.0
+        2 -> 1.5
+        3 -> 2.0
+        4 -> 3.0
+        _ -> 1.0
+      end
+
+    difficulty_mult =
+      case difficulty_id do
+        1 -> 1.0
+        2 -> 2.0
+        3 -> 5.0
+        4 -> 10.0
+        _ -> 1.0
+      end
+
+    round(base_health * tier_mult * difficulty_mult)
+  end
+
+  # Calculate damage range based on level and difficulty
+  defp calculate_damage(level, difficulty_id) do
+    base_min = 5 + level
+    base_max = 10 + level * 2
+
+    mult =
+      case difficulty_id do
+        1 -> 1.0
+        2 -> 1.5
+        3 -> 2.0
+        4 -> 3.0
+        _ -> 1.0
+      end
+
+    {round(base_min * mult), round(base_max * mult)}
+  end
+
+  # Convert archetype to AI type (simplified)
+  defp archetype_to_ai_type(archetype_id) do
+    # Archetype IDs vary - assume most are aggressive
+    # 29 = hostile, 30 = neutral/passive, etc.
+    case archetype_id do
+      30 -> :passive
+      31 -> :defensive
+      _ -> :aggressive
     end
   end
 

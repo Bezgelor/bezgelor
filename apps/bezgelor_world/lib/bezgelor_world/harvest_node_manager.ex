@@ -316,9 +316,12 @@ defmodule BezgelorWorld.HarvestNodeManager do
 
     guid = WorldManager.generate_guid(:object)
 
+    # Support both node_type_id and harvest_node_id field names
+    node_type_id = spawn_def[:node_type_id] || spawn_def[:harvest_node_id] || 0
+
     # Get node type name for entity name
     node_name =
-      case Store.get_node_type(spawn_def.node_type_id) do
+      case Store.get_node_type(node_type_id) do
         {:ok, node_type} -> node_type[:name] || "Harvest Node"
         :error -> "Harvest Node"
       end
@@ -338,7 +341,7 @@ defmodule BezgelorWorld.HarvestNodeManager do
 
     node_state = %{
       entity: entity,
-      node_type_id: spawn_def.node_type_id,
+      node_type_id: node_type_id,
       spawn_position: position,
       spawn_rotation: rotation,
       state: :available,
