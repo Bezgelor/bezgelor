@@ -1,4 +1,5 @@
 defmodule BezgelorDev.ReportGenerator do
+  @compile {:no_warn_undefined, BezgelorProtocol.Opcode}
   @moduledoc """
   Generates markdown and JSON reports for captured packets.
 

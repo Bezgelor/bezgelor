@@ -1,4 +1,5 @@
 defmodule BezgelorDev.InteractivePrompt do
+  @compile {:no_warn_undefined, BezgelorProtocol.Opcode}
   @moduledoc """
   Interactive terminal UI for capturing player context.
 

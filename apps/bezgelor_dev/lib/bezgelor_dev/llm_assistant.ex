@@ -1,4 +1,5 @@
 defmodule BezgelorDev.LlmAssistant do
+  @compile {:no_warn_undefined, BezgelorProtocol.Opcode}
   @moduledoc """
   Generates LLM-ready prompts for packet analysis.
 

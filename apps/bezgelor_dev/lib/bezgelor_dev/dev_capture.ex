@@ -1,4 +1,5 @@
 defmodule BezgelorDev.DevCapture do
+  @compile {:no_warn_undefined, BezgelorProtocol.Opcode}
   @moduledoc """
   GenServer for capturing and managing unknown/unhandled packet events.
 

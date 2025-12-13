@@ -1,4 +1,5 @@
 defmodule BezgelorDev.PacketContext do
+  @compile {:no_warn_undefined, BezgelorProtocol.Opcode}
   @moduledoc """
   Rich context captured alongside unknown/unhandled packets.
 
