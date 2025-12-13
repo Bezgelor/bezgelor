@@ -1,4 +1,6 @@
 defmodule BezgelorPortalWeb.Admin.ServerLive do
+  @dialyzer :no_match
+
   @moduledoc """
   Admin LiveView for server operations.
 
@@ -574,8 +576,8 @@ defmodule BezgelorPortalWeb.Admin.ServerLive do
 
   defp get_account_info(nil), do: %{}
   defp get_account_info(account_id) do
-    case BezgelorDb.Accounts.get_account(account_id) do
-      {:ok, account} -> %{email: account.email}
+    case BezgelorDb.Accounts.get_by_id(account_id) do
+      %{email: email} -> %{email: email}
       _ -> %{}
     end
   end
@@ -583,8 +585,8 @@ defmodule BezgelorPortalWeb.Admin.ServerLive do
   defp get_zone_name(nil), do: "Unknown"
   defp get_zone_name(zone_id) do
     case BezgelorData.Store.get(:world_location, zone_id) do
-      nil -> "Zone #{zone_id}"
-      data -> Map.get(data, :name) || Map.get(data, "name") || "Zone #{zone_id}"
+      :error -> "Zone #{zone_id}"
+      {:ok, data} -> Map.get(data, :name) || Map.get(data, "name") || "Zone #{zone_id}"
     end
   end
 

@@ -214,7 +214,7 @@ defmodule BezgelorWorld.Quest.PrerequisiteChecker do
     end
   end
 
-  defp check_prerequisite_item(character, quest) do
+  defp check_prerequisite_item(_character, quest) do
     required_item = Map.get(quest, :preq_item, 0)
 
     if required_item == 0 do

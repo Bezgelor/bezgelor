@@ -17,8 +17,8 @@ defmodule BezgelorProtocol.Packets.World.ClientLootMasterAssign do
 
   @impl true
   def read(reader) do
-    {loot_id, reader} = PacketReader.read_uint64(reader)
-    {recipient_id, reader} = PacketReader.read_uint64(reader)
+    {:ok, loot_id, reader} = PacketReader.read_uint64(reader)
+    {:ok, recipient_id, reader} = PacketReader.read_uint64(reader)
 
     packet = %__MODULE__{
       loot_id: loot_id,

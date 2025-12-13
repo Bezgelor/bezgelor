@@ -387,7 +387,7 @@ defmodule BezgelorWorld.EventDispatcher do
   Marks zone-specific path missions as abandoned (not completed).
   """
   @spec on_zone_exit(session_data(), integer(), integer()) :: session_data()
-  def on_zone_exit(session_data, world_id, zone_id) do
+  def on_zone_exit(session_data, _world_id, zone_id) do
     # Remove zone-specific missions that weren't completed
     active_missions = session_data[:active_path_missions] || %{}
 

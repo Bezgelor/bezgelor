@@ -51,7 +51,7 @@ defmodule BezgelorWorld.CombatParticipants do
   List of character IDs that should receive kill credit.
   """
   @spec resolve(AI.t(), non_neg_integer(), non_neg_integer()) :: [non_neg_integer()]
-  def resolve(ai, zone_id, instance_id) do
+  def resolve(ai, _zone_id, _instance_id) do
     # Get entity GUIDs of direct combatants
     participant_guids = AI.get_combat_participants(ai)
 
@@ -93,7 +93,7 @@ defmodule BezgelorWorld.CombatParticipants do
   """
   @spec resolve_with_groups(AI.t(), non_neg_integer(), non_neg_integer(), {float(), float(), float()}, float()) ::
           [non_neg_integer()]
-  def resolve_with_groups(ai, zone_id, instance_id, creature_position, credit_range \\ 100.0) do
+  def resolve_with_groups(ai, zone_id, instance_id, _creature_position, _credit_range \\ 100.0) do
     # Start with direct participants
     base_participants = resolve(ai, zone_id, instance_id)
 

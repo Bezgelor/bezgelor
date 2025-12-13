@@ -1,4 +1,6 @@
 defmodule BezgelorWorld.HarvestNodeManager do
+  @dialyzer :no_match
+
   @moduledoc """
   Manages harvest/gathering node spawns in the world.
 
@@ -297,17 +299,8 @@ defmodule BezgelorWorld.HarvestNodeManager do
     # Spawn each node
     {spawned_count, nodes} =
       Enum.reduce(spawn_defs, {0, state.nodes}, fn spawn_def, {count, nodes} ->
-        case spawn_node_from_def(spawn_def) do
-          {:ok, guid, node_state} ->
-            {count + 1, Map.put(nodes, guid, node_state)}
-
-          {:error, reason} ->
-            Logger.warning(
-              "Failed to spawn harvest node #{spawn_def[:node_type_id]} at #{inspect(spawn_def[:position])}: #{inspect(reason)}"
-            )
-
-            {count, nodes}
-        end
+        {:ok, guid, node_state} = spawn_node_from_def(spawn_def)
+        {count + 1, Map.put(nodes, guid, node_state)}
       end)
 
     {spawned_count, %{state | nodes: nodes}}

@@ -556,9 +556,10 @@ defmodule BezgelorDb.Authorization do
   List of audit log entries by this admin.
   """
   @spec get_account_audit_history(Account.t() | integer(), keyword()) :: [AdminAuditLog.t()]
+  def get_account_audit_history(admin_or_id, opts \\ [])
   def get_account_audit_history(%Account{id: id}, opts), do: get_account_audit_history(id, opts)
 
-  def get_account_audit_history(admin_id, opts \\ []) when is_integer(admin_id) do
+  def get_account_audit_history(admin_id, opts) when is_integer(admin_id) do
     list_audit_log(Keyword.put(opts, :admin_id, admin_id))
   end
 end

@@ -9,6 +9,10 @@ defmodule BezgelorPortalWeb.Admin.AnalyticsLive do
   - System metrics (CPU, memory, uptime)
   - Auto-refreshing with configurable interval
   """
+
+  # Suppress warning for os_mon :memsup module (may not be available)
+  @compile {:no_warn_undefined, :memsup}
+
   use BezgelorPortalWeb, :live_view
 
   alias BezgelorDb.{Accounts, Characters}

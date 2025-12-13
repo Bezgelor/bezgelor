@@ -114,7 +114,7 @@ defmodule BezgelorWorld.Encounter.Generator do
     spell_bases = ability_research["spell_bases_found"] || %{}
 
     # Find abilities that might belong to this boss
-    boss_name = boss["name"] || ""
+    _boss_name = boss["name"] || ""
 
     relevant_notes =
       ability_names

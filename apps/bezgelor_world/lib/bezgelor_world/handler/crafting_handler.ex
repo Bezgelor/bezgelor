@@ -28,7 +28,7 @@ defmodule BezgelorWorld.Handler.CraftingHandler do
     ClientCraftCancel,
     ServerCraftSession,
     ServerCraftResult,
-    ServerTradeskillDiscovery,
+    
     ServerTradeskillUpdate
   }
   alias BezgelorData.Store
@@ -245,7 +245,7 @@ defmodule BezgelorWorld.Handler.CraftingHandler do
   defp calculate_xp(:excellent), do: 500
   defp calculate_xp(_), do: 100
 
-  defp award_crafting_xp(character_id, schematic_id, xp, state) do
+  defp award_crafting_xp(character_id, _schematic_id, xp, _state) do
     # TODO: Look up profession from schematic
     profession_id = 1  # Placeholder
 

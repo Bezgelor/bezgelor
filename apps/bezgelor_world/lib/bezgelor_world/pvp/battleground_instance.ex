@@ -21,7 +21,6 @@ defmodule BezgelorWorld.PvP.BattlegroundInstance do
   @preparation_time_ms 60_000
   @match_duration_ms 1_200_000
   @ending_time_ms 15_000
-  @respawn_time_ms 30_000
 
   # Victory conditions
   @default_score_limit 1600
@@ -560,12 +559,8 @@ defmodule BezgelorWorld.PvP.BattlegroundInstance do
       Enum.each(all_players, fn player ->
         won = (player.faction == state.winner)
 
-        PvP.record_battleground(
-          player.player_guid,
-          won,
-          player.kills,
-          player.deaths
-        )
+        # TODO: Add kills/deaths tracking to record_battleground
+        PvP.record_battleground(player.player_guid, won)
       end)
     end)
   rescue

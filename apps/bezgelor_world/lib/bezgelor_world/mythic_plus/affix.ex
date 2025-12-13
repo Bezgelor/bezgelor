@@ -326,7 +326,7 @@ defmodule BezgelorWorld.MythicPlus.Affix do
     ranged_players = context[:ranged_players] || []
 
     effects =
-      Enum.map(ranged_players, fn {player_id, pos} ->
+      Enum.map(ranged_players, fn {_player_id, pos} ->
         # Offset the position slightly
         offset_pos = offset_position(pos, 3.0)
 

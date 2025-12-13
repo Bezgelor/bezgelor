@@ -1,4 +1,6 @@
 defmodule BezgelorPortalWeb.Admin.UserDetailLive do
+  @dialyzer :no_match
+
   @moduledoc """
   Admin LiveView for viewing and managing individual user accounts.
 
@@ -538,20 +540,16 @@ defmodule BezgelorPortalWeb.Admin.UserDetailLive do
       {:ok, role} ->
         if role_assigned?(socket.assigns.user_roles, role) do
           # Remove role
-          case Authorization.remove_role(user, role) do
-            {:ok, _} ->
-              Authorization.log_action(admin, "user.remove_role", "account", user.id, %{
-                role_name: role.name
-              })
+          {:ok, _} = Authorization.remove_role(user, role)
 
-              {:noreply,
-               socket
-               |> put_flash(:info, "Role '#{role.name}' removed")
-               |> assign(user_roles: Authorization.get_account_roles(user))}
+          Authorization.log_action(admin, "user.remove_role", "account", user.id, %{
+            role_name: role.name
+          })
 
-            {:error, _} ->
-              {:noreply, put_flash(socket, :error, "Failed to remove role")}
-          end
+          {:noreply,
+           socket
+           |> put_flash(:info, "Role '#{role.name}' removed")
+           |> assign(user_roles: Authorization.get_account_roles(user))}
         else
           # Check TOTP requirement for admin roles
           role_has_admin_perms = Enum.any?(role.permissions, fn p ->

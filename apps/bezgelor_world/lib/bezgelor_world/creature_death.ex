@@ -180,7 +180,7 @@ defmodule BezgelorWorld.CreatureDeath do
   end
 
   # Spawn a corpse entity if there's loot to pick up
-  defp spawn_corpse_if_needed(entity, loot_drops) when loot_drops == [] or is_nil(loot_drops) do
+  defp spawn_corpse_if_needed(_entity, loot_drops) when loot_drops == [] or is_nil(loot_drops) do
     nil
   end
 

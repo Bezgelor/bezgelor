@@ -135,7 +135,7 @@ defmodule BezgelorWorld.MythicPlus.Keystone do
   Gets the time limit for a dungeon at a given keystone level.
   """
   @spec get_time_limit(non_neg_integer(), non_neg_integer()) :: non_neg_integer()
-  def get_time_limit(dungeon_id, level) do
+  def get_time_limit(dungeon_id, _level) do
     # Base time for the dungeon (could come from data)
     base_time = get_dungeon_base_time(dungeon_id)
 

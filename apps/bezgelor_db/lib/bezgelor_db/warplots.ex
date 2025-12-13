@@ -267,6 +267,24 @@ defmodule BezgelorDb.Warplots do
     |> Repo.update_all(set: [health_percent: 100])
   end
 
+  @doc """
+  Sets the boss for a warplot (stub - boss system not yet implemented).
+
+  ## Note
+  This function is a placeholder. The warplot boss system requires:
+  - Adding boss_id field to warplot schema
+  - Migration to add the field
+  - Boss selection UI and validation
+  """
+  @spec set_boss(integer(), integer(), integer()) :: {:ok, Warplot.t()} | {:error, atom()}
+  def set_boss(warplot_id, _boss_id, _cost) do
+    # Stub implementation - just return the current warplot
+    case get_warplot(warplot_id) do
+      nil -> {:error, :not_found}
+      warplot -> {:ok, warplot}
+    end
+  end
+
   # =============================================================================
   # Leaderboards
   # =============================================================================

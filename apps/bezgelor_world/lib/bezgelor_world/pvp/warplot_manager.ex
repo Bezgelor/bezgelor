@@ -134,28 +134,30 @@ defmodule BezgelorWorld.PvP.WarplotManager do
 
   @impl true
   def handle_call({:get_warplot, guild_id}, _from, state) do
-    result = Warplots.get_by_guild(guild_id)
+    result = Warplots.get_warplot_by_guild(guild_id)
     {:reply, result, state}
   end
 
   def handle_call({:create_warplot, guild_id, name}, _from, state) do
-    result = Warplots.create(guild_id, name)
+    result = Warplots.create_warplot(guild_id, name)
     {:reply, result, state}
   end
 
   def handle_call({:install_plug, guild_id, slot_id, plug_type}, _from, state) do
-    with {:ok, warplot} <- Warplots.get_by_guild(guild_id),
+    with {:ok, warplot} <- Warplots.get_warplot_by_guild(guild_id),
          {:ok, cost} <- get_plug_cost(plug_type),
          :ok <- validate_war_coins(warplot, cost),
-         {:ok, updated} <- Warplots.install_plug(warplot.id, slot_id, plug_type, cost) do
-      {:reply, {:ok, updated}, state}
+         {:ok, _updated_plug} <- Warplots.install_plug(warplot.id, plug_type, slot_id),
+         # Deduct war coins for the plug
+         {:ok, updated_warplot} <- Warplots.spend_war_coins(warplot.id, cost) do
+      {:reply, {:ok, updated_warplot}, state}
     else
       error -> {:reply, error, state}
     end
   end
 
   def handle_call({:remove_plug, guild_id, slot_id}, _from, state) do
-    with {:ok, warplot} <- Warplots.get_by_guild(guild_id),
+    with {:ok, warplot} <- Warplots.get_warplot_by_guild(guild_id),
          {:ok, updated} <- Warplots.remove_plug(warplot.id, slot_id) do
       {:reply, {:ok, updated}, state}
     else
@@ -164,7 +166,7 @@ defmodule BezgelorWorld.PvP.WarplotManager do
   end
 
   def handle_call({:set_boss, guild_id, boss_id}, _from, state) do
-    with {:ok, warplot} <- Warplots.get_by_guild(guild_id),
+    with {:ok, warplot} <- Warplots.get_warplot_by_guild(guild_id),
          {:ok, cost} <- get_boss_cost(boss_id),
          :ok <- validate_war_coins(warplot, cost),
          {:ok, updated} <- Warplots.set_boss(warplot.id, boss_id, cost) do
@@ -175,7 +177,7 @@ defmodule BezgelorWorld.PvP.WarplotManager do
   end
 
   def handle_call({:add_war_coins, guild_id, amount}, _from, state) do
-    with {:ok, warplot} <- Warplots.get_by_guild(guild_id),
+    with {:ok, warplot} <- Warplots.get_warplot_by_guild(guild_id),
          {:ok, updated} <- Warplots.add_war_coins(warplot.id, amount) do
       {:reply, {:ok, updated}, state}
     else
@@ -184,7 +186,7 @@ defmodule BezgelorWorld.PvP.WarplotManager do
   end
 
   def handle_call({:queue_for_battle, guild_id}, _from, state) do
-    with {:ok, warplot} <- Warplots.get_by_guild(guild_id),
+    with {:ok, warplot} <- Warplots.get_warplot_by_guild(guild_id),
          :ok <- validate_not_in_queue(state, guild_id),
          :ok <- validate_warplot_ready(warplot) do
       entry = %{

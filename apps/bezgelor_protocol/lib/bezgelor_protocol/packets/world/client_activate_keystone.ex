@@ -17,8 +17,8 @@ defmodule BezgelorProtocol.Packets.World.ClientActivateKeystone do
 
   @impl true
   def read(reader) do
-    {dungeon_id, reader} = PacketReader.read_uint32(reader)
-    {keystone_level, reader} = PacketReader.read_byte(reader)
+    {:ok, dungeon_id, reader} = PacketReader.read_uint32(reader)
+    {:ok, keystone_level, reader} = PacketReader.read_byte(reader)
 
     packet = %__MODULE__{
       dungeon_id: dungeon_id,

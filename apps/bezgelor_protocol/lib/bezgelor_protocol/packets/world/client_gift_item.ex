@@ -19,10 +19,10 @@ defmodule BezgelorProtocol.Packets.World.ClientGiftItem do
 
   @impl true
   def read(reader) do
-    {item_id, reader} = PacketReader.read_uint32(reader)
-    {recipient_name, reader} = PacketReader.read_string(reader)
-    {message, reader} = PacketReader.read_string(reader)
-    {currency_byte, reader} = PacketReader.read_byte(reader)
+    {:ok, item_id, reader} = PacketReader.read_uint32(reader)
+    {:ok, recipient_name, reader} = PacketReader.read_string(reader)
+    {:ok, message, reader} = PacketReader.read_string(reader)
+    {:ok, currency_byte, reader} = PacketReader.read_byte(reader)
 
     packet = %__MODULE__{
       item_id: item_id,

@@ -18,7 +18,6 @@ defmodule BezgelorPortal.TOTP do
   """
 
   alias BezgelorDb.Schema.Account
-  alias BezgelorDb.Accounts
   alias BezgelorDb.Repo
   alias BezgelorPortal.Vault
 

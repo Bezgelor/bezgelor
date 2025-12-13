@@ -31,7 +31,7 @@ defmodule BezgelorDev.StubGenerator do
   """
   @spec generate_packet_struct(String.t(), integer(), list()) :: String.t()
   def generate_packet_struct(suggested_name, opcode_int, field_analysis) do
-    atom_name = to_atom_name(suggested_name)
+    _atom_name = to_atom_name(suggested_name)
     module_name = determine_module_path(suggested_name, opcode_int)
     fields = generate_struct_fields(field_analysis)
     field_names = extract_field_names(field_analysis)

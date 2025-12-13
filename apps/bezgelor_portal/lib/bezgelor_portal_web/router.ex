@@ -107,13 +107,15 @@ defmodule BezgelorPortalWeb.Router do
 
   # Development routes - mailbox preview and tracing
   if Application.compile_env(:bezgelor_portal, :dev_routes) do
+    import OrionWeb.Router
+
     scope "/dev" do
       pipe_through :browser
 
       forward "/mailbox", Plug.Swoosh.MailboxPreview
-
-      # Orion distributed tracing UI
-      live "/tracing", Orion.LiveView
     end
+
+    # Orion distributed tracing UI
+    live_orion("/dev/tracing")
   end
 end

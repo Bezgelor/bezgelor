@@ -257,7 +257,7 @@ defmodule BezgelorWorld.Quest.SessionQuestManager do
       %{state: state} when state != :complete ->
         {:error, :quest_not_complete}
 
-      quest ->
+      _quest ->
         # Remove from active, add to completed
         remaining_quests = Map.delete(active_quests, quest_id)
         updated_completed = MapSet.put(completed_ids, quest_id)

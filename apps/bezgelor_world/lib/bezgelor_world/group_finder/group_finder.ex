@@ -31,7 +31,6 @@ defmodule BezgelorWorld.GroupFinder.GroupFinder do
 
   @match_interval 5_000      # Check for matches every 5 seconds
   @confirm_timeout 30_000    # 30 seconds to accept/decline
-  @queue_timeout 3600_000    # 1 hour max queue time
 
   defstruct [
     queues: %{},           # instance_type => [queue_entry]
@@ -270,10 +269,6 @@ defmodule BezgelorWorld.GroupFinder.GroupFinder do
     end
   end
 
-  defp character_in_match?(match, character_id) do
-    Enum.any?(match.members, fn m -> m.character_id == character_id end)
-  end
-
   def handle_call(:get_stats, _from, state) do
     queue_counts =
       Map.new(state.queues, fn {type, queue} ->
@@ -326,6 +321,10 @@ defmodule BezgelorWorld.GroupFinder.GroupFinder do
   end
 
   # Private Functions
+
+  defp character_in_match?(match, character_id) do
+    Enum.any?(match.members, fn m -> m.character_id == character_id end)
+  end
 
   defp schedule_match_check do
     Process.send_after(self(), :check_matches, @match_interval)

@@ -11,7 +11,7 @@ defmodule BezgelorPortalWeb.SettingsLive do
 
   alias BezgelorDb.Accounts
   alias BezgelorCrypto.Password
-  alias BezgelorPortal.{Auth, Notifier, RateLimiter}
+  alias BezgelorPortal.{Notifier, RateLimiter}
 
   @min_password_length 8
 

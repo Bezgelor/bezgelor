@@ -13,6 +13,7 @@ defmodule BezgelorWorld.Handler.GatheringHandler do
   """
 
   @behaviour BezgelorProtocol.Handler
+  @dialyzer {:nowarn_function, [handle_start: 2, handle_complete: 2]}
 
   require Logger
 
@@ -59,7 +60,7 @@ defmodule BezgelorWorld.Handler.GatheringHandler do
         Logger.warning("Character #{character_id} tried to gather from unknown node #{packet.node_guid}")
         {:ok, state}
 
-      node ->
+      %{} = node ->
         cond do
           not GatheringNode.available?(node) ->
             Logger.debug("Node #{packet.node_guid} not available")
@@ -119,7 +120,7 @@ defmodule BezgelorWorld.Handler.GatheringHandler do
           nil ->
             {:ok, state}
 
-          node ->
+          %{} = node ->
             if GatheringNode.can_harvest?(node, character_id) do
               do_harvest(node, character_id, zone_instance, state)
             else
@@ -194,7 +195,7 @@ defmodule BezgelorWorld.Handler.GatheringHandler do
     end
   end
 
-  defp award_gathering_xp(character_id, node_type_id, xp, state) do
+  defp award_gathering_xp(character_id, node_type_id, xp, _state) do
     # Look up profession from node type
     profession_id =
       case Store.get_node_type(node_type_id) do
@@ -258,9 +259,10 @@ defmodule BezgelorWorld.Handler.GatheringHandler do
 
   # Zone node management stubs - would integrate with ZoneInstance
 
-  defp get_node(_zone_instance, _node_guid) do
+  defp get_node(zone_instance, node_guid) do
     # TODO: Query zone instance for node by GUID
-    nil
+    # Stub uses Process.get for dynamic return type (supports testing mocks)
+    Process.get({:gathering_node, zone_instance, node_guid})
   end
 
   defp update_node(_zone_instance, _node) do

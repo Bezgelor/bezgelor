@@ -199,8 +199,7 @@ defmodule BezgelorPortalWeb.Admin.AuditLogLive do
                       <.link
                         navigate={~p"/admin/users/#{entry.admin_account_id}"}
                         class="link link-primary"
-                        phx-click={JS.stop_propagation()}
-                      >
+                                             >
                         {entry.admin_account.email}
                       </.link>
                     </td>
@@ -267,7 +266,7 @@ defmodule BezgelorPortalWeb.Admin.AuditLogLive do
 
   defp target_link(%{type: "account"} = assigns) do
     ~H"""
-    <.link navigate={~p"/admin/users/#{@id}"} class="link link-primary" phx-click={JS.stop_propagation()}>
+    <.link navigate={~p"/admin/users/#{@id}"} class="link link-primary">
       Account #{@id}
     </.link>
     """
@@ -275,7 +274,7 @@ defmodule BezgelorPortalWeb.Admin.AuditLogLive do
 
   defp target_link(%{type: "character"} = assigns) do
     ~H"""
-    <.link navigate={~p"/admin/characters/#{@id}"} class="link link-primary" phx-click={JS.stop_propagation()}>
+    <.link navigate={~p"/admin/characters/#{@id}"} class="link link-primary">
       Character #{@id}
     </.link>
     """

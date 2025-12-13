@@ -178,7 +178,7 @@ defmodule BezgelorWorld.Handler.MountHandler do
     :ok
   end
 
-  defp get_entity_guid(connection_pid) do
+  defp get_entity_guid(_connection_pid) do
     # Would retrieve from session state
     # For now return a placeholder - real impl would query WorldManager
     0

@@ -82,7 +82,7 @@ defmodule BezgelorWorld.PvP.RatingDecay do
   Calculate how many weeks until decay starts for a player.
   """
   @spec weeks_until_decay(integer(), DateTime.t() | nil) :: integer() | :never
-  def weeks_until_decay(rating, last_game_at) when rating < @decay_threshold do
+  def weeks_until_decay(rating, _last_game_at) when rating < @decay_threshold do
     :never
   end
 

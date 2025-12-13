@@ -36,7 +36,6 @@ defmodule BezgelorWorld.Instance.Instance do
   require Logger
 
   @idle_timeout :timer.minutes(30)
-  @boss_engaged_timeout :timer.minutes(30)
 
   defstruct [
     :instance_guid,
@@ -585,7 +584,7 @@ defmodule BezgelorWorld.Instance.Instance do
       end)
 
     # Notify boss encounters of wipe
-    Enum.each(state.bosses, fn {boss_id, boss_info} ->
+    Enum.each(state.bosses, fn {_boss_id, boss_info} ->
       if boss_info[:pid] && Process.alive?(boss_info[:pid]) do
         BossEncounter.wipe(boss_info[:pid])
       end

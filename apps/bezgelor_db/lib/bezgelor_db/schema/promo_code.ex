@@ -103,7 +103,7 @@ defmodule BezgelorDb.Schema.PromoCode do
   @doc "Check if promo code can be used."
   def usable?(%__MODULE__{is_active: false}), do: false
   def usable?(%__MODULE__{max_uses: max, current_uses: current}) when not is_nil(max) and current >= max, do: false
-  def usable?(%__MODULE__{starts_at: starts_at, ends_at: ends_at} = code) do
+  def usable?(%__MODULE__{starts_at: starts_at, ends_at: ends_at}) do
     now = DateTime.utc_now()
     within_start = is_nil(starts_at) or DateTime.compare(now, starts_at) != :lt
     within_end = is_nil(ends_at) or DateTime.compare(now, ends_at) != :gt

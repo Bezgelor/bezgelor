@@ -1,4 +1,6 @@
 defmodule BezgelorWorld.Portal do
+  @dialyzer :no_match
+
   @moduledoc """
   Portal integration module for admin panel operations.
 
@@ -12,7 +14,6 @@ defmodule BezgelorWorld.Portal do
   """
 
   alias BezgelorWorld.WorldManager
-  alias BezgelorWorld.Zone.Instance, as: ZoneInstance
 
   require Logger
 
@@ -186,8 +187,8 @@ defmodule BezgelorWorld.Portal do
   defp get_zone_name(zone_id) do
     # Try to get zone name from data store
     case BezgelorData.Store.get(:world_location, zone_id) do
-      nil -> "Zone #{zone_id}"
-      data -> Map.get(data, :name) || Map.get(data, "name") || "Zone #{zone_id}"
+      :error -> "Zone #{zone_id}"
+      {:ok, data} -> Map.get(data, :name) || Map.get(data, "name") || "Zone #{zone_id}"
     end
   end
 

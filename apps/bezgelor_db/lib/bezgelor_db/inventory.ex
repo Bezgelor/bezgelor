@@ -24,7 +24,6 @@ defmodule BezgelorDb.Inventory do
 
   @default_backpack_size 16
   @max_bag_slots 4
-  @max_bank_bags 6
 
   # Bag Management
 

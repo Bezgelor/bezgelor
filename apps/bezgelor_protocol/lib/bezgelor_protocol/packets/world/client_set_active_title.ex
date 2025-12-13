@@ -16,7 +16,7 @@ defmodule BezgelorProtocol.Packets.World.ClientSetActiveTitle do
 
   @impl true
   def read(reader) do
-    {title_id, reader} = PacketReader.read_uint32(reader)
+    {:ok, title_id, reader} = PacketReader.read_uint32(reader)
 
     packet = %__MODULE__{
       title_id: if(title_id == 0, do: nil, else: title_id)

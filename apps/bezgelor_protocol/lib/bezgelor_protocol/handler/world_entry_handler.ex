@@ -16,6 +16,7 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
   """
 
   @behaviour BezgelorProtocol.Handler
+  @compile {:no_warn_undefined, [BezgelorWorld.Quest.QuestCache, BezgelorWorld.Handler.AchievementHandler]}
 
   import Bitwise
 

@@ -18,9 +18,9 @@ defmodule BezgelorProtocol.Packets.World.ClientLootSettings do
 
   @impl true
   def read(reader) do
-    {loot_method, reader} = PacketReader.read_byte(reader)
-    {threshold, reader} = PacketReader.read_byte(reader)
-    {master_looter_id, reader} = PacketReader.read_uint64(reader)
+    {:ok, loot_method, reader} = PacketReader.read_byte(reader)
+    {:ok, threshold, reader} = PacketReader.read_byte(reader)
+    {:ok, master_looter_id, reader} = PacketReader.read_uint64(reader)
 
     packet = %__MODULE__{
       loot_method: loot_method,

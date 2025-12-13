@@ -83,7 +83,7 @@ defmodule BezgelorWorld.Quest.RewardHandler do
   end
 
   # Grant XP from quest definition
-  defp grant_xp_reward(summary, connection_pid, character_id, quest) do
+  defp grant_xp_reward(summary, _connection_pid, character_id, quest) do
     xp = Map.get(quest, :reward_xpOverride, 0)
 
     if xp > 0 do

@@ -1,4 +1,6 @@
 defmodule BezgelorWorld.PvP.SeasonScheduler do
+  @dialyzer :no_match
+
   @moduledoc """
   Manages PvP season lifecycle with scheduled transitions.
 
@@ -121,14 +123,8 @@ defmodule BezgelorWorld.PvP.SeasonScheduler do
         if DateTime.compare(now, season.end_date) == :gt do
           Logger.info("Ending PvP season #{season.season_number}")
 
-          case Season.end_season(season.id) do
-            {:ok, _result} ->
-              %{state | seasons_ended: state.seasons_ended + 1}
-
-            {:error, reason} ->
-              Logger.error("Failed to end season #{season.season_number}: #{inspect(reason)}")
-              state
-          end
+          {:ok, _result} = Season.end_season(season.id)
+          %{state | seasons_ended: state.seasons_ended + 1}
         else
           days_remaining = DateTime.diff(season.end_date, now, :day)
           Logger.debug("Season #{season.season_number} has #{days_remaining} days remaining")
@@ -145,15 +141,9 @@ defmodule BezgelorWorld.PvP.SeasonScheduler do
     if day_of_week == @decay_day_of_week and state.last_decay_week != week_number do
       Logger.info("Applying weekly rating decay (Tuesday maintenance)")
 
-      case RatingDecay.process_weekly_decay() do
-        {:ok, count} ->
-          Logger.info("Applied decay to #{count} ratings")
-          %{state | last_decay_week: week_number, decays_applied: state.decays_applied + count}
-
-        {:error, reason} ->
-          Logger.error("Failed to apply rating decay: #{inspect(reason)}")
-          state
-      end
+      {:ok, count} = RatingDecay.process_weekly_decay()
+      Logger.info("Applied decay to #{count} ratings")
+      %{state | last_decay_week: week_number, decays_applied: state.decays_applied + count}
     else
       state
     end

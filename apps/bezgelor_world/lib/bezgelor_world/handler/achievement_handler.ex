@@ -41,7 +41,7 @@ defmodule BezgelorWorld.Handler.AchievementHandler do
   """
 
   use GenServer
-  use Bitwise
+  import Bitwise
 
   alias BezgelorData.{AchievementIndex, Store}
   alias BezgelorDb.Achievements

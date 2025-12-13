@@ -13,7 +13,6 @@ defmodule BezgelorWorld.PvP.ArenaQueue do
 
   require Logger
 
-  alias BezgelorData.Store
   alias BezgelorDb.ArenaTeams
 
   # Queue configuration

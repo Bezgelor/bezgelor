@@ -38,13 +38,10 @@ defmodule BezgelorWorld.EquipmentDrops do
   @weapon_family 2
 
   # Quality IDs
-  @quality_inferior 1
-  @quality_average 2
   @quality_good 3
   @quality_excellent 4
   @quality_superb 5
   @quality_legendary 6
-  @quality_artifact 7
 
   # Drop chances by tier (creature tier -> quality -> chance%)
   @tier_drop_chances %{

@@ -1,4 +1,6 @@
 defmodule BezgelorPortalWeb.Admin.InstancesLive do
+  @dialyzer :no_match
+
   @moduledoc """
   Admin LiveView for managing dungeon and raid instances.
 
@@ -669,8 +671,8 @@ defmodule BezgelorPortalWeb.Admin.InstancesLive do
   defp get_instance_name(nil), do: "Unknown Instance"
   defp get_instance_name(zone_id) do
     case BezgelorData.Store.get(:world_location, zone_id) do
-      nil -> "Instance #{zone_id}"
-      data -> Map.get(data, :name) || Map.get(data, "name") || "Instance #{zone_id}"
+      :error -> "Instance #{zone_id}"
+      {:ok, data} -> Map.get(data, :name) || Map.get(data, "name") || "Instance #{zone_id}"
     end
   end
 
@@ -678,7 +680,7 @@ defmodule BezgelorPortalWeb.Admin.InstancesLive do
 
   defp search_lockouts(search) do
     # Search by character name
-    case Characters.search_characters(search, limit: 1) do
+    case Characters.search_characters(search: search, limit: 1) do
       [character | _] ->
         # Get real lockouts from database
         Lockouts.get_character_lockouts(character.id)

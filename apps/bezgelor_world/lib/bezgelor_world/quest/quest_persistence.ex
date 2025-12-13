@@ -1,4 +1,6 @@
 defmodule BezgelorWorld.Quest.QuestPersistence do
+  @dialyzer :no_match
+
   @moduledoc """
   Quest persistence utilities for saving session quest state to database.
 
@@ -40,8 +42,7 @@ defmodule BezgelorWorld.Quest.QuestPersistence do
   `{:ok, count, updated_session_data}` on success
   `{:error, reason}` on failure
   """
-  @spec persist_dirty_quests(non_neg_integer(), map()) ::
-          {:ok, non_neg_integer(), map()} | {:error, term()}
+  @spec persist_dirty_quests(non_neg_integer(), map()) :: {:ok, non_neg_integer(), map()}
   def persist_dirty_quests(character_id, session_data) do
     active_quests = session_data[:active_quests] || %{}
     dirty_quests = QuestCache.get_dirty_quests(active_quests)
@@ -127,10 +128,6 @@ defmodule BezgelorWorld.Quest.QuestPersistence do
         :ok
 
       {:ok, 0, _} ->
-        :ok
-
-      {:error, reason} ->
-        Logger.error("Failed to persist quests on logout for character #{character_id}: #{inspect(reason)}")
         :ok
     end
   end

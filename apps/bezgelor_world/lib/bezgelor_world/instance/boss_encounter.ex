@@ -31,7 +31,6 @@ defmodule BezgelorWorld.Instance.BossEncounter do
   require Logger
 
   @ability_tick_interval 100  # Check abilities every 100ms
-  @enrage_damage 999_999
 
   defstruct [
     :instance_guid,
@@ -388,7 +387,7 @@ defmodule BezgelorWorld.Instance.BossEncounter do
   defp check_phase_condition(nil, _health), do: true
   defp check_phase_condition(_, _health), do: false
 
-  defp check_phase_transition(state, old_percent, new_percent) do
+  defp check_phase_transition(state, _old_percent, new_percent) do
     phases = get_in(state.boss_definition, ["phases"]) || []
     new_phase = find_phase_for_health(phases, new_percent)
 

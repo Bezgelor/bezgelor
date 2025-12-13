@@ -18,9 +18,9 @@ defmodule BezgelorProtocol.Packets.World.ClientStorePurchase do
 
   @impl true
   def read(reader) do
-    {item_id, reader} = PacketReader.read_uint32(reader)
-    {currency_byte, reader} = PacketReader.read_byte(reader)
-    {promo_code, reader} = PacketReader.read_string(reader)
+    {:ok, item_id, reader} = PacketReader.read_uint32(reader)
+    {:ok, currency_byte, reader} = PacketReader.read_byte(reader)
+    {:ok, promo_code, reader} = PacketReader.read_string(reader)
 
     packet = %__MODULE__{
       item_id: item_id,
