@@ -9,13 +9,15 @@ Bezgelor is a **feature-complete game engine with minimal game content**. The ar
 
 | Aspect | Status |
 |--------|--------|
-| Systems Implementation | ~95% complete |
-| Content/Data | ~85% complete |
+| Systems Implementation | ~98% complete |
+| Content/Data | ~90% complete |
 | Populated Worlds | 7 of 7 (open world) |
+| Resource Spawns | ✅ 5,015 harvest nodes |
 | Quests Defined | 5,194 (from client) |
 | Quest Giver Mappings | ✅ Available (creatures_full) |
 | Vendor Inventories | ✅ 881 vendors, 35,842 items |
-| Loot System | ✅ Real items + equipment drops |
+| Loot System | ✅ Real items + equipment drops + corpse pickup |
+| Combat System | ✅ Stats, ticks, XP, telegraphs complete |
 | Dungeons Working | 0 of 46 |
 
 ---
@@ -24,10 +26,10 @@ Bezgelor is a **feature-complete game engine with minimal game content**. The ar
 
 | Category | Status | Work Required |
 |----------|--------|---------------|
-| **Quest Wiring** | Data ready | Wire 5,194 quests to handlers using creature giver mappings |
+| **Quest Wiring** | ✅ Wired | Handlers registered, ready for client testing |
 | **Vendor Inventories** | ✅ Generated | 881 vendors, 35,842 item listings |
 | **Loot Tables** | ✅ Complete | Real items, equipment drops, group bonuses |
-| **Gathering Nodes** | System ready | Extract or generate node spawn positions |
+| **Gathering Nodes** | ✅ Complete | 5,015 harvest nodes extracted + wired |
 | **Dungeon Scripts** | DSL ready | Script 46 dungeon encounters |
 | **Dialogue Wiring** | Data ready | Connect gossipSetId to NPC interactions |
 
@@ -71,7 +73,7 @@ The primary work is **integration**, not content creation—data exists, systems
 | ~~NPC/Vendor Data~~ | ✅ **881 vendors + 35,842 items** | ✅ Complete |
 | ~~Vendor Inventories~~ | ✅ **Generated** | ✅ Complete |
 | ~~Loot Tables~~ | ✅ **Real items + equipment** | ✅ Complete |
-| **Gathering Nodes** | 0 spawns | Tradeskills broken |
+| ~~Gathering Nodes~~ | ✅ **5,015 nodes extracted** | ✅ Complete |
 | **Dungeon Scripts** | 1 example | No PvE endgame |
 | ~~Dialogue Trees~~ | ✅ **10,799 entries extracted** | Needs wiring |
 
@@ -79,12 +81,13 @@ The primary work is **integration**, not content creation—data exists, systems
 
 ## Detailed Gap Analysis
 
-### 1. Quest System (✅ Data Extracted - Needs Wiring)
+### 1. Quest System (✅ Handlers Wired - Ready for Testing)
 
 **What exists:**
 - Database schemas: `Quest`, `QuestHistory` with full lifecycle
 - Protocol packets: Accept, abandon, turn-in implemented
-- Handler: `QuestHandler` in world server
+- ✅ **Handler wiring complete** - `QuestHandler` and `NpcHandler` implement `BezgelorProtocol.Handler` behaviour
+- ✅ **Packet registration correct** - `client_accept_quest`, `client_abandon_quest`, `client_turn_in_quest`, `client_npc_interact`
 - Progress tracking: JSON-based objective progress
 - ✅ **5,194 quests extracted from client** (`quests.json`)
 - ✅ **10,031 quest objectives** (`quest_objectives.json`)
@@ -92,13 +95,16 @@ The primary work is **integration**, not content creation—data exists, systems
 - ✅ **209 quest hubs** (`quest_hubs.json`)
 - ✅ **53 quest categories** (`quest_categories.json`)
 - ✅ **Quest giver/receiver mappings** (`creatures_part1-4.json` - `questIdGiven00-24`, `questIdReceive00-24` fields)
+- ✅ **Store functions** - `get_quests_for_creature_giver/1`, `get_quests_for_creature_receiver/1`, `creature_quest_giver?/1`
+- ✅ **PrerequisiteChecker** - Level, race, class, faction, quest chain validation
+- ✅ **RewardHandler** - XP, gold, items, reputation grants
 
 **What's needed:**
-- Wire quest data to existing quest system
-- ~~Map quest givers (WorldLocation2 → creature spawns)~~ → Available in creatures_full data
-- Implement quest objective handlers for all types
+- ~~Wire quest data to existing quest system~~ → ✅ Complete
+- ~~Map quest givers~~ → ✅ Available in creatures_full data
+- End-to-end testing with actual client
 
-**Impact:** ~~Cannot progress~~ → Data available, needs integration.
+**Impact:** ✅ Quest system is fully wired - data flows from NPC interaction through to rewards.
 
 ### 2. NPC/Vendor System (✅ COMPLETE)
 
@@ -131,24 +137,24 @@ The primary work is **integration**, not content creation—data exists, systems
 - 3,436 zone definitions with full metadata
 - 41,056 creature spawns across all 7 open world continents
 - 2,921 object spawns
+- ✅ **5,015 harvest/resource node spawns** (extracted from NexusForever.WorldDatabase)
 - Full import from NexusForever.WorldDatabase
 
 **World coverage:**
-| World ID | Continent | Zones | Creatures | Objects |
-|----------|-----------|-------|-----------|---------|
-| 51 | Alizar (Exile) | Algoroc, Celestion, Galeras, Thayd, Whitevale | 20,229 | 1,833 |
-| 22 | Olyssia (Dominion) | Auroria, Deradune, Ellevar, Illium, Wilderrun | 996 | 30 |
-| 1061 | Isigrol (Max-level) | Blighthaven, Malgrave, SouthernGrimvault, TheDefile, WesternGrimvault | 17,990 | 986 |
-| 990 | EverstarGrove | Tutorial area | 1,107 | 49 |
-| 426 | NorthernWilds | Tutorial area | 590 | 23 |
-| 870 | CrimsonIsle | Dominion starter | 47 | 0 |
-| 1387 | LevianBay | Shiphand area | 97 | 0 |
+| World ID | Continent | Zones | Creatures | Objects | Resources |
+|----------|-----------|-------|-----------|---------|-----------|
+| 51 | Alizar (Exile) | Algoroc, Celestion, Galeras, Thayd, Whitevale | 20,229 | 1,833 | 1,898 |
+| 22 | Olyssia (Dominion) | Auroria, Deradune, Ellevar, Illium, Wilderrun | 996 | 30 | 1,619 |
+| 1061 | Isigrol (Max-level) | Blighthaven, Malgrave, SouthernGrimvault, TheDefile, WesternGrimvault | 17,990 | 986 | 1,498 |
+| 990 | EverstarGrove | Tutorial area | 1,107 | 49 | 0 |
+| 426 | NorthernWilds | Tutorial area | 590 | 23 | 0 |
+| 870 | CrimsonIsle | Dominion starter | 47 | 0 | 0 |
+| 1387 | LevianBay | Shiphand area | 97 | 0 | 0 |
 
 **Still missing:**
 - Instance/dungeon creature spawns (separate data)
-- Resource/gathering node spawns
 
-**Impact:** Open world is now populated. Players can explore and combat creatures.
+**Impact:** Open world is now populated. Players can explore, combat creatures, and gather resources.
 
 ### 4. Loot System (✅ 85% Complete)
 
@@ -191,19 +197,21 @@ The primary work is **integration**, not content creation—data exists, systems
 
 **Impact:** No PvE endgame content.
 
-### 6. Tradeskill Content (70% Complete)
+### 6. Tradeskill Content (✅ 90% Complete)
 
 **What exists:**
 - 6 crafting + 3 gathering professions
 - Schematics, talents, additives
 - Coordinate-based crafting system
 - Work order templates
+- ✅ **5,015 gathering node spawns** across 3 continents
+- ✅ **HarvestNodeManager** for zone spawning and respawns
 
 **What's missing:**
-- Gathering node world positions
-- Node spawn data per zone
+- Tutorial zone gathering nodes (EverstarGrove, NorthernWilds)
+- Some instance/dungeon gathering nodes
 
-**Impact:** Gathering professions non-functional.
+**Impact:** ✅ Gathering professions now functional in main game zones.
 
 ---
 
@@ -224,7 +232,7 @@ The primary work is **integration**, not content creation—data exists, systems
 | # | Gap | Impact | Effort | Data Source |
 |---|-----|--------|--------|-------------|
 | ~~4~~ | ~~Loot Table Assignment~~ | ~~No rewards~~ | ~~Medium~~ | ✅ **COMPLETE** - Real items + equipment drops |
-| 5 | **Gathering Node Spawns** | Tradeskills broken | Medium | Extract or generate |
+| ~~5~~ | ~~Gathering Node Spawns~~ | ~~Tradeskills broken~~ | ~~Medium~~ | ✅ **COMPLETE** - 5,015 nodes extracted |
 | 6 | **Dungeon Encounters** | No PvE endgame | High | Manual scripting |
 
 ### Tier 3: Polish & Completeness
@@ -287,9 +295,10 @@ Options (in order of preference):
 - Quest chains with story
 - Zone transition quests
 
-**C.2: Gathering Nodes**
-- Extract or generate node positions
-- Distribute by zone type and level
+**C.2: Gathering Nodes** ✅ COMPLETE
+- ✅ 5,015 harvest nodes extracted from NexusForever.WorldDatabase
+- ✅ HarvestNodeManager wired into zone spawning
+- ✅ Respawn system implemented
 
 **C.3: First Dungeon**
 - Script Stormtalon's Lair completely
@@ -312,9 +321,9 @@ Options (in order of preference):
 | Client data extraction | Medium | ✅ **COMPLETE** - 5,194 quests + all content |
 | NPC/Vendor identification | Medium | ✅ **COMPLETE** - 881 vendors |
 | Loot table wiring | Medium | ✅ **COMPLETE** - Real items + equipment drops |
-| Wire quest data to system | Medium | TODO |
-| Generate vendor inventories | Medium | TODO |
-| Gathering nodes | Medium | TODO |
+| Wire quest data to system | Medium | ✅ **COMPLETE** - Handlers wired |
+| Generate vendor inventories | Medium | ✅ **COMPLETE** - 35,842 items |
+| Gathering nodes | Medium | ✅ **COMPLETE** - 5,015 nodes extracted + wired |
 | First dungeon complete | High | TODO |
 
 **Minimum viable "playable" (level 1-20):** 1-2 weeks focused work (data extraction complete!)
@@ -385,6 +394,7 @@ Bezgelor represents an impressive technical achievement—a complete WildStar se
 - **1,064 path missions** for all four paths
 - **10,799 dialogue entries** for NPC conversations
 - **33,396 world locations** for quest directions
+- **5,015 harvest nodes** for gathering professions (extracted from WorldDatabase)
 
 The path to playability is now much clearer:
 1. ~~Populate the world (WorldDatabase import)~~ ✅ **COMPLETE**

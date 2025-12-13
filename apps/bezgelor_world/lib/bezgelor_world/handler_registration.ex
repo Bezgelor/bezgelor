@@ -38,6 +38,7 @@ defmodule BezgelorWorld.HandlerRegistration do
     LootHandler,
     MailHandler,
     MountHandler,
+    NpcHandler,
     PathHandler,
     PetHandler,
     QuestHandler,
@@ -80,10 +81,13 @@ defmodule BezgelorWorld.HandlerRegistration do
     PacketRegistry.register(:client_delete_item, InventoryHandler)
     PacketRegistry.register(:client_use_item, InventoryHandler)
 
+    # NPC interaction
+    PacketRegistry.register(:client_npc_interact, NpcHandler)
+
     # Quests
-    PacketRegistry.register(:client_quest_accept, QuestHandler)
-    PacketRegistry.register(:client_quest_abandon, QuestHandler)
-    PacketRegistry.register(:client_quest_complete, QuestHandler)
+    PacketRegistry.register(:client_accept_quest, QuestHandler)
+    PacketRegistry.register(:client_abandon_quest, QuestHandler)
+    PacketRegistry.register(:client_turn_in_quest, QuestHandler)
     PacketRegistry.register(:client_quest_share, QuestHandler)
 
     # Achievements

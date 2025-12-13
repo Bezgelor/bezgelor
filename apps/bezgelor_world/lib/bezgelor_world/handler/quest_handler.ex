@@ -5,7 +5,11 @@ defmodule BezgelorWorld.Handler.QuestHandler do
   Processes quest acceptance, abandonment, turn-in, and progress updates.
   """
 
+  @behaviour BezgelorProtocol.Handler
+
+  alias BezgelorData.Store
   alias BezgelorDb.{Characters, Quests}
+  alias BezgelorProtocol.PacketReader
   alias BezgelorProtocol.Packets.World.{
     ClientAcceptQuest,
     ClientAbandonQuest,
@@ -19,6 +23,96 @@ defmodule BezgelorWorld.Handler.QuestHandler do
   alias BezgelorWorld.Quest.{PrerequisiteChecker, RewardHandler}
 
   require Logger
+
+  # ============================================================================
+  # Handler Behaviour
+  # ============================================================================
+
+  @impl true
+  def handle(payload, state) do
+    # Determine which packet type based on opcode in state
+    opcode = state[:current_opcode]
+    reader = PacketReader.new(payload)
+
+    result =
+      case opcode do
+        :client_accept_quest ->
+          handle_accept_packet(reader, state)
+
+        :client_abandon_quest ->
+          handle_abandon_packet(reader, state)
+
+        :client_turn_in_quest ->
+          handle_turn_in_packet(reader, state)
+
+        :client_quest_share ->
+          # Quest sharing not yet implemented
+          Logger.debug("Quest share received but not implemented")
+          {:ok, state}
+
+        _ ->
+          Logger.warning("Unknown quest opcode: #{inspect(opcode)}")
+          {:ok, state}
+      end
+
+    result
+  end
+
+  defp handle_accept_packet(reader, state) do
+    case ClientAcceptQuest.read(reader) do
+      {:ok, packet, _reader} ->
+        character_id = state.session_data[:character_id]
+        connection_pid = self()
+
+        # Look up quest data from store
+        quest_data =
+          case Store.get_quest_with_objectives(packet.quest_id) do
+            {:ok, data} -> data
+            :error -> %{}
+          end
+
+        handle_accept_quest(connection_pid, character_id, packet, quest_data)
+        {:ok, state}
+
+      {:error, reason} ->
+        Logger.warning("Failed to parse ClientAcceptQuest: #{inspect(reason)}")
+        {:error, reason}
+    end
+  end
+
+  defp handle_abandon_packet(reader, state) do
+    case ClientAbandonQuest.read(reader) do
+      {:ok, packet, _reader} ->
+        character_id = state.session_data[:character_id]
+        connection_pid = self()
+
+        handle_abandon_quest(connection_pid, character_id, packet)
+        {:ok, state}
+
+      {:error, reason} ->
+        Logger.warning("Failed to parse ClientAbandonQuest: #{inspect(reason)}")
+        {:error, reason}
+    end
+  end
+
+  defp handle_turn_in_packet(reader, state) do
+    case ClientTurnInQuest.read(reader) do
+      {:ok, packet, _reader} ->
+        character_id = state.session_data[:character_id]
+        connection_pid = self()
+
+        handle_turn_in_quest(connection_pid, character_id, packet)
+        {:ok, state}
+
+      {:error, reason} ->
+        Logger.warning("Failed to parse ClientTurnInQuest: #{inspect(reason)}")
+        {:error, reason}
+    end
+  end
+
+  # ============================================================================
+  # Public API
+  # ============================================================================
 
   @doc """
   Send full quest log to client (called on login).

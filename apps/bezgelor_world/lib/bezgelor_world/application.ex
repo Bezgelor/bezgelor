@@ -30,10 +30,11 @@ defmodule BezgelorWorld.Application do
     # This breaks the compile-time dependency from protocol to world layer
     BezgelorWorld.HandlerRegistration.register_all()
 
-    # Always start WorldManager, CreatureManager, and Zone infrastructure
+    # Always start WorldManager, CreatureManager, HarvestNodeManager, and Zone infrastructure
     base_children = [
       BezgelorWorld.WorldManager,
       BezgelorWorld.CreatureManager,
+      BezgelorWorld.HarvestNodeManager,
       # TickScheduler must start before BuffManager (BuffManager registers with it)
       BezgelorWorld.TickScheduler,
       BezgelorWorld.BuffManager,

@@ -9,8 +9,11 @@ defmodule BezgelorWorld.Handler.NpcHandler do
   - Gossip NPC: shows dialogue options
   """
 
+  @behaviour BezgelorProtocol.Handler
+
   alias BezgelorData.Store
   alias BezgelorDb.{Characters, Quests}
+  alias BezgelorProtocol.PacketReader
   alias BezgelorProtocol.Packets.World.{
     ClientNpcInteract,
     ServerQuestOffer
@@ -18,6 +21,32 @@ defmodule BezgelorWorld.Handler.NpcHandler do
   alias BezgelorWorld.{CombatBroadcaster, Quest.PrerequisiteChecker}
 
   require Logger
+
+  # ============================================================================
+  # Handler Behaviour
+  # ============================================================================
+
+  @impl true
+  def handle(payload, state) do
+    reader = PacketReader.new(payload)
+
+    case ClientNpcInteract.read(reader) do
+      {:ok, packet, _reader} ->
+        character_id = state.session_data[:character_id]
+        connection_pid = self()
+
+        handle_interact(connection_pid, character_id, packet, state.session_data)
+        {:ok, state}
+
+      {:error, reason} ->
+        Logger.warning("Failed to parse ClientNpcInteract: #{inspect(reason)}")
+        {:error, reason}
+    end
+  end
+
+  # ============================================================================
+  # Public API
+  # ============================================================================
 
   @doc """
   Handle NPC interaction packet.

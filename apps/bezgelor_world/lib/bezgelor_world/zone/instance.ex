@@ -28,7 +28,7 @@ defmodule BezgelorWorld.Zone.Instance do
   use GenServer
 
   alias BezgelorCore.{Entity, SpatialGrid}
-  alias BezgelorWorld.CreatureManager
+  alias BezgelorWorld.{CreatureManager, HarvestNodeManager}
 
   require Logger
 
@@ -245,6 +245,18 @@ defmodule BezgelorWorld.Zone.Instance do
 
       {:error, reason} ->
         Logger.warning("Zone #{state.zone_id}: failed to load spawns: #{inspect(reason)}")
+    end
+
+    # Load harvest node spawns for this zone
+    case HarvestNodeManager.load_zone_spawns(state.zone_id) do
+      {:ok, 0} ->
+        Logger.debug("Zone #{state.zone_id}: no harvest nodes found")
+
+      {:ok, count} ->
+        Logger.info("Zone #{state.zone_id}: loaded #{count} harvest nodes")
+
+      {:error, reason} ->
+        Logger.warning("Zone #{state.zone_id}: failed to load harvest nodes: #{inspect(reason)}")
     end
 
     {:noreply, state}
