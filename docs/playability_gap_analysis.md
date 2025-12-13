@@ -369,6 +369,8 @@ Tool: tools/spawn_importer/nexusforever_converter.py
 - ✅ Equipment drops by creature tier (1-5)
 - ✅ Group loot bonus wiring
 - ✅ Boss-specific unique drops (16 dungeon + 6 GA + 9 DS raid bosses)
+  - Note: Boss→item mappings generated using appropriate item level/quality
+  - Historical mappings not in client data (server-side). See [loot_system_analysis.md](loot_system_analysis.md)
 
 ### Phase B: Quest Foundation ✅ COMPLETE
 
