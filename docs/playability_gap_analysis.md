@@ -146,11 +146,11 @@ All major systems are complete. No critical gaps remaining.
 
 **What's needed:**
 - ~~Vendor inventory data~~ → ✅ Generated
-- ~~Wire gossip system to NPCs~~ → `gossipSetId` mapping available
+- ~~Wire gossip system to NPCs~~ → ✅ Complete (GossipManager wired to NpcHandler)
 
 **Impact:** ✅ NPCs fully configured with inventories and dialogue mappings.
 
-### 3. World Population (✅ COMPLETE for Open World)
+### 3. World Population (✅ COMPLETE)
 
 **What exists:**
 - 3,436 zone definitions with full metadata
@@ -170,10 +170,11 @@ All major systems are complete. No critical gaps remaining.
 | 870 | CrimsonIsle | Dominion starter | 47 | 0 | 0 |
 | 1387 | LevianBay | Shiphand area | 97 | 0 | 0 |
 
-**Still missing:**
-- Instance/dungeon creature spawns (separate data)
+**Instance content:**
+- ✅ Instance/dungeon creature spawns (`instance_spawns.json` - 6 dungeons/raids with trash packs)
+- ✅ Dungeon navigation waypoints (`dungeon_waypoints.json` - 6 dungeons/raids)
 
-**Impact:** Open world is now populated. Players can explore, combat creatures, and gather resources.
+**Impact:** ✅ Open world and instances are fully populated. Players can explore, combat creatures, and gather resources.
 
 ### 4. Loot System (✅ 100% Complete)
 
@@ -240,10 +241,10 @@ All major systems are complete. No critical gaps remaining.
 - Movement effects (knockback, pull)
 - Enrage timers and phase modifiers
 
-**What's missing:**
-- Dungeon waypoint/layout data (cosmetic)
+**Navigation data:**
+- ✅ Dungeon waypoint/layout data (`dungeon_waypoints.json` - 6 dungeons/raids)
 
-**Impact:** ✅ Full PvE endgame content available.
+**Impact:** ✅ Full PvE endgame content available with navigation support.
 
 ### 6. Tradeskill Content (✅ 100% Complete)
 
@@ -340,7 +341,7 @@ All major systems are complete. No critical gaps remaining.
 | ~~9~~ | ~~Path Mission Data~~ | ~~Paths empty~~ | ~~Medium~~ | ✅ **EXTRACTED** - 1,064 path missions |
 | ~~10~~ | ~~Wire Achievements~~ | ~~Data exists, needs triggers~~ | ~~Medium~~ | ✅ **COMPLETE** - Event-indexed O(1) lookup |
 | ~~11~~ | ~~Wire Path Missions~~ | ~~Data exists~~ | ~~Medium~~ | ✅ **COMPLETE** - 26 mission types wired |
-| 12 | **Additional Battlegrounds** | Limited PvP | Medium | Manual creation |
+| ~~12~~ | ~~Additional Battlegrounds~~ | ~~Limited PvP~~ | ~~Medium~~ | ✅ **COMPLETE** - 5 battlegrounds + 4 rated |
 
 ---
 
@@ -424,7 +425,7 @@ Tool: tools/spawn_importer/nexusforever_converter.py
 
 - ✅ Achievement event triggers - Complete (4,943 achievements, 83 types, O(1) lookup)
 - ✅ Path mission integration - Complete (26 mission types, 4 paths)
-- Extended battleground maps (optional)
+- ✅ Battleground content - Complete (5 battlegrounds + 4 rated)
 
 ---
 
@@ -529,7 +530,6 @@ The path to playability is now much clearer:
 - ✅ Path missions (1,064 missions, 26 types, all 4 paths)
 - ✅ Achievement system (4,943 achievements, 83 types, event-indexed O(1) lookup)
 
-**All major systems complete!** Optional remaining work:
-- Additional battleground maps (2 currently available)
+**All major systems complete!** No critical gaps remaining.
 
 The architectural foundation is solid, all major content is wired. Bezgelor is a fully playable WildStar server emulator.
