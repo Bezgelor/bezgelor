@@ -1581,6 +1581,9 @@ defmodule BezgelorData.Store do
     # Build secondary indexes
     build_all_indexes()
 
+    # Build achievement event index for O(1) lookup
+    BezgelorData.AchievementIndex.build_index()
+
     Logger.info("Game data loaded: #{inspect(stats())}")
   end
 

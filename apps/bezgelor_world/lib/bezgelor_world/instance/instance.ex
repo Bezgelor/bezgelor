@@ -28,6 +28,7 @@ defmodule BezgelorWorld.Instance.Instance do
   """
   use GenServer
 
+  alias BezgelorDb.Achievements
   alias BezgelorWorld.Instance.Registry, as: InstanceRegistry
   alias BezgelorWorld.Instance.BossEncounter
   alias BezgelorData.Store
@@ -558,6 +559,15 @@ defmodule BezgelorWorld.Instance.Instance do
 
   defp complete_instance(state) do
     Logger.info("Instance #{state.instance_guid} completed!")
+
+    # Broadcast dungeon completion achievement to all players
+    instance_id = state.definition_id
+
+    Enum.each(state.players, fn {_player_id, player_info} ->
+      if character_id = player_info[:character_id] do
+        Achievements.broadcast(character_id, {:dungeon_complete, instance_id})
+      end
+    end)
 
     %{state |
       state: :completed,

@@ -288,12 +288,17 @@ defmodule BezgelorProtocol.Connection do
     end
   end
 
-  # Terminate callback - persist quests on disconnect
+  # Terminate callback - persist quests on disconnect and clean up handlers
   @impl GenServer
   def terminate(_reason, state) do
     # Cancel the persistence timer if running
     if state.quest_persist_timer do
       Process.cancel_timer(state.quest_persist_timer)
+    end
+
+    # Stop achievement handler if running
+    if handler = get_in(state.session_data, [:achievement_handler]) do
+      GenServer.stop(handler, :normal)
     end
 
     # Persist any dirty quests before shutdown

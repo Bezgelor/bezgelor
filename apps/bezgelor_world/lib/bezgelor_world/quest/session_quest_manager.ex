@@ -35,7 +35,7 @@ defmodule BezgelorWorld.Quest.SessionQuestManager do
   """
 
   alias BezgelorWorld.Quest.QuestCache
-  alias BezgelorDb.Quests
+  alias BezgelorDb.{Achievements, Quests}
   alias BezgelorData.Store
   alias BezgelorProtocol.Packets.World.{ServerQuestUpdate, ServerQuestAdd, ServerQuestRemove}
   alias BezgelorProtocol.PacketWriter
@@ -272,6 +272,10 @@ defmodule BezgelorWorld.Quest.SessionQuestManager do
           {:ok, _history} ->
             packet = build_quest_remove_packet(quest_id)
             Logger.info("Character #{character_id} completed quest #{quest_id}")
+
+            # Broadcast achievement event for quest completion
+            Achievements.broadcast(character_id, {:quest_complete, quest_id})
+
             {:ok, updated_session, packet}
 
           {:error, reason} ->

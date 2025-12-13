@@ -11,6 +11,8 @@ defmodule BezgelorWorld.CombatBroadcaster do
 
   require Logger
 
+  alias BezgelorDb.Achievements
+
   alias BezgelorProtocol.Packets.World.{
     ServerBuffApply,
     ServerBuffRemove,
@@ -345,8 +347,12 @@ defmodule BezgelorWorld.CombatBroadcaster do
     end
 
     # Send game event to ALL participants for session-based quest tracking
+    # and broadcast kill achievement events
     for character_id <- participant_character_ids do
       send_game_event(character_id, :kill, %{creature_id: creature_id})
+
+      # Achievement tracking for kill achievements
+      Achievements.broadcast(character_id, {:kill, creature_id})
     end
 
     :ok
@@ -510,6 +516,8 @@ defmodule BezgelorWorld.CombatBroadcaster do
 
                 {:ok, updated, level_up: true} ->
                   Logger.info("Character #{character_id} leveled up to #{updated.level}!")
+                  # Broadcast level up achievement event
+                  Achievements.broadcast(character_id, {:level_up, updated.level})
                   # TODO: Send level up packet
 
                 {:error, reason} ->

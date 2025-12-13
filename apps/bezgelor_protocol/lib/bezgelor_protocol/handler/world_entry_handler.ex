@@ -22,6 +22,7 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
   alias BezgelorProtocol.Packets.World.{ServerEntityCreate, ServerQuestList}
   alias BezgelorProtocol.PacketWriter
   alias BezgelorCore.Entity
+  alias BezgelorWorld.Handler.AchievementHandler
   alias BezgelorWorld.Quest.QuestCache
 
   require Logger
@@ -62,12 +63,26 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
     {:ok, quest_writer} = ServerQuestList.write(quest_list_packet, quest_writer)
     quest_packet_data = PacketWriter.to_binary(quest_writer)
 
+    # Start achievement handler for this character
+    account_id = state.session_data[:account_id]
+
+    {:ok, achievement_handler} =
+      AchievementHandler.start_link(
+        state.connection_pid,
+        character.id,
+        account_id: account_id
+      )
+
+    # Send achievement list to client
+    AchievementHandler.send_achievement_list(state.connection_pid, character.id)
+
     # Update session state
     state = put_in(state.session_data[:entity_guid], guid)
     state = put_in(state.session_data[:entity], entity)
     state = put_in(state.session_data[:in_world], true)
     state = put_in(state.session_data[:active_quests], active_quests)
     state = put_in(state.session_data[:completed_quest_ids], completed_quest_ids)
+    state = put_in(state.session_data[:achievement_handler], achievement_handler)
 
     Logger.info(
       "Player '#{character.name}' (GUID: #{guid}) entered world at " <>
