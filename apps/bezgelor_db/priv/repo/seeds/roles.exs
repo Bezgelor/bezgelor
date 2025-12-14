@@ -12,6 +12,14 @@ import Ecto.Query
 # Define role configurations
 roles_config = [
   %{
+    name: "Player",
+    description: "Default role for all players - includes Signature tier features",
+    protected: true,
+    permissions: [
+      "account.signature"
+    ]
+  },
+  %{
     name: "Moderator",
     description: "Community management focused - can view users, ban/unban, kick players, broadcast messages",
     protected: true,

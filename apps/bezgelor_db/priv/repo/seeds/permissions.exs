@@ -68,7 +68,10 @@ permissions = [
   %{key: "admin.manage_roles", category: "administration", description: "Create/edit/delete roles"},
   %{key: "admin.assign_roles", category: "administration", description: "Assign roles to users"},
   %{key: "admin.view_audit_log", category: "administration", description: "View admin action history"},
-  %{key: "admin.export_audit_log", category: "administration", description: "Download audit logs"}
+  %{key: "admin.export_audit_log", category: "administration", description: "Download audit logs"},
+
+  # Account Features
+  %{key: "account.signature", category: "account_features", description: "Signature tier account (premium features, extra slots)"}
 ]
 
 now = DateTime.utc_now() |> DateTime.truncate(:second)

@@ -246,7 +246,8 @@ defmodule BezgelorDb.Accounts do
   Create a new account with email and password.
 
   Generates SRP6 salt and verifier from the password - the password
-  itself is never stored.
+  itself is never stored. Assigns the default Player role which includes
+  Signature tier features.
 
   ## Parameters
 
@@ -266,20 +267,26 @@ defmodule BezgelorDb.Accounts do
   def create_account(email, password) do
     {salt, verifier} = BezgelorCrypto.Password.generate_salt_and_verifier(email, password)
 
-    %Account{}
-    |> Account.changeset(%{
-      email: email,
-      salt: salt,
-      verifier: verifier
-    })
-    |> Repo.insert()
+    Repo.transaction(fn ->
+      case %Account{}
+           |> Account.changeset(%{email: email, salt: salt, verifier: verifier})
+           |> Repo.insert() do
+        {:ok, account} ->
+          assign_default_role(account)
+          account
+
+        {:error, changeset} ->
+          Repo.rollback(changeset)
+      end
+    end)
   end
 
   @doc """
   Register a new account (for web portal).
 
   Creates an account with `email_verified_at: nil`. The account exists but
-  should not be allowed to play until email is verified.
+  should not be allowed to play until email is verified. Assigns the default
+  Player role which includes Signature tier features.
 
   ## Parameters
 
@@ -300,13 +307,18 @@ defmodule BezgelorDb.Accounts do
   def register_account(email, password) do
     {salt, verifier} = BezgelorCrypto.Password.generate_salt_and_verifier(email, password)
 
-    %Account{}
-    |> Account.registration_changeset(%{
-      email: email,
-      salt: salt,
-      verifier: verifier
-    })
-    |> Repo.insert()
+    Repo.transaction(fn ->
+      case %Account{}
+           |> Account.registration_changeset(%{email: email, salt: salt, verifier: verifier})
+           |> Repo.insert() do
+        {:ok, account} ->
+          assign_default_role(account)
+          account
+
+        {:error, changeset} ->
+          Repo.rollback(changeset)
+      end
+    end)
   end
 
   @doc """
@@ -561,6 +573,54 @@ defmodule BezgelorDb.Accounts do
   @spec deleted?(Account.t()) :: boolean()
   def deleted?(%Account{deleted_at: nil}), do: false
   def deleted?(%Account{deleted_at: _}), do: true
+
+  # ============================================================================
+  # Default Role Assignment
+  # ============================================================================
+
+  # Default role name for new accounts
+  @default_role_name "Player"
+
+  @doc false
+  defp assign_default_role(account) do
+    alias BezgelorDb.Authorization
+
+    case Authorization.get_role_by_name(@default_role_name) do
+      nil ->
+        # Player role doesn't exist yet (seeds not run), skip silently
+        :ok
+
+      role ->
+        Authorization.assign_role(account, role, nil)
+    end
+  end
+
+  @doc """
+  Assign the default Player role to an existing account.
+
+  Use this to grant Signature tier features to accounts created
+  before the default role assignment was added.
+
+  ## Parameters
+
+  - `account` - The account to grant the role to
+
+  ## Returns
+
+  - `{:ok, account_role}` on success
+  - `{:error, :already_assigned}` if already has role
+  - `{:error, :role_not_found}` if Player role doesn't exist
+  """
+  @spec grant_default_role(Account.t()) ::
+          {:ok, term()} | {:error, :already_assigned | :role_not_found | term()}
+  def grant_default_role(account) do
+    alias BezgelorDb.Authorization
+
+    case Authorization.get_role_by_name(@default_role_name) do
+      nil -> {:error, :role_not_found}
+      role -> Authorization.assign_role(account, role, nil)
+    end
+  end
 
   # ============================================================================
   # Admin Statistics
