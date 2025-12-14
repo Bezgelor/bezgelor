@@ -15,7 +15,7 @@ defmodule BezgelorProtocol.Handler.CharacterDeleteHandler do
 
   alias BezgelorProtocol.Packets.World.{
     ClientCharacterDelete,
-    ServerCharacterList
+    ServerCharacterDeleteResult
   }
 
   alias BezgelorProtocol.{PacketReader, PacketWriter}
@@ -53,25 +53,25 @@ defmodule BezgelorProtocol.Handler.CharacterDeleteHandler do
       {:ok, deleted_char} ->
         Logger.info("Deleted character '#{deleted_char.original_name}' (ID: #{character_id}) for account #{account_id}")
 
-        # Send updated character list
-        characters = Characters.list_characters(account_id)
-        response = ServerCharacterList.from_characters(characters)
-
-        {:reply_world_encrypted, :server_character_list, encode_packet(response), state}
+        # Send delete success result
+        response = ServerCharacterDeleteResult.success()
+        {:reply_world_encrypted, :server_character_delete_result, encode_packet(response), state}
 
       {:error, :not_found} ->
         Logger.warning("Attempted to delete non-existent character #{character_id} for account #{account_id}")
-        {:error, :character_not_found}
+        response = ServerCharacterDeleteResult.failure()
+        {:reply_world_encrypted, :server_character_delete_result, encode_packet(response), state}
 
       {:error, reason} ->
         Logger.error("Character deletion failed: #{inspect(reason)}")
-        {:error, reason}
+        response = ServerCharacterDeleteResult.failure()
+        {:reply_world_encrypted, :server_character_delete_result, encode_packet(response), state}
     end
   end
 
-  defp encode_packet(%ServerCharacterList{} = packet) do
+  defp encode_packet(%ServerCharacterDeleteResult{} = packet) do
     writer = PacketWriter.new()
-    {:ok, writer} = ServerCharacterList.write(packet, writer)
+    {:ok, writer} = ServerCharacterDeleteResult.write(packet, writer)
     PacketWriter.to_binary(writer)
   end
 end

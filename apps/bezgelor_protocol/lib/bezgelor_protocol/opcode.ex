@@ -59,6 +59,7 @@ defmodule BezgelorProtocol.Opcode do
   @client_character_create 0x025B
   @server_character_create 0x00DC
   @client_character_delete 0x0352
+  @server_character_delete_result 0x00E6
   @client_entered_world 0x00F2
 
   # Logout opcodes
@@ -269,6 +270,7 @@ defmodule BezgelorProtocol.Opcode do
     client_character_create: @client_character_create,
     server_character_create: @server_character_create,
     client_character_delete: @client_character_delete,
+    server_character_delete_result: @server_character_delete_result,
     client_entered_world: @client_entered_world,
     # Logout
     server_logout_update: @server_logout_update,
@@ -450,6 +452,7 @@ defmodule BezgelorProtocol.Opcode do
     client_character_create: "ClientCharacterCreate",
     server_character_create: "ServerCharacterCreate",
     client_character_delete: "ClientCharacterDelete",
+    server_character_delete_result: "ServerCharacterDeleteResult",
     client_entered_world: "ClientEnteredWorld",
     server_logout_update: "ServerLogoutUpdate",
     client_logout_request: "ClientLogoutRequest",
