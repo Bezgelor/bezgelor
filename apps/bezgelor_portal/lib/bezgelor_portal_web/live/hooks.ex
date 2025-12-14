@@ -147,7 +147,7 @@ defmodule BezgelorPortalWeb.Live.Hooks do
 
   defp handle_status_refresh(:refresh_server_status, socket) do
     Process.send_after(self(), :refresh_server_status, @status_refresh_interval)
-    {:cont, assign(socket, :server_status, fetch_server_status())}
+    {:halt, assign(socket, :server_status, fetch_server_status())}
   end
 
   defp handle_status_refresh(_msg, socket), do: {:cont, socket}
