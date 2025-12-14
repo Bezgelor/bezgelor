@@ -369,6 +369,9 @@ defmodule BezgelorProtocol.Packets.World.ServerCharacterList do
               {0.0, 0.0, 0.0}
           end
 
+        # Extract customization data from appearance association
+        {labels, values, bones} = get_customization_data(char)
+
         %CharacterEntry{
           id: char.id,
           name: char.name,
@@ -392,10 +395,9 @@ defmodule BezgelorProtocol.Packets.World.ServerCharacterList do
           requires_rename: false,
           # 0xFFFFFFFF shows all gear slots (per NexusForever)
           gear_mask: 0xFFFFFFFF,
-          labels: [],
-          values: [],
-          # Bones are in the appearance association
-          bones: get_bones(char),
+          labels: labels,
+          values: values,
+          bones: bones,
           last_logged_out_days: last_logged_out_days
         }
       end)
@@ -416,11 +418,19 @@ defmodule BezgelorProtocol.Packets.World.ServerCharacterList do
     }
   end
 
-  # Extract bones from character appearance association
-  defp get_bones(char) do
+  # Extract customization data (labels, values, bones) from character appearance association
+  defp get_customization_data(char) do
     case Map.get(char, :appearance) do
-      %{bones: bones} when is_list(bones) -> bones
-      _ -> []
+      %{labels: labels, values: values, bones: bones}
+      when is_list(labels) and is_list(values) and is_list(bones) ->
+        {labels, values, bones}
+
+      %{bones: bones} when is_list(bones) ->
+        # Legacy: only bones stored
+        {[], [], bones}
+
+      _ ->
+        {[], [], []}
     end
   end
 end

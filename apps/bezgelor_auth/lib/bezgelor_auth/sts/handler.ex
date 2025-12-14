@@ -65,6 +65,12 @@ defmodule BezgelorAuth.Sts.Handler do
     GameAccountHandler.handle_list_accounts(packet, session)
   end
 
+  defp route("/Auth/PageVerifiedIps", _packet, session) do
+    # Client requests list of verified IPs for account security
+    # Return empty list (feature not implemented)
+    {:ok, "<Reply><Page><TotalItemCount>0</TotalItemCount></Page></Reply>", session}
+  end
+
   defp route(uri, _packet, session) do
     Logger.warning("[STS] Unknown URI: #{uri}")
     {:error, 404, "Not Found", session}

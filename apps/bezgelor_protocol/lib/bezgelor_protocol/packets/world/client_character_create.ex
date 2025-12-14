@@ -130,7 +130,8 @@ defmodule BezgelorProtocol.Packets.World.ClientCharacterCreate do
   @doc """
   Convert customization data to database-compatible map.
 
-  Labels and values are paired to create customization entries.
+  Labels and values are stored as arrays for sending back in character list.
+  Also stored as a map for potential future use.
   """
   @spec customization_to_map(t()) :: map()
   def customization_to_map(%__MODULE__{} = packet) do
@@ -140,6 +141,8 @@ defmodule BezgelorProtocol.Packets.World.ClientCharacterCreate do
 
     %{
       customizations: customizations,
+      labels: packet.labels,
+      values: packet.values,
       bones: packet.bones
     }
   end

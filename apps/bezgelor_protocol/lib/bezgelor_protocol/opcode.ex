@@ -61,6 +61,12 @@ defmodule BezgelorProtocol.Opcode do
   @client_character_delete 0x0352
   @client_entered_world 0x00F2
 
+  # Logout opcodes
+  @server_logout_update 0x0092
+  @client_logout_request 0x00BF
+  @client_logout_confirm 0x00C0
+  @server_logout 0x0594
+
   # Client statistics/telemetry opcodes
   @client_statistics_watchdog 0x023C
   @client_statistics_window_open 0x023D
@@ -264,6 +270,11 @@ defmodule BezgelorProtocol.Opcode do
     server_character_create: @server_character_create,
     client_character_delete: @client_character_delete,
     client_entered_world: @client_entered_world,
+    # Logout
+    server_logout_update: @server_logout_update,
+    client_logout_request: @client_logout_request,
+    client_logout_confirm: @client_logout_confirm,
+    server_logout: @server_logout,
     # Client statistics
     client_statistics_watchdog: @client_statistics_watchdog,
     client_statistics_window_open: @client_statistics_window_open,
@@ -440,6 +451,10 @@ defmodule BezgelorProtocol.Opcode do
     server_character_create: "ServerCharacterCreate",
     client_character_delete: "ClientCharacterDelete",
     client_entered_world: "ClientEnteredWorld",
+    server_logout_update: "ServerLogoutUpdate",
+    client_logout_request: "ClientLogoutRequest",
+    client_logout_confirm: "ClientLogoutConfirm",
+    server_logout: "ServerLogout",
     client_statistics_watchdog: "ClientStatisticsWatchdog",
     client_statistics_window_open: "ClientStatisticsWindowOpen",
     client_statistics_gfx: "ClientStatisticsGfx",

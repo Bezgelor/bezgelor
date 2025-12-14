@@ -79,6 +79,7 @@ defmodule BezgelorProtocol.Packets.World.ServerCharacterCreate do
       |> PacketWriter.write_uint64(packet.character_id)
       |> PacketWriter.write_uint32(packet.world_id)
       |> PacketWriter.write_bits(result_code, 3)
+      |> PacketWriter.flush_bits()
 
     {:ok, writer}
   end

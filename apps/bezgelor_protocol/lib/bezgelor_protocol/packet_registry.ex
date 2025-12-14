@@ -95,6 +95,7 @@ defmodule BezgelorProtocol.PacketRegistry do
       client_character_select: Handler.CharacterSelectHandler,
       client_character_delete: Handler.CharacterDeleteHandler,
       client_entered_world: Handler.WorldEntryHandler,
+      client_logout_request: Handler.LogoutHandler,
       client_movement: Handler.MovementHandler,
       # Client statistics/telemetry
       client_statistics_connection: Handler.StatisticsConnectionHandler,

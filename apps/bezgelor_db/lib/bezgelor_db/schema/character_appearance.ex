@@ -102,6 +102,10 @@ defmodule BezgelorDb.Schema.CharacterAppearance do
     # Bone customization sliders
     field :bones, {:array, :float}, default: []
 
+    # Raw customization label/value pairs (sent back to client in character list)
+    field :labels, {:array, :integer}, default: []
+    field :values, {:array, :integer}, default: []
+
     timestamps(type: :utc_datetime)
   end
 
@@ -111,7 +115,7 @@ defmodule BezgelorDb.Schema.CharacterAppearance do
                       hair_style hair_color facial_hair
                       skin_color
                       feature_1 feature_2 feature_3 feature_4
-                      bones)a
+                      bones labels values)a
 
   @doc """
   Build a changeset for creating or updating character appearance.
