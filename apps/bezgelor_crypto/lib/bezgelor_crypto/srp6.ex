@@ -228,8 +228,25 @@ defmodule BezgelorCrypto.SRP6 do
 
     client_m1 = :binary.decode_unsigned(client_m1_bytes, :little)
 
+    # Debug logging for SRP6 troubleshooting
+    require Logger
+    Logger.debug("[SRP6] === M1 Verification Debug ===")
+    Logger.debug("[SRP6] Identity: #{identity}")
+    Logger.debug("[SRP6] Salt (hex): #{Base.encode16(salt)}")
+    Logger.debug("[SRP6] A (hex): #{Base.encode16(int_to_bytes(a))}")
+    Logger.debug("[SRP6] B (hex): #{Base.encode16(int_to_bytes(public_b))}")
+    Logger.debug("[SRP6] K (hex): #{Base.encode16(k)}")
+    Logger.debug("[SRP6] H(N) XOR H(g) (hex): #{Base.encode16(xor_ng)}")
+    Logger.debug("[SRP6] H(I) (hex): #{Base.encode16(h_identity)}")
+    Logger.debug("[SRP6] Client M1 bytes (hex): #{Base.encode16(client_m1_bytes)}")
+    Logger.debug("[SRP6] Client M1 (integer): #{client_m1}")
+    Logger.debug("[SRP6] Expected M1 (integer): #{expected_m1}")
+    Logger.debug("[SRP6] Expected M1 (hex): #{Base.encode16(int_to_bytes(expected_m1))}")
+    Logger.debug("[SRP6] M1 Match: #{client_m1 == expected_m1}")
+
     if client_m1 == expected_m1 do
-      {:ok, %{server | m1: client_m1}}
+      # Store original M1 bytes for M2 calculation (not integer)
+      {:ok, %{server | m1: client_m1_bytes}}
     else
       {:error, :invalid_evidence}
     end
@@ -238,16 +255,59 @@ defmodule BezgelorCrypto.SRP6 do
   @doc """
   Calculate server evidence message M2 to send to client.
 
-  M2 = H(A, M1, K)
+  M2 = H(A, M1, K) with NexusForever's specific byte handling:
+  1. Hash(true, A, M1, K) - reverses hash output
+  2. Convert to bytes via BigInteger
+  3. ReverseBytesAsUInt32 on final output
+
+  The two reversals effectively cancel out for 32-byte hashes,
+  but we match NexusForever exactly for compatibility.
   """
   @spec server_evidence(server()) :: {:ok, binary()}
   def server_evidence(%{public_a: a, m1: m1, session_key: k}) do
-    m2 = hash_integers(true, [a, m1, :binary.decode_unsigned(k, :little)])
-    m2_bytes = int_to_bytes(m2)
+    require Logger
 
-    # Reverse bytes as uint32 (WildStar-specific)
-    reversed = reverse_bytes_as_uint32(m2_bytes)
-    {:ok, reversed}
+    # m1 is stored as bytes, convert to integer for hash_integers
+    m1_int = :binary.decode_unsigned(m1, :little)
+    k_int = :binary.decode_unsigned(k, :little)
+
+    # Debug: show the ACTUAL bytes that will be hashed (after int conversion)
+    a_bytes_for_hash = int_to_bytes(a)
+    m1_bytes_for_hash = int_to_bytes(m1_int)
+    k_bytes_for_hash = int_to_bytes(k_int)
+
+    Logger.debug("[SRP6] === M2 Input Debug ===")
+    Logger.debug("[SRP6] A raw (from int): #{byte_size(a_bytes_for_hash)} bytes")
+    Logger.debug("[SRP6] M1 raw: #{byte_size(m1)} bytes, via int: #{byte_size(m1_bytes_for_hash)} bytes")
+    Logger.debug("[SRP6] K raw: #{byte_size(k)} bytes, via int: #{byte_size(k_bytes_for_hash)} bytes")
+
+    # Check if M1/K bytes change through integer conversion
+    if m1 != m1_bytes_for_hash do
+      Logger.warning("[SRP6] M1 bytes changed through int conversion!")
+      Logger.debug("[SRP6] M1 original (hex): #{Base.encode16(m1)}")
+      Logger.debug("[SRP6] M1 via int (hex): #{Base.encode16(m1_bytes_for_hash)}")
+    end
+
+    if k != k_bytes_for_hash do
+      Logger.warning("[SRP6] K bytes changed through int conversion!")
+      Logger.debug("[SRP6] K original (hex): #{Base.encode16(k)}")
+      Logger.debug("[SRP6] K via int (hex): #{Base.encode16(k_bytes_for_hash)}")
+    end
+
+    # Match NexusForever exactly:
+    # M2 = Hash(true, A, M1, K)  - hash with reversal on output
+    m2_int = hash_integers(true, [a, m1_int, k_int])
+    m2_bytes = int_to_bytes_padded(m2_int, 32)
+
+    # Then: ReverseBytesAsUInt32(M2Bytes) on the output
+    m2_final = reverse_bytes_as_uint32(m2_bytes)
+
+    Logger.debug("[SRP6] === M2 Calculation Debug ===")
+    Logger.debug("[SRP6] M2 before reversal (hex): #{Base.encode16(m2_bytes)}")
+    Logger.debug("[SRP6] M2 after reversal (hex): #{Base.encode16(m2_final)}")
+    Logger.debug("[SRP6] M2 size: #{byte_size(m2_final)} bytes")
+
+    {:ok, m2_final}
   end
 
   # ============================================================================
@@ -334,7 +394,8 @@ defmodule BezgelorCrypto.SRP6 do
     end
   end
 
-  # Reverse bytes in 4-byte chunks (WildStar-specific)
+  # Reverse 4-byte chunk ORDER (matches WildStar client's SRP6 implementation)
+  # [A,B,C,D, E,F,G,H] -> [E,F,G,H, A,B,C,D]
   defp reverse_bytes_as_uint32(bytes) do
     bytes
     |> :binary.bin_to_list()
