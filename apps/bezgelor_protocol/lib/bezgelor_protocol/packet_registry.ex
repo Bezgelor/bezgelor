@@ -100,6 +100,8 @@ defmodule BezgelorProtocol.PacketRegistry do
       client_statistics_connection: Handler.StatisticsConnectionHandler,
       client_statistics_framerate: Handler.StatisticsFramerateHandler,
       client_statistics_watchdog: Handler.StatisticsWatchdogHandler,
+      client_statistics_window_open: Handler.StatisticsWindowOpenHandler,
+      client_statistics_gfx: Handler.StatisticsGfxHandler,
       # Movement/Entity commands
       client_entity_command: Handler.EntityCommandHandler,
       client_zone_change: Handler.ZoneChangeHandler,
