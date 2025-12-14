@@ -323,6 +323,11 @@ defmodule BezgelorWorld.Zone.Instance do
   end
 
   @impl true
+  def handle_call(:get_state, _from, state) do
+    {:reply, state, state}
+  end
+
+  @impl true
   def handle_call({:get_entity, guid}, _from, state) do
     result =
       case Map.get(state.entities, guid) do

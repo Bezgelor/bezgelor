@@ -169,6 +169,11 @@ defmodule BezgelorWorld.Creature.ZoneManager do
   end
 
   @impl true
+  def handle_call(:get_state, _from, state) do
+    {:reply, state, state}
+  end
+
+  @impl true
   def handle_call({:spawn_creature, template_id, position}, _from, state) do
     case CreatureTemplate.get(template_id) do
       nil ->
