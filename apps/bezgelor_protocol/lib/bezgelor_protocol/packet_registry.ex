@@ -76,6 +76,8 @@ defmodule BezgelorProtocol.PacketRegistry do
 
   defp default_handlers do
     %{
+      # Connection state (ignored, sent by client during handshake)
+      client_state: Handler.StateHandler,
       # STS Server handlers (port 6600)
       client_hello_auth: Handler.AuthHandler,
       client_encrypted: Handler.EncryptedHandler,

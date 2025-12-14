@@ -19,6 +19,9 @@ defmodule BezgelorProtocol.Opcode do
       {:ok, :server_hello}
   """
 
+  # Connection state opcodes (ignored)
+  @client_state 0x0000
+
   # Auth Server Opcodes
   @server_hello 0x0003
   @client_hello_auth 0x0004
@@ -219,6 +222,8 @@ defmodule BezgelorProtocol.Opcode do
 
   # Mapping from atom to integer
   @opcode_map %{
+    # Connection state (ignored)
+    client_state: @client_state,
     # Auth (STS Server - port 6600)
     server_hello: @server_hello,
     client_hello_auth: @client_hello_auth,
@@ -396,6 +401,7 @@ defmodule BezgelorProtocol.Opcode do
 
   # Human-readable names
   @names %{
+    client_state: "ClientState",
     server_hello: "ServerHello",
     client_hello_auth: "ClientHelloAuth",
     server_auth_accepted: "ServerAuthAccepted",
