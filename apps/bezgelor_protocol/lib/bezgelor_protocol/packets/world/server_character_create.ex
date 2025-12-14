@@ -34,6 +34,8 @@ defmodule BezgelorProtocol.Packets.World.ServerCharacterCreate do
   # CharacterModifyResult codes (from NexusForever)
   @result_create_ok 0x03
   @result_create_failed 0x04
+  # Suppress unused warning - keeping for documentation
+  _ = @result_create_failed
   @result_unique_name 0x06
   @result_account_full 0x09
   @result_invalid_name 0x0A

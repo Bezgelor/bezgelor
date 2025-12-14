@@ -37,14 +37,8 @@ defmodule BezgelorProtocol.Handler.CharacterListHandler do
   def handle(payload, state) do
     reader = PacketReader.new(payload)
 
-    case ClientCharacterList.read(reader) do
-      {:ok, _packet, _reader} ->
-        send_character_list(state)
-
-      {:error, reason} ->
-        Logger.warning("Failed to parse ClientCharacterList: #{inspect(reason)}")
-        {:error, reason}
-    end
+    {:ok, _packet, _reader} = ClientCharacterList.read(reader)
+    send_character_list(state)
   end
 
   defp send_character_list(state) do

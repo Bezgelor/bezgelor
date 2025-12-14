@@ -96,7 +96,7 @@ defmodule BezgelorProtocol.Handler.CharacterSelectHandler do
           unit_id: player_guid
         })
         path_initialise_data = encode_packet(ServerPathInitialise.from_character(character))
-        player_create_data = encode_packet(ServerPlayerCreate.from_character(character))
+        _player_create_data = encode_packet(ServerPlayerCreate.from_character(character))
 
         # Store character info in session for WorldEntryHandler
         state = put_in(state.session_data[:character_id], character.id)
