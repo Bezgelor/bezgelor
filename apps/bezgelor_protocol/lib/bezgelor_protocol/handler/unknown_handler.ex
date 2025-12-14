@@ -126,3 +126,28 @@ defmodule BezgelorProtocol.Handler.Unknown0x00FBHandler do
     {:ok, state}
   end
 end
+
+defmodule BezgelorProtocol.Handler.Unknown0x0635Handler do
+  @moduledoc "Handler for unknown opcode 0x0635 (labeled Server0635 in NexusForever)"
+  @behaviour BezgelorProtocol.Handler
+  require Logger
+
+  @impl true
+  def handle(payload, state) do
+    Logger.debug("[Unknown:0x0635] Received #{byte_size(payload)} bytes")
+    {:ok, state}
+  end
+end
+
+defmodule BezgelorProtocol.Handler.P2PTradingCancelHandler do
+  @moduledoc "Handler for ClientP2PTradingCancelTrade (0x018F)"
+  @behaviour BezgelorProtocol.Handler
+  require Logger
+
+  @impl true
+  def handle(_payload, state) do
+    # Player is canceling a P2P trade - currently not implemented
+    Logger.debug("[P2PTrading] Trade cancel request (trading not implemented)")
+    {:ok, state}
+  end
+end

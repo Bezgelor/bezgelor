@@ -89,6 +89,10 @@ defmodule BezgelorProtocol.Opcode do
   @client_unknown_0x00D5 0x00D5
   # 0x00FB: Unknown, possibly path-related
   @client_unknown_0x00FB 0x00FB
+  # 0x0635: Unknown, labeled Server0635 in NexusForever but sent by client
+  @client_unknown_0x0635 0x0635
+  # 0x018F: ClientP2PTradingCancelTrade - player canceling a trade
+  @client_p2p_trading_cancel 0x018F
   @server_world_enter 0x00AD    # ServerChangeWorld in NexusForever
   @server_instance_settings 0x00F1
   @server_housing_neighbors 0x0507
@@ -280,6 +284,8 @@ defmodule BezgelorProtocol.Opcode do
     client_unknown_0x07CC: @client_unknown_0x07CC,
     client_unknown_0x00D5: @client_unknown_0x00D5,
     client_unknown_0x00FB: @client_unknown_0x00FB,
+    client_unknown_0x0635: @client_unknown_0x0635,
+    client_p2p_trading_cancel: @client_p2p_trading_cancel,
     server_world_enter: @server_world_enter,
     server_instance_settings: @server_instance_settings,
     server_housing_neighbors: @server_housing_neighbors,
@@ -453,6 +459,8 @@ defmodule BezgelorProtocol.Opcode do
     client_unknown_0x07CC: "ClientUnknown0x07CC",
     client_unknown_0x00D5: "ClientUnknown0x00D5",
     client_unknown_0x00FB: "ClientUnknown0x00FB",
+    client_unknown_0x0635: "ClientUnknown0x0635",
+    client_p2p_trading_cancel: "ClientP2PTradingCancel",
     server_world_enter: "ServerWorldEnter",
     server_instance_settings: "ServerInstanceSettings",
     server_housing_neighbors: "ServerHousingNeighbors",
