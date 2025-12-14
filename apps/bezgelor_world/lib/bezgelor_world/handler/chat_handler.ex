@@ -26,6 +26,7 @@ defmodule BezgelorWorld.Handler.ChatHandler do
 
   alias BezgelorProtocol.Packets.World.{ClientChat, ServerChat, ServerChatResult}
   alias BezgelorProtocol.{PacketReader, PacketWriter}
+  alias BezgelorProtocol.Handler.TeleportCommandHandler
   alias BezgelorCore.{Chat, ChatCommand}
   alias BezgelorWorld.WorldManager
 
@@ -158,6 +159,32 @@ defmodule BezgelorWorld.Handler.ChatHandler do
     else
       system_msg = ServerChat.system("Location unavailable")
       send_packet(:server_chat, system_msg, state)
+    end
+  end
+
+  defp handle_action(:teleport, args, state) do
+    case TeleportCommandHandler.handle(args, state) do
+      {:ok, updated_state} ->
+        character_name = state.session_data[:character_name]
+        Logger.info("Teleport successful for player #{character_name}")
+        system_msg = ServerChat.system("Teleport successful")
+        send_packet(:server_chat, system_msg, updated_state)
+
+      {:error, :invalid_location} ->
+        system_msg = ServerChat.system("Teleport failed: invalid location ID")
+        send_packet(:server_chat, system_msg, state)
+
+      {:error, :invalid_world} ->
+        system_msg = ServerChat.system("Teleport failed: invalid world ID")
+        send_packet(:server_chat, system_msg, state)
+
+      {:error, :invalid_arguments} ->
+        system_msg = ServerChat.system("Usage: /teleport <location_id> or /teleport <x> <y> <z>")
+        send_packet(:server_chat, system_msg, state)
+
+      {:error, _reason} ->
+        system_msg = ServerChat.system("Teleport failed")
+        send_packet(:server_chat, system_msg, state)
     end
   end
 

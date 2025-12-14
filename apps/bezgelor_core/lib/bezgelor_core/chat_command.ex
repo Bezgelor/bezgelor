@@ -97,6 +97,10 @@ defmodule BezgelorCore.ChatCommand do
   defp execute_command("loc", _), do: {:action, :location, []}
   defp execute_command("location", _), do: {:action, :location, []}
 
+  # Teleport command (GM command)
+  defp execute_command("teleport", args), do: {:action, :teleport, args}
+  defp execute_command("tp", args), do: {:action, :teleport, args}
+
   # Unknown command
   defp execute_command(cmd, _) do
     {:error, {:unknown_command, cmd}}

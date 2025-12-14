@@ -67,6 +67,15 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
   # EntityType values (from NexusForever)
   @entity_type_player 20
 
+  # Stat enum values (from NexusForever)
+  @stat_health 0
+  @stat_level 10
+  @stat_sheathed 15
+
+  # StatType values
+  @stat_type_integer 0
+  # @stat_type_float 1
+
   # EntityCommand values
   @cmd_set_platform 1
   @cmd_set_position 2
@@ -91,7 +100,13 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
             title: 0,
             # Entity fields
             create_flags: 0,
+            # Stats: list of {stat_id, stat_type, value} tuples
+            # stat_type: 0 = Integer, 1 = Float
+            stats: [],
             time: 0,
+            # Visible items: list of {slot, display_id, colour_set_id, dye_data} tuples
+            # These define the visual appearance (body parts, armor, etc.)
+            visible_items: [],
             faction1: 166,
             faction2: 166,
             display_info: 0,
@@ -99,6 +114,9 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
             # Position/rotation for commands
             position: {0.0, 0.0, 0.0},
             rotation: {0.0, 0.0, 0.0}
+
+  @type stat :: {stat_id :: non_neg_integer(), stat_type :: 0 | 1, value :: number()}
+  @type item_visual :: {slot :: non_neg_integer(), display_id :: non_neg_integer(), colour_set_id :: non_neg_integer(), dye_data :: integer()}
 
   @type t :: %__MODULE__{
           guid: non_neg_integer(),
@@ -113,7 +131,9 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
           bones: [float()],
           title: non_neg_integer(),
           create_flags: non_neg_integer(),
+          stats: [stat()],
           time: non_neg_integer(),
+          visible_items: [item_visual()],
           faction1: non_neg_integer(),
           faction2: non_neg_integer(),
           display_info: non_neg_integer(),
@@ -138,16 +158,18 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
       |> write_player_entity_model(packet)
       # CreateFlags (8 bits)
       |> PacketWriter.write_bits(packet.create_flags, 8)
-      # Stats - empty for now
-      |> PacketWriter.write_bits(0, 5)
+      # Stats count (5 bits) + stats array
+      |> PacketWriter.write_bits(length(packet.stats), 5)
+      |> write_stats(packet.stats)
       # Time
       |> PacketWriter.write_bits(packet.time, 32)
       # Commands (8 default commands)
       |> write_default_commands(packet)
       # Properties - empty
       |> PacketWriter.write_bits(0, 8)
-      # VisibleItems - empty
-      |> PacketWriter.write_bits(0, 7)
+      # VisibleItems count (7 bits) + items array
+      |> PacketWriter.write_bits(length(packet.visible_items), 7)
+      |> write_visible_items(packet.visible_items)
       # SpellInitData - empty
       |> PacketWriter.write_bits(0, 9)
       # CurrentSpellUniqueId
@@ -221,6 +243,57 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
     writer
     |> PacketWriter.write_float32_bits(bone)
     |> write_bones(rest)
+  end
+
+  # Write stats array - each stat is {stat_id, stat_type, value}
+  # stat_type: 0 = Integer (value as uint32), 1 = Float (value as float32)
+  defp write_stats(writer, []), do: writer
+
+  defp write_stats(writer, [{stat_id, stat_type, value} | rest]) do
+    writer
+    # Stat enum (5 bits)
+    |> PacketWriter.write_bits(stat_id, 5)
+    # StatType (2 bits) - 0 = Integer, 1 = Float
+    |> PacketWriter.write_bits(stat_type, 2)
+    # Value - depends on type
+    |> write_stat_value(stat_type, value)
+    |> write_stats(rest)
+  end
+
+  defp write_stat_value(writer, 0, value) do
+    # Integer type - write as uint32
+    PacketWriter.write_bits(writer, trunc(value), 32)
+  end
+
+  defp write_stat_value(writer, 1, value) do
+    # Float type - write as float32
+    PacketWriter.write_float32_bits(writer, value / 1.0)
+  end
+
+  # Write visible items array - each item is {slot, display_id, colour_set_id, dye_data}
+  defp write_visible_items(writer, []), do: writer
+
+  defp write_visible_items(writer, [{slot, display_id, colour_set_id, dye_data} | rest]) do
+    writer
+    # Slot (7 bits)
+    |> PacketWriter.write_bits(slot, 7)
+    # DisplayId (15 bits)
+    |> PacketWriter.write_bits(display_id, 15)
+    # ColourSetId (14 bits)
+    |> PacketWriter.write_bits(colour_set_id, 14)
+    # DyeData (int32 - signed)
+    |> write_signed_int32(dye_data)
+    |> write_visible_items(rest)
+  end
+
+  defp write_signed_int32(writer, value) when value < 0 do
+    # Two's complement for negative numbers
+    unsigned = :erlang.band(value, 0xFFFFFFFF)
+    PacketWriter.write_bits(writer, unsigned, 32)
+  end
+
+  defp write_signed_int32(writer, value) do
+    PacketWriter.write_bits(writer, value, 32)
   end
 
   # Write default movement commands for a stationary entity
@@ -302,6 +375,33 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
       _ -> []
     end
 
+    # Build initial stats for player
+    # Health must be > 0 or player spawns dead
+    level = character.level || 1
+    # Base health calculation - simple formula for now
+    # WildStar base health is roughly 200 + (level * 50)
+    max_health = 200 + (level * 50)
+
+    stats = [
+      {@stat_health, @stat_type_integer, max_health},
+      {@stat_level, @stat_type_integer, level},
+      {@stat_sheathed, @stat_type_integer, 1}
+    ]
+
+    # Build visible items from appearance visuals
+    # Each visual is stored as %{slot: n, display_id: n} or %{"slot" => n, "display_id" => n}
+    visible_items = case character do
+      %{appearance: %{visuals: visuals}} when is_list(visuals) ->
+        Enum.map(visuals, fn visual ->
+          slot = visual[:slot] || visual["slot"] || 0
+          display_id = visual[:display_id] || visual["display_id"] || 0
+          colour_set_id = visual[:colour_set_id] || visual["colour_set_id"] || 0
+          dye_data = visual[:dye_data] || visual["dye_data"] || 0
+          {slot, display_id, colour_set_id, dye_data}
+        end)
+      _ -> []
+    end
+
     %__MODULE__{
       guid: player_guid,
       entity_type: @entity_type_player,
@@ -315,7 +415,9 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
       bones: bones,
       title: 0,
       create_flags: 0,
+      stats: stats,
       time: :os.system_time(:millisecond) |> rem(0xFFFFFFFF),
+      visible_items: visible_items,
       faction1: character.faction_id || 166,
       faction2: character.faction_id || 166,
       display_info: 0,
@@ -335,6 +437,16 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
     {pos_x, pos_y, pos_z} = entity.position || {0.0, 0.0, 0.0}
     rotation = entity.rotation || {0.0, 0.0, 0.0}
 
+    # Build stats from entity - health must be > 0 to be alive
+    health = entity.health || 250
+    level = entity.level || 1
+
+    stats = [
+      {@stat_health, @stat_type_integer, health},
+      {@stat_level, @stat_type_integer, level},
+      {@stat_sheathed, @stat_type_integer, 1}
+    ]
+
     %__MODULE__{
       guid: entity.guid,
       entity_type: @entity_type_player,
@@ -348,6 +460,7 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
       bones: [],
       title: 0,
       create_flags: 0,
+      stats: stats,
       time: :os.system_time(:millisecond) |> rem(0xFFFFFFFF),
       faction1: entity.faction || 166,
       faction2: entity.faction || 166,
