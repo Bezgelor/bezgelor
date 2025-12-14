@@ -64,6 +64,28 @@ defmodule BezgelorProtocol.Opcode do
   @client_statistics_gfx 0x023E
   @client_statistics_connection 0x023F
   @client_statistics_framerate 0x0240
+
+  # Movement/Entity command opcodes
+  @client_entity_command 0x0637
+  @client_zone_change 0x063A
+  @client_player_movement_speed_update 0x063B
+
+  # Settings/Options opcodes
+  @client_options 0x012B
+
+  # Marketplace/Auction opcodes
+  @client_request_owned_commodity_orders 0x03EC
+  @client_request_owned_item_auctions 0x03ED
+
+  # Unknown opcodes (documented for investigation)
+  # 0x0269: Sent after world entry, purpose unknown, not in NexusForever
+  @client_unknown_0x0269 0x0269
+  # 0x07CC: Sent periodically, purpose unknown, not in NexusForever
+  @client_unknown_0x07CC 0x07CC
+  # 0x00D5: Related to ServerInstanceSettings per NexusForever comments
+  @client_unknown_0x00D5 0x00D5
+  # 0x00FB: Unknown, possibly path-related
+  @client_unknown_0x00FB 0x00FB
   @server_world_enter 0x00AD    # ServerChangeWorld in NexusForever
   @server_instance_settings 0x00F1
   @server_housing_neighbors 0x0507
@@ -239,6 +261,20 @@ defmodule BezgelorProtocol.Opcode do
     client_statistics_gfx: @client_statistics_gfx,
     client_statistics_connection: @client_statistics_connection,
     client_statistics_framerate: @client_statistics_framerate,
+    # Movement/Entity commands
+    client_entity_command: @client_entity_command,
+    client_zone_change: @client_zone_change,
+    client_player_movement_speed_update: @client_player_movement_speed_update,
+    # Settings/Options
+    client_options: @client_options,
+    # Marketplace/Auction
+    client_request_owned_commodity_orders: @client_request_owned_commodity_orders,
+    client_request_owned_item_auctions: @client_request_owned_item_auctions,
+    # Unknown opcodes
+    client_unknown_0x0269: @client_unknown_0x0269,
+    client_unknown_0x07CC: @client_unknown_0x07CC,
+    client_unknown_0x00D5: @client_unknown_0x00D5,
+    client_unknown_0x00FB: @client_unknown_0x00FB,
     server_world_enter: @server_world_enter,
     server_instance_settings: @server_instance_settings,
     server_housing_neighbors: @server_housing_neighbors,
@@ -397,6 +433,20 @@ defmodule BezgelorProtocol.Opcode do
     client_statistics_gfx: "ClientStatisticsGfx",
     client_statistics_connection: "ClientStatisticsConnection",
     client_statistics_framerate: "ClientStatisticsFramerate",
+    # Movement/Entity commands
+    client_entity_command: "ClientEntityCommand",
+    client_zone_change: "ClientZoneChange",
+    client_player_movement_speed_update: "ClientPlayerMovementSpeedUpdate",
+    # Settings/Options
+    client_options: "ClientOptions",
+    # Marketplace/Auction
+    client_request_owned_commodity_orders: "ClientRequestOwnedCommodityOrders",
+    client_request_owned_item_auctions: "ClientRequestOwnedItemAuctions",
+    # Unknown opcodes
+    client_unknown_0x0269: "ClientUnknown0x0269",
+    client_unknown_0x07CC: "ClientUnknown0x07CC",
+    client_unknown_0x00D5: "ClientUnknown0x00D5",
+    client_unknown_0x00FB: "ClientUnknown0x00FB",
     server_world_enter: "ServerWorldEnter",
     server_instance_settings: "ServerInstanceSettings",
     server_housing_neighbors: "ServerHousingNeighbors",

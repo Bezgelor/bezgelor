@@ -97,7 +97,21 @@ defmodule BezgelorProtocol.PacketRegistry do
       # Client statistics/telemetry
       client_statistics_connection: Handler.StatisticsConnectionHandler,
       client_statistics_framerate: Handler.StatisticsFramerateHandler,
-      client_statistics_watchdog: Handler.StatisticsWatchdogHandler
+      client_statistics_watchdog: Handler.StatisticsWatchdogHandler,
+      # Movement/Entity commands
+      client_entity_command: Handler.EntityCommandHandler,
+      client_zone_change: Handler.ZoneChangeHandler,
+      client_player_movement_speed_update: Handler.MovementSpeedUpdateHandler,
+      # Settings/Options
+      client_options: Handler.OptionsHandler,
+      # Marketplace/Auction
+      client_request_owned_commodity_orders: Handler.CommodityOrdersHandler,
+      client_request_owned_item_auctions: Handler.ItemAuctionsHandler,
+      # Unknown opcodes (for investigation)
+      client_unknown_0x0269: Handler.Unknown0x0269Handler,
+      client_unknown_0x07CC: Handler.Unknown0x07CCHandler,
+      client_unknown_0x00D5: Handler.Unknown0x00D5Handler,
+      client_unknown_0x00FB: Handler.Unknown0x00FBHandler
     }
   end
 end
