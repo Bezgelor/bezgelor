@@ -404,6 +404,26 @@ defmodule BezgelorWorld.Quest.SessionQuestManager do
     end
   end
 
+  # Enter area event from TriggerManager (world location trigger volumes)
+  defp matches_event?(:enter_area, obj_type, obj_data, %{area_id: area_id}) do
+    case obj_type do
+      @type_enter_location -> obj_data == area_id
+      @type_explore -> obj_data == area_id
+      @type_generic -> obj_data == area_id
+      _ -> false
+    end
+  end
+
+  # Enter zone event from EventDispatcher.on_zone_entry
+  defp matches_event?(:enter_zone, obj_type, obj_data, %{zone_id: zone_id}) do
+    case obj_type do
+      @type_enter_location -> obj_data == zone_id
+      @type_explore -> obj_data == zone_id
+      @type_generic -> obj_data == zone_id
+      _ -> false
+    end
+  end
+
   defp matches_event?(:talk_npc, obj_type, obj_data, %{creature_id: creature_id}) do
     case obj_type do
       @type_talk_to_npc -> obj_data == creature_id
