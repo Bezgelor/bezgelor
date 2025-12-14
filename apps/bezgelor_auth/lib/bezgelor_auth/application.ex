@@ -19,9 +19,10 @@ defmodule BezgelorAuth.Application do
   Configure in `config/config.exs` or environment variables:
 
       config :bezgelor_auth,
+        host: "0.0.0.0",
         port: 6600
 
-  Or set `AUTH_PORT` environment variable.
+  Or set `AUTH_HOST` and `AUTH_PORT` environment variables.
   """
 
   use Application
@@ -31,16 +32,22 @@ defmodule BezgelorAuth.Application do
   def start(_type, _args) do
     children =
       if Application.get_env(:bezgelor_auth, :start_server, true) do
+        host = Application.get_env(:bezgelor_auth, :host, "0.0.0.0")
         port = Application.get_env(:bezgelor_auth, :port, 6600)
-        Logger.info("Starting Auth Server on port #{port}")
+        Logger.info("Starting STS Auth Server on #{host}:#{port}")
+
+        socket_opts = build_socket_opts(host, port)
 
         [
-          # Start the TCP listener for auth connections
-          {BezgelorProtocol.TcpListener,
-           port: port,
-           handler: BezgelorProtocol.Connection,
-           handler_opts: [connection_type: :auth],
-           name: :auth_listener}
+          # Start the STS protocol listener for auth connections
+          # WildStar client (via ClientConnector) uses HTTP-style STS/1.0 protocol
+          :ranch.child_spec(
+            :sts_listener,
+            :ranch_tcp,
+            socket_opts,
+            BezgelorAuth.Sts.Connection,
+            []
+          )
         ]
       else
         Logger.info("Auth Server disabled (start_server: false)")
@@ -49,5 +56,23 @@ defmodule BezgelorAuth.Application do
 
     opts = [strategy: :one_for_one, name: BezgelorAuth.Supervisor]
     Supervisor.start_link(children, opts)
+  end
+
+  defp build_socket_opts(host, port) do
+    base_opts = %{socket_opts: [port: port]}
+
+    case parse_host(host) do
+      {:ok, ip_tuple} ->
+        %{base_opts | socket_opts: [port: port, ip: ip_tuple]}
+      :error ->
+        base_opts
+    end
+  end
+
+  defp parse_host(host) when is_binary(host) do
+    case :inet.parse_address(String.to_charlist(host)) do
+      {:ok, ip_tuple} -> {:ok, ip_tuple}
+      {:error, _} -> :error
+    end
   end
 end

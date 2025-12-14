@@ -16,9 +16,10 @@ defmodule BezgelorRealm.Application do
   Configure in `config/config.exs` or environment variables:
 
       config :bezgelor_realm,
+        host: "0.0.0.0",
         port: 23115
 
-  Or set `REALM_PORT` environment variable.
+  Or set `REALM_HOST` and `REALM_PORT` environment variables.
   """
 
   use Application
@@ -28,12 +29,14 @@ defmodule BezgelorRealm.Application do
   def start(_type, _args) do
     children =
       if Application.get_env(:bezgelor_realm, :start_server, true) do
+        host = Application.get_env(:bezgelor_realm, :host, "0.0.0.0")
         port = Application.get_env(:bezgelor_realm, :port, 23115)
-        Logger.info("Starting Realm Server on port #{port}")
+        Logger.info("Starting Realm Server on #{host}:#{port}")
 
         [
           # Start the TCP listener for realm connections
           {BezgelorProtocol.TcpListener,
+           host: host,
            port: port,
            handler: BezgelorProtocol.Connection,
            handler_opts: [connection_type: :realm],

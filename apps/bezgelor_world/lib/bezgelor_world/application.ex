@@ -16,9 +16,10 @@ defmodule BezgelorWorld.Application do
   Configure in `config/config.exs` or environment variables:
 
       config :bezgelor_world,
+        host: "0.0.0.0",
         port: 24000
 
-  Or set `WORLD_PORT` environment variable.
+  Or set `WORLD_HOST` and `WORLD_PORT` environment variables.
   """
 
   use Application
@@ -88,12 +89,14 @@ defmodule BezgelorWorld.Application do
 
     server_children =
       if Application.get_env(:bezgelor_world, :start_server, true) do
+        host = Application.get_env(:bezgelor_world, :host, "0.0.0.0")
         port = Application.get_env(:bezgelor_world, :port, 24000)
-        Logger.info("Starting World Server on port #{port}")
+        Logger.info("Starting World Server on #{host}:#{port}")
 
         [
           # Start the TCP listener for world connections
           {BezgelorProtocol.TcpListener,
+           host: host,
            port: port,
            handler: BezgelorProtocol.Connection,
            handler_opts: [connection_type: :world],

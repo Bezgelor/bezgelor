@@ -87,15 +87,25 @@ config :bezgelor_db, BezgelorDb.Repo,
 
 # Auth Server (STS) configuration
 config :bezgelor_auth,
+  host: System.get_env("AUTH_HOST", "0.0.0.0"),
   port: String.to_integer(System.get_env("AUTH_PORT", "6600"))
 
 # Realm Server configuration
 config :bezgelor_realm,
-  port: String.to_integer(System.get_env("REALM_PORT", "23115"))
+  host: System.get_env("REALM_HOST", "0.0.0.0"),
+  port: String.to_integer(System.get_env("REALM_PORT", "23115")),
+  # Realm info sent to clients
+  realm_name: System.get_env("REALM_NAME", "Bezgelor"),
+  realm_type: :pve,  # :pve or :pvp
+  realm_flags: 0,
+  realm_note_text_id: 0
 
 # World Server configuration
 config :bezgelor_world,
-  port: String.to_integer(System.get_env("WORLD_PORT", "24000"))
+  host: System.get_env("WORLD_HOST", "0.0.0.0"),
+  port: String.to_integer(System.get_env("WORLD_PORT", "24000")),
+  # Public address clients connect to (defaults to host if not set)
+  public_address: System.get_env("WORLD_PUBLIC_ADDRESS", "127.0.0.1")
 
 # Tradeskill configuration
 config :bezgelor_world, :tradeskills,

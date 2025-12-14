@@ -67,9 +67,11 @@ defmodule BezgelorPortal.MixProject do
       {:dns_cluster, "~> 0.2.0"},
       {:bandit, "~> 1.5"},
 
-      # Umbrella dependencies
+      # Umbrella dependencies (all servers must be listed to start them)
       {:bezgelor_db, in_umbrella: true},
       {:bezgelor_crypto, in_umbrella: true},
+      {:bezgelor_auth, in_umbrella: true},
+      {:bezgelor_realm, in_umbrella: true},
       {:bezgelor_world, in_umbrella: true},
       {:bezgelor_data, in_umbrella: true},
 

@@ -9,14 +9,14 @@ defmodule BezgelorApi.Application do
   - Zone information
   - Player statistics
 
-  Listens on port 4000 by default.
+  Listens on port 4002 by default (port 4000 is used by the portal).
 
   ## Configuration
 
   Configure in `config/config.exs` or environment variables:
 
       config :bezgelor_api,
-        port: 4000
+        port: 4002
 
   Or set `API_PORT` environment variable.
   """
@@ -27,7 +27,7 @@ defmodule BezgelorApi.Application do
 
   @impl true
   def start(_type, _args) do
-    port = Application.get_env(:bezgelor_api, :port, 4000)
+    port = Application.get_env(:bezgelor_api, :port, 4002)
     start_server = Application.get_env(:bezgelor_api, :start_server, true)
 
     children =
