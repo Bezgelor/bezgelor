@@ -61,8 +61,34 @@ config :bezgelor_portal, BezgelorPortalWeb.Endpoint,
 # Enable dev routes for dashboard and mailbox
 config :bezgelor_portal, dev_routes: true
 
-# Do not include metadata nor timestamps in development logs
-config :logger, :default_formatter, format: "[$level] $message\n"
+# Development logging configuration
+#
+# Console: info+ only (keeps output clean)
+# File:    debug+ to rotating log (5MB x 3 files)
+#
+# Usage:
+#   mix run --no-halt              # Clean console, debug in file
+#   LOG_LEVEL=debug mix run        # Debug on console too
+#   tail -f logs/dev.log           # Monitor debug output in real-time
+#
+# Configuration:
+#   :logger, :console, level:      Console log level (default: info)
+#   :bezgelor_core, :file_log      Rotating file log settings
+config :logger,
+  level: :debug
+
+config :logger, :console,
+  level: String.to_existing_atom(System.get_env("LOG_LEVEL", "info")),
+  format: "[$level] $message\n"
+
+# Rotating file log - captures all debug output for troubleshooting
+# Console stays clean (info+), file gets everything (debug+)
+config :bezgelor_core,
+  file_log: [
+    path: "logs/dev.log",
+    max_bytes: 5_000_000,   # 5MB per file
+    max_files: 3            # Keep 3 rotated files
+  ]
 
 # Set a higher stacktrace during development. Avoid configuring such
 # in production as building large stacktraces may be expensive.

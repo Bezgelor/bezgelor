@@ -35,3 +35,4 @@ Thumbs.db
 
 # Docker volumes (if using local bind mounts)
 /docker/postgres/data/
+logs/
