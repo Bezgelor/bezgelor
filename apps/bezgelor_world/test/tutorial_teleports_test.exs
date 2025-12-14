@@ -3,29 +3,29 @@ defmodule BezgelorWorld.TutorialTeleportsTest do
 
   alias BezgelorWorld.TutorialTeleports
 
-  describe "check_teleport/2" do
-    test "returns :no_teleport for unknown trigger" do
-      session_data = %{active_quests: %{}}
-      assert TutorialTeleports.check_teleport(session_data, 999_999) == :no_teleport
-    end
-
-    test "get_all_teleports returns the configured teleports" do
-      teleports = TutorialTeleports.get_all_teleports()
-      assert is_list(teleports)
-    end
-
-    test "is_teleport_trigger? returns false for unknown trigger" do
-      refute TutorialTeleports.is_teleport_trigger?(999_999)
+  describe "get_teleport_for_quest/1" do
+    test "returns :none for unconfigured quest" do
+      assert TutorialTeleports.get_teleport_for_quest(999_999) == :none
     end
   end
 
-  describe "maybe_teleport/2" do
-    test "returns unchanged session for non-teleport trigger" do
-      session_data = %{active_quests: %{}}
-      {result_session, packets} = TutorialTeleports.maybe_teleport(session_data, 999_999)
+  describe "has_teleport_reward?/1" do
+    test "returns false for unconfigured quest" do
+      refute TutorialTeleports.has_teleport_reward?(999_999)
+    end
+  end
 
-      assert result_session == session_data
-      assert packets == []
+  describe "execute_quest_teleport/2" do
+    test "returns :no_teleport for unconfigured quest" do
+      session_data = %{active_quests: %{}}
+      assert TutorialTeleports.execute_quest_teleport(session_data, 999_999) == :no_teleport
+    end
+  end
+
+  describe "get_all_teleports/0" do
+    test "returns a list of configured teleports" do
+      teleports = TutorialTeleports.get_all_teleports()
+      assert is_list(teleports)
     end
   end
 end

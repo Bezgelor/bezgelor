@@ -1,27 +1,27 @@
 defmodule BezgelorWorld.TutorialTeleports do
   @moduledoc """
-  Tutorial zone teleport pad configuration.
+  Tutorial quest teleport reward configuration.
 
-  Maps trigger world locations to teleport destinations with optional quest gates.
-  When a player enters a trigger volume and meets the quest requirements, they
-  are teleported to the destination.
+  Maps quests to teleport destinations that execute when the quest becomes
+  completable. This avoids burdening the movement handler with tutorial
+  checks that only apply for the first 15 minutes of gameplay.
 
   ## Configuration Format
 
       %{
-        trigger_id: world_location_id that triggers the teleport,
-        destination_id: world_location_id to teleport to,
-        quest_gate: quest_id that must be completable (optional),
-        auto_complete_quest: true to auto-complete the gate quest
+        quest_id: quest that triggers teleport on completion,
+        destination_id: world_location_id to teleport to
       }
 
   ## Usage
 
-      case TutorialTeleports.check_teleport(session_data, trigger_id) do
-        {:teleport, destination_id, opts} ->
-          # Execute teleport
-        :no_teleport ->
-          # No teleport for this trigger
+  Called from SessionQuestManager when a quest becomes completable:
+
+      case TutorialTeleports.get_teleport_for_quest(quest_id) do
+        {:ok, destination_id} ->
+          Teleport.to_world_location(session, destination_id)
+        :none ->
+          # No teleport for this quest
       end
   """
 
@@ -30,186 +30,75 @@ defmodule BezgelorWorld.TutorialTeleports do
   require Logger
 
   @type teleport_config :: %{
-          trigger_id: non_neg_integer(),
-          destination_id: non_neg_integer(),
-          quest_gate: non_neg_integer() | nil,
-          auto_complete_quest: boolean()
+          quest_id: non_neg_integer(),
+          destination_id: non_neg_integer()
         }
 
   # ============================================================================
-  # Tutorial Teleport Configurations
+  # Tutorial Quest Teleport Configurations
   # ============================================================================
 
-  # Exile tutorial teleport pads
-  @exile_teleports [
-    # Cryo bay to main deck (after intro objectives)
-    # %{
-    #   trigger_id: 50231,  # World location ID of teleport pad
-    #   destination_id: 50232,  # Destination world location
-    #   quest_gate: 8042,  # Quest that must be completable
-    #   auto_complete_quest: true
-    # }
+  # Quests that teleport the player on completion
+  # Add tutorial quest IDs here when known from game data
+  @quest_teleports [
+    # Example: Cryo bay exit quest teleports to main deck
+    # %{quest_id: 8042, destination_id: 50232}
   ]
-
-  # Dominion tutorial teleport pads
-  @dominion_teleports [
-    # Similar structure for Dominion tutorial
-  ]
-
-  # All tutorial teleports combined
-  @all_teleports @exile_teleports ++ @dominion_teleports
 
   # Build lookup map at compile time
-  @teleport_by_trigger Map.new(@all_teleports, fn config ->
-                         {config.trigger_id, config}
-                       end)
+  @teleport_by_quest Map.new(@quest_teleports, fn config ->
+                       {config.quest_id, config.destination_id}
+                     end)
 
   # ============================================================================
   # Public API
   # ============================================================================
 
   @doc """
-  Check if a trigger should teleport the player.
+  Get the teleport destination for a quest, if configured.
 
-  Returns `{:teleport, destination_id, opts}` if conditions are met,
-  or `:no_teleport` if the trigger doesn't cause a teleport or conditions aren't met.
+  Returns `{:ok, destination_id}` if the quest has a teleport reward,
+  or `:none` if no teleport is configured.
   """
-  @spec check_teleport(map(), non_neg_integer()) ::
-          {:teleport, non_neg_integer(), keyword()} | :no_teleport
-  def check_teleport(session_data, trigger_id) do
-    case Map.get(@teleport_by_trigger, trigger_id) do
-      nil ->
-        :no_teleport
-
-      config ->
-        check_teleport_conditions(session_data, config)
+  @spec get_teleport_for_quest(non_neg_integer()) :: {:ok, non_neg_integer()} | :none
+  def get_teleport_for_quest(quest_id) do
+    case Map.get(@teleport_by_quest, quest_id) do
+      nil -> :none
+      destination_id -> {:ok, destination_id}
     end
   end
 
   @doc """
-  Execute a tutorial teleport if conditions are met.
+  Execute a teleport reward for a quest that just became completable.
 
-  This is called from MovementHandler when a trigger is entered.
-  Returns updated session_data and any packets to send.
+  Returns `{:ok, updated_session}` or `{:error, reason}`.
   """
-  @spec maybe_teleport(map(), non_neg_integer()) :: {map(), [{atom(), binary()}]}
-  def maybe_teleport(session_data, trigger_id) do
-    case check_teleport(session_data, trigger_id) do
-      {:teleport, destination_id, opts} ->
-        execute_teleport(session_data, destination_id, opts)
+  @spec execute_quest_teleport(map(), non_neg_integer()) ::
+          {:ok, map()} | {:error, atom()} | :no_teleport
+  def execute_quest_teleport(session_data, quest_id) do
+    case get_teleport_for_quest(quest_id) do
+      {:ok, destination_id} ->
+        Logger.info("Quest #{quest_id} completed - teleporting to #{destination_id}")
+        Teleport.to_world_location(session_data, destination_id)
 
-      :no_teleport ->
-        {session_data, []}
-    end
-  end
-
-  # ============================================================================
-  # Private Implementation
-  # ============================================================================
-
-  defp check_teleport_conditions(session_data, config) do
-    quest_gate = config.quest_gate
-
-    cond do
-      # No quest gate - always teleport
-      is_nil(quest_gate) ->
-        {:teleport, config.destination_id, [auto_complete: config.auto_complete_quest, quest_id: nil]}
-
-      # Check if quest is completable (all objectives done)
-      quest_completable?(session_data, quest_gate) ->
-        {:teleport, config.destination_id,
-         [auto_complete: config.auto_complete_quest, quest_id: quest_gate]}
-
-      # Quest not ready
-      true ->
+      :none ->
         :no_teleport
     end
   end
 
-  defp quest_completable?(session_data, quest_id) do
-    active_quests = session_data[:active_quests] || %{}
-
-    case Map.get(active_quests, quest_id) do
-      nil ->
-        false
-
-      quest ->
-        quest.state == :complete or all_objectives_complete?(quest)
-    end
+  @doc """
+  Check if a quest has a teleport reward configured.
+  """
+  @spec has_teleport_reward?(non_neg_integer()) :: boolean()
+  def has_teleport_reward?(quest_id) do
+    Map.has_key?(@teleport_by_quest, quest_id)
   end
-
-  defp all_objectives_complete?(quest) do
-    Enum.all?(quest.objectives, fn obj ->
-      obj.current >= obj.target
-    end)
-  end
-
-  defp execute_teleport(session_data, destination_id, opts) do
-    quest_id = opts[:quest_id]
-    auto_complete = opts[:auto_complete] || false
-
-    Logger.info(
-      "Tutorial teleport triggered: destination=#{destination_id}, quest=#{inspect(quest_id)}, auto_complete=#{auto_complete}"
-    )
-
-    # Auto-complete quest if configured
-    session_data =
-      if auto_complete and quest_id do
-        auto_complete_quest(session_data, quest_id)
-      else
-        session_data
-      end
-
-    # Execute teleport - returns {:ok, session} or {:error, reason}
-    case Teleport.to_world_location(session_data, destination_id) do
-      {:ok, updated_session} ->
-        # Teleport successful - packets handled internally by Teleport module
-        {updated_session, []}
-
-      {:error, reason} ->
-        Logger.warning("Tutorial teleport failed: #{inspect(reason)}")
-        {session_data, []}
-    end
-  end
-
-  defp auto_complete_quest(session_data, quest_id) do
-    active_quests = session_data[:active_quests] || %{}
-    completed_ids = session_data[:completed_quest_ids] || MapSet.new()
-
-    case Map.get(active_quests, quest_id) do
-      nil ->
-        session_data
-
-      _quest ->
-        # Move from active to completed
-        remaining_quests = Map.delete(active_quests, quest_id)
-        updated_completed = MapSet.put(completed_ids, quest_id)
-
-        Logger.info("Auto-completed quest #{quest_id}")
-
-        session_data
-        |> Map.put(:active_quests, remaining_quests)
-        |> Map.put(:completed_quest_ids, updated_completed)
-    end
-  end
-
-  # ============================================================================
-  # Configuration Helpers
-  # ============================================================================
 
   @doc """
-  Get all configured tutorial teleport triggers.
+  Get all configured quest teleports.
 
   Useful for debugging and inspection.
   """
   @spec get_all_teleports() :: [teleport_config()]
-  def get_all_teleports, do: @all_teleports
-
-  @doc """
-  Check if a trigger ID is a tutorial teleport trigger.
-  """
-  @spec is_teleport_trigger?(non_neg_integer()) :: boolean()
-  def is_teleport_trigger?(trigger_id) do
-    Map.has_key?(@teleport_by_trigger, trigger_id)
-  end
+  def get_all_teleports, do: @quest_teleports
 end

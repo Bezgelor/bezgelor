@@ -15,7 +15,7 @@ defmodule BezgelorProtocol.Handler.MovementHandler do
   """
 
   @behaviour BezgelorProtocol.Handler
-  @compile {:no_warn_undefined, [BezgelorWorld.TriggerManager, BezgelorWorld.EventDispatcher, BezgelorWorld.TutorialTeleports]}
+  @compile {:no_warn_undefined, [BezgelorWorld.TriggerManager, BezgelorWorld.EventDispatcher]}
 
   alias BezgelorProtocol.Packets.World.ClientMovement
   alias BezgelorProtocol.PacketReader
@@ -103,7 +103,6 @@ defmodule BezgelorProtocol.Handler.MovementHandler do
 
   defp fire_trigger_events([trigger_id | rest], zone_id, state) do
     alias BezgelorWorld.EventDispatcher
-    alias BezgelorWorld.TutorialTeleports
 
     Logger.info("Player entered trigger #{trigger_id} in zone #{zone_id}")
 
@@ -112,17 +111,6 @@ defmodule BezgelorProtocol.Handler.MovementHandler do
       EventDispatcher.dispatch_enter_area(state.session_data, trigger_id, zone_id)
 
     state = %{state | session_data: updated_session}
-
-    # Check for tutorial teleport triggers
-    {final_session, teleport_packets} =
-      TutorialTeleports.maybe_teleport(state.session_data, trigger_id)
-
-    state = %{state | session_data: final_session}
-
-    # If teleport occurred, send packets (teleport packets handled by Teleport module)
-    if teleport_packets != [] do
-      Logger.info("Tutorial teleport triggered from #{trigger_id}")
-    end
 
     fire_trigger_events(rest, zone_id, state)
   end
