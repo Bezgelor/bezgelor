@@ -13,7 +13,11 @@ defmodule BezgelorProtocol.Framing do
       │ Size (4 bytes)│ Opcode (2 bytes)│ Payload (variable) │
       └──────────────┴──────────────┴─────────────────────┘
 
-  Size includes itself (4 bytes), so payload_length = size - 4.
+  Size includes the full header (6 bytes), so:
+  - size = 6 + payload_length
+  - payload_length = size - 6
+
+  The client reads Size, then reads (Size - 4) bytes to get opcode + payload.
   """
 
   alias BezgelorProtocol.Packet

@@ -84,11 +84,20 @@ defmodule BezgelorProtocol.PacketRegistry do
       # World Server handlers (port 24000) - protocol-layer only
       # World-layer handlers are registered at runtime by BezgelorWorld.HandlerRegistration
       client_hello_realm: Handler.WorldAuthHandler,
+      client_packed_world: Handler.PackedWorldHandler,
+      client_packed: Handler.PackedHandler,
+      client_pregame_keep_alive: Handler.KeepAliveHandler,
+      client_storefront_request_catalog: Handler.StorefrontRequestHandler,
+      client_character_list: Handler.CharacterListHandler,
       client_character_create: Handler.CharacterCreateHandler,
       client_character_select: Handler.CharacterSelectHandler,
       client_character_delete: Handler.CharacterDeleteHandler,
       client_entered_world: Handler.WorldEntryHandler,
-      client_movement: Handler.MovementHandler
+      client_movement: Handler.MovementHandler,
+      # Client statistics/telemetry
+      client_statistics_connection: Handler.StatisticsConnectionHandler,
+      client_statistics_framerate: Handler.StatisticsFramerateHandler,
+      client_statistics_watchdog: Handler.StatisticsWatchdogHandler
     }
   end
 end

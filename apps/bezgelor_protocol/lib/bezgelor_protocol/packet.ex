@@ -68,17 +68,21 @@ defmodule BezgelorProtocol.Packet do
   @doc """
   Calculate size field value from payload size.
 
-  The size field includes itself (4 bytes) but not the opcode (2 bytes).
-  Size field value = 4 + payload
+  The size field includes the full header (size + opcode = 6 bytes) plus payload.
+  Size field value = 6 + payload = 4 (size) + 2 (opcode) + payload
+
+  The client reads Size, then reads (Size - 4) bytes which gives opcode + payload.
   """
   @spec packet_size(non_neg_integer()) :: non_neg_integer()
-  def packet_size(payload_size), do: 4 + payload_size
+  def packet_size(payload_size), do: 6 + payload_size
 
   @doc """
   Calculate payload size from the size field value.
+
+  Payload = Size - 6 (size field + opcode)
   """
   @spec payload_size(non_neg_integer()) :: non_neg_integer()
-  def payload_size(size_field), do: size_field - 4
+  def payload_size(size_field), do: size_field - 6
 
   # Behaviour definitions
 

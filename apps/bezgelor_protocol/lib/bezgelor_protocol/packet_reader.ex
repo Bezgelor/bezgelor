@@ -114,15 +114,70 @@ defmodule BezgelorProtocol.PacketReader do
     end
   end
 
-  @doc "Read a UTF-16LE string with uint32 length prefix."
+  @doc """
+  Read a UTF-16LE string with bit-packed length prefix.
+
+  This matches NexusForever's GamePacketReader.ReadWideString().
+  - 1 bit: extended flag
+  - 7 or 15 bits: length in bytes
+  - length bytes of UTF-16 data
+  """
   @spec read_wide_string(t()) :: {:ok, String.t(), t()} | {:error, term()}
   def read_wide_string(%__MODULE__{} = reader) do
+    with {:ok, extended, reader} <- read_bit(reader),
+         {:ok, length_bits, reader} <- read_bits(reader, if(extended == 1, do: 15, else: 7)),
+         length_bytes = length_bits * 2,
+         {:ok, utf16_data, reader} <- read_bytes(reader, length_bytes) do
+      case :unicode.characters_to_binary(utf16_data, {:utf16, :little}, :utf8) do
+        string when is_binary(string) -> {:ok, string, reader}
+        _ -> {:error, :invalid_utf16}
+      end
+    end
+  end
+
+  @doc "Read a UTF-16LE string with uint32 length prefix (legacy format)."
+  @spec read_wide_string_legacy(t()) :: {:ok, String.t(), t()} | {:error, term()}
+  def read_wide_string_legacy(%__MODULE__{} = reader) do
     with {:ok, length, reader} <- read_uint32(reader),
          {:ok, utf16_data, reader} <- read_bytes(reader, length * 2) do
       case :unicode.characters_to_binary(utf16_data, {:utf16, :little}, :utf8) do
         string when is_binary(string) -> {:ok, string, reader}
         _ -> {:error, :invalid_utf16}
       end
+    end
+  end
+
+  @doc """
+  Read a UTF-16LE string with uint16 length prefix (null-terminated).
+
+  This matches NexusForever's GamePacketReader.ReadWideStringFixed().
+  Length is character count, data is length * 2 bytes, minus null terminator.
+  """
+  @spec read_wide_string_fixed(t()) :: {:ok, String.t(), t()} | {:error, term()}
+  def read_wide_string_fixed(%__MODULE__{} = reader) do
+    with {:ok, length, reader} <- read_uint16(reader),
+         {:ok, utf16_data, reader} <- read_bytes(reader, length * 2) do
+      # Skip the null terminator (last 2 bytes)
+      utf16_without_null =
+        if length > 0 and byte_size(utf16_data) >= 2 do
+          binary_part(utf16_data, 0, byte_size(utf16_data) - 2)
+        else
+          utf16_data
+        end
+
+      case :unicode.characters_to_binary(utf16_without_null, {:utf16, :little}, :utf8) do
+        string when is_binary(string) -> {:ok, string, reader}
+        _ -> {:error, :invalid_utf16}
+      end
+    end
+  end
+
+  @doc "Read a single bit."
+  @spec read_bit(t()) :: {:ok, 0 | 1, t()} | {:error, :eof}
+  def read_bit(%__MODULE__{} = reader) do
+    case read_bits(reader, 1) do
+      {:ok, value, reader} -> {:ok, value, reader}
+      {:error, :eof} -> {:error, :eof}
     end
   end
 
@@ -141,6 +196,19 @@ defmodule BezgelorProtocol.PacketReader do
     else
       {:error, :eof}
     end
+  end
+
+  @doc """
+  Reset bit position to next byte boundary.
+
+  If currently in the middle of reading bits, advances to the start of the next byte.
+  Used after reading bit-packed fields to resume byte-aligned reading.
+  """
+  @spec reset_bits(t()) :: t()
+  def reset_bits(%__MODULE__{bit_pos: 0} = reader), do: reader
+
+  def reset_bits(%__MODULE__{bit_pos: bit_pos, byte_pos: byte_pos} = reader) when bit_pos > 0 do
+    %{reader | bit_pos: 0, bit_value: 0, byte_pos: byte_pos + 1}
   end
 
   defp flush_bits(%__MODULE__{bit_pos: 0} = reader), do: reader

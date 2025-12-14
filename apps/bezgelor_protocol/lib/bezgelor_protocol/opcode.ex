@@ -25,7 +25,7 @@ defmodule BezgelorProtocol.Opcode do
   @server_auth_accepted 0x0005
   @server_auth_denied 0x0006
   @server_auth_encrypted 0x0076
-  @client_encrypted 0x0077
+  @client_encrypted 0x0244
 
   # Realm Server Opcodes (port 23115)
   @client_hello_auth_realm 0x0592
@@ -35,19 +35,49 @@ defmodule BezgelorProtocol.Opcode do
   @server_realm_info 0x03DB
 
   # World Server Opcodes
-  @client_hello_realm 0x0008
-  @server_realm_encrypted 0x0079
+  @server_player_entered_world 0x0061
+  @client_hello_realm 0x058F
+  @server_realm_encrypted 0x03DC
+  @client_packed_world 0x038C
+  @client_packed 0x025C
+  @client_pregame_keep_alive 0x0241
+  @client_storefront_request_catalog 0x082D
   @server_character_list 0x0117
-  @client_character_select 0x0118
-  @client_character_create 0x011A
-  @server_character_create 0x011B
-  @client_character_delete 0x011C
+  @server_max_character_level_achieved 0x0036
+  @server_account_currency_set 0x0966
+  @server_account_entitlements 0x0968
+  @server_account_tier 0x097F
+  @server_generic_unlock_account_list 0x0981
+  @server_store_finalise 0x0987
+  @server_store_categories 0x0988
+  @server_store_offers 0x098B
+  @client_character_list 0x07E0
+  @client_character_select 0x07DD
+  @client_character_create 0x025B
+  @server_character_create 0x00DC
+  @client_character_delete 0x0352
   @client_entered_world 0x00F2
-  @server_world_enter 0x00F3
-  @server_entity_create 0x0100
+
+  # Client statistics/telemetry opcodes
+  @client_statistics_watchdog 0x023C
+  @client_statistics_window_open 0x023D
+  @client_statistics_gfx 0x023E
+  @client_statistics_connection 0x023F
+  @client_statistics_framerate 0x0240
+  @server_world_enter 0x00AD    # ServerChangeWorld in NexusForever
+  @server_instance_settings 0x00F1
+  @server_housing_neighbors 0x0507
+  @server_entity_create 0x0262
   @server_entity_destroy 0x0101
   @client_movement 0x07F4
   @server_movement 0x07F5
+  @server_player_create 0x025E
+  @server_movement_control 0x0636
+  @server_time_of_day 0x0845
+  @server_character_flags_updated 0x00FE
+  @server_player_changed 0x019B
+  @server_set_unit_path_type 0x08B8
+  @server_path_initialise 0x06BC
 
   # Chat opcodes
   @client_chat 0x0300
@@ -76,6 +106,10 @@ defmodule BezgelorProtocol.Opcode do
   # XP/Level opcodes
   @server_xp_gain 0x0520
   @server_level_up 0x0521
+
+  # Achievement opcodes
+  @server_achievement_list 0x00AE   # ServerAchievementInit in NexusForever
+  @server_achievement_update 0x00AF
 
   # Loot opcodes
   @server_loot_drop 0x0530
@@ -159,6 +193,7 @@ defmodule BezgelorProtocol.Opcode do
 
   # Quest opcodes
   @server_quest_offer 0x0351
+  @server_quest_list 0x035F   # ServerQuestInit in NexusForever
 
   # Mapping from atom to integer
   @opcode_map %{
@@ -176,19 +211,48 @@ defmodule BezgelorProtocol.Opcode do
     server_realm_messages: @server_realm_messages,
     server_realm_info: @server_realm_info,
     # World Server
+    server_player_entered_world: @server_player_entered_world,
     client_hello_realm: @client_hello_realm,
     server_realm_encrypted: @server_realm_encrypted,
+    client_packed_world: @client_packed_world,
+    client_packed: @client_packed,
+    client_pregame_keep_alive: @client_pregame_keep_alive,
+    client_storefront_request_catalog: @client_storefront_request_catalog,
     server_character_list: @server_character_list,
+    server_max_character_level_achieved: @server_max_character_level_achieved,
+    server_account_currency_set: @server_account_currency_set,
+    server_account_entitlements: @server_account_entitlements,
+    server_account_tier: @server_account_tier,
+    server_generic_unlock_account_list: @server_generic_unlock_account_list,
+    server_store_finalise: @server_store_finalise,
+    server_store_categories: @server_store_categories,
+    server_store_offers: @server_store_offers,
+    client_character_list: @client_character_list,
     client_character_select: @client_character_select,
     client_character_create: @client_character_create,
     server_character_create: @server_character_create,
     client_character_delete: @client_character_delete,
     client_entered_world: @client_entered_world,
+    # Client statistics
+    client_statistics_watchdog: @client_statistics_watchdog,
+    client_statistics_window_open: @client_statistics_window_open,
+    client_statistics_gfx: @client_statistics_gfx,
+    client_statistics_connection: @client_statistics_connection,
+    client_statistics_framerate: @client_statistics_framerate,
     server_world_enter: @server_world_enter,
+    server_instance_settings: @server_instance_settings,
+    server_housing_neighbors: @server_housing_neighbors,
     server_entity_create: @server_entity_create,
     server_entity_destroy: @server_entity_destroy,
     client_movement: @client_movement,
     server_movement: @server_movement,
+    server_player_create: @server_player_create,
+    server_movement_control: @server_movement_control,
+    server_time_of_day: @server_time_of_day,
+    server_character_flags_updated: @server_character_flags_updated,
+    server_player_changed: @server_player_changed,
+    server_set_unit_path_type: @server_set_unit_path_type,
+    server_path_initialise: @server_path_initialise,
     # Chat
     client_chat: @client_chat,
     server_chat: @server_chat,
@@ -212,6 +276,9 @@ defmodule BezgelorProtocol.Opcode do
     # XP/Level
     server_xp_gain: @server_xp_gain,
     server_level_up: @server_level_up,
+    # Achievements
+    server_achievement_list: @server_achievement_list,
+    server_achievement_update: @server_achievement_update,
     # Loot
     server_loot_drop: @server_loot_drop,
     client_loot_corpse: @client_loot_corpse,
@@ -284,7 +351,8 @@ defmodule BezgelorProtocol.Opcode do
     # NPC interaction
     client_npc_interact: @client_npc_interact,
     # Quests
-    server_quest_offer: @server_quest_offer
+    server_quest_offer: @server_quest_offer,
+    server_quest_list: @server_quest_list
   }
 
   # Reverse mapping from integer to atom
@@ -303,19 +371,46 @@ defmodule BezgelorProtocol.Opcode do
     server_auth_denied_realm: "ServerAuthDeniedRealm",
     server_realm_messages: "ServerRealmMessages",
     server_realm_info: "ServerRealmInfo",
+    server_player_entered_world: "ServerPlayerEnteredWorld",
     client_hello_realm: "ClientHelloRealm",
     server_realm_encrypted: "ServerRealmEncrypted",
+    client_packed_world: "ClientPackedWorld",
+    client_packed: "ClientPacked",
+    client_pregame_keep_alive: "ClientPregameKeepAlive",
+    client_storefront_request_catalog: "ClientStorefrontRequestCatalog",
     server_character_list: "ServerCharacterList",
+    server_max_character_level_achieved: "ServerMaxCharacterLevelAchieved",
+    server_account_currency_set: "ServerAccountCurrencySet",
+    server_account_entitlements: "ServerAccountEntitlements",
+    server_account_tier: "ServerAccountTier",
+    server_generic_unlock_account_list: "ServerGenericUnlockAccountList",
+    server_store_finalise: "ServerStoreFinalise",
+    server_store_categories: "ServerStoreCategories",
+    server_store_offers: "ServerStoreOffers",
     client_character_select: "ClientCharacterSelect",
     client_character_create: "ClientCharacterCreate",
     server_character_create: "ServerCharacterCreate",
     client_character_delete: "ClientCharacterDelete",
     client_entered_world: "ClientEnteredWorld",
+    client_statistics_watchdog: "ClientStatisticsWatchdog",
+    client_statistics_window_open: "ClientStatisticsWindowOpen",
+    client_statistics_gfx: "ClientStatisticsGfx",
+    client_statistics_connection: "ClientStatisticsConnection",
+    client_statistics_framerate: "ClientStatisticsFramerate",
     server_world_enter: "ServerWorldEnter",
+    server_instance_settings: "ServerInstanceSettings",
+    server_housing_neighbors: "ServerHousingNeighbors",
     server_entity_create: "ServerEntityCreate",
     server_entity_destroy: "ServerEntityDestroy",
     client_movement: "ClientMovement",
     server_movement: "ServerMovement",
+    server_player_create: "ServerPlayerCreate",
+    server_movement_control: "ServerMovementControl",
+    server_time_of_day: "ServerTimeOfDay",
+    server_character_flags_updated: "ServerCharacterFlagsUpdated",
+    server_player_changed: "ServerPlayerChanged",
+    server_set_unit_path_type: "ServerSetUnitPathType",
+    server_path_initialise: "ServerPathInitialise",
     client_chat: "ClientChat",
     server_chat: "ServerChat",
     server_chat_result: "ServerChatResult",
@@ -334,6 +429,8 @@ defmodule BezgelorProtocol.Opcode do
     server_respawn: "ServerRespawn",
     server_xp_gain: "ServerXPGain",
     server_level_up: "ServerLevelUp",
+    server_achievement_list: "ServerAchievementList",
+    server_achievement_update: "ServerAchievementUpdate",
     server_loot_drop: "ServerLootDrop",
     client_loot_corpse: "ClientLootCorpse",
     client_mount_summon: "ClientMountSummon",
@@ -402,7 +499,8 @@ defmodule BezgelorProtocol.Opcode do
     # NPC interaction
     client_npc_interact: "ClientNpcInteract",
     # Quests
-    server_quest_offer: "ServerQuestOffer"
+    server_quest_offer: "ServerQuestOffer",
+    server_quest_list: "ServerQuestList"
   }
 
   @type t :: atom()
