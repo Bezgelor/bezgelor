@@ -77,7 +77,9 @@ defmodule BezgelorData.Store do
     # Harvest node loot
     :harvest_loot,
     # Character creation templates
-    :character_creations
+    :character_creations,
+    # Character customization (label/value -> slot/displayId mapping)
+    :character_customizations
   ]
 
   # Secondary index tables for efficient lookups by foreign key
@@ -112,7 +114,9 @@ defmodule BezgelorData.Store do
     :challenge_tiers_by_challenge,
     # World location indexes
     :world_locations_by_world,
-    :world_locations_by_zone
+    :world_locations_by_zone,
+    # Character customization indexes (race, sex) -> list of customization entries
+    :customizations_by_race_sex
   ]
 
   # Client API
@@ -1363,6 +1367,76 @@ defmodule BezgelorData.Store do
   def get_all_character_creations, do: list(:character_creations)
 
   @doc """
+  Get item visuals for character customization.
+
+  Converts a list of (label, value) pairs into ItemVisual entries (slot, displayId)
+  based on the CharacterCustomization table for the given race and sex.
+
+  This is used during character creation to generate the appearance data
+  that gets stored and sent back in the character list.
+
+  ## Parameters
+
+  - `race` - Race ID (1=Human, 3=Granok, etc.)
+  - `sex` - Sex (0=Male, 1=Female)
+  - `customizations` - List of {label, value} tuples from character creation
+
+  ## Returns
+
+  List of `%{slot: slot_id, display_id: display_id}` maps.
+  """
+  @spec get_item_visuals(non_neg_integer(), non_neg_integer(), [{non_neg_integer(), non_neg_integer()}]) :: [map()]
+  def get_item_visuals(race, sex, customizations) do
+    # Get all customization entries for this race/sex combo
+    # Race 0 entries are defaults that apply to all races
+    race_entries = get_customizations_for_race_sex(race, sex)
+    default_entries = get_customizations_for_race_sex(0, sex)
+    all_entries = race_entries ++ default_entries
+
+    # Convert customizations list to a map for efficient lookup
+    custom_map = Map.new(customizations)
+
+    # For each entry that matches a customization, return the slot/displayId
+    # Filter entries where flags = 2 (enabled) and the label/value matches
+    all_entries
+    |> Enum.filter(fn entry ->
+      # Entry is enabled (flags = 2)
+      entry.flags == 2 &&
+        # And matches at least one customization
+        matches_customization?(entry, custom_map)
+    end)
+    |> Enum.map(fn entry ->
+      %{slot: entry.itemSlotId, display_id: entry.itemDisplayId}
+    end)
+    |> Enum.uniq_by(fn %{slot: slot} -> slot end)
+  end
+
+  # Check if an entry matches the given customizations
+  defp matches_customization?(entry, custom_map) do
+    label0 = entry.characterCustomizationLabelId00
+    value0 = entry.value00
+    label1 = entry.characterCustomizationLabelId01
+    value1 = entry.value01
+
+    # Match if label0/value0 matches (ignoring 0 labels)
+    match0 = label0 == 0 || Map.get(custom_map, label0) == value0
+
+    # Match if label1/value1 matches (ignoring 0 labels)
+    match1 = label1 == 0 || Map.get(custom_map, label1) == value1
+
+    # Both must match (or be 0/ignored)
+    match0 && match1 && (label0 != 0 || label1 != 0)
+  end
+
+  # Get customizations indexed by race/sex
+  defp get_customizations_for_race_sex(race, sex) do
+    case :ets.lookup(index_table_name(:customizations_by_race_sex), {race, sex}) do
+      [{{^race, ^sex}, entries}] -> entries
+      [] -> []
+    end
+  end
+
+  @doc """
   Resolve loot table for a creature based on rules.
 
   Returns the loot table ID and modifiers for a creature based on:
@@ -1594,6 +1668,9 @@ defmodule BezgelorData.Store do
 
     # Character creation templates
     load_client_table(:character_creations, "CharacterCreation.json", "charactercreation")
+
+    # Character customization (for converting labels/values to appearance visuals)
+    load_character_customizations()
 
     # Validate loot data
     validate_loot_data()
@@ -2022,6 +2099,58 @@ defmodule BezgelorData.Store do
     end
   end
 
+  defp load_character_customizations do
+    table_name = table_name(:character_customizations)
+
+    # Clear existing data
+    :ets.delete_all_objects(table_name)
+
+    json_path = Path.join(data_directory(), "CharacterCustomization.json")
+
+    case load_json_raw(json_path) do
+      {:ok, data} ->
+        items = Map.get(data, :charactercustomization, [])
+
+        for item <- items do
+          id = Map.get(item, :ID)
+
+          if id do
+            # Normalize to lowercase :id and keep original field names
+            normalized = Map.put(item, :id, id)
+            :ets.insert(table_name, {id, normalized})
+          end
+        end
+
+        # Build the race/sex index
+        build_customizations_index(items)
+
+        Logger.debug("Loaded #{length(items)} character customizations")
+
+      {:error, reason} ->
+        Logger.warning("Failed to load character customizations: #{inspect(reason)}")
+    end
+  end
+
+  # Build the customizations_by_race_sex index for efficient lookup
+  defp build_customizations_index(items) do
+    index_name = index_table_name(:customizations_by_race_sex)
+
+    # Clear existing index
+    :ets.delete_all_objects(index_name)
+
+    # Group by {raceId, gender}
+    groups =
+      items
+      |> Enum.group_by(fn item ->
+        {Map.get(item, :raceId, 0), Map.get(item, :gender, 0)}
+      end)
+
+    # Insert each group - store the full entry (not just ID) for efficient lookup
+    for {{race, sex}, entries} <- groups do
+      :ets.insert(index_name, {{race, sex}, entries})
+    end
+  end
+
   defp validate_loot_data do
     alias BezgelorData.LootValidator
 
@@ -2110,8 +2239,9 @@ defmodule BezgelorData.Store do
   defp build_all_indexes do
     Logger.debug("Building secondary indexes...")
 
-    # Clear all index tables
-    for table <- @index_tables do
+    # Clear all index tables EXCEPT customizations_by_race_sex
+    # (which is built during load_character_customizations)
+    for table <- @index_tables, table != :customizations_by_race_sex do
       :ets.delete_all_objects(index_table_name(table))
     end
 

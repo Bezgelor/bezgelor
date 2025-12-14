@@ -106,6 +106,11 @@ defmodule BezgelorDb.Schema.CharacterAppearance do
     field :labels, {:array, :integer}, default: []
     field :values, {:array, :integer}, default: []
 
+    # Computed ItemVisual entries for body appearance (head, hands, feet, etc.)
+    # Each entry is a map with :slot and :display_id
+    # Computed from labels/values using CharacterCustomization table
+    field :visuals, {:array, :map}, default: []
+
     timestamps(type: :utc_datetime)
   end
 
@@ -115,7 +120,7 @@ defmodule BezgelorDb.Schema.CharacterAppearance do
                       hair_style hair_color facial_hair
                       skin_color
                       feature_1 feature_2 feature_3 feature_4
-                      bones labels values)a
+                      bones labels values visuals)a
 
   @doc """
   Build a changeset for creating or updating character appearance.

@@ -115,6 +115,11 @@ defmodule BezgelorProtocol.Handler.CharacterCreateHandler do
     # Convert customization data
     customization_attrs = ClientCharacterCreate.customization_to_map(packet)
 
+    # Compute appearance visuals from labels/values using CharacterCustomization table
+    # This converts the customization options to actual body slot/displayId pairs
+    visuals = compute_visuals(race, sex, packet.labels, packet.values)
+    customization_attrs = Map.put(customization_attrs, :visuals, visuals)
+
     case Characters.create_character(account_id, character_attrs, customization_attrs) do
       {:ok, character} ->
         Logger.info("Created character '#{character.name}' (ID: #{character.id}) for account #{account_id} in world #{character.world_id}")
@@ -148,5 +153,11 @@ defmodule BezgelorProtocol.Handler.CharacterCreateHandler do
     writer = PacketWriter.new()
     {:ok, writer} = ServerCharacterCreate.write(packet, writer)
     PacketWriter.to_binary(writer)
+  end
+
+  # Compute ItemVisual entries from customization labels/values
+  defp compute_visuals(race, sex, labels, values) do
+    customizations = Enum.zip(labels, values)
+    Store.get_item_visuals(race, sex, customizations)
   end
 end

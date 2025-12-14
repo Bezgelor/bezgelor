@@ -370,7 +370,10 @@ defmodule BezgelorProtocol.Packets.World.ServerCharacterList do
           end
 
         # Extract customization data from appearance association
-        {labels, values, bones} = get_customization_data(char)
+        {labels, values, bones, visuals} = get_customization_data(char)
+
+        # Convert stored visuals to ItemVisual structs
+        appearance_items = convert_visuals_to_item_visuals(visuals)
 
         %CharacterEntry{
           id: char.id,
@@ -380,7 +383,7 @@ defmodule BezgelorProtocol.Packets.World.ServerCharacterList do
           class: char.class || 0,
           faction: char.faction_id || 0,
           level: char.level || 1,
-          appearance: [],
+          appearance: appearance_items,
           gear: [],
           world_id: char.world_id || 0,
           world_zone_id: char.world_zone_id || 0,
@@ -418,19 +421,41 @@ defmodule BezgelorProtocol.Packets.World.ServerCharacterList do
     }
   end
 
-  # Extract customization data (labels, values, bones) from character appearance association
+  # Extract customization data (labels, values, bones, visuals) from character appearance association
   defp get_customization_data(char) do
     case Map.get(char, :appearance) do
+      %{labels: labels, values: values, bones: bones, visuals: visuals}
+      when is_list(labels) and is_list(values) and is_list(bones) and is_list(visuals) ->
+        {labels, values, bones, visuals}
+
       %{labels: labels, values: values, bones: bones}
       when is_list(labels) and is_list(values) and is_list(bones) ->
-        {labels, values, bones}
+        {labels, values, bones, []}
 
       %{bones: bones} when is_list(bones) ->
         # Legacy: only bones stored
-        {[], [], bones}
+        {[], [], bones, []}
 
       _ ->
-        {[], [], []}
+        {[], [], [], []}
     end
   end
+
+  # Convert stored visuals (maps with :slot and :display_id) to ItemVisual structs
+  defp convert_visuals_to_item_visuals(visuals) when is_list(visuals) do
+    Enum.map(visuals, fn visual ->
+      # Handle both atom and string keys (from database JSON serialization)
+      slot = Map.get(visual, :slot) || Map.get(visual, "slot") || 0
+      display_id = Map.get(visual, :display_id) || Map.get(visual, "display_id") || 0
+
+      %ItemVisual{
+        slot: slot,
+        display_id: display_id,
+        colour_set_id: 0,
+        dye_data: 0
+      }
+    end)
+  end
+
+  defp convert_visuals_to_item_visuals(_), do: []
 end
