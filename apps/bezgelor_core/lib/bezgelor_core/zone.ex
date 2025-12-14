@@ -7,8 +7,8 @@ defmodule BezgelorCore.Zone do
 
   ## Factions
 
-  - 166: Exile
-  - 167: Dominion
+  - 166: Dominion
+  - 167: Exile
 
   ## Default Spawn Locations
 
@@ -39,9 +39,9 @@ defmodule BezgelorCore.Zone do
     rotation: {0.0, 0.0, 0.0}
   }
 
-  # Faction IDs
-  @faction_exile 166
-  @faction_dominion 167
+  # Faction IDs (matches NexusForever Faction.cs)
+  @faction_dominion 166
+  @faction_exile 167
 
   @doc """
   Get default spawn location for a faction.
@@ -49,10 +49,10 @@ defmodule BezgelorCore.Zone do
   ## Examples
 
       iex> Zone.default_spawn(166)
-      %{world_id: 870, zone_id: 1, position: {-3200.0, -800.0, -580.0}, rotation: {0.0, 0.0, 0.0}}
+      %{world_id: 870, zone_id: 2, position: {-3200.0, -800.0, -580.0}, rotation: {0.0, 0.0, 0.0}}
 
       iex> Zone.default_spawn(167)
-      %{world_id: 870, zone_id: 2, position: {-3200.0, -800.0, -580.0}, rotation: {0.0, 0.0, 0.0}}
+      %{world_id: 870, zone_id: 1, position: {-3200.0, -800.0, -580.0}, rotation: {0.0, 0.0, 0.0}}
   """
   @spec default_spawn(non_neg_integer()) :: spawn_location()
   def default_spawn(@faction_exile), do: @exile_start
@@ -67,7 +67,7 @@ defmodule BezgelorCore.Zone do
 
   ## Examples
 
-      iex> character = %{world_id: 100, world_zone_id: 5, location_x: 1.0, location_y: 2.0, location_z: 3.0, rotation_x: 0.0, rotation_y: 0.0, rotation_z: 0.0, faction_id: 166}
+      iex> character = %{world_id: 100, world_zone_id: 5, location_x: 1.0, location_y: 2.0, location_z: 3.0, rotation_x: 0.0, rotation_y: 0.0, rotation_z: 0.0, faction_id: 167}
       iex> Zone.spawn_location(character)
       %{world_id: 100, zone_id: 5, position: {1.0, 2.0, 3.0}, rotation: {0.0, 0.0, 0.0}}
   """

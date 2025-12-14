@@ -75,7 +75,9 @@ defmodule BezgelorData.Store do
     :loot_tables,
     :creature_loot_rules,
     # Harvest node loot
-    :harvest_loot
+    :harvest_loot,
+    # Character creation templates
+    :character_creations
   ]
 
   # Secondary index tables for efficient lookups by foreign key
@@ -1345,6 +1347,21 @@ defmodule BezgelorData.Store do
     end)
   end
 
+  # Character Creation API
+
+  @doc """
+  Get a character creation template by ID.
+
+  The CharacterCreation table maps CharacterCreationId to race, class, sex, faction,
+  and starting items. Used during character creation to resolve the template.
+  """
+  @spec get_character_creation(non_neg_integer()) :: {:ok, map()} | :error
+  def get_character_creation(id), do: get(:character_creations, id)
+
+  @doc "List all character creation templates."
+  @spec get_all_character_creations() :: [map()]
+  def get_all_character_creations, do: list(:character_creations)
+
   @doc """
   Resolve loot table for a creature based on rules.
 
@@ -1574,6 +1591,9 @@ defmodule BezgelorData.Store do
 
     # Harvest node loot
     load_harvest_loot()
+
+    # Character creation templates
+    load_client_table(:character_creations, "CharacterCreation.json", "charactercreation")
 
     # Validate loot data
     validate_loot_data()

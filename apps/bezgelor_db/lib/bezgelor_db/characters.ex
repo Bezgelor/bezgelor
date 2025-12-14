@@ -434,20 +434,23 @@ defmodule BezgelorDb.Characters do
     |> Repo.insert()
   end
 
-  # Race ID to atom mapping (matches NexusForever)
-  defp race_id_to_atom(0), do: :human
-  defp race_id_to_atom(1), do: :mordesh
-  defp race_id_to_atom(2), do: :draken
+  # Race ID to atom mapping (matches NexusForever Race enum)
+  # See: NexusForever/Source/NexusForever.Game.Static/Entity/Race.cs
+  defp race_id_to_atom(1), do: :human
+  defp race_id_to_atom(2), do: :cassian     # Eshara in code, Cassian in lore
   defp race_id_to_atom(3), do: :granok
   defp race_id_to_atom(4), do: :aurin
-  defp race_id_to_atom(5), do: :chua
+  defp race_id_to_atom(5), do: :draken
   defp race_id_to_atom(12), do: :mechari
-  defp race_id_to_atom(13), do: :cassian
+  defp race_id_to_atom(13), do: :chua
+  defp race_id_to_atom(16), do: :mordesh
   defp race_id_to_atom(_), do: :unknown
 
-  # Faction IDs: 166 = Exile, 167 = Dominion
-  defp valid_race_faction_atom?(race, 166) when race in @exile_races, do: true
-  defp valid_race_faction_atom?(race, 167) when race in @dominion_races, do: true
+  # Faction IDs (matches NexusForever Faction enum)
+  # See: NexusForever/Source/NexusForever.Game.Static/Reputation/Faction.cs
+  # 166 = Dominion, 167 = Exile
+  defp valid_race_faction_atom?(race, 166) when race in @dominion_races, do: true
+  defp valid_race_faction_atom?(race, 167) when race in @exile_races, do: true
   defp valid_race_faction_atom?(_, _), do: false
 
   # ============================================================================
