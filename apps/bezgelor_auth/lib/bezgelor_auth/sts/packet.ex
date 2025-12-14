@@ -117,10 +117,30 @@ defmodule BezgelorAuth.Sts.Packet do
 
   @doc """
   Build an error response.
+
+  For STS protocol, errors include an XML body with error code.
+  The client uses these codes to display appropriate messages:
+  - 3002: InvalidAccountNameOrPassword (shows "bad credentials" message)
   """
   @spec error_response(String.t(), non_neg_integer(), String.t()) :: binary()
   def error_response(sequence, status_code, message) do
-    build_response(status_code, message, %{"s" => "#{sequence}R"}, "")
+    # Map HTTP status to STS error codes that the client understands
+    error_code = sts_error_code(status_code, message)
+    body = error_body(error_code)
+    build_response(status_code, message, %{"s" => "#{sequence}R"}, body)
+  end
+
+  # STS Error codes (from NexusForever ErrorCode.cs)
+  @error_invalid_credentials 3002
+
+  defp sts_error_code(401, _message), do: @error_invalid_credentials
+  defp sts_error_code(403, _message), do: @error_invalid_credentials
+  defp sts_error_code(_status, _message), do: 0
+
+  defp error_body(0), do: ""
+  defp error_body(code) do
+    # Format matches NexusForever ServerErrorMessage
+    "<Error code=\"#{code}\" server=\"0\" module=\"0\" line=\"0\" text=\"0\"/>"
   end
 
   # Private functions

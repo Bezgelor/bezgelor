@@ -45,8 +45,10 @@ defmodule BezgelorAuth.Sts.PacketTest do
     test "builds a valid OK response" do
       response = Packet.ok_response("1", "test body")
 
-      assert response =~ "STS/1.0 200 OK\r\n"
-      assert response =~ "l:9\r\n"
+      # NexusForever uses double space before status message
+      assert response =~ "STS/1.0 200  OK\r\n"
+      # Length includes trailing newline added by build_response
+      assert response =~ "l:10\r\n"
       assert response =~ "s:1R\r\n"
       assert response =~ "test body"
     end
@@ -54,8 +56,9 @@ defmodule BezgelorAuth.Sts.PacketTest do
     test "builds response with empty body" do
       response = Packet.ok_response("42", "")
 
-      assert response =~ "STS/1.0 200 OK\r\n"
-      assert response =~ "l:0\r\n"
+      assert response =~ "STS/1.0 200  OK\r\n"
+      # Empty body still gets trailing newline
+      assert response =~ "l:1\r\n"
       assert response =~ "s:42R\r\n"
     end
   end
@@ -64,15 +67,25 @@ defmodule BezgelorAuth.Sts.PacketTest do
     test "builds error response" do
       response = Packet.error_response("1", 400, "Bad Request")
 
-      assert response =~ "STS/1.0 400 Bad Request\r\n"
+      assert response =~ "STS/1.0 400  Bad Request\r\n"
       assert response =~ "s:1R\r\n"
     end
 
-    test "builds 401 unauthorized response" do
+    test "builds 401 unauthorized response with error code" do
       response = Packet.error_response("5", 401, "Unauthorized")
 
-      assert response =~ "STS/1.0 401 Unauthorized\r\n"
+      assert response =~ "STS/1.0 401  Unauthorized\r\n"
       assert response =~ "s:5R\r\n"
+      # Should include XML error body with InvalidAccountNameOrPassword code
+      assert response =~ "<Error code=\"3002\""
+    end
+
+    test "builds 403 forbidden response with error code" do
+      response = Packet.error_response("6", 403, "Forbidden")
+
+      assert response =~ "STS/1.0 403  Forbidden\r\n"
+      # 403 also maps to InvalidAccountNameOrPassword for banned/suspended accounts
+      assert response =~ "<Error code=\"3002\""
     end
   end
 end
