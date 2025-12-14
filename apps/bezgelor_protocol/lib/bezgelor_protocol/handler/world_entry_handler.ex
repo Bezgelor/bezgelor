@@ -25,6 +25,7 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
   alias BezgelorCore.Entity
   alias BezgelorWorld.Handler.AchievementHandler
   alias BezgelorWorld.Quest.QuestCache
+  alias BezgelorWorld.TriggerManager
 
   require Logger
 
@@ -87,6 +88,19 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
     state = put_in(state.session_data[:active_quests], active_quests)
     state = put_in(state.session_data[:completed_quest_ids], completed_quest_ids)
     state = put_in(state.session_data[:achievement_handler], achievement_handler)
+
+    # Load trigger volumes for the zone
+    spawn_location = state.session_data[:spawn_location]
+    zone_id = if spawn_location, do: spawn_location.zone_id, else: character.world_zone_id
+    world_id = if spawn_location, do: spawn_location.world_id, else: character.world_id
+
+    triggers = TriggerManager.load_zone_triggers(zone_id)
+    state = put_in(state.session_data[:zone_triggers], triggers)
+    state = put_in(state.session_data[:active_triggers], MapSet.new())
+    state = put_in(state.session_data[:zone_id], zone_id)
+    state = put_in(state.session_data[:world_id], world_id)
+
+    Logger.debug("Loaded #{length(triggers)} trigger volumes for zone #{zone_id}")
 
     Logger.info(
       "Player '#{character.name}' (GUID: #{guid}) entered world at " <>

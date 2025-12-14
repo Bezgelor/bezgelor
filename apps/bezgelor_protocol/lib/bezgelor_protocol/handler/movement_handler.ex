@@ -53,6 +53,9 @@ defmodule BezgelorProtocol.Handler.MovementHandler do
     entity = state.session_data[:entity]
     character_id = state.session_data[:character_id]
 
+    # Get old position before update
+    old_position = if entity, do: entity.position, else: {0.0, 0.0, 0.0}
+
     # Update entity position in memory
     new_position = ClientMovement.position(packet)
     new_rotation = ClientMovement.rotation(packet)
@@ -64,9 +67,49 @@ defmodule BezgelorProtocol.Handler.MovementHandler do
     # Throttle database saves
     state = maybe_save_position(character_id, packet, state)
 
-    # TODO: Broadcast to nearby players in Phase 7+
+    # Check trigger volumes for area-based objectives
+    state = check_trigger_volumes(old_position, new_position, state)
 
     {:ok, state}
+  end
+
+  # Check if player entered any trigger volumes
+  defp check_trigger_volumes(old_position, new_position, state) do
+    triggers = state.session_data[:zone_triggers] || []
+    active_triggers = state.session_data[:active_triggers] || MapSet.new()
+
+    if triggers == [] do
+      state
+    else
+      alias BezgelorWorld.TriggerManager
+
+      {entered, _exited, new_active} =
+        TriggerManager.check_triggers(triggers, old_position, new_position, active_triggers)
+
+      state = put_in(state.session_data[:active_triggers], new_active)
+
+      # Fire events for entered triggers
+      if entered != [] do
+        zone_id = state.session_data[:zone_id] || 0
+        fire_trigger_events(entered, zone_id, state)
+      else
+        state
+      end
+    end
+  end
+
+  defp fire_trigger_events([], _zone_id, state), do: state
+
+  defp fire_trigger_events([trigger_id | rest], zone_id, state) do
+    alias BezgelorWorld.EventDispatcher
+
+    Logger.info("Player entered trigger #{trigger_id} in zone #{zone_id}")
+
+    {updated_session, _packets} =
+      EventDispatcher.dispatch_enter_area(state.session_data, trigger_id, zone_id)
+
+    state = %{state | session_data: updated_session}
+    fire_trigger_events(rest, zone_id, state)
   end
 
   # Throttle database position saves
