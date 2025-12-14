@@ -29,12 +29,9 @@ defmodule BezgelorProtocol.Handler.CharacterCreateHandler do
   alias BezgelorProtocol.{PacketReader, PacketWriter}
   alias BezgelorData.Store
   alias BezgelorDb.Characters
+  alias BezgelorCore.Zone
 
   require Logger
-
-  # Starting location (default spawn point)
-  @default_world_id 870
-  @default_zone_id 1
 
   @impl true
   def handle(payload, state) do
@@ -84,7 +81,19 @@ defmodule BezgelorProtocol.Handler.CharacterCreateHandler do
     sex = Map.get(creation_entry, "sex") || Map.get(creation_entry, :sex)
     faction_id = Map.get(creation_entry, "factionId") || Map.get(creation_entry, :factionId)
 
-    Logger.debug("Creating character from template: race=#{race}, class=#{class}, sex=#{sex}, faction=#{faction_id}")
+    # Get creation start type (0=Arkship, 3=Nexus/Veteran, 4=PreTutorial/Novice, 5=Level50)
+    creation_start =
+      Map.get(creation_entry, "characterCreationStartEnum") ||
+        Map.get(creation_entry, :characterCreationStartEnum) ||
+        4
+
+    # Get starting location based on creation type and faction
+    spawn = Zone.starting_location(creation_start, faction_id)
+
+    Logger.debug(
+      "Creating character from template: race=#{race}, class=#{class}, sex=#{sex}, " <>
+        "faction=#{faction_id}, creation_start=#{creation_start}, world_id=#{spawn.world_id}"
+    )
 
     character_attrs = %{
       name: packet.name,
@@ -92,8 +101,14 @@ defmodule BezgelorProtocol.Handler.CharacterCreateHandler do
       race: race,
       class: class,
       faction_id: faction_id,
-      world_id: @default_world_id,
-      world_zone_id: @default_zone_id,
+      world_id: spawn.world_id,
+      world_zone_id: spawn.zone_id,
+      location_x: elem(spawn.position, 0),
+      location_y: elem(spawn.position, 1),
+      location_z: elem(spawn.position, 2),
+      rotation_x: elem(spawn.rotation, 0),
+      rotation_y: elem(spawn.rotation, 1),
+      rotation_z: elem(spawn.rotation, 2),
       active_path: packet.path
     }
 
@@ -102,8 +117,8 @@ defmodule BezgelorProtocol.Handler.CharacterCreateHandler do
 
     case Characters.create_character(account_id, character_attrs, customization_attrs) do
       {:ok, character} ->
-        Logger.info("Created character '#{character.name}' (ID: #{character.id}) for account #{account_id}")
-        response = ServerCharacterCreate.success(character.id)
+        Logger.info("Created character '#{character.name}' (ID: #{character.id}) for account #{account_id} in world #{character.world_id}")
+        response = ServerCharacterCreate.success(character.id, character.world_id)
         {:reply, :server_character_create, encode_packet(response), state}
 
       {:error, :name_taken} ->

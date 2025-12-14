@@ -10,9 +10,20 @@ defmodule BezgelorCore.Zone do
   - 166: Dominion
   - 167: Exile
 
+  ## CharacterCreationStart Values
+
+  - 0: Arkship
+  - 1: Demo01
+  - 2: Demo02
+  - 3: Nexus (Veteran)
+  - 4: PreTutorial (Novice) - cryotube awakening tutorial
+  - 5: Level50
+
   ## Default Spawn Locations
 
-  New characters spawn in their faction's starting area.
+  New characters spawn based on their CharacterCreationStart type.
+  Novice (4) starts in the tutorial arkship (world 3460).
+  Veteran (3) starts on Nexus.
   Existing characters spawn at their last saved position.
   """
 
@@ -23,20 +34,53 @@ defmodule BezgelorCore.Zone do
           rotation: {float(), float(), float()}
         }
 
-  # Exile starting zone (Everstar Grove)
-  @exile_start %{
-    world_id: 870,
+  # CharacterCreationStart enum values (from NexusForever)
+  @creation_start_arkship 0
+  @creation_start_demo01 1
+  @creation_start_demo02 2
+  @creation_start_nexus 3
+  @creation_start_pretutorial 4
+  @creation_start_level50 5
+
+  # Novice tutorial arkship spawn (PreTutorial = 4)
+  # This is the cryotube awakening tutorial instance
+  @tutorial_start %{
+    world_id: 3460,
+    zone_id: 0,
+    position: {29.1286, -853.8716, -560.188},
+    rotation: {-2.751458, 0.0, 0.0}
+  }
+
+  # Exile starting zone on Nexus (Veteran/Nexus = 3)
+  @exile_nexus_start %{
+    world_id: 426,
     zone_id: 1,
-    position: {-3200.0, -800.0, -580.0},
+    position: {4110.71, -658.6249, -5145.48},
+    rotation: {0.317613, 0.0, 0.0}
+  }
+
+  # Dominion starting zone on Nexus (Veteran/Nexus = 3)
+  @dominion_nexus_start %{
+    world_id: 1387,
+    zone_id: 2,
+    position: {-3835.341, -980.2174, -6050.524},
+    rotation: {-0.45682, 0.0, 0.0}
+  }
+
+  # Exile Level 50 start (Thayd)
+  @exile_level50_start %{
+    world_id: 51,
+    zone_id: 1,
+    position: {4074.34, -797.8368, -2399.37},
     rotation: {0.0, 0.0, 0.0}
   }
 
-  # Dominion starting zone (Levian Bay)
-  @dominion_start %{
-    world_id: 870,
+  # Dominion Level 50 start (Illium)
+  @dominion_level50_start %{
+    world_id: 22,
     zone_id: 2,
-    position: {-3200.0, -800.0, -580.0},
-    rotation: {0.0, 0.0, 0.0}
+    position: {-3343.58, -887.4646, -536.03},
+    rotation: {-0.7632219, 0.0, 0.0}
   }
 
   # Faction IDs (matches NexusForever Faction.cs)
@@ -44,20 +88,60 @@ defmodule BezgelorCore.Zone do
   @faction_exile 167
 
   @doc """
-  Get default spawn location for a faction.
+  Get starting location for a new character based on creation type and faction.
+
+  ## CharacterCreationStart Types
+
+  - 4 (PreTutorial/Novice): Tutorial arkship cryotube awakening
+  - 3 (Nexus/Veteran): Open world on Nexus
+  - 5 (Level50): Capital city (Thayd/Illium)
+
+  ## Examples
+
+      iex> Zone.starting_location(4, 167)  # Novice Exile
+      %{world_id: 3460, zone_id: 0, position: {29.1286, -853.8716, -560.188}, rotation: {-2.751458, 0.0, 0.0}}
+  """
+  @spec starting_location(non_neg_integer(), non_neg_integer()) :: spawn_location()
+  def starting_location(creation_start, faction_id)
+
+  # PreTutorial (Novice = 4) - Tutorial arkship for all factions
+  def starting_location(@creation_start_pretutorial, _faction_id), do: @tutorial_start
+
+  # Arkship (0) - Same as tutorial
+  def starting_location(@creation_start_arkship, _faction_id), do: @tutorial_start
+
+  # Nexus/Veteran (3) - Faction-specific starting zone on Nexus
+  def starting_location(@creation_start_nexus, @faction_exile), do: @exile_nexus_start
+  def starting_location(@creation_start_nexus, @faction_dominion), do: @dominion_nexus_start
+
+  # Level50 (5) - Faction capital city
+  def starting_location(@creation_start_level50, @faction_exile), do: @exile_level50_start
+  def starting_location(@creation_start_level50, @faction_dominion), do: @dominion_level50_start
+
+  # Demo modes (1, 2) - Use tutorial
+  def starting_location(@creation_start_demo01, _faction_id), do: @tutorial_start
+  def starting_location(@creation_start_demo02, _faction_id), do: @tutorial_start
+
+  # Fallback - Use tutorial arkship
+  def starting_location(_creation_start, _faction_id), do: @tutorial_start
+
+  @doc """
+  Get default spawn location for a faction (legacy function).
+
+  For new characters, use `starting_location/2` instead.
 
   ## Examples
 
       iex> Zone.default_spawn(166)
-      %{world_id: 870, zone_id: 2, position: {-3200.0, -800.0, -580.0}, rotation: {0.0, 0.0, 0.0}}
+      %{world_id: 1387, zone_id: 2, position: {-3835.341, -980.2174, -6050.524}, rotation: {-0.45682, 0.0, 0.0}}
 
       iex> Zone.default_spawn(167)
-      %{world_id: 870, zone_id: 1, position: {-3200.0, -800.0, -580.0}, rotation: {0.0, 0.0, 0.0}}
+      %{world_id: 426, zone_id: 1, position: {4110.71, -658.6249, -5145.48}, rotation: {0.317613, 0.0, 0.0}}
   """
   @spec default_spawn(non_neg_integer()) :: spawn_location()
-  def default_spawn(@faction_exile), do: @exile_start
-  def default_spawn(@faction_dominion), do: @dominion_start
-  def default_spawn(_), do: @exile_start
+  def default_spawn(@faction_exile), do: @exile_nexus_start
+  def default_spawn(@faction_dominion), do: @dominion_nexus_start
+  def default_spawn(_), do: @exile_nexus_start
 
   @doc """
   Get spawn location for a character.
