@@ -44,7 +44,7 @@ defmodule BezgelorProtocol.Handler.CharacterCreateHandler do
       {:error, reason} ->
         Logger.warning("Failed to parse ClientCharacterCreate: #{inspect(reason)}")
         response = ServerCharacterCreate.failure(:server_error)
-        {:reply, :server_character_create, encode_packet(response), state}
+        {:reply_world_encrypted, :server_character_create, encode_packet(response), state}
     end
   end
 
@@ -54,7 +54,7 @@ defmodule BezgelorProtocol.Handler.CharacterCreateHandler do
     if is_nil(account_id) do
       Logger.warning("Character create attempted without authenticated account")
       response = ServerCharacterCreate.failure(:server_error)
-      {:reply, :server_character_create, encode_packet(response), state}
+      {:reply_world_encrypted, :server_character_create, encode_packet(response), state}
     else
       do_create(account_id, packet, state)
     end
@@ -69,7 +69,7 @@ defmodule BezgelorProtocol.Handler.CharacterCreateHandler do
       :error ->
         Logger.warning("Invalid character creation ID: #{packet.character_creation_id}")
         response = ServerCharacterCreate.failure(:server_error)
-        {:reply, :server_character_create, encode_packet(response), state}
+        {:reply_world_encrypted, :server_character_create, encode_packet(response), state}
     end
   end
 
@@ -119,28 +119,28 @@ defmodule BezgelorProtocol.Handler.CharacterCreateHandler do
       {:ok, character} ->
         Logger.info("Created character '#{character.name}' (ID: #{character.id}) for account #{account_id} in world #{character.world_id}")
         response = ServerCharacterCreate.success(character.id, character.world_id)
-        {:reply, :server_character_create, encode_packet(response), state}
+        {:reply_world_encrypted, :server_character_create, encode_packet(response), state}
 
       {:error, :name_taken} ->
         response = ServerCharacterCreate.failure(:name_taken)
-        {:reply, :server_character_create, encode_packet(response), state}
+        {:reply_world_encrypted, :server_character_create, encode_packet(response), state}
 
       {:error, :invalid_name} ->
         response = ServerCharacterCreate.failure(:invalid_name)
-        {:reply, :server_character_create, encode_packet(response), state}
+        {:reply_world_encrypted, :server_character_create, encode_packet(response), state}
 
       {:error, :max_characters} ->
         response = ServerCharacterCreate.failure(:max_characters)
-        {:reply, :server_character_create, encode_packet(response), state}
+        {:reply_world_encrypted, :server_character_create, encode_packet(response), state}
 
       {:error, :invalid_faction} ->
         response = ServerCharacterCreate.failure(:invalid_faction)
-        {:reply, :server_character_create, encode_packet(response), state}
+        {:reply_world_encrypted, :server_character_create, encode_packet(response), state}
 
       {:error, reason} ->
         Logger.error("Character creation failed: #{inspect(reason)}")
         response = ServerCharacterCreate.failure(:server_error)
-        {:reply, :server_character_create, encode_packet(response), state}
+        {:reply_world_encrypted, :server_character_create, encode_packet(response), state}
     end
   end
 

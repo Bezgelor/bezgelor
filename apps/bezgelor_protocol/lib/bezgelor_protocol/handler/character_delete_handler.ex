@@ -57,7 +57,7 @@ defmodule BezgelorProtocol.Handler.CharacterDeleteHandler do
         characters = Characters.list_characters(account_id)
         response = ServerCharacterList.from_characters(characters)
 
-        {:reply, :server_character_list, encode_packet(response), state}
+        {:reply_world_encrypted, :server_character_list, encode_packet(response), state}
 
       {:error, :not_found} ->
         Logger.warning("Attempted to delete non-existent character #{character_id} for account #{account_id}")

@@ -92,7 +92,7 @@ defmodule BezgelorProtocol.Handler.MountHandler do
         {opcode, payload} = serialize_packet(update_packet)
 
         Logger.debug("Player #{character_id} summoned mount #{packet.mount_id}")
-        {:reply, opcode, payload, state}
+        {:reply_world_encrypted, opcode, payload, state}
 
       {:error, :not_owned} ->
         Logger.warning("Player #{character_id} tried to summon unowned mount #{packet.mount_id}")
@@ -114,7 +114,7 @@ defmodule BezgelorProtocol.Handler.MountHandler do
     {opcode, payload} = serialize_packet(update_packet)
 
     Logger.debug("Player #{character_id} dismissed mount")
-    {:reply, opcode, payload, state}
+    {:reply_world_encrypted, opcode, payload, state}
   end
 
   defp process_customize(packet, state) do
@@ -137,7 +137,7 @@ defmodule BezgelorProtocol.Handler.MountHandler do
         {opcode, payload} = serialize_packet(custom_packet)
 
         Logger.debug("Player #{character_id} customized mount")
-        {:reply, opcode, payload, state}
+        {:reply_world_encrypted, opcode, payload, state}
 
       {:error, :no_active_mount} ->
         Logger.warning("Player #{character_id} tried to customize without active mount")

@@ -144,7 +144,7 @@ defmodule BezgelorProtocol.Handler.PetHandler do
         {opcode, payload} = serialize_packet(update_packet)
 
         Logger.debug("Player #{character_id} summoned pet #{packet.pet_id}")
-        {:reply, opcode, payload, state}
+        {:reply_world_encrypted, opcode, payload, state}
 
       {:error, :not_owned} ->
         Logger.warning("Player #{character_id} tried to summon unowned pet #{packet.pet_id}")
@@ -166,7 +166,7 @@ defmodule BezgelorProtocol.Handler.PetHandler do
     {opcode, payload} = serialize_packet(update_packet)
 
     Logger.debug("Player #{character_id} dismissed pet")
-    {:reply, opcode, payload, state}
+    {:reply_world_encrypted, opcode, payload, state}
   end
 
   defp process_rename(packet, state) do
@@ -185,7 +185,7 @@ defmodule BezgelorProtocol.Handler.PetHandler do
         {opcode, payload} = serialize_packet(update_packet)
 
         Logger.debug("Player #{character_id} renamed pet to '#{packet.nickname}'")
-        {:reply, opcode, payload, state}
+        {:reply_world_encrypted, opcode, payload, state}
 
       {:error, :no_active_pet} ->
         Logger.warning("Player #{character_id} tried to rename without active pet")
