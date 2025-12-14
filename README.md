@@ -178,6 +178,12 @@ The connector saves your settings to `config.json`. To change servers, delete th
 | `POSTGRES_PASSWORD` | bezgelor_dev | Database password |
 | `POSTGRES_HOST` | localhost | Database host |
 | `POSTGRES_PORT` | 5433 | Database port |
+| `AUTH_HOST` | 0.0.0.0 | Auth server bind address |
+| `AUTH_PORT` | 6600 | Auth server port |
+| `REALM_HOST` | 0.0.0.0 | Realm server bind address |
+| `REALM_PORT` | 23115 | Realm server port |
+| `WORLD_HOST` | 0.0.0.0 | World server bind address |
+| `WORLD_PORT` | 24000 | World server port |
 
 ### Config Files
 
