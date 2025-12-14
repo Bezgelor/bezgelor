@@ -137,21 +137,9 @@ defmodule BezgelorPortalWeb.Layouts do
         </div>
       </div>
 
-      <!-- Right: Navigation -->
+      <!-- Right: Account & Theme -->
       <div class="flex-1 flex justify-end">
         <ul class="flex items-center space-x-1">
-          <li>
-            <a href="/dashboard" class="btn btn-ghost">Dashboard</a>
-          </li>
-          <li>
-            <a href="/characters" class="btn btn-ghost">Characters</a>
-          </li>
-          <li :if={@has_admin_access}>
-            <a href="/admin" class="btn btn-ghost">
-              <.icon name="hero-shield-check-micro" class="size-4" />
-              <span class="hidden sm:inline">Admin</span>
-            </a>
-          </li>
           <%= if @current_account do %>
             <li class="dropdown dropdown-end">
               <div tabindex="0" role="button" class="btn btn-ghost">
@@ -162,7 +150,12 @@ defmodule BezgelorPortalWeb.Layouts do
                 tabindex="0"
                 class="dropdown-content menu bg-base-100 rounded-box z-10 w-52 p-2 shadow-lg"
               >
+                <li><a href="/dashboard">Dashboard</a></li>
+                <li><a href="/characters">Characters</a></li>
+                <li :if={@has_admin_access}><a href="/admin">Admin Panel</a></li>
+                <hr class="my-1 border-base-300" />
                 <li><a href="/settings">Account Settings</a></li>
+                <li><a href="/settings/totp/setup">Two-Factor Auth</a></li>
                 <hr class="my-1 border-base-300" />
                 <li><a href="/logout">Log out</a></li>
               </ul>
@@ -693,11 +686,6 @@ defmodule BezgelorPortalWeb.Layouts do
           <br />
           WildStar and all related content are trademarks of NCSOFT Corporation.
         </p>
-
-        <!-- Theme Toggle -->
-        <div class="mt-4 flex justify-center">
-          <.theme_toggle />
-        </div>
       </div>
     </footer>
     """

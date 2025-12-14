@@ -6,22 +6,8 @@ defmodule BezgelorPortalWeb.DashboardLive do
   """
   use BezgelorPortalWeb, :live_view
 
-  alias BezgelorDb.Authorization
-
   def mount(_params, _session, socket) do
-    account = socket.assigns.current_account
-    permissions = Authorization.get_account_permissions(account)
-    roles = Authorization.get_account_roles(account)
-
-    has_admin_access = length(permissions) > 0
-
-    {:ok,
-     assign(socket,
-       page_title: "Dashboard",
-       permissions: permissions,
-       roles: roles,
-       has_admin_access: has_admin_access
-     )}
+    {:ok, assign(socket, page_title: "Dashboard")}
   end
 
   def render(assigns) do
@@ -57,15 +43,6 @@ defmodule BezgelorPortalWeb.DashboardLive do
           icon="hero-shield-check"
           accent
         />
-      </div>
-
-      <div :if={length(@roles) > 0} class="mt-6">
-        <h2 class="text-xl font-semibold mb-4">Your Roles</h2>
-        <div class="flex flex-wrap gap-2">
-          <span :for={role <- @roles} class="badge badge-lg badge-primary">
-            {role.name}
-          </span>
-        </div>
       </div>
     </div>
     """

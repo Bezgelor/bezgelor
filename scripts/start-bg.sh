@@ -14,12 +14,15 @@ if ! docker compose ps postgres | grep -q "running"; then
 fi
 
 echo "==> Starting Bezgelor servers in background..."
-echo "    Portal:  http://localhost:4001"
-echo "    Auth:    localhost:6600"
-echo "    Realm:   localhost:23115"
-echo "    World:   localhost:24000"
+echo "    Portal:  http://localhost:4000  (localhost only)"
+echo "    Auth:    0.0.0.0:6600           (all interfaces)"
+echo "    Realm:   0.0.0.0:23115          (all interfaces)"
+echo "    World:   0.0.0.0:24000          (all interfaces)"
+echo ""
+echo "    Logs:    tail -f logs/dev.log"
 echo ""
 
 MIX_ENV=dev elixir --erl "-detached" -S mix phx.server
 
-echo "Servers started in background. Use ./scripts/stop.sh to stop."
+echo "Servers started in background."
+echo "Use './scripts/stop.sh' or 'mix bezgelor.stop' to stop."

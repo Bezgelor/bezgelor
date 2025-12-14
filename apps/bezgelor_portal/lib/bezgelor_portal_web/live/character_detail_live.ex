@@ -35,6 +35,7 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
            page_title: character.name,
            character: character,
            active_tab: :overview,
+           tabs: @tabs,
            guild: nil,
            guild_membership: nil,
            inventory_items: [],
@@ -50,28 +51,30 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
   def render(assigns) do
     ~H"""
     <div class="max-w-6xl mx-auto">
+      <!-- Breadcrumb -->
+      <nav class="breadcrumbs text-sm mb-4">
+        <ul>
+          <li><.link navigate={~p"/dashboard"}>Dashboard</.link></li>
+          <li><.link navigate={~p"/characters"}>Characters</.link></li>
+          <li>{@character.name}</li>
+        </ul>
+      </nav>
+
       <!-- Header -->
       <div class="flex items-center gap-4 mb-6">
-        <.link navigate={~p"/characters"} class="btn btn-ghost btn-sm">
-          <.icon name="hero-arrow-left" class="size-4" />
-          Back
-        </.link>
-
-        <div class="flex-1 flex items-center gap-4">
-          <.character_avatar character={@character} size="lg" />
-          <div>
-            <h1 class="text-2xl font-bold flex items-center gap-2">
-              {@character.name}
-              <.faction_badge faction_id={@character.faction_id} />
-            </h1>
-            <p class="text-base-content/70">
-              Level <span class="font-bold">{@character.level}</span>
-              <span style={"color: #{GameData.class_color(@character.class)}"}>
-                {GameData.class_name(@character.class)}
-              </span>
-              &bull; {GameData.race_name(@character.race)}
-            </p>
-          </div>
+        <.character_avatar character={@character} size="lg" />
+        <div class="flex-1">
+          <h1 class="text-2xl font-bold flex items-center gap-2">
+            {@character.name}
+            <.faction_badge faction_id={@character.faction_id} />
+          </h1>
+          <p class="text-base-content/70">
+            Level <span class="font-bold">{@character.level}</span>
+            <span style={"color: #{GameData.class_color(@character.class)}"}>
+              {GameData.class_name(@character.class)}
+            </span>
+            &bull; {GameData.race_name(@character.race)}
+          </p>
         </div>
 
         <button type="button" class="btn btn-error btn-outline btn-sm" phx-click="show_delete_modal">
@@ -114,9 +117,6 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
   defp tab_label(:guild), do: "Guild"
   defp tab_label(:tradeskills), do: "Tradeskills"
 
-  # Get tabs list for assigns
-  defp tabs, do: @tabs
-
   # Render tab content based on active tab
   defp render_tab_content(%{active_tab: :overview} = assigns), do: render_overview(assigns)
   defp render_tab_content(%{active_tab: :inventory} = assigns), do: render_inventory(assigns)
@@ -126,7 +126,6 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
 
   # Overview Tab
   defp render_overview(assigns) do
-    assigns = assign(assigns, :tabs, tabs())
 
     ~H"""
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -174,8 +173,7 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
             Location
           </h2>
           <div class="grid grid-cols-2 gap-4 mt-4">
-            <.info_row label="World ID" value={@character.world_id || "Unknown"} />
-            <.info_row label="Zone ID" value={@character.world_zone_id || "Unknown"} />
+            <.info_row label="World" value={GameData.world_name(@character.world_id)} />
             <.info_row label="Position" value={format_position(@character)} />
           </div>
         </div>
@@ -201,7 +199,6 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
 
   # Inventory Tab
   defp render_inventory(assigns) do
-    assigns = assign(assigns, :tabs, tabs())
 
     ~H"""
     <div class="space-y-6">
@@ -278,7 +275,6 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
 
   # Currencies Tab
   defp render_currencies(assigns) do
-    assigns = assign(assigns, :tabs, tabs())
 
     ~H"""
     <div class="card bg-base-100 shadow-xl">
@@ -303,7 +299,6 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
 
   # Guild Tab
   defp render_guild(assigns) do
-    assigns = assign(assigns, :tabs, tabs())
 
     ~H"""
     <div class="card bg-base-100 shadow-xl">
@@ -332,7 +327,6 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
 
   # Tradeskills Tab
   defp render_tradeskills(assigns) do
-    assigns = assign(assigns, :tabs, tabs())
 
     ~H"""
     <div class="card bg-base-100 shadow-xl">

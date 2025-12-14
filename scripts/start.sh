@@ -14,10 +14,12 @@ if ! docker compose ps postgres | grep -q "running"; then
 fi
 
 echo "==> Starting Bezgelor servers..."
-echo "    Portal:  http://localhost:4001"
-echo "    Auth:    localhost:6600"
-echo "    Realm:   localhost:23115"
-echo "    World:   localhost:24000"
+echo "    Portal:  http://localhost:4000  (localhost only)"
+echo "    Auth:    0.0.0.0:6600           (all interfaces)"
+echo "    Realm:   0.0.0.0:23115          (all interfaces)"
+echo "    World:   0.0.0.0:24000          (all interfaces)"
+echo ""
+echo "    Logs:    tail -f logs/dev.log"
 echo ""
 
 iex -S mix phx.server

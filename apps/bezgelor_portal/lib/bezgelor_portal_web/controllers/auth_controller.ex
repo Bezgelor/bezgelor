@@ -81,6 +81,6 @@ defmodule BezgelorPortalWeb.AuthController do
     conn
     |> Auth.logout()
     |> put_flash(:info, "You have been logged out.")
-    |> redirect(to: ~p"/login")
+    |> redirect(to: ~p"/")
   end
 end

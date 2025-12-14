@@ -9,7 +9,7 @@ defmodule BezgelorPortalWeb.SettingsLive do
   """
   use BezgelorPortalWeb, :live_view
 
-  alias BezgelorDb.Accounts
+  alias BezgelorDb.{Accounts, Authorization}
   alias BezgelorCrypto.Password
   alias BezgelorPortal.{Notifier, RateLimiter}
 
@@ -17,6 +17,7 @@ defmodule BezgelorPortalWeb.SettingsLive do
 
   def mount(_params, _session, socket) do
     account = socket.assigns.current_account
+    roles = Authorization.get_account_roles(account)
 
     {:ok,
      assign(socket,
@@ -37,6 +38,7 @@ defmodule BezgelorPortalWeb.SettingsLive do
        password_strength: nil,
        totp_enabled: account.totp_enabled_at != nil,
        # Account tab
+       roles: roles,
        delete_form: to_form(%{"confirm_email" => ""}, as: :delete_account),
        delete_error: nil,
        show_delete_modal: false
@@ -46,6 +48,13 @@ defmodule BezgelorPortalWeb.SettingsLive do
   def render(assigns) do
     ~H"""
     <div class="max-w-6xl mx-auto">
+      <nav class="breadcrumbs text-sm mb-4">
+        <ul>
+          <li><.link navigate={~p"/dashboard"}>Dashboard</.link></li>
+          <li>Settings</li>
+        </ul>
+      </nav>
+
       <div class="flex items-center justify-between mb-6">
         <div>
           <h1 class="text-2xl font-bold">Account Settings</h1>
@@ -101,6 +110,7 @@ defmodule BezgelorPortalWeb.SettingsLive do
             <% "account" -> %>
               <.account_tab
                 account={@current_account}
+                roles={@roles}
                 form={@delete_form}
                 error={@delete_error}
                 show_delete_modal={@show_delete_modal}
@@ -280,6 +290,7 @@ defmodule BezgelorPortalWeb.SettingsLive do
 
   # Account Tab
   attr :account, :map, required: true
+  attr :roles, :list, required: true
   attr :form, :map, required: true
   attr :error, :string, default: nil
   attr :show_delete_modal, :boolean, required: true
@@ -295,6 +306,17 @@ defmodule BezgelorPortalWeb.SettingsLive do
             <span class="label-text font-medium">Account Created</span>
           </label>
           <span>{Calendar.strftime(@account.inserted_at, "%B %d, %Y")}</span>
+        </div>
+
+        <div :if={length(@roles) > 0} class="form-control">
+          <label class="label">
+            <span class="label-text font-medium">Roles</span>
+          </label>
+          <div class="flex flex-wrap gap-2">
+            <span :for={role <- @roles} class="badge badge-primary">
+              {role.name}
+            </span>
+          </div>
         </div>
 
         <div class="divider">Danger Zone</div>

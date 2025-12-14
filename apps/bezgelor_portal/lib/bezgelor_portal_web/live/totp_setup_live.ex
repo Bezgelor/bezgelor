@@ -44,6 +44,14 @@ defmodule BezgelorPortalWeb.TotpSetupLive do
   def render(assigns) do
     ~H"""
     <div class="container mx-auto max-w-2xl px-4 py-8">
+      <nav class="breadcrumbs text-sm mb-4">
+        <ul>
+          <li><.link navigate={~p"/dashboard"}>Dashboard</.link></li>
+          <li><.link navigate={~p"/settings"}>Settings</.link></li>
+          <li>Two-Factor Setup</li>
+        </ul>
+      </nav>
+
       <div class="card bg-base-100 shadow-xl">
         <div class="card-body">
           <%= case @step do %>

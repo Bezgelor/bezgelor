@@ -31,6 +31,14 @@ defmodule BezgelorPortalWeb.TotpDisableLive do
   def render(assigns) do
     ~H"""
     <div class="container mx-auto max-w-lg px-4 py-8">
+      <nav class="breadcrumbs text-sm mb-4">
+        <ul>
+          <li><.link navigate={~p"/dashboard"}>Dashboard</.link></li>
+          <li><.link navigate={~p"/settings"}>Settings</.link></li>
+          <li>Disable Two-Factor</li>
+        </ul>
+      </nav>
+
       <div class="card bg-base-100 shadow-xl">
         <div class="card-body">
           <h2 class="card-title text-2xl mb-2">Disable Two-Factor Authentication</h2>

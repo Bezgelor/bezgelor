@@ -49,6 +49,7 @@ defmodule BezgelorPortalWeb.Live.Hooks do
     if socket.assigns.current_account do
       socket =
         socket
+        |> assign(:has_admin_access, has_admin_access?(socket.assigns.current_account))
         |> assign_server_status()
         |> maybe_schedule_status_refresh()
 
@@ -109,9 +110,23 @@ defmodule BezgelorPortalWeb.Live.Hooks do
     end
   end
 
+  # Admin permissions that grant access to the admin panel
+  @admin_permissions [
+    "users.view",
+    "users.ban",
+    "characters.view",
+    "characters.modify_items",
+    "economy.view_stats",
+    "economy.view_transactions",
+    "events.manage",
+    "events.broadcast_message",
+    "server.view_logs",
+    "admin.manage_roles",
+    "admin.view_audit_log"
+  ]
+
   defp has_admin_access?(account) do
-    permissions = Authorization.get_account_permissions(account)
-    length(permissions) > 0
+    Authorization.has_any_permission?(account, @admin_permissions)
   end
 
   # Server status helpers

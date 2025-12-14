@@ -6,26 +6,26 @@ defmodule BezgelorPortal.GameData do
   game constants used in the portal UI.
   """
 
-  # Race IDs (from NexusForever)
+  # Race IDs (from NexusForever.Game.Static.Entity.Race)
   @races %{
-    0 => %{name: "Human", faction: :exile, icon: "human"},
-    1 => %{name: "Mordesh", faction: :exile, icon: "mordesh"},
-    2 => %{name: "Draken", faction: :dominion, icon: "draken"},
+    1 => %{name: "Human", faction: :exile, icon: "human"},
+    2 => %{name: "Cassian", faction: :dominion, icon: "cassian"},
     3 => %{name: "Granok", faction: :exile, icon: "granok"},
     4 => %{name: "Aurin", faction: :exile, icon: "aurin"},
-    5 => %{name: "Chua", faction: :dominion, icon: "chua"},
+    5 => %{name: "Draken", faction: :dominion, icon: "draken"},
     12 => %{name: "Mechari", faction: :dominion, icon: "mechari"},
-    13 => %{name: "Cassian", faction: :dominion, icon: "cassian"}
+    13 => %{name: "Chua", faction: :dominion, icon: "chua"},
+    16 => %{name: "Mordesh", faction: :exile, icon: "mordesh"}
   }
 
-  # Class IDs (from NexusForever)
+  # Class IDs (from NexusForever.Game.Static.Entity.Class)
   @classes %{
     1 => %{name: "Warrior", icon: "warrior", color: "#C69B6D"},
-    2 => %{name: "Esper", icon: "esper", color: "#9B59B6"},
-    3 => %{name: "Spellslinger", icon: "spellslinger", color: "#E74C3C"},
-    4 => %{name: "Stalker", icon: "stalker", color: "#2ECC71"},
-    5 => %{name: "Medic", icon: "medic", color: "#3498DB"},
-    7 => %{name: "Engineer", icon: "engineer", color: "#F1C40F"}
+    2 => %{name: "Engineer", icon: "engineer", color: "#F1C40F"},
+    3 => %{name: "Esper", icon: "esper", color: "#9B59B6"},
+    4 => %{name: "Medic", icon: "medic", color: "#3498DB"},
+    5 => %{name: "Stalker", icon: "stalker", color: "#2ECC71"},
+    7 => %{name: "Spellslinger", icon: "spellslinger", color: "#E74C3C"}
   }
 
   # Faction IDs
@@ -169,4 +169,45 @@ defmodule BezgelorPortal.GameData do
   """
   @spec all_paths() :: map()
   def all_paths, do: @paths
+
+  @doc """
+  Get zone name by ID, looking up from game data.
+  """
+  @spec zone_name(integer() | nil) :: String.t()
+  def zone_name(nil), do: "Unknown"
+
+  def zone_name(zone_id) do
+    case BezgelorData.get_zone_with_name(zone_id) do
+      {:ok, zone} -> zone.name || "Zone #{zone_id}"
+      :error -> "Zone #{zone_id}"
+    end
+  end
+
+  @doc """
+  Get world name by ID. Since we don't have a world table with names,
+  we use known world IDs or fall back to the ID.
+  """
+  @spec world_name(integer() | nil) :: String.t()
+  def world_name(nil), do: "Unknown"
+
+  def world_name(world_id) do
+    # Known world IDs from WildStar (mapped from game data analysis)
+    case world_id do
+      22 -> "Eastern Continent"
+      51 -> "Western Continent"
+      426 -> "Arcterra"
+      870 -> "Nexus"
+      990 -> "Star-Comm Basin"
+      1061 -> "Halon Ring"
+      1068 -> "Farside"
+      1181 -> "Blighthaven"
+      1323 -> "The Defile"
+      1333 -> "Northern Wastes"
+      1387 -> "Levian Bay"
+      1421 -> "Housing Skymap"
+      1629 -> "Genetic Archives"
+      3335 -> "Omnicore-1"
+      _ -> "World #{world_id}"
+    end
+  end
 end

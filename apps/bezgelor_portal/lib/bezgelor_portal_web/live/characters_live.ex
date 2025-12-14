@@ -31,6 +31,13 @@ defmodule BezgelorPortalWeb.CharactersLive do
   def render(assigns) do
     ~H"""
     <div class="max-w-6xl mx-auto">
+      <nav class="breadcrumbs text-sm mb-4">
+        <ul>
+          <li><.link navigate={~p"/dashboard"}>Dashboard</.link></li>
+          <li>Characters</li>
+        </ul>
+      </nav>
+
       <div class="flex items-center justify-between mb-6">
         <div>
           <h1 class="text-2xl font-bold">My Characters</h1>
@@ -80,49 +87,40 @@ defmodule BezgelorPortalWeb.CharactersLive do
     """
   end
 
-  # Grid view component
+  # Grid view component - compact layout for many characters
   defp character_grid(assigns) do
     ~H"""
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
       <.link
         :for={character <- @characters}
         navigate={~p"/characters/#{character.id}"}
-        class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow cursor-pointer"
+        class="card bg-base-100 shadow hover:shadow-lg transition-shadow cursor-pointer"
       >
-        <div class="card-body">
-          <div class="flex items-start gap-4">
-            <.character_avatar character={character} size="lg" />
+        <div class="card-body p-3">
+          <div class="flex items-center gap-2">
+            <.character_avatar character={character} size="sm" />
             <div class="flex-1 min-w-0">
-              <h2 class="card-title text-lg truncate">{character.name}</h2>
-              <p class="text-sm">
-                Level <span class="font-bold">{character.level}</span>
+              <div class="font-semibold text-sm truncate">{character.name}</div>
+              <div class="text-xs text-base-content/70">
+                Lv{character.level}
                 <span style={"color: #{GameData.class_color(character.class)}"}>
                   {GameData.class_name(character.class)}
                 </span>
-              </p>
-              <p class="text-sm text-base-content/70">
-                {GameData.race_name(character.race)}
-              </p>
+              </div>
             </div>
-            <.faction_badge faction_id={character.faction_id} />
+            <.faction_badge faction_id={character.faction_id} size="xs" />
           </div>
 
-          <div class="divider my-2"></div>
-
-          <div class="grid grid-cols-2 gap-2 text-sm">
-            <div>
-              <span class="text-base-content/50">Path:</span>
-              <span class="ml-1">{GameData.path_name(character.active_path)}</span>
-            </div>
-            <div>
-              <span class="text-base-content/50">Played:</span>
-              <span class="ml-1">{GameData.format_play_time(character.time_played_total)}</span>
-            </div>
+          <div class="flex justify-between text-xs text-base-content/60 mt-2">
+            <span>{GameData.race_name(character.race)}</span>
+            <span>{GameData.path_name(character.active_path)}</span>
           </div>
 
-          <div class="text-xs text-base-content/50 mt-2">
-            Last online: {GameData.format_relative_time(character.last_online)}
-          </div>
+          <progress
+            class="progress progress-primary w-full h-1 mt-1"
+            value={rem(character.total_xp, 1000)}
+            max="1000"
+          />
         </div>
       </.link>
     </div>
