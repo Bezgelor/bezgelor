@@ -58,14 +58,15 @@ defmodule BezgelorProtocol.Packets.Realm.ClientHelloAuth do
   def read(reader) do
     with {:ok, build, reader} <- PacketReader.read_uint32(reader),
          {:ok, crypt_key, reader} <- PacketReader.read_uint64(reader),
-         {:ok, email, reader} <- PacketReader.read_wide_string(reader),
+         {:ok, email, reader} <- PacketReader.read_wide_string_fixed(reader),
          {:ok, uuid_1, reader} <- PacketReader.read_bytes(reader, 16),
          {:ok, game_token, reader} <- PacketReader.read_bytes(reader, 16),
          {:ok, inet_address, reader} <- PacketReader.read_uint32(reader),
          {:ok, language, reader} <- PacketReader.read_uint32(reader),
          {:ok, game_mode, reader} <- PacketReader.read_uint32(reader),
          {:ok, unused, reader} <- PacketReader.read_uint32(reader),
-         {:ok, datacenter_id, reader} <- read_datacenter_id(reader) do
+         {:ok, reader} <- skip_hardware_info(reader),
+         {:ok, datacenter_id, reader} <- PacketReader.read_uint32(reader) do
       packet = %__MODULE__{
         build: build,
         crypt_key_integer: crypt_key,
@@ -83,15 +84,43 @@ defmodule BezgelorProtocol.Packets.Realm.ClientHelloAuth do
     end
   end
 
-  # Read datacenter ID, handling potential hardware info between
-  # For now, skip any remaining bytes and read last uint32 as datacenter
-  # Full hardware info parsing can be added later if needed
-  defp read_datacenter_id(reader) do
-    # Try to read datacenter_id directly
-    # If there's more data (hardware info), we skip it for now
-    case PacketReader.read_uint32(reader) do
-      {:ok, value, reader} -> {:ok, value, reader}
-      {:error, :eof} -> {:ok, 0, reader}
+  # Skip hardware info (CPU, GPU, OS details)
+  # Format: CpuInfo, uint32 MemoryPhysical, GpuInfo, 4x uint32 OS info
+  defp skip_hardware_info(reader) do
+    with {:ok, reader} <- skip_cpu_info(reader),
+         {:ok, _memory, reader} <- PacketReader.read_uint32(reader),
+         {:ok, reader} <- skip_gpu_info(reader),
+         {:ok, _arch, reader} <- PacketReader.read_uint32(reader),
+         {:ok, _os_ver, reader} <- PacketReader.read_uint32(reader),
+         {:ok, _sp, reader} <- PacketReader.read_uint32(reader),
+         {:ok, _prod_type, reader} <- PacketReader.read_uint32(reader) do
+      {:ok, reader}
+    end
+  end
+
+  # Skip CPU info: 3 wide strings + 5 uint32s
+  defp skip_cpu_info(reader) do
+    with {:ok, _manufacturer, reader} <- PacketReader.read_wide_string(reader),
+         {:ok, _name, reader} <- PacketReader.read_wide_string(reader),
+         {:ok, _desc, reader} <- PacketReader.read_wide_string(reader),
+         {:ok, _family, reader} <- PacketReader.read_uint32(reader),
+         {:ok, _level, reader} <- PacketReader.read_uint32(reader),
+         {:ok, _revision, reader} <- PacketReader.read_uint32(reader),
+         {:ok, _max_clock, reader} <- PacketReader.read_uint32(reader),
+         {:ok, _num_cores, reader} <- PacketReader.read_uint32(reader) do
+      {:ok, reader}
+    end
+  end
+
+  # Skip GPU info: 1 wide string + 5 uint32s
+  defp skip_gpu_info(reader) do
+    with {:ok, _name, reader} <- PacketReader.read_wide_string(reader),
+         {:ok, _vendor_id, reader} <- PacketReader.read_uint32(reader),
+         {:ok, _device_id, reader} <- PacketReader.read_uint32(reader),
+         {:ok, _subsys_id, reader} <- PacketReader.read_uint32(reader),
+         {:ok, _revision, reader} <- PacketReader.read_uint32(reader),
+         {:ok, _adapter_ram, reader} <- PacketReader.read_uint32(reader) do
+      {:ok, reader}
     end
   end
 end

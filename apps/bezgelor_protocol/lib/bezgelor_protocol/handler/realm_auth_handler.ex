@@ -28,7 +28,7 @@ defmodule BezgelorProtocol.Handler.RealmAuthHandler do
 
   alias BezgelorProtocol.{PacketReader, PacketWriter}
   alias BezgelorCrypto.Random
-  alias BezgelorDb.{Accounts, Realms}
+  alias BezgelorDb.Accounts
 
   require Logger
 
@@ -46,7 +46,7 @@ defmodule BezgelorProtocol.Handler.RealmAuthHandler do
       {:error, reason} ->
         Logger.warning("Failed to parse ClientHelloAuth (realm): #{inspect(reason)}")
         response = build_denial(:unknown)
-        {:reply, :server_auth_denied_realm, encode_packet(response), state}
+        {:reply_encrypted, :server_auth_denied_realm, encode_packet(response), state}
     end
   end
 
@@ -58,7 +58,7 @@ defmodule BezgelorProtocol.Handler.RealmAuthHandler do
       {:error, reason} ->
         Logger.warning("Build version mismatch: expected #{@expected_build}, got #{packet.build}")
         response = build_denial(reason)
-        {:reply, :server_auth_denied_realm, encode_packet(response), state}
+        {:reply_encrypted, :server_auth_denied_realm, encode_packet(response), state}
     end
   end
 
@@ -71,7 +71,7 @@ defmodule BezgelorProtocol.Handler.RealmAuthHandler do
 
     with {:ok, account} <- lookup_account(packet.email, game_token_hex),
          :ok <- check_suspension(account),
-         {:ok, realm} <- get_realm(),
+         {:ok, realm} <- get_realm_config(),
          {:ok, session_key} <- generate_session_key(account) do
       # Build responses
       accepted = %ServerAuthAccepted{}
@@ -82,20 +82,20 @@ defmodule BezgelorProtocol.Handler.RealmAuthHandler do
       state = put_in(state.session_data[:account_id], account.id)
       state = put_in(state.session_data[:session_key], session_key)
 
-      # Send multiple responses
+      # Send multiple encrypted responses
       responses = [
         {:server_auth_accepted_realm, encode_packet(accepted)},
         {:server_realm_messages, encode_packet(messages)},
         {:server_realm_info, encode_packet(realm_info)}
       ]
 
-      {:reply_multi, responses, state}
+      {:reply_multi_encrypted, responses, state}
     else
       {:error, reason} ->
         Logger.warning("Realm authentication failed: #{inspect(reason)}")
         {result, days} = denial_from_reason(reason)
         response = build_denial(result, days)
-        {:reply, :server_auth_denied_realm, encode_packet(response), state}
+        {:reply_encrypted, :server_auth_denied_realm, encode_packet(response), state}
     end
   end
 
@@ -118,15 +118,20 @@ defmodule BezgelorProtocol.Handler.RealmAuthHandler do
     end
   end
 
-  defp get_realm do
-    case Realms.get_first_online_realm() do
-      nil ->
-        Logger.warning("No online realms available")
-        {:error, :no_realms_available}
+  defp get_realm_config do
+    # Get realm info from config instead of database
+    world_config = Application.get_all_env(:bezgelor_world)
 
-      realm ->
-        {:ok, realm}
-    end
+    realm = %{
+      name: Application.get_env(:bezgelor_realm, :realm_name, "Bezgelor"),
+      address: Keyword.get(world_config, :public_address, "127.0.0.1"),
+      port: Keyword.get(world_config, :port, 24000),
+      type: Application.get_env(:bezgelor_realm, :realm_type, :pve),
+      flags: Application.get_env(:bezgelor_realm, :realm_flags, 0),
+      note_text_id: Application.get_env(:bezgelor_realm, :realm_note_text_id, 0)
+    }
+
+    {:ok, realm}
   end
 
   defp generate_session_key(account) do
@@ -140,8 +145,11 @@ defmodule BezgelorProtocol.Handler.RealmAuthHandler do
   end
 
   defp build_realm_info(account, realm, session_key) do
+    address_int = ip_to_uint32(realm.address)
+    Logger.debug("[Realm] ServerRealmInfo: address=#{realm.address} (0x#{Integer.to_string(address_int, 16)}), port=#{realm.port}, account_id=#{account.id}, realm_name=#{realm.name}, type=#{inspect(realm.type)}")
+
     %ServerRealmInfo{
-      address: Realms.ip_to_uint32(realm.address),
+      address: address_int,
       port: realm.port,
       session_key: session_key,
       account_id: account.id,
@@ -150,6 +158,17 @@ defmodule BezgelorProtocol.Handler.RealmAuthHandler do
       type: realm.type,
       note_text_id: realm.note_text_id
     }
+  end
+
+  # Convert IP string to network byte order uint32
+  defp ip_to_uint32(ip_string) when is_binary(ip_string) do
+    [a, b, c, d] =
+      ip_string
+      |> String.split(".")
+      |> Enum.map(&String.to_integer/1)
+
+    <<n::big-unsigned-32>> = <<a, b, c, d>>
+    n
   end
 
   defp build_denial(result, days \\ 0.0) do

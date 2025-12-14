@@ -20,7 +20,7 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
 
   import Bitwise
 
-  alias BezgelorProtocol.Packets.World.{ServerEntityCreate, ServerQuestList}
+  alias BezgelorProtocol.Packets.World.{ServerEntityCreate, ServerQuestList, ServerPlayerEnteredWorld}
   alias BezgelorProtocol.PacketWriter
   alias BezgelorCore.Entity
   alias BezgelorWorld.Handler.AchievementHandler
@@ -67,15 +67,18 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
     # Start achievement handler for this character
     account_id = state.session_data[:account_id]
 
+    # Connection PID is self() since handlers run in the Connection GenServer
+    connection_pid = self()
+
     {:ok, achievement_handler} =
       AchievementHandler.start_link(
-        state.connection_pid,
+        connection_pid,
         character.id,
         account_id: account_id
       )
 
     # Send achievement list to client
-    AchievementHandler.send_achievement_list(state.connection_pid, character.id)
+    AchievementHandler.send_achievement_list(connection_pid, character.id)
 
     # Update session state
     state = put_in(state.session_data[:entity_guid], guid)
@@ -93,9 +96,15 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
     # Schedule periodic quest persistence timer
     send(self(), :schedule_quest_persistence)
 
-    {:reply_multi, [
+    # Build ServerPlayerEnteredWorld packet - this dismisses the loading screen
+    entered_world_writer = PacketWriter.new()
+    {:ok, entered_world_writer} = ServerPlayerEnteredWorld.write(%ServerPlayerEnteredWorld{}, entered_world_writer)
+    entered_world_data = PacketWriter.to_binary(entered_world_writer)
+
+    {:reply_multi_world_encrypted, [
       {:server_entity_create, entity_packet_data},
-      {:server_quest_list, quest_packet_data}
+      {:server_quest_list, quest_packet_data},
+      {:server_player_entered_world, entered_world_data}
     ], state}
   end
 

@@ -28,8 +28,8 @@ defmodule BezgelorProtocol.Packets.Realm.ServerRealmInfo do
 
   @behaviour BezgelorProtocol.Packet.Writable
 
-  import Bitwise
   alias BezgelorProtocol.PacketWriter
+  require Logger
 
   @realm_type_pve 0
   @realm_type_pvp 1
@@ -65,21 +65,24 @@ defmodule BezgelorProtocol.Packets.Realm.ServerRealmInfo do
   @spec write(t(), PacketWriter.t()) :: {:ok, PacketWriter.t()}
   def write(%__MODULE__{} = packet, writer) do
     type_int = realm_type_to_int(packet.type)
-    # Pack type (2 bits) and note_text_id (21 bits) into a uint32
-    type_and_note = (type_int &&& 0x3) ||| ((packet.note_text_id &&& 0x1FFFFF) <<< 2)
 
-    # Address is written as raw bytes in network order (big-endian)
-    address_bytes = <<packet.address::big-unsigned-32>>
-
+    # Address is written in little-endian (client expects it this way)
     writer =
       writer
-      |> PacketWriter.write_bytes(address_bytes)
+      |> PacketWriter.write_uint32(packet.address)
       |> PacketWriter.write_uint16(packet.port)
       |> PacketWriter.write_bytes(packet.session_key)
       |> PacketWriter.write_uint32(packet.account_id)
       |> PacketWriter.write_wide_string(packet.realm_name)
       |> PacketWriter.write_uint32(packet.flags)
-      |> PacketWriter.write_uint32(type_and_note)
+      # Type and NoteTextId are bit-packed (2 bits + 21 bits)
+      |> PacketWriter.write_bits(type_int, 2)
+      |> PacketWriter.write_bits(packet.note_text_id, 21)
+      |> PacketWriter.flush_bits()
+
+    # Debug: dump packet bytes
+    bytes = PacketWriter.to_binary(writer)
+    Logger.debug("[ServerRealmInfo] Packet bytes (#{byte_size(bytes)}): #{Base.encode16(bytes)}")
 
     {:ok, writer}
   end

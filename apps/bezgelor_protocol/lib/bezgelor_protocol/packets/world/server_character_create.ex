@@ -4,47 +4,49 @@ defmodule BezgelorProtocol.Packets.World.ServerCharacterCreate do
 
   ## Overview
 
-  Server response to ClientCharacterCreate indicating success
-  or failure with the new character ID.
+  Server response to ClientCharacterCreate indicating success or failure.
 
-  ## Wire Format
+  ## Wire Format (from NexusForever)
 
   ```
-  result       : uint32 - Result code (0=success, other=error)
   character_id : uint64 - New character ID (0 on failure)
+  world_id     : uint32 - Starting world ID
+  result       : 3 bits - Result code from CharacterModifyResult
   ```
 
-  ## Result Codes
+  ## Result Codes (CharacterModifyResult)
 
   | Code | Name | Description |
   |------|------|-------------|
-  | 0 | success | Character created successfully |
-  | 1 | name_taken | Name already in use |
-  | 2 | invalid_name | Name doesn't meet requirements |
-  | 3 | max_characters | Account has maximum characters |
-  | 4 | invalid_race | Invalid race selection |
-  | 5 | invalid_class | Invalid class selection |
-  | 6 | invalid_faction | Race doesn't match faction |
-  | 7 | server_error | Internal server error |
+  | 0x03 | CreateOk | Character created successfully |
+  | 0x04 | CreateFailed | General creation failure |
+  | 0x06 | CreateFailed_UniqueName | Name already in use |
+  | 0x09 | CreateFailed_AccountFull | Max characters reached |
+  | 0x0A | CreateFailed_InvalidName | Name doesn't meet requirements |
+  | 0x0B | CreateFailed_Faction | Race doesn't match faction |
+  | 0x0C | CreateFailed_Internal | Internal server error |
   """
 
   @behaviour BezgelorProtocol.Packet.Writable
 
   alias BezgelorProtocol.PacketWriter
 
-  # Result codes
-  @result_success 0
-  @result_name_taken 1
-  @result_invalid_name 2
-  @result_max_characters 3
-  @result_invalid_race 4
-  @result_invalid_class 5
-  @result_invalid_faction 6
-  @result_server_error 7
+  # CharacterModifyResult codes (from NexusForever)
+  @result_create_ok 0x03
+  @result_create_failed 0x04
+  @result_unique_name 0x06
+  @result_account_full 0x09
+  @result_invalid_name 0x0A
+  @result_faction 0x0B
+  @result_internal 0x0C
+
+  # Default world ID for new characters
+  @default_world_id 870
 
   defstruct [
     :result,
-    character_id: 0
+    character_id: 0,
+    world_id: @default_world_id
   ]
 
   @type result ::
@@ -52,14 +54,13 @@ defmodule BezgelorProtocol.Packets.World.ServerCharacterCreate do
           | :name_taken
           | :invalid_name
           | :max_characters
-          | :invalid_race
-          | :invalid_class
           | :invalid_faction
           | :server_error
 
   @type t :: %__MODULE__{
           result: result(),
-          character_id: non_neg_integer()
+          character_id: non_neg_integer(),
+          world_id: non_neg_integer()
         }
 
   @impl true
@@ -70,46 +71,41 @@ defmodule BezgelorProtocol.Packets.World.ServerCharacterCreate do
   def write(%__MODULE__{} = packet, writer) do
     result_code = result_to_code(packet.result)
 
+    # Format: character_id (uint64), world_id (uint32), result (3 bits)
     writer =
       writer
-      |> PacketWriter.write_uint32(result_code)
       |> PacketWriter.write_uint64(packet.character_id)
+      |> PacketWriter.write_uint32(packet.world_id)
+      |> PacketWriter.write_bits(result_code, 3)
 
     {:ok, writer}
   end
 
-  @doc "Convert result atom to integer code."
+  @doc "Convert result atom to CharacterModifyResult code."
   @spec result_to_code(result()) :: non_neg_integer()
-  def result_to_code(:success), do: @result_success
-  def result_to_code(:name_taken), do: @result_name_taken
+  def result_to_code(:success), do: @result_create_ok
+  def result_to_code(:name_taken), do: @result_unique_name
   def result_to_code(:invalid_name), do: @result_invalid_name
-  def result_to_code(:max_characters), do: @result_max_characters
-  def result_to_code(:invalid_race), do: @result_invalid_race
-  def result_to_code(:invalid_class), do: @result_invalid_class
-  def result_to_code(:invalid_faction), do: @result_invalid_faction
-  def result_to_code(:server_error), do: @result_server_error
-  def result_to_code(_), do: @result_server_error
-
-  @doc "Convert integer code to result atom."
-  @spec code_to_result(non_neg_integer()) :: result()
-  def code_to_result(@result_success), do: :success
-  def code_to_result(@result_name_taken), do: :name_taken
-  def code_to_result(@result_invalid_name), do: :invalid_name
-  def code_to_result(@result_max_characters), do: :max_characters
-  def code_to_result(@result_invalid_race), do: :invalid_race
-  def code_to_result(@result_invalid_class), do: :invalid_class
-  def code_to_result(@result_invalid_faction), do: :invalid_faction
-  def code_to_result(_), do: :server_error
+  def result_to_code(:max_characters), do: @result_account_full
+  def result_to_code(:invalid_faction), do: @result_faction
+  def result_to_code(:server_error), do: @result_internal
+  def result_to_code(_), do: @result_internal
 
   @doc "Create a success response with character ID."
   @spec success(non_neg_integer()) :: t()
   def success(character_id) do
-    %__MODULE__{result: :success, character_id: character_id}
+    %__MODULE__{result: :success, character_id: character_id, world_id: @default_world_id}
+  end
+
+  @doc "Create a success response with character ID and world ID."
+  @spec success(non_neg_integer(), non_neg_integer()) :: t()
+  def success(character_id, world_id) do
+    %__MODULE__{result: :success, character_id: character_id, world_id: world_id}
   end
 
   @doc "Create a failure response."
   @spec failure(result()) :: t()
   def failure(reason) do
-    %__MODULE__{result: reason, character_id: 0}
+    %__MODULE__{result: reason, character_id: 0, world_id: 0}
   end
 end

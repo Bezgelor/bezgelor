@@ -5,11 +5,17 @@ defmodule BezgelorProtocol.Handler.CharacterCreateHandler do
   Validates character creation parameters and creates the character
   in the database.
 
+  ## Overview
+
+  The client sends a CharacterCreationId which references the CharacterCreation
+  game table. This table contains the race, class, sex, faction, and starting
+  items for the character template. Customizations are applied on top.
+
   ## Validation
 
   - Name format (3-24 characters, alphanumeric + spaces)
   - Name availability (case-insensitive)
-  - Race/faction compatibility (Exile vs Dominion)
+  - Valid character creation template
   - Character slot limit (12 per account)
   """
 
@@ -21,6 +27,7 @@ defmodule BezgelorProtocol.Handler.CharacterCreateHandler do
   }
 
   alias BezgelorProtocol.{PacketReader, PacketWriter}
+  alias BezgelorData.Store
   alias BezgelorDb.Characters
 
   require Logger
@@ -57,23 +64,43 @@ defmodule BezgelorProtocol.Handler.CharacterCreateHandler do
   end
 
   defp do_create(account_id, packet, state) do
-    # Derive faction from race
-    faction_id = faction_for_race(packet.race)
+    # Look up the character creation template
+    case Store.get_character_creation(packet.character_creation_id) do
+      {:ok, creation_entry} ->
+        create_from_template(account_id, packet, creation_entry, state)
+
+      :error ->
+        Logger.warning("Invalid character creation ID: #{packet.character_creation_id}")
+        response = ServerCharacterCreate.failure(:server_error)
+        {:reply, :server_character_create, encode_packet(response), state}
+    end
+  end
+
+  defp create_from_template(account_id, packet, creation_entry, state) do
+    # Extract race, class, sex, faction from the creation template
+    # The JSON uses string keys like "raceId", "classId", etc.
+    race = Map.get(creation_entry, "raceId") || Map.get(creation_entry, :raceId)
+    class = Map.get(creation_entry, "classId") || Map.get(creation_entry, :classId)
+    sex = Map.get(creation_entry, "sex") || Map.get(creation_entry, :sex)
+    faction_id = Map.get(creation_entry, "factionId") || Map.get(creation_entry, :factionId)
+
+    Logger.debug("Creating character from template: race=#{race}, class=#{class}, sex=#{sex}, faction=#{faction_id}")
 
     character_attrs = %{
       name: packet.name,
-      sex: packet.sex,
-      race: packet.race,
-      class: packet.class,
+      sex: sex,
+      race: race,
+      class: class,
       faction_id: faction_id,
       world_id: @default_world_id,
       world_zone_id: @default_zone_id,
       active_path: packet.path
     }
 
-    appearance_attrs = ClientCharacterCreate.appearance_to_map(packet.appearance)
+    # Convert customization data
+    customization_attrs = ClientCharacterCreate.customization_to_map(packet)
 
-    case Characters.create_character(account_id, character_attrs, appearance_attrs) do
+    case Characters.create_character(account_id, character_attrs, customization_attrs) do
       {:ok, character} ->
         Logger.info("Created character '#{character.name}' (ID: #{character.id}) for account #{account_id}")
         response = ServerCharacterCreate.success(character.id)
@@ -101,13 +128,6 @@ defmodule BezgelorProtocol.Handler.CharacterCreateHandler do
         {:reply, :server_character_create, encode_packet(response), state}
     end
   end
-
-  # Derive faction ID from race
-  # Exile races (166): Human (0), Mordesh (1), Granok (3), Aurin (4)
-  # Dominion races (167): Draken (2), Chua (5), Mechari (12), Cassian (13)
-  defp faction_for_race(race) when race in [0, 1, 3, 4], do: 166
-  defp faction_for_race(race) when race in [2, 5, 12, 13], do: 167
-  defp faction_for_race(_), do: 166
 
   defp encode_packet(%ServerCharacterCreate{} = packet) do
     writer = PacketWriter.new()

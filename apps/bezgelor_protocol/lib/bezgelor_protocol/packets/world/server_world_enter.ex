@@ -1,26 +1,22 @@
 defmodule BezgelorProtocol.Packets.World.ServerWorldEnter do
   @moduledoc """
-  World entry initialization packet.
+  World change/entry packet (ServerChangeWorld in NexusForever).
 
   ## Overview
 
   Sent when player enters the world after character selection.
-  Contains character data and initial spawn position.
+  If sent while on CharacterSelect screen, loads into the Game screen.
+  If sent while Game screen is already active, reinitializes player data managers.
 
-  ## Wire Format
+  ## Wire Format (from NexusForever)
 
   ```
-  character_id : uint64  - Character database ID
-  world_id     : uint32  - World/map ID
-  zone_id      : uint32  - Zone within world
-  position_x   : float32 - X coordinate
-  position_y   : float32 - Y coordinate
-  position_z   : float32 - Z coordinate
-  rotation_x   : float32 - X rotation
-  rotation_y   : float32 - Y rotation
-  rotation_z   : float32 - Z rotation
-  time_of_day  : uint32  - Current time in game
-  weather      : uint32  - Weather state
+  world_id   : 15 bits  - World/map ID
+  position_x : float32  - X coordinate
+  position_y : float32  - Y coordinate
+  position_z : float32  - Z coordinate
+  yaw        : float32  - Horizontal rotation
+  pitch      : float32  - Vertical rotation
   ```
   """
 
@@ -29,31 +25,21 @@ defmodule BezgelorProtocol.Packets.World.ServerWorldEnter do
   alias BezgelorProtocol.PacketWriter
 
   defstruct [
-    :character_id,
     :world_id,
-    :zone_id,
-    :position_x,
-    :position_y,
-    :position_z,
-    rotation_x: 0.0,
-    rotation_y: 0.0,
-    rotation_z: 0.0,
-    time_of_day: 0,
-    weather: 0
+    position_x: 0.0,
+    position_y: 0.0,
+    position_z: 0.0,
+    yaw: 0.0,
+    pitch: 0.0
   ]
 
   @type t :: %__MODULE__{
-          character_id: non_neg_integer(),
           world_id: non_neg_integer(),
-          zone_id: non_neg_integer(),
           position_x: float(),
           position_y: float(),
           position_z: float(),
-          rotation_x: float(),
-          rotation_y: float(),
-          rotation_z: float(),
-          time_of_day: non_neg_integer(),
-          weather: non_neg_integer()
+          yaw: float(),
+          pitch: float()
         }
 
   @impl true
@@ -62,41 +48,56 @@ defmodule BezgelorProtocol.Packets.World.ServerWorldEnter do
   @impl true
   @spec write(t(), PacketWriter.t()) :: {:ok, PacketWriter.t()}
   def write(%__MODULE__{} = packet, writer) do
+    # Format: world_id (15 bits), position (3 floats), yaw, pitch
+    # Use write_float32_bits to maintain continuous bit stream after world_id
     writer =
       writer
-      |> PacketWriter.write_uint64(packet.character_id)
-      |> PacketWriter.write_uint32(packet.world_id)
-      |> PacketWriter.write_uint32(packet.zone_id)
-      |> PacketWriter.write_float32(packet.position_x)
-      |> PacketWriter.write_float32(packet.position_y)
-      |> PacketWriter.write_float32(packet.position_z)
-      |> PacketWriter.write_float32(packet.rotation_x || 0.0)
-      |> PacketWriter.write_float32(packet.rotation_y || 0.0)
-      |> PacketWriter.write_float32(packet.rotation_z || 0.0)
-      |> PacketWriter.write_uint32(packet.time_of_day || 0)
-      |> PacketWriter.write_uint32(packet.weather || 0)
+      |> PacketWriter.write_bits(packet.world_id || 0, 15)
+      |> PacketWriter.write_float32_bits(packet.position_x || 0.0)
+      |> PacketWriter.write_float32_bits(packet.position_y || 0.0)
+      |> PacketWriter.write_float32_bits(packet.position_z || 0.0)
+      |> PacketWriter.write_float32_bits(packet.yaw || 0.0)
+      |> PacketWriter.write_float32_bits(packet.pitch || 0.0)
+      |> PacketWriter.flush_bits()
 
     {:ok, writer}
   end
 
   @doc """
-  Create a world enter packet from a spawn location.
+  Create a world enter packet from character data.
   """
-  @spec from_spawn(non_neg_integer(), map()) :: t()
-  def from_spawn(character_id, spawn) do
-    {pos_x, pos_y, pos_z} = spawn.position
-    {rot_x, rot_y, rot_z} = spawn.rotation
+  @spec from_character(map()) :: t()
+  def from_character(character) do
+    %__MODULE__{
+      world_id: character.world_id || 870,
+      position_x: character.location_x || 0.0,
+      position_y: character.location_y || 0.0,
+      position_z: character.location_z || 0.0,
+      yaw: character.rotation_z || 0.0,
+      pitch: character.rotation_x || 0.0
+    }
+  end
+
+  @doc """
+  Create a world enter packet from spawn location data.
+
+  Spawn location maps have:
+  - world_id: integer
+  - position: {x, y, z} tuple
+  - rotation: {rx, ry, rz} tuple
+  """
+  @spec from_spawn(map()) :: t()
+  def from_spawn(spawn) do
+    {x, y, z} = spawn.position
+    {_rx, _ry, rz} = spawn.rotation
 
     %__MODULE__{
-      character_id: character_id,
       world_id: spawn.world_id,
-      zone_id: spawn.zone_id,
-      position_x: pos_x,
-      position_y: pos_y,
-      position_z: pos_z,
-      rotation_x: rot_x,
-      rotation_y: rot_y,
-      rotation_z: rot_z
+      position_x: x,
+      position_y: y,
+      position_z: z,
+      yaw: rz,
+      pitch: 0.0
     }
   end
 end

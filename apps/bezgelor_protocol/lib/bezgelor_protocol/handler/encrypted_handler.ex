@@ -1,13 +1,13 @@
 defmodule BezgelorProtocol.Handler.EncryptedHandler do
   @moduledoc """
-  Handles encrypted packets (opcode 0x0077 - ClientEncrypted).
+  Handles encrypted packets (opcode 0x0244 - ClientEncrypted).
 
   Decrypts the payload using the session encryption cipher,
   then dispatches the inner packet to the appropriate handler.
 
   ## Encryption Flow
 
-  1. Client sends encrypted packet with opcode 0x0077
+  1. Client sends encrypted packet with opcode 0x0244
   2. Handler retrieves cipher from connection state
   3. Payload is decrypted using PacketCrypt
   4. Inner opcode is extracted from decrypted data
@@ -16,7 +16,7 @@ defmodule BezgelorProtocol.Handler.EncryptedHandler do
   ## State Requirements
 
   The connection state must contain:
-  - `:packet_cipher` - A `BezgelorCrypto.PacketCrypt` struct initialized
+  - `:encryption` - A `BezgelorCrypto.PacketCrypt` struct initialized
     with the session key during authentication
   """
 
@@ -33,6 +33,24 @@ defmodule BezgelorProtocol.Handler.EncryptedHandler do
       {:ok, new_state} ->
         {:ok, new_state}
 
+      {:reply, opcode, response, new_state} ->
+        {:reply, opcode, response, new_state}
+
+      {:reply_encrypted, opcode, response, new_state} ->
+        {:reply_encrypted, opcode, response, new_state}
+
+      {:reply_multi, responses, new_state} ->
+        {:reply_multi, responses, new_state}
+
+      {:reply_multi_encrypted, responses, new_state} ->
+        {:reply_multi_encrypted, responses, new_state}
+
+      {:reply_world_encrypted, opcode, response, new_state} ->
+        {:reply_world_encrypted, opcode, response, new_state}
+
+      {:reply_multi_world_encrypted, responses, new_state} ->
+        {:reply_multi_world_encrypted, responses, new_state}
+
       {:error, reason} ->
         Logger.warning("EncryptedHandler: failed to process - #{inspect(reason)}")
         {:ok, state}
@@ -40,14 +58,17 @@ defmodule BezgelorProtocol.Handler.EncryptedHandler do
   end
 
   defp decrypt_and_dispatch(payload, state) do
-    # Get cipher from connection state
-    cipher = Map.get(state, :packet_cipher)
+    # Get cipher from connection state (stored as :encryption in Connection struct)
+    cipher = Map.get(state, :encryption)
 
     if is_nil(cipher) do
       Logger.warning("EncryptedHandler: no encryption cipher available")
       {:error, :no_cipher}
     else
-      with {:ok, decrypted} <- decrypt_payload(cipher, payload),
+      # ClientEncrypted packet structure: uint32 length + encrypted_data
+      # The length includes itself, so encrypted_data = length - 4 bytes
+      with {:ok, encrypted_data} <- extract_encrypted_data(payload),
+           {:ok, decrypted} <- decrypt_payload(cipher, encrypted_data),
            {:ok, inner_opcode, inner_payload} <- parse_inner_packet(decrypted),
            {:ok, handler} <- lookup_handler(inner_opcode) do
         Logger.debug(
@@ -59,10 +80,33 @@ defmodule BezgelorProtocol.Handler.EncryptedHandler do
     end
   end
 
+  # Extract encrypted data from ClientEncrypted packet (skip 4-byte length prefix)
+  defp extract_encrypted_data(payload) when byte_size(payload) < 4 do
+    {:error, :payload_too_short}
+  end
+
+  defp extract_encrypted_data(payload) do
+    <<length::little-32, rest::binary>> = payload
+    # Length includes itself (4 bytes), so encrypted data is (length - 4) bytes
+    encrypted_data_size = length - 4
+
+    if byte_size(rest) < encrypted_data_size do
+      Logger.warning("EncryptedHandler: payload too short. Expected #{encrypted_data_size} bytes, got #{byte_size(rest)}")
+      {:error, :payload_too_short}
+    else
+      encrypted_data = binary_part(rest, 0, encrypted_data_size)
+      Logger.debug("EncryptedHandler: payload size=#{byte_size(payload)}, length field=#{length}, encrypted_data size=#{byte_size(encrypted_data)}")
+      {:ok, encrypted_data}
+    end
+  end
+
   # Decrypt the encrypted payload
   defp decrypt_payload(cipher, payload) do
     try do
       decrypted = PacketCrypt.decrypt(cipher, payload)
+      # Debug: log first 16 bytes of decrypted data and input
+      Logger.debug("EncryptedHandler: input (first 16): #{Base.encode16(:binary.part(payload, 0, min(16, byte_size(payload))))}")
+      Logger.debug("EncryptedHandler: decrypted (first 16): #{Base.encode16(:binary.part(decrypted, 0, min(16, byte_size(decrypted))))}")
       {:ok, decrypted}
     rescue
       e ->

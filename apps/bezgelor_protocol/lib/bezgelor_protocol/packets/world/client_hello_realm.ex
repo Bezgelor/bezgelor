@@ -12,7 +12,9 @@ defmodule BezgelorProtocol.Packets.World.ClientHelloRealm do
   ```
   account_id    : uint32
   session_key   : 16 bytes
+  unused        : uint64 (always 0)
   email         : wide_string (length-prefixed UTF-16LE)
+  always3       : uint32 (always 3)
   ```
 
   The session key was provided by the realm server in ServerRealmInfo
@@ -26,13 +28,17 @@ defmodule BezgelorProtocol.Packets.World.ClientHelloRealm do
   defstruct [
     :account_id,
     :session_key,
-    :email
+    :unused,
+    :email,
+    :always3
   ]
 
   @type t :: %__MODULE__{
           account_id: non_neg_integer(),
           session_key: binary(),
-          email: String.t()
+          unused: non_neg_integer(),
+          email: String.t(),
+          always3: non_neg_integer()
         }
 
   @impl true
@@ -42,11 +48,15 @@ defmodule BezgelorProtocol.Packets.World.ClientHelloRealm do
   def read(reader) do
     with {:ok, account_id, reader} <- PacketReader.read_uint32(reader),
          {:ok, session_key, reader} <- PacketReader.read_bytes(reader, 16),
-         {:ok, email, reader} <- PacketReader.read_wide_string(reader) do
+         {:ok, unused, reader} <- PacketReader.read_uint64(reader),
+         {:ok, email, reader} <- PacketReader.read_wide_string(reader),
+         {:ok, always3, reader} <- PacketReader.read_uint32(reader) do
       packet = %__MODULE__{
         account_id: account_id,
         session_key: session_key,
-        email: email
+        unused: unused,
+        email: email,
+        always3: always3
       }
 
       {:ok, packet, reader}

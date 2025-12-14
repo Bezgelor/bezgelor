@@ -3,25 +3,25 @@ defmodule BezgelorProtocol.Handler.WorldAuthHandler do
   Handler for ClientHelloRealm packets on the world server (port 24000).
 
   This handler validates session keys issued by the realm server
-  and sends the character list to the client.
+  and updates the encryption key for subsequent packets.
 
   ## Authentication Flow
 
   1. Parse ClientHelloRealm with session key
   2. Look up account by email + session key
-  3. Load character list for account
-  4. Send ServerCharacterList with all characters
+  3. Update encryption to use session-key-derived key
+  4. Wait for client to send ClientCharacterList (handled separately)
+
+  Note: Character list is NOT sent here. The client will request it
+  via ClientCharacterList packet, which is handled by CharacterListHandler.
   """
 
   @behaviour BezgelorProtocol.Handler
 
-  alias BezgelorProtocol.Packets.World.{
-    ClientHelloRealm,
-    ServerCharacterList
-  }
-
-  alias BezgelorProtocol.{PacketReader, PacketWriter}
-  alias BezgelorDb.{Accounts, Characters}
+  alias BezgelorProtocol.Packets.World.ClientHelloRealm
+  alias BezgelorProtocol.PacketReader
+  alias BezgelorCrypto.PacketCrypt
+  alias BezgelorDb.Accounts
 
   require Logger
 
@@ -36,21 +36,30 @@ defmodule BezgelorProtocol.Handler.WorldAuthHandler do
 
       {:error, reason} ->
         Logger.warning("Failed to parse ClientHelloRealm: #{inspect(reason)}")
-        # For world server, we just disconnect on error
         {:error, reason}
     end
   end
 
   defp process_auth(packet, state) do
-    with {:ok, account} <- validate_session(packet),
-         characters <- load_characters(account.id) do
+    with {:ok, account} <- validate_session(packet) do
       # Store account in session
       state = put_in(state.session_data[:account_id], account.id)
 
-      # Build character list response
-      response = ServerCharacterList.from_characters(characters)
+      # CRITICAL: Update encryption key to use session key
+      # This matches NexusForever's SetEncryptionKey(helloRealm.SessionKey)
+      # All subsequent packets will use this new encryption key
+      new_key = PacketCrypt.key_from_ticket(packet.session_key)
+      new_encryption = PacketCrypt.new(new_key)
+      state = %{state | encryption: new_encryption}
 
-      {:reply, :server_character_list, encode_packet(response), state}
+      Logger.info(
+        "World auth successful for account #{account.id} (#{packet.email}), " <>
+          "switched to session-based encryption"
+      )
+
+      # Don't send character list here - wait for ClientCharacterList request
+      # This matches NexusForever's flow
+      {:ok, state}
     else
       {:error, reason} ->
         Logger.warning("World authentication failed: #{inspect(reason)}")
@@ -80,15 +89,5 @@ defmodule BezgelorProtocol.Handler.WorldAuthHandler do
           {:error, :account_mismatch}
         end
     end
-  end
-
-  defp load_characters(account_id) do
-    Characters.list_characters(account_id)
-  end
-
-  defp encode_packet(%ServerCharacterList{} = packet) do
-    writer = PacketWriter.new()
-    {:ok, writer} = ServerCharacterList.write(packet, writer)
-    PacketWriter.to_binary(writer)
   end
 end
