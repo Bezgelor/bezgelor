@@ -62,9 +62,10 @@ config :tailwind,
   ]
 
 # Configure Elixir's Logger
-# Metadata appears at end: account (email), char (character name), conn_id (session ID)
+# Metadata appears at end with pipe: account (email), char (character name), conn_id (session ID)
+# Pipe only shown when metadata exists (via custom formatter)
 config :logger, :default_formatter,
-  format: "$time [$level] $message | $metadata\n",
+  format: {BezgelorCore.LogFormatter, :format},
   metadata: [:account, :char, :conn_id]
 
 # Use Jason for JSON parsing in Phoenix
