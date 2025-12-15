@@ -36,6 +36,6 @@ defmodule BezgelorProtocol.Handler.InputKeySetHandler do
     {:ok, writer} = BiInputKeySet.write(response, writer)
     response_data = PacketWriter.to_binary(writer)
 
-    {:reply_world_encrypted, {:bi_input_key_set, response_data}, state}
+    {:reply_world_encrypted, :bi_input_key_set, response_data, state}
   end
 end

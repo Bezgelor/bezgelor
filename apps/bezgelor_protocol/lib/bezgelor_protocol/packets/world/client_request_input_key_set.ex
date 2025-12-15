@@ -25,7 +25,7 @@ defmodule BezgelorProtocol.Packets.World.ClientRequestInputKeySet do
 
   @impl true
   def read(reader) do
-    {character_id, reader} = PacketReader.read_uint64(reader)
+    {:ok, character_id, reader} = PacketReader.read_uint64(reader)
 
     packet = %__MODULE__{
       character_id: character_id
