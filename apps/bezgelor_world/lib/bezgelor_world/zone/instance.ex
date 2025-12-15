@@ -235,29 +235,10 @@ defmodule BezgelorWorld.Zone.Instance do
 
   @impl true
   def handle_continue(:load_spawns, state) do
-    # Load creature spawns for this zone from static data
-    case CreatureManager.load_zone_spawns(state.zone_id) do
-      {:ok, count} ->
-        Logger.info("Zone #{state.zone_id}: loaded #{count} creature spawns")
-
-      {:error, :not_found} ->
-        Logger.debug("Zone #{state.zone_id}: no spawn data found")
-
-      {:error, reason} ->
-        Logger.warning("Zone #{state.zone_id}: failed to load spawns: #{inspect(reason)}")
-    end
-
-    # Load harvest node spawns for this zone
-    case HarvestNodeManager.load_zone_spawns(state.zone_id) do
-      {:ok, 0} ->
-        Logger.debug("Zone #{state.zone_id}: no harvest nodes found")
-
-      {:ok, count} ->
-        Logger.info("Zone #{state.zone_id}: loaded #{count} harvest nodes")
-
-      {:error, reason} ->
-        Logger.warning("Zone #{state.zone_id}: failed to load harvest nodes: #{inspect(reason)}")
-    end
+    # Load spawns asynchronously - don't block zone startup
+    # Managers log results directly
+    CreatureManager.load_zone_spawns_async(state.zone_id)
+    HarvestNodeManager.load_zone_spawns_async(state.zone_id)
 
     {:noreply, state}
   end

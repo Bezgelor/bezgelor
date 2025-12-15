@@ -122,6 +122,16 @@ defmodule BezgelorWorld.CreatureManager do
   end
 
   @doc """
+  Load all creature spawns for a zone asynchronously.
+  Use this when the caller doesn't need to wait for completion.
+  Results are logged by CreatureManager.
+  """
+  @spec load_zone_spawns_async(non_neg_integer()) :: :ok
+  def load_zone_spawns_async(world_id) do
+    GenServer.cast(__MODULE__, {:load_zone_spawns_async, world_id})
+  end
+
+  @doc """
   Load spawns for a specific area within a zone.
   """
   @spec load_area_spawns(non_neg_integer(), non_neg_integer()) ::
@@ -281,6 +291,21 @@ defmodule BezgelorWorld.CreatureManager do
       :error ->
         Logger.warning("No spawn data found for world #{world_id}")
         {:reply, {:error, :no_spawn_data}, state}
+    end
+  end
+
+  @impl true
+  def handle_cast({:load_zone_spawns_async, world_id}, state) do
+    case Store.get_creature_spawns(world_id) do
+      {:ok, zone_data} ->
+        {spawned_count, new_state} = spawn_from_definitions(zone_data.creature_spawns, world_id, state)
+        Logger.info("Loaded #{spawned_count} creature spawns for world #{world_id}")
+        {:noreply, new_state}
+
+      :error ->
+        # Tutorial zones may not have spawn data - don't warn for known empty zones
+        Logger.debug("No spawn data found for world #{world_id}")
+        {:noreply, state}
     end
   end
 

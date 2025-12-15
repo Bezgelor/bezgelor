@@ -60,6 +60,15 @@ defmodule BezgelorWorld.HarvestNodeManager do
     GenServer.call(__MODULE__, {:load_zone_spawns, world_id}, 30_000)
   end
 
+  @doc """
+  Load all harvest node spawns for a zone asynchronously.
+  Use this when the caller doesn't need to wait for completion.
+  """
+  @spec load_zone_spawns_async(non_neg_integer()) :: :ok
+  def load_zone_spawns_async(world_id) do
+    GenServer.cast(__MODULE__, {:load_zone_spawns_async, world_id})
+  end
+
   @doc "Get a node by GUID."
   @spec get_node(non_neg_integer()) :: node_state() | nil
   def get_node(guid) do
@@ -125,6 +134,19 @@ defmodule BezgelorWorld.HarvestNodeManager do
       {spawned_count, new_state} = spawn_from_definitions(resource_spawns, state)
       Logger.info("Loaded #{spawned_count} harvest node spawns for world #{world_id}")
       {:reply, {:ok, spawned_count}, new_state}
+    end
+  end
+
+  @impl true
+  def handle_cast({:load_zone_spawns_async, world_id}, state) do
+    resource_spawns = Store.get_resource_spawns(world_id)
+
+    if Enum.empty?(resource_spawns) do
+      {:noreply, state}
+    else
+      {spawned_count, new_state} = spawn_from_definitions(resource_spawns, state)
+      Logger.info("Loaded #{spawned_count} harvest node spawns for world #{world_id}")
+      {:noreply, new_state}
     end
   end
 
