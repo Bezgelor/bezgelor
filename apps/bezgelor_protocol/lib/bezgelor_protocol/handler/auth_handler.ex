@@ -26,6 +26,10 @@ defmodule BezgelorProtocol.Handler.AuthHandler do
 
   @expected_build 16042
 
+  # Rate limiting: max 5 auth attempts per minute per IP
+  @rate_limit_scale 60_000
+  @rate_limit_count 5
+
   @impl true
   def handle(payload, state) do
     reader = PacketReader.new(payload)
@@ -35,12 +39,38 @@ defmodule BezgelorProtocol.Handler.AuthHandler do
       {:ok, packet, _reader} ->
         # Store email in session for later use
         state = put_in(state.session_data[:email], packet.email)
-        process_auth(packet, state)
+
+        # Check rate limit before processing auth
+        client_ip = get_client_ip(state)
+
+        case check_rate_limit(client_ip) do
+          {:allow, _count} ->
+            process_auth(packet, state)
+
+          {:deny, _limit} ->
+            Logger.warning("Rate limit exceeded for IP: #{client_ip}")
+            response = build_denial(:rate_limited)
+            {:reply, :server_auth_denied, encode_packet(response), state}
+        end
 
       {:error, reason} ->
         Logger.warning("Failed to parse ClientHelloAuth: #{inspect(reason)}")
         response = build_denial(:unknown)
         {:reply, :server_auth_denied, encode_packet(response), state}
+    end
+  end
+
+  # Check rate limit using Hammer
+  defp check_rate_limit(client_ip) do
+    Hammer.check_rate("auth:#{client_ip}", @rate_limit_scale, @rate_limit_count)
+  end
+
+  # Extract client IP from state (stored by connection handler)
+  defp get_client_ip(state) do
+    case state do
+      %{peer_ip: ip} when is_tuple(ip) -> :inet.ntoa(ip) |> to_string()
+      %{peer_ip: ip} when is_binary(ip) -> ip
+      _ -> "unknown"
     end
   end
 
@@ -184,6 +214,7 @@ defmodule BezgelorProtocol.Handler.AuthHandler do
   defp denial_params(:invalid_credentials), do: {:invalid_token, 0, 0.0}
   defp denial_params(:database_error), do: {:database_error, 0, 0.0}
   defp denial_params(:account_banned), do: {:account_banned, 0, 0.0}
+  defp denial_params(:rate_limited), do: {:unknown, 0, 0.0}  # No specific code for rate limiting
   defp denial_params({:account_suspended, days}), do: {:account_suspended, 0, days / 1.0}
   defp denial_params(_unknown), do: {:unknown, 0, 0.0}
 

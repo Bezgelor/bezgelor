@@ -33,6 +33,18 @@ defmodule BezgelorProtocol.Handler.CharacterCreateHandler do
 
   require Logger
 
+  # Character name validation: 3-24 characters, letters, numbers, spaces, apostrophes
+  # Must start with a letter, no consecutive spaces
+  @name_min_length 3
+  @name_max_length 24
+  @name_regex ~r/^[A-Za-z][A-Za-z0-9' ]*$/
+
+  # Customization limits to prevent abuse
+  @max_customization_count 100
+  @max_bone_count 200
+  @max_bone_value 10.0
+  @min_bone_value -10.0
+
   @impl true
   def handle(payload, state) do
     reader = PacketReader.new(payload)
@@ -51,14 +63,63 @@ defmodule BezgelorProtocol.Handler.CharacterCreateHandler do
   defp create_character(packet, state) do
     account_id = state.session_data[:account_id]
 
-    if is_nil(account_id) do
-      Logger.warning("Character create attempted without authenticated account")
-      response = ServerCharacterCreate.failure(:server_error)
-      {:reply_world_encrypted, :server_character_create, encode_packet(response), state}
-    else
-      do_create(account_id, packet, state)
+    cond do
+      is_nil(account_id) ->
+        Logger.warning("Character create attempted without authenticated account")
+        response = ServerCharacterCreate.failure(:server_error)
+        {:reply_world_encrypted, :server_character_create, encode_packet(response), state}
+
+      not valid_name?(packet.name) ->
+        Logger.debug("Invalid character name rejected: #{inspect(packet.name)}")
+        response = ServerCharacterCreate.failure(:invalid_name)
+        {:reply_world_encrypted, :server_character_create, encode_packet(response), state}
+
+      not valid_customization?(packet) ->
+        Logger.warning("Invalid customization data rejected: labels=#{length(packet.labels)}, bones=#{length(packet.bones)}")
+        response = ServerCharacterCreate.failure(:server_error)
+        {:reply_world_encrypted, :server_character_create, encode_packet(response), state}
+
+      true ->
+        do_create(account_id, packet, state)
     end
   end
+
+  # Validate character name format
+  defp valid_name?(name) when is_binary(name) do
+    len = String.length(name)
+    trimmed = String.trim(name)
+
+    len >= @name_min_length and
+      len <= @name_max_length and
+      trimmed == name and
+      not String.contains?(name, "  ") and
+      Regex.match?(@name_regex, name)
+  end
+
+  defp valid_name?(_), do: false
+
+  # Validate customization data to prevent abuse
+  defp valid_customization?(packet) do
+    labels_count = length(packet.labels)
+    values_count = length(packet.values)
+    bones_count = length(packet.bones)
+
+    # Labels and values must match in count
+    labels_count == values_count and
+      # Limit customization count to prevent abuse
+      labels_count <= @max_customization_count and
+      # Limit bone count
+      bones_count <= @max_bone_count and
+      # Validate bone values are within reasonable range
+      Enum.all?(packet.bones, &valid_bone_value?/1)
+  end
+
+  # Validate bone value is within acceptable range
+  defp valid_bone_value?(bone) when is_float(bone) do
+    bone >= @min_bone_value and bone <= @max_bone_value
+  end
+
+  defp valid_bone_value?(_), do: false
 
   defp do_create(account_id, packet, state) do
     # Look up the character creation template

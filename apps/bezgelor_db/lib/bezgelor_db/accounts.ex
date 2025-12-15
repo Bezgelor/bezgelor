@@ -31,6 +31,9 @@ defmodule BezgelorDb.Accounts do
   alias BezgelorDb.Repo
   alias BezgelorDb.Schema.{Account, AccountSuspension, Character}
 
+  # Maximum limit for list queries to prevent abuse
+  @max_query_limit 500
+
   @doc """
   Get an account by email address.
 
@@ -157,8 +160,8 @@ defmodule BezgelorDb.Accounts do
     )
   end
 
-  # Session TTL: 1 hour
-  @session_ttl_seconds 3600
+  # Session TTL: 30 minutes (reduced from 1 hour for security)
+  @session_ttl_seconds 1800
 
   @doc """
   Validate a session key with expiration checking.
@@ -273,6 +276,19 @@ defmodule BezgelorDb.Accounts do
   end
 
   @doc """
+  Refresh the session timestamp for sliding window expiration.
+
+  Call this periodically during active sessions to extend the TTL.
+  The session key remains the same, only the timestamp is updated.
+  """
+  @spec refresh_session(Account.t()) :: {:ok, Account.t()} | {:error, Ecto.Changeset.t()}
+  def refresh_session(account) do
+    account
+    |> Account.session_changeset(%{session_key_created_at: DateTime.utc_now()})
+    |> Repo.update()
+  end
+
+  @doc """
   Get an account by ID.
 
   ## Parameters
@@ -318,18 +334,21 @@ defmodule BezgelorDb.Accounts do
     # web portal, which requires email verification.
     {salt, verifier} = BezgelorCrypto.Password.generate_salt_and_verifier(email, password)
 
-    Repo.transaction(fn ->
-      case %Account{}
-           |> Account.changeset(%{email: email, salt: salt, verifier: verifier})
-           |> Repo.insert() do
-        {:ok, account} ->
-          assign_default_role(account)
-          account
+    Repo.transaction(
+      fn ->
+        case %Account{}
+             |> Account.changeset(%{email: email, salt: salt, verifier: verifier})
+             |> Repo.insert() do
+          {:ok, account} ->
+            assign_default_role(account)
+            account
 
-        {:error, changeset} ->
-          Repo.rollback(changeset)
-      end
-    end)
+          {:error, changeset} ->
+            Repo.rollback(changeset)
+        end
+      end,
+      timeout: :timer.seconds(30)
+    )
   end
 
   @doc """
@@ -358,18 +377,21 @@ defmodule BezgelorDb.Accounts do
   def register_account(email, password) do
     {salt, verifier} = BezgelorCrypto.Password.generate_salt_and_verifier(email, password)
 
-    Repo.transaction(fn ->
-      case %Account{}
-           |> Account.registration_changeset(%{email: email, salt: salt, verifier: verifier})
-           |> Repo.insert() do
-        {:ok, account} ->
-          assign_default_role(account)
-          account
+    Repo.transaction(
+      fn ->
+        case %Account{}
+             |> Account.registration_changeset(%{email: email, salt: salt, verifier: verifier})
+             |> Repo.insert() do
+          {:ok, account} ->
+            assign_default_role(account)
+            account
 
-        {:error, changeset} ->
-          Repo.rollback(changeset)
-      end
-    end)
+          {:error, changeset} ->
+            Repo.rollback(changeset)
+        end
+      end,
+      timeout: :timer.seconds(30)
+    )
   end
 
   @doc """
@@ -737,19 +759,24 @@ defmodule BezgelorDb.Accounts do
   ## Options
 
   - `:search` - Search term for email
-  - `:limit` - Maximum results (default: 50)
-  - `:offset` - Offset for pagination (default: 0)
+  - `:limit` - Maximum results (default: 50, max: 500)
+  - `:offset` - Offset for pagination (default: 0, must be non-negative)
   - `:include_deleted` - Include deleted accounts (default: false)
 
   ## Returns
 
   List of accounts.
+
+  ## Security
+
+  The limit is capped at #{@max_query_limit} to prevent abuse.
+  Negative offsets are normalized to 0.
   """
   @spec list_accounts(keyword()) :: [Account.t()]
   def list_accounts(opts \\ []) do
     search = Keyword.get(opts, :search)
-    limit = Keyword.get(opts, :limit, 50)
-    offset = Keyword.get(opts, :offset, 0)
+    limit = opts |> Keyword.get(:limit, 50) |> min(@max_query_limit)
+    offset = opts |> Keyword.get(:offset, 0) |> max(0)
     include_deleted = Keyword.get(opts, :include_deleted, false)
 
     query =
@@ -793,8 +820,8 @@ defmodule BezgelorDb.Accounts do
   @spec list_accounts_with_character_counts(keyword()) :: [map()]
   def list_accounts_with_character_counts(opts \\ []) do
     search = Keyword.get(opts, :search)
-    limit = Keyword.get(opts, :limit, 50)
-    offset = Keyword.get(opts, :offset, 0)
+    limit = opts |> Keyword.get(:limit, 50) |> min(@max_query_limit)
+    offset = opts |> Keyword.get(:offset, 0) |> max(0)
     include_deleted = Keyword.get(opts, :include_deleted, false)
 
     # Subquery to count characters per account
