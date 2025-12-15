@@ -56,10 +56,14 @@ defmodule BezgelorProtocol.Handler.CharacterListHandler do
       characters = Characters.list_characters(account_id, realm_id)
 
       # Calculate max level achieved across all characters
-      max_level =
+      # Always report at least level 50 to unlock all character creation options
+      # (Veteran requires level 3+, Level50 start requires level 50)
+      actual_max =
         characters
         |> Enum.map(& &1.level)
         |> Enum.max(fn -> 1 end)
+
+      max_level = max(actual_max, 50)
 
       # Determine account tier based on signature permission
       has_signature = Authorization.has_permission?(account_id, "account.signature")
