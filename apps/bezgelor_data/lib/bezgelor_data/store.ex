@@ -18,6 +18,8 @@ defmodule BezgelorData.Store do
     :zones,
     :spells,
     :items,
+    :item_types,
+    :creation_armor_sets,
     :texts,
     :house_types,
     :housing_decor,
@@ -79,7 +81,9 @@ defmodule BezgelorData.Store do
     # Character creation templates
     :character_creations,
     # Character customization (label/value -> slot/displayId mapping)
-    :character_customizations
+    :character_customizations,
+    # Item display source entries (for level-scaled item visuals)
+    :item_display_sources
   ]
 
   # Secondary index tables for efficient lookups by foreign key
@@ -116,7 +120,9 @@ defmodule BezgelorData.Store do
     :world_locations_by_world,
     :world_locations_by_zone,
     # Character customization indexes (race, sex) -> list of customization entries
-    :customizations_by_race_sex
+    :customizations_by_race_sex,
+    # Item display source entries indexed by source_id for efficient lookup
+    :display_sources_by_source_id
   ]
 
   # Client API
@@ -1437,6 +1443,195 @@ defmodule BezgelorData.Store do
   end
 
   @doc """
+  Get the equipment slot for an item.
+
+  Uses the item's type_id to look up the slot from Item2Type table.
+
+  ## Parameters
+
+  - `item_id` - The item ID
+
+  ## Returns
+
+  The ItemSlot ID (e.g., 1=ArmorChest, 20=WeaponPrimary) or nil if not found.
+  """
+  @spec get_item_slot(non_neg_integer()) :: non_neg_integer() | nil
+  def get_item_slot(item_id) do
+    with {:ok, item} <- get(:items, item_id),
+         type_id when type_id > 0 <- get_item_type_id(item),
+         {:ok, item_type} <- get(:item_types, type_id) do
+      # item_type has itemSlotId field
+      get_slot_id(item_type)
+    else
+      _ -> nil
+    end
+  end
+
+  defp get_item_type_id(item) do
+    Map.get(item, "type_id") || Map.get(item, :type_id) || 0
+  end
+
+  defp get_slot_id(item_type) do
+    Map.get(item_type, "itemSlotId") || Map.get(item_type, :itemSlotId) || 0
+  end
+
+  @doc """
+  Get default gear visuals for a character class.
+
+  Uses CharacterCreationArmorSet to get display IDs for starting gear.
+  Returns visuals for the Arkship creation type (gear set 0).
+
+  ## Parameters
+
+  - `class_id` - The class ID (1=Warrior, 2=Esper, etc.)
+
+  ## Returns
+
+  List of `%{slot: slot_id, display_id: display_id}` maps.
+  """
+  @spec get_class_gear_visuals(non_neg_integer()) :: [map()]
+  def get_class_gear_visuals(class_id) do
+    # Find armor set for this class with creationGearSetEnum = 0 (Arkship)
+    armor_sets = list(:creation_armor_sets)
+
+    armor_set =
+      Enum.find(armor_sets, fn set ->
+        set_class = Map.get(set, "classId") || Map.get(set, :classId) || 0
+        gear_set = Map.get(set, "creationGearSetEnum") || Map.get(set, :creationGearSetEnum) || 0
+        set_class == class_id && gear_set == 0
+      end)
+
+    if armor_set do
+      # Map display IDs to slots
+      # ItemDisplayId00 = WeaponPrimary (slot 20)
+      # ItemDisplayId01 = ArmorChest (slot 1)
+      # ItemDisplayId02 = ArmorLegs (slot 2)
+      # ItemDisplayId03 = ArmorHead (slot 3)
+      # ItemDisplayId04 = ArmorShoulder (slot 4)
+      # ItemDisplayId05 = ArmorFeet (slot 5)
+      # ItemDisplayId06 = ArmorHands (slot 6)
+      slot_mapping = [
+        {"itemDisplayId00", 20},  # WeaponPrimary
+        {"itemDisplayId01", 1},   # ArmorChest
+        {"itemDisplayId02", 2},   # ArmorLegs
+        {"itemDisplayId03", 3},   # ArmorHead
+        {"itemDisplayId04", 4},   # ArmorShoulder
+        {"itemDisplayId05", 5},   # ArmorFeet
+        {"itemDisplayId06", 6}    # ArmorHands
+      ]
+
+      slot_mapping
+      |> Enum.map(fn {key, slot} ->
+        display_id = Map.get(armor_set, key) || Map.get(armor_set, String.to_atom(key)) || 0
+        if display_id > 0, do: %{slot: slot, display_id: display_id}, else: nil
+      end)
+      |> Enum.reject(&is_nil/1)
+    else
+      []
+    end
+  end
+
+  @doc """
+  Get the display ID for an item, resolving through ItemDisplaySource if needed.
+
+  Items with `item_source_id > 0` use the ItemDisplaySourceEntry table to
+  look up level-scaled visuals. Items with `item_source_id = 0` use their
+  direct `display_id` field.
+
+  ## Parameters
+
+  - `item_id` - The item ID
+  - `power_level` - Optional power level for level-based lookups (defaults to item's power_level)
+
+  ## Returns
+
+  The display ID for the item, or 0 if not found.
+
+  ## Example
+
+      # Item with direct display_id
+      Store.get_item_display_id(81344) #=> 4160
+
+      # Item with item_source_id (level-scaled)
+      Store.get_item_display_id(28366, 50) #=> varies by level
+  """
+  @spec get_item_display_id(non_neg_integer(), non_neg_integer() | nil) :: non_neg_integer()
+  def get_item_display_id(item_id, power_level \\ nil) do
+    case get(:items, item_id) do
+      {:ok, item} ->
+        item_source_id = get_item_field(item, :item_source_id) || 0
+        display_id = get_item_field(item, :display_id) || 0
+        item_power_level = power_level || get_item_field(item, :power_level) || 0
+        type_id = get_item_field(item, :type_id) || 0
+
+        if item_source_id > 0 do
+          # Look up from ItemDisplaySourceEntry by source_id and level
+          resolve_display_from_source(item_source_id, type_id, item_power_level, display_id)
+        else
+          # Use direct display_id
+          display_id
+        end
+
+      :error ->
+        0
+    end
+  end
+
+  # Resolve display_id from ItemDisplaySourceEntry table
+  defp resolve_display_from_source(source_id, type_id, power_level, fallback_display_id) do
+    # Get all entries for this source_id
+    entries = get_display_source_entries(source_id)
+
+    # Filter by type_id
+    matching_entries = Enum.filter(entries, fn entry ->
+      entry_type_id = Map.get(entry, :Item2TypeId) || Map.get(entry, "Item2TypeId") || 0
+      entry_type_id == type_id
+    end)
+
+    case matching_entries do
+      [] ->
+        # No entries, use fallback
+        fallback_display_id
+
+      [single] ->
+        # Single entry, use its display_id
+        Map.get(single, :ItemDisplayId) || Map.get(single, "ItemDisplayId") || fallback_display_id
+
+      multiple when is_list(multiple) ->
+        # Multiple entries - check if we have an explicit display_id first
+        if fallback_display_id > 0 do
+          fallback_display_id
+        else
+          # Find entry matching level range
+          level_match = Enum.find(multiple, fn entry ->
+            min_level = Map.get(entry, :ItemMinLevel) || Map.get(entry, "ItemMinLevel") || 0
+            max_level = Map.get(entry, :ItemMaxLevel) || Map.get(entry, "ItemMaxLevel") || 999
+            power_level >= min_level and power_level <= max_level
+          end)
+
+          if level_match do
+            Map.get(level_match, :ItemDisplayId) || Map.get(level_match, "ItemDisplayId") || fallback_display_id
+          else
+            fallback_display_id
+          end
+        end
+    end
+  end
+
+  # Get display source entries for a source_id (uses index)
+  defp get_display_source_entries(source_id) do
+    case :ets.lookup(index_table_name(:display_sources_by_source_id), source_id) do
+      [{^source_id, entries}] -> entries
+      [] -> []
+    end
+  end
+
+  # Helper to get item field with both atom and string key support
+  defp get_item_field(item, field) when is_atom(field) do
+    Map.get(item, field) || Map.get(item, Atom.to_string(field))
+  end
+
+  @doc """
   Resolve loot table for a creature based on rules.
 
   Returns the loot table ID and modifiers for a creature based on:
@@ -1589,6 +1784,8 @@ defmodule BezgelorData.Store do
     load_table(:zones, "zones.json", "zones")
     load_table(:spells, "spells.json", "spells")
     load_table(:items, "items.json", "items")
+    load_client_table(:item_types, "Item2Type.json", "item2type")
+    load_client_table(:creation_armor_sets, "CharacterCreationArmorSet.json", "charactercreationarmorset")
     load_table(:texts, "texts.json", "texts")
     load_table(:house_types, "house_types.json", "house_types")
     load_table(:housing_decor, "housing_decor.json", "decor")
@@ -1671,6 +1868,9 @@ defmodule BezgelorData.Store do
 
     # Character customization (for converting labels/values to appearance visuals)
     load_character_customizations()
+
+    # Item display source entries (for level-scaled item visuals)
+    load_item_display_sources()
 
     # Validate loot data
     validate_loot_data()
@@ -2148,6 +2348,59 @@ defmodule BezgelorData.Store do
     # Insert each group - store the full entry (not just ID) for efficient lookup
     for {{race, sex}, entries} <- groups do
       :ets.insert(index_name, {{race, sex}, entries})
+    end
+  end
+
+  # Load ItemDisplaySourceEntry data for level-scaled item visuals
+  # File structure: { "itemdisplaysourceentry": [ {ID, ItemSourceId, Item2TypeId, ItemMinLevel, ItemMaxLevel, ItemDisplayId, Icon}, ...] }
+  defp load_item_display_sources do
+    table_name = table_name(:item_display_sources)
+    index_name = index_table_name(:display_sources_by_source_id)
+
+    # Clear existing data
+    :ets.delete_all_objects(table_name)
+    :ets.delete_all_objects(index_name)
+
+    json_path = Path.join(data_directory(), "ItemDisplaySourceEntry.json")
+
+    case load_json_raw(json_path) do
+      {:ok, data} ->
+        items = Map.get(data, :itemdisplaysourceentry, [])
+
+        for item <- items do
+          id = Map.get(item, :ID)
+
+          if id do
+            normalized = Map.put(item, :id, id)
+            :ets.insert(table_name, {id, normalized})
+          end
+        end
+
+        # Build the source_id index for efficient lookup
+        build_display_source_index(items)
+
+        Logger.debug("Loaded #{length(items)} item display source entries")
+
+      {:error, _reason} ->
+        # ItemDisplaySourceEntry.json is optional - many items don't use it
+        Logger.debug("ItemDisplaySourceEntry.json not found (optional - items will use direct display_id)")
+    end
+  end
+
+  # Build the display_sources_by_source_id index for efficient lookup
+  defp build_display_source_index(items) do
+    index_name = index_table_name(:display_sources_by_source_id)
+
+    # Group by ItemSourceId
+    groups =
+      items
+      |> Enum.group_by(fn item ->
+        Map.get(item, :ItemSourceId) || Map.get(item, "ItemSourceId") || 0
+      end)
+
+    # Insert each group - store the full entry (not just ID) for efficient lookup
+    for {source_id, entries} <- groups, source_id > 0 do
+      :ets.insert(index_name, {source_id, entries})
     end
   end
 

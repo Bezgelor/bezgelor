@@ -36,7 +36,7 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
   outfit_info         : 15 bits
   ```
 
-  ## PlayerEntityModel Format
+  ## PlayerEntityModel Format (type = 20)
 
   ```
   id                  : uint64 (character ID)
@@ -58,13 +58,22 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
   unknown_4c          : 8 bits
   title               : 14 bits
   ```
+
+  ## NonPlayerEntityModel Format (type = 0, for creatures/NPCs)
+
+  ```
+  creature_id         : 18 bits
+  quest_checklist_idx : 8 bits
+  ```
   """
 
   @behaviour BezgelorProtocol.Packet.Writable
 
   alias BezgelorProtocol.PacketWriter
+  alias BezgelorDb.Inventory
 
   # EntityType values (from NexusForever)
+  @entity_type_nonplayer 0
   @entity_type_player 20
 
   # Stat enum values (from NexusForever)
@@ -88,7 +97,7 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
 
   defstruct guid: 0,
             entity_type: @entity_type_player,
-            # Player entity model fields
+            # Player entity model fields (type = 20)
             character_id: 0,
             realm_id: 1,
             name: "",
@@ -98,7 +107,10 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
             group_id: 0,
             bones: [],
             title: 0,
-            # Entity fields
+            # NonPlayer entity model fields (type = 0)
+            creature_id: 0,
+            quest_checklist_idx: 0,
+            # Common entity fields
             create_flags: 0,
             # Stats: list of {stat_id, stat_type, value} tuples
             # stat_type: 0 = Integer, 1 = Float
@@ -121,6 +133,7 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
   @type t :: %__MODULE__{
           guid: non_neg_integer(),
           entity_type: non_neg_integer(),
+          # Player fields
           character_id: non_neg_integer(),
           realm_id: non_neg_integer(),
           name: String.t(),
@@ -130,6 +143,10 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
           group_id: non_neg_integer(),
           bones: [float()],
           title: non_neg_integer(),
+          # NonPlayer (creature) fields
+          creature_id: non_neg_integer(),
+          quest_checklist_idx: non_neg_integer(),
+          # Common fields
           create_flags: non_neg_integer(),
           stats: [stat()],
           time: non_neg_integer(),
@@ -152,10 +169,10 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
       writer
       # Guid
       |> PacketWriter.write_bits(packet.guid, 32)
-      # EntityType (6 bits) - Player = 20
+      # EntityType (6 bits)
       |> PacketWriter.write_bits(packet.entity_type, 6)
-      # PlayerEntityModel
-      |> write_player_entity_model(packet)
+      # EntityModel - varies by type
+      |> write_entity_model(packet)
       # CreateFlags (8 bits)
       |> PacketWriter.write_bits(packet.create_flags, 8)
       # Stats count (5 bits) + stats array
@@ -202,6 +219,30 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
     {:ok, writer}
   end
 
+  # Branch entity model writing based on entity type
+  defp write_entity_model(writer, %{entity_type: @entity_type_nonplayer} = packet) do
+    write_nonplayer_entity_model(writer, packet)
+  end
+
+  defp write_entity_model(writer, %{entity_type: @entity_type_player} = packet) do
+    write_player_entity_model(writer, packet)
+  end
+
+  # Default to player model for unknown types (shouldn't happen)
+  defp write_entity_model(writer, packet) do
+    write_player_entity_model(writer, packet)
+  end
+
+  # NonPlayer entity model (creatures, NPCs)
+  defp write_nonplayer_entity_model(writer, packet) do
+    writer
+    # CreatureId (18 bits)
+    |> PacketWriter.write_bits(packet.creature_id, 18)
+    # QuestChecklistIdx (8 bits)
+    |> PacketWriter.write_bits(packet.quest_checklist_idx, 8)
+  end
+
+  # Player entity model
   defp write_player_entity_model(writer, packet) do
     writer
     # Id (uint64) - character ID
@@ -362,6 +403,8 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
   """
   @spec from_character(map(), map()) :: t()
   def from_character(character, spawn) do
+    require Logger
+
     # Generate GUID for player entity
     player_guid = character.id + 0x2000_0000
 
@@ -388,9 +431,9 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
       {@stat_sheathed, @stat_type_integer, 1}
     ]
 
-    # Build visible items from appearance visuals
+    # Build visible items from appearance visuals (body parts: face, hair, skin, etc.)
     # Each visual is stored as %{slot: n, display_id: n} or %{"slot" => n, "display_id" => n}
-    visible_items = case character do
+    appearance_items = case character do
       %{appearance: %{visuals: visuals}} when is_list(visuals) ->
         Enum.map(visuals, fn visual ->
           slot = visual[:slot] || visual["slot"] || 0
@@ -399,8 +442,17 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
           dye_data = visual[:dye_data] || visual["dye_data"] || 0
           {slot, display_id, colour_set_id, dye_data}
         end)
-      _ -> []
+      _ ->
+        []
     end
+
+    # Get gear visuals (equipped items: armor, weapons)
+    gear_items = get_gear_visuals(character.id, character.class)
+
+    # Combine appearance and gear visuals
+    visible_items = appearance_items ++ gear_items
+
+    Logger.debug("ServerEntityCreate: #{length(appearance_items)} appearance + #{length(gear_items)} gear = #{length(visible_items)} visible items")
 
     %__MODULE__{
       guid: player_guid,
@@ -469,5 +521,117 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
       position: {pos_x, pos_y, pos_z},
       rotation: rotation
     }
+  end
+
+  @doc """
+  Create a creature entity packet from creature data.
+
+  ## Parameters
+
+  - `creature_state` - Creature state from CreatureManager containing:
+    - `entity` - The Entity struct with guid, position, health, etc.
+    - `template` - CreatureTemplate with creature_id, level, faction, display_info
+    - `spawn_def` - Optional spawn definition with faction/display overrides
+
+  ## Examples
+
+      iex> ServerEntityCreate.from_creature(creature_state)
+      %ServerEntityCreate{entity_type: 0, creature_id: 2370, ...}
+  """
+  @spec from_creature(map()) :: t()
+  def from_creature(%{entity: entity, template: template} = creature_state) do
+    # Extract position and rotation
+    {pos_x, pos_y, pos_z} = entity.position || {0.0, 0.0, 0.0}
+    rotation = entity.rotation || {0.0, 0.0, 0.0}
+
+    # Get creature_id from entity (set during spawn) or template
+    creature_id = entity.creature_id || template.id || 0
+
+    # Get spawn_def for faction/display overrides
+    spawn_def = Map.get(creature_state, :spawn_def, %{})
+
+    # Get faction from spawn_def, entity, or template
+    faction =
+      cond do
+        spawn_def[:faction1] && spawn_def[:faction1] > 0 -> spawn_def[:faction1]
+        entity.faction && entity.faction > 0 -> entity.faction
+        true -> 219  # Default neutral faction
+      end
+
+    # Get display_info from spawn_def, entity, or template
+    display_info =
+      cond do
+        spawn_def[:display_info] && spawn_def[:display_info] > 0 -> spawn_def[:display_info]
+        entity.display_info && entity.display_info > 0 -> entity.display_info
+        template.display_info && template.display_info > 0 -> template.display_info
+        true -> 0
+      end
+
+    # Build stats - creatures need health and level
+    health = entity.health || template.max_health || 100
+    level = entity.level || template.level || 1
+
+    stats = [
+      {@stat_health, @stat_type_integer, health},
+      {@stat_level, @stat_type_integer, level},
+      {@stat_sheathed, @stat_type_integer, 0}
+    ]
+
+    %__MODULE__{
+      guid: entity.guid,
+      entity_type: @entity_type_nonplayer,
+      creature_id: creature_id,
+      quest_checklist_idx: spawn_def[:quest_checklist_idx] || 0,
+      create_flags: 0,
+      stats: stats,
+      time: :os.system_time(:millisecond) |> rem(0xFFFFFFFF),
+      visible_items: [],
+      faction1: faction,
+      faction2: faction,
+      display_info: display_info,
+      outfit_info: spawn_def[:outfit_info] || 0,
+      position: {pos_x, pos_y, pos_z},
+      rotation: rotation
+    }
+  end
+
+  # Get gear visuals for a character from their equipped inventory items
+  # Falls back to class default visuals if inventory items have no display_id
+  # Returns list of {slot, display_id, colour_set_id, dye_data} tuples
+  defp get_gear_visuals(character_id, class_id) do
+    # Get all equipped items for this character
+    equipped_items = Inventory.get_items(character_id, :equipped)
+
+    # Try to get display_ids from inventory items
+    gear_from_inventory =
+      equipped_items
+      |> Enum.map(fn item ->
+        # Look up the item data to get display_id
+        case BezgelorData.Store.get(:items, item.item_id) do
+          {:ok, item_data} ->
+            display_id = Map.get(item_data, "display_id") || Map.get(item_data, :display_id) || 0
+
+            if display_id > 0 do
+              {item.slot, display_id, 0, 0}
+            else
+              nil
+            end
+
+          :error ->
+            nil
+        end
+      end)
+      |> Enum.reject(&is_nil/1)
+
+    # If we have gear with display_ids, use that; otherwise fall back to class defaults
+    if Enum.any?(gear_from_inventory) do
+      gear_from_inventory
+    else
+      # Get default gear visuals based on class
+      BezgelorData.Store.get_class_gear_visuals(class_id)
+      |> Enum.map(fn %{slot: slot, display_id: display_id} ->
+        {slot, display_id, 0, 0}
+      end)
+    end
   end
 end

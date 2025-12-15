@@ -36,12 +36,14 @@ defmodule BezgelorDb.Schema.Character do
   use Ecto.Schema
   import Ecto.Changeset
 
-  alias BezgelorDb.Schema.{Account, CharacterAppearance}
+  alias BezgelorDb.Schema.{Account, CharacterAppearance, Realm}
 
   @type t :: %__MODULE__{
           id: integer() | nil,
           account_id: integer() | nil,
           account: Account.t() | Ecto.Association.NotLoaded.t() | nil,
+          realm_id: integer() | nil,
+          realm: Realm.t() | Ecto.Association.NotLoaded.t() | nil,
           name: String.t() | nil,
           sex: integer() | nil,
           race: integer() | nil,
@@ -66,6 +68,7 @@ defmodule BezgelorDb.Schema.Character do
           time_played_total: integer(),
           time_played_level: integer(),
           flags: integer(),
+          gear_mask: integer(),
           last_online: DateTime.t() | nil,
           deleted_at: DateTime.t() | nil,
           original_name: String.t() | nil,
@@ -76,6 +79,7 @@ defmodule BezgelorDb.Schema.Character do
 
   schema "characters" do
     belongs_to :account, Account
+    belongs_to :realm, Realm
     has_one :appearance, CharacterAppearance
 
     field :name, :string
@@ -106,6 +110,9 @@ defmodule BezgelorDb.Schema.Character do
     field :time_played_total, :integer, default: 0
     field :time_played_level, :integer, default: 0
     field :flags, :integer, default: 0
+    # Gear visibility bitmask: set bit = visible, clear bit = hidden
+    # 0xFFFFFFFF = all visible (default), 0 = all hidden
+    field :gear_mask, :integer, default: 0xFFFFFFFF
 
     # Timestamps
     field :last_online, :utc_datetime
@@ -115,10 +122,10 @@ defmodule BezgelorDb.Schema.Character do
     timestamps(type: :utc_datetime)
   end
 
-  @required_fields ~w(account_id name sex race class faction_id world_id world_zone_id)a
+  @required_fields ~w(account_id realm_id name sex race class faction_id world_id world_zone_id)a
   @optional_fields ~w(level location_x location_y location_z rotation_x rotation_y rotation_z
                       title active_path active_costume_index active_spec innate_index
-                      total_xp rest_bonus_xp time_played_total time_played_level flags
+                      total_xp rest_bonus_xp time_played_total time_played_level flags gear_mask
                       last_online deleted_at original_name)a
 
   @doc """
@@ -131,6 +138,7 @@ defmodule BezgelorDb.Schema.Character do
     |> validate_required(@required_fields)
     |> validate_length(:name, min: 3, max: 24)
     |> foreign_key_constraint(:account_id)
+    |> foreign_key_constraint(:realm_id)
     |> unique_constraint(:name)
   end
 

@@ -326,10 +326,18 @@ defmodule BezgelorProtocol.Packets.World.ServerCharacterList do
 
   @doc """
   Build a character list packet from database characters.
+
+  ## Parameters
+
+  - `characters` - List of character maps from database
+  - `max_characters` - Maximum character slots (default 12)
+  - `opts` - Options map with:
+    - `:gear` - Map of character_id => [ItemVisual] for equipped gear
   """
-  @spec from_characters([map()], non_neg_integer()) :: t()
-  def from_characters(characters, max_characters \\ 12) do
+  @spec from_characters([map()], non_neg_integer(), map()) :: t()
+  def from_characters(characters, max_characters \\ 12, opts \\ %{}) do
     server_time = System.system_time(:millisecond)
+    gear_by_character = Map.get(opts, :gear, %{})
 
     entries =
       Enum.map(characters, fn char ->
@@ -375,6 +383,9 @@ defmodule BezgelorProtocol.Packets.World.ServerCharacterList do
         # Convert stored visuals to ItemVisual structs
         appearance_items = convert_visuals_to_item_visuals(visuals)
 
+        # Get gear visuals from the provided gear map (keyed by character_id)
+        gear_items = Map.get(gear_by_character, char.id, [])
+
         %CharacterEntry{
           id: char.id,
           name: char.name,
@@ -384,7 +395,7 @@ defmodule BezgelorProtocol.Packets.World.ServerCharacterList do
           faction: char.faction_id || 0,
           level: char.level || 1,
           appearance: appearance_items,
-          gear: [],
+          gear: gear_items,
           world_id: char.world_id || 0,
           world_zone_id: char.world_zone_id || 0,
           realm_id: 1,
@@ -396,8 +407,12 @@ defmodule BezgelorProtocol.Packets.World.ServerCharacterList do
           path: char.active_path || 0,
           is_locked: false,
           requires_rename: false,
-          # 0xFFFFFFFF shows all gear slots (per NexusForever)
-          gear_mask: 0xFFFFFFFF,
+          # Gear visibility: set bit = visible, 0xFFFFFFFF = all visible
+          # Treat 0 as "all visible" for backward compatibility (old records have 0)
+          gear_mask: case Map.get(char, :gear_mask, 0xFFFFFFFF) do
+            0 -> 0xFFFFFFFF
+            mask -> mask
+          end,
           labels: labels,
           values: values,
           bones: bones,
