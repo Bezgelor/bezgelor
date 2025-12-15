@@ -390,7 +390,7 @@ defmodule BezgelorProtocol.Connection do
       {:ok, opcode_atom} ->
         # Skip logging outer encrypted packet wrapper - inner handler logs the actual opcode
         unless opcode_atom in [:client_encrypted, :client_packed_world] do
-          Logger.info("[#{server_name(state.connection_type)}] Recv: #{Opcode.name(opcode_atom)} (#{byte_size(payload)} bytes)")
+          Logger.debug("[#{server_name(state.connection_type)}] Recv: #{Opcode.name(opcode_atom)} (#{byte_size(payload)} bytes)")
         end
         result = dispatch_to_handler(opcode_atom, payload, state, start_time)
         result

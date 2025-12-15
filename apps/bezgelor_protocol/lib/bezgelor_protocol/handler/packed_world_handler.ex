@@ -70,7 +70,7 @@ defmodule BezgelorProtocol.Handler.PackedWorldHandler do
         case lookup_handler(inner_opcode) do
           {:ok, handler} ->
             # Log with same format as Connection - shows the actual opcode being handled
-            Logger.info("[World] Recv: #{Opcode.name(inner_opcode)} (#{byte_size(inner_payload)} bytes)")
+            Logger.debug("[World] Recv: #{Opcode.name(inner_opcode)} (#{byte_size(inner_payload)} bytes)")
 
             handler.handle(inner_payload, state)
 

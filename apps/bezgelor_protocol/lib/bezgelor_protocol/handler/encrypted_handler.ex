@@ -73,7 +73,7 @@ defmodule BezgelorProtocol.Handler.EncryptedHandler do
            {:ok, handler} <- lookup_handler(inner_opcode) do
         # Log with same format as Connection - shows the actual opcode being handled
         server_name = server_name_from_state(state)
-        Logger.info("[#{server_name}] Recv: #{Opcode.name(inner_opcode)} (#{byte_size(inner_payload)} bytes)")
+        Logger.debug("[#{server_name}] Recv: #{Opcode.name(inner_opcode)} (#{byte_size(inner_payload)} bytes)")
 
         handler.handle(inner_payload, state)
       end
