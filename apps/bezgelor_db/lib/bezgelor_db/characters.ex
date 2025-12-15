@@ -52,6 +52,23 @@ defmodule BezgelorDb.Characters do
   end
 
   @doc """
+  List characters for an account on a specific realm.
+
+  Returns characters ordered by most recently logged in.
+  Excludes soft-deleted characters.
+  """
+  @spec list_characters(integer(), integer()) :: [Character.t()]
+  def list_characters(account_id, realm_id) do
+    Character
+    |> where([c], c.account_id == ^account_id)
+    |> where([c], c.realm_id == ^realm_id)
+    |> where([c], is_nil(c.deleted_at))
+    |> preload(:appearance)
+    |> order_by([c], desc: c.last_online)
+    |> Repo.all()
+  end
+
+  @doc """
   Get a character by ID, ensuring it belongs to the account.
 
   Returns nil if character doesn't exist, belongs to a different
@@ -160,6 +177,18 @@ defmodule BezgelorDb.Characters do
   def count_characters(account_id) do
     Character
     |> where([c], c.account_id == ^account_id)
+    |> where([c], is_nil(c.deleted_at))
+    |> Repo.aggregate(:count)
+  end
+
+  @doc """
+  Count non-deleted characters for an account on a specific realm.
+  """
+  @spec count_characters(integer(), integer()) :: integer()
+  def count_characters(account_id, realm_id) do
+    Character
+    |> where([c], c.account_id == ^account_id)
+    |> where([c], c.realm_id == ^realm_id)
     |> where([c], is_nil(c.deleted_at))
     |> Repo.aggregate(:count)
   end

@@ -11,7 +11,8 @@ seeds_dir = Path.join([__DIR__, "seeds"])
 # Define seed files in order of execution
 seed_files = [
   "permissions.exs",
-  "roles.exs"
+  "roles.exs",
+  "realms.exs"
 ]
 
 Enum.each(seed_files, fn file ->
