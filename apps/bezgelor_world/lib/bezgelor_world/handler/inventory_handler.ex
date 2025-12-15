@@ -5,6 +5,8 @@ defmodule BezgelorWorld.Handler.InventoryHandler do
   Processes item moves, splits, and sends inventory updates to client.
   """
 
+  import Bitwise
+
   alias BezgelorDb.Inventory
   alias BezgelorProtocol.Packets.World.{
     ClientMoveItem,
@@ -171,15 +173,17 @@ defmodule BezgelorWorld.Handler.InventoryHandler do
       {:ok, items} ->
         # Send item add packets for each new stack
         Enum.each(items, fn item ->
+          # Use database item ID as unique guid
+          guid = item.id || generate_item_guid(item)
+
           packet = %ServerItemAdd{
-            container_type: item.container_type,
-            bag_index: item.bag_index,
-            slot: item.slot,
+            guid: guid,
             item_id: item.item_id,
-            quantity: item.quantity,
-            max_stack: item.max_stack,
-            durability: item.durability,
-            bound: item.bound
+            location: item.container_type,
+            bag_index: item.slot,
+            stack_count: item.quantity || 1,
+            durability: item.durability || 100,
+            reason: :no_reason
           }
 
           send(connection_pid, {:send_packet, packet})
@@ -273,15 +277,16 @@ defmodule BezgelorWorld.Handler.InventoryHandler do
           durability: updated_source.durability
         }
 
+        guid = new_item.id || generate_item_guid(new_item)
+
         add_packet = %ServerItemAdd{
-          container_type: new_item.container_type,
-          bag_index: new_item.bag_index,
-          slot: new_item.slot,
+          guid: guid,
           item_id: new_item.item_id,
-          quantity: new_item.quantity,
-          max_stack: new_item.max_stack,
-          durability: new_item.durability,
-          bound: new_item.bound
+          location: new_item.container_type,
+          bag_index: new_item.slot,
+          stack_count: new_item.quantity || 1,
+          durability: new_item.durability || 100,
+          reason: :no_reason
         }
 
         send(connection_pid, {:send_packet, update_packet})
@@ -290,5 +295,20 @@ defmodule BezgelorWorld.Handler.InventoryHandler do
       {:error, reason} ->
         Logger.warning("Split stack failed: #{inspect(reason)}")
     end
+  end
+
+  # Generate a unique item guid if database ID not available
+  defp generate_item_guid(item) do
+    container_int =
+      case item.container_type do
+        :equipped -> 0
+        :bag -> 1
+        :inventory -> 1
+        :bank -> 2
+        _ -> 1
+      end
+
+    # Combine container, bag_index, and slot into a unique ID
+    (container_int <<< 48) ||| ((item.bag_index || 0) <<< 32) ||| (item.slot || 0)
   end
 end
