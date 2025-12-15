@@ -85,6 +85,9 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
   @stat_type_integer 0
   # @stat_type_float 1
 
+  # Property enum values (from NexusForever)
+  @property_base_health 7
+
   # EntityCommand values
   @cmd_set_platform 1
   @cmd_set_position 2
@@ -115,6 +118,9 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
             # Stats: list of {stat_id, stat_type, value} tuples
             # stat_type: 0 = Integer, 1 = Float
             stats: [],
+            # Properties: list of {property_id, base_value, value} tuples
+            # Values are floats
+            properties: [],
             time: 0,
             # Visible items: list of {slot, display_id, colour_set_id, dye_data} tuples
             # These define the visual appearance (body parts, armor, etc.)
@@ -128,6 +134,7 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
             rotation: {0.0, 0.0, 0.0}
 
   @type stat :: {stat_id :: non_neg_integer(), stat_type :: 0 | 1, value :: number()}
+  @type property :: {property_id :: non_neg_integer(), base_value :: float(), value :: float()}
   @type item_visual :: {slot :: non_neg_integer(), display_id :: non_neg_integer(), colour_set_id :: non_neg_integer(), dye_data :: integer()}
 
   @type t :: %__MODULE__{
@@ -149,6 +156,7 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
           # Common fields
           create_flags: non_neg_integer(),
           stats: [stat()],
+          properties: [property()],
           time: non_neg_integer(),
           visible_items: [item_visual()],
           faction1: non_neg_integer(),
@@ -182,8 +190,9 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
       |> PacketWriter.write_bits(packet.time, 32)
       # Commands (8 default commands)
       |> write_default_commands(packet)
-      # Properties - empty
-      |> PacketWriter.write_bits(0, 8)
+      # Properties count (8 bits) + properties array
+      |> PacketWriter.write_bits(length(packet.properties), 8)
+      |> write_properties(packet.properties)
       # VisibleItems count (7 bits) + items array
       |> PacketWriter.write_bits(length(packet.visible_items), 7)
       |> write_visible_items(packet.visible_items)
@@ -311,6 +320,21 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
     PacketWriter.write_float32_bits(writer, value / 1.0)
   end
 
+  # Write properties array - each property is {property_id, base_value, value}
+  # Both values are floats
+  defp write_properties(writer, []), do: writer
+
+  defp write_properties(writer, [{property_id, base_value, value} | rest]) do
+    writer
+    # Property enum (8 bits)
+    |> PacketWriter.write_bits(property_id, 8)
+    # BaseValue (float32)
+    |> PacketWriter.write_float32_bits(base_value / 1.0)
+    # Value (float32)
+    |> PacketWriter.write_float32_bits(value / 1.0)
+    |> write_properties(rest)
+  end
+
   # Write visible items array - each item is {slot, display_id, colour_set_id, dye_data}
   defp write_visible_items(writer, []), do: writer
 
@@ -431,6 +455,12 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
       {@stat_sheathed, @stat_type_integer, 1}
     ]
 
+    # Build properties - BaseHealth (Property 7) is required for max health display
+    # Property format: {property_id, base_value, value} - both floats
+    properties = [
+      {@property_base_health, max_health / 1.0, max_health / 1.0}
+    ]
+
     # Build visible items from appearance visuals (body parts: face, hair, skin, etc.)
     # Each visual is stored as %{slot: n, display_id: n} or %{"slot" => n, "display_id" => n}
     appearance_items = case character do
@@ -468,6 +498,7 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
       title: 0,
       create_flags: 0,
       stats: stats,
+      properties: properties,
       time: :os.system_time(:millisecond) |> rem(0xFFFFFFFF),
       visible_items: visible_items,
       faction1: character.faction_id || 166,
@@ -492,11 +523,17 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
     # Build stats from entity - health must be > 0 to be alive
     health = entity.health || 250
     level = entity.level || 1
+    max_health = entity.max_health || health
 
     stats = [
       {@stat_health, @stat_type_integer, health},
       {@stat_level, @stat_type_integer, level},
       {@stat_sheathed, @stat_type_integer, 1}
+    ]
+
+    # Properties - BaseHealth for max health display
+    properties = [
+      {@property_base_health, max_health / 1.0, max_health / 1.0}
     ]
 
     %__MODULE__{
@@ -513,6 +550,7 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
       title: 0,
       create_flags: 0,
       stats: stats,
+      properties: properties,
       time: :os.system_time(:millisecond) |> rem(0xFFFFFFFF),
       faction1: entity.faction || 166,
       faction2: entity.faction || 166,
@@ -569,6 +607,7 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
 
     # Build stats - creatures need health and level
     health = entity.health || template.max_health || 100
+    max_health = entity.max_health || template.max_health || health
     level = entity.level || template.level || 1
 
     stats = [
@@ -577,6 +616,19 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
       {@stat_sheathed, @stat_type_integer, 0}
     ]
 
+    # Properties - BaseHealth for max health display
+    properties = [
+      {@property_base_health, max_health / 1.0, max_health / 1.0}
+    ]
+
+    # Get outfit_info from entity (populated from creature data), spawn_def, or default
+    outfit_info =
+      cond do
+        entity.outfit_info && entity.outfit_info > 0 -> entity.outfit_info
+        spawn_def[:outfit_info] && spawn_def[:outfit_info] > 0 -> spawn_def[:outfit_info]
+        true -> 0
+      end
+
     %__MODULE__{
       guid: entity.guid,
       entity_type: @entity_type_nonplayer,
@@ -584,12 +636,13 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
       quest_checklist_idx: spawn_def[:quest_checklist_idx] || 0,
       create_flags: 0,
       stats: stats,
+      properties: properties,
       time: :os.system_time(:millisecond) |> rem(0xFFFFFFFF),
       visible_items: [],
       faction1: faction,
       faction2: faction,
       display_info: display_info,
-      outfit_info: spawn_def[:outfit_info] || 0,
+      outfit_info: outfit_info,
       position: {pos_x, pos_y, pos_z},
       rotation: rotation
     }
@@ -602,23 +655,18 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
     # Get all equipped items for this character
     equipped_items = Inventory.get_items(character_id, :equipped)
 
-    # Try to get display_ids from inventory items
+    # Try to get display_ids from inventory items using ItemDisplaySourceEntry lookup
     gear_from_inventory =
       equipped_items
       |> Enum.map(fn item ->
-        # Look up the item data to get display_id
-        case BezgelorData.Store.get(:items, item.item_id) do
-          {:ok, item_data} ->
-            display_id = Map.get(item_data, "display_id") || Map.get(item_data, :display_id) || 0
+        # Use get_item_display_id which handles ItemDisplaySourceEntry lookup
+        # for items with item_source_id > 0 and display_id == 0
+        display_id = BezgelorData.Store.get_item_display_id(item.item_id)
 
-            if display_id > 0 do
-              {item.slot, display_id, 0, 0}
-            else
-              nil
-            end
-
-          :error ->
-            nil
+        if display_id > 0 do
+          {item.slot, display_id, 0, 0}
+        else
+          nil
         end
       end)
       |> Enum.reject(&is_nil/1)

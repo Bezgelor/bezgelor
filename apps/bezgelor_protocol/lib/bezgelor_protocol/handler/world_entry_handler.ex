@@ -84,6 +84,9 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
     {:ok, quest_writer} = ServerQuestList.write(quest_list_packet, quest_writer)
     quest_packet_data = PacketWriter.to_binary(quest_writer)
 
+    # Note: Inventory is sent via ServerPlayerCreate in CharacterSelectHandler during loading.
+    # ServerItemAdd packets are only for runtime item additions, not initial load.
+
     # Start achievement handler for this character
     account_id = state.session_data[:account_id]
 
@@ -149,6 +152,7 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
     ]
 
     # Order: player entity, creatures, quest list, cinematics, entered_world (dismisses loading)
+    # Note: Inventory already sent via ServerPlayerCreate in CharacterSelectHandler
     final_packets =
       base_packets ++
       creature_packets ++

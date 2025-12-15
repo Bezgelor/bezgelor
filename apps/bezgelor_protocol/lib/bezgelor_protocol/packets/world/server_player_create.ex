@@ -46,6 +46,8 @@ defmodule BezgelorProtocol.Packets.World.ServerPlayerCreate do
 
   @behaviour BezgelorProtocol.Packet.Writable
 
+  import Bitwise
+
   alias BezgelorProtocol.PacketWriter
 
   defstruct xp: 0,
@@ -60,7 +62,8 @@ defmodule BezgelorProtocol.Packets.World.ServerPlayerCreate do
             input_key_set: 0,
             gear_score: 0.0,
             is_pvp_server: false,
-            matching_flags: 0
+            matching_flags: 0,
+            inventory: []
 
   @type t :: %__MODULE__{
           xp: non_neg_integer(),
@@ -75,8 +78,17 @@ defmodule BezgelorProtocol.Packets.World.ServerPlayerCreate do
           input_key_set: non_neg_integer(),
           gear_score: float(),
           is_pvp_server: boolean(),
-          matching_flags: non_neg_integer()
+          matching_flags: non_neg_integer(),
+          inventory: list()
         }
+
+  # InventoryLocation enum values
+  @location_equipped 0
+  @location_inventory 1
+  @location_bank 2
+
+  # ItemUpdateReason enum (6 bits)
+  @reason_no_reason 0
 
   @impl true
   def opcode, do: :server_player_create
@@ -86,8 +98,9 @@ defmodule BezgelorProtocol.Packets.World.ServerPlayerCreate do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      # Empty inventory
-      |> PacketWriter.write_bits(0, 32)
+      # Inventory count and items
+      |> PacketWriter.write_uint32(length(packet.inventory))
+      |> write_inventory_items(packet.inventory)
       # Money[16] - 16 uint64 currencies (all zero)
       |> write_money()
       # XP
@@ -164,16 +177,108 @@ defmodule BezgelorProtocol.Packets.World.ServerPlayerCreate do
   end
 
   @doc """
-  Create a player create packet from character data.
+  Create a player create packet from character data and inventory.
   """
-  @spec from_character(map()) :: t()
-  def from_character(character) do
+  @spec from_character(map(), list()) :: t()
+  def from_character(character, inventory \\ []) do
     %__MODULE__{
       xp: character.total_xp || 0,
       rest_bonus_xp: character.rest_bonus_xp || 0,
       spec_index: character.active_spec || 0,
       faction_id: character.faction_id || 166,
-      active_costume_index: character.active_costume_index || -1
+      active_costume_index: character.active_costume_index || -1,
+      inventory: inventory
     }
+  end
+
+  # Write all inventory items
+  defp write_inventory_items(writer, []), do: writer
+
+  defp write_inventory_items(writer, [item | rest]) do
+    writer
+    |> write_inventory_item(item)
+    |> write_inventory_items(rest)
+  end
+
+  # Write a single inventory item (InventoryItem = Item + 6-bit reason)
+  defp write_inventory_item(writer, item) do
+    # Generate guid from item ID or use database ID
+    guid = item[:id] || generate_item_guid(item)
+
+    writer
+    # Item guid (uint64)
+    |> PacketWriter.write_uint64(guid)
+    # Unknown0 (uint64)
+    |> PacketWriter.write_uint64(0)
+    # Item ID (18 bits)
+    |> PacketWriter.write_bits(item[:item_id] || 0, 18)
+    # Location (9 bits)
+    |> PacketWriter.write_bits(location_to_int(item[:container_type]), 9)
+    # Bag index (uint32) - for equipped items, this is the slot number
+    |> PacketWriter.write_uint32(item[:slot] || 0)
+    # Stack count (uint32)
+    |> PacketWriter.write_uint32(item[:quantity] || 1)
+    # Charges (uint32)
+    |> PacketWriter.write_uint32(item[:charges] || 0)
+    # Random circuit data (uint64)
+    |> PacketWriter.write_uint64(0)
+    # Random glyph data (uint32)
+    |> PacketWriter.write_uint32(0)
+    # Threshold data (uint64)
+    |> PacketWriter.write_uint64(0)
+    # Durability (float32)
+    |> PacketWriter.write_float32(normalize_durability(item[:durability]))
+    # Unknown44 (uint32)
+    |> PacketWriter.write_uint32(0)
+    # Unknown48 (uint8)
+    |> PacketWriter.write_byte(0)
+    # Dye data (uint32)
+    |> PacketWriter.write_uint32(0)
+    # Dynamic flags (uint32)
+    |> PacketWriter.write_uint32(0)
+    # Expiration time left (uint32)
+    |> PacketWriter.write_uint32(0)
+    # Unknown58 array (2 elements, each 3-bit + uint32 + uint32)
+    |> write_unknown58_entry()
+    |> write_unknown58_entry()
+    # Unknown70 (18 bits)
+    |> PacketWriter.write_bits(0, 18)
+    # Microchips count (3 bits) + array
+    |> PacketWriter.write_bits(0, 3)
+    # Glyphs count (4 bits) + array
+    |> PacketWriter.write_bits(0, 4)
+    # Unknown88 count (6 bits) + array
+    |> PacketWriter.write_bits(0, 6)
+    # Effective item level (uint32)
+    |> PacketWriter.write_uint32(0)
+    # ItemUpdateReason (6 bits)
+    |> PacketWriter.write_bits(@reason_no_reason, 6)
+  end
+
+  # Write an Unknown58 entry (3-bit + uint32 + uint32)
+  defp write_unknown58_entry(writer) do
+    writer
+    |> PacketWriter.write_bits(0, 3)
+    |> PacketWriter.write_uint32(0)
+    |> PacketWriter.write_uint32(0)
+  end
+
+  # Convert durability (0-100) to float 0.0-1.0
+  defp normalize_durability(nil), do: 1.0
+  defp normalize_durability(d) when is_float(d) and d <= 1.0, do: d
+  defp normalize_durability(d) when is_integer(d), do: d / 100.0
+  defp normalize_durability(d) when is_float(d), do: d / 100.0
+
+  defp location_to_int(:equipped), do: @location_equipped
+  defp location_to_int(:inventory), do: @location_inventory
+  defp location_to_int(:bag), do: @location_inventory
+  defp location_to_int(:bank), do: @location_bank
+  defp location_to_int(loc) when is_integer(loc), do: loc
+  defp location_to_int(_), do: @location_inventory
+
+  # Generate a unique item guid from location and slot
+  defp generate_item_guid(item) do
+    container_int = location_to_int(item[:container_type])
+    (container_int <<< 32) ||| (item[:slot] || 0)
   end
 end

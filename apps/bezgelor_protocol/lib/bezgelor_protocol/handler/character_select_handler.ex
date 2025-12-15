@@ -32,7 +32,7 @@ defmodule BezgelorProtocol.Handler.CharacterSelectHandler do
   }
 
   alias BezgelorProtocol.{PacketReader, PacketWriter}
-  alias BezgelorDb.Characters
+  alias BezgelorDb.{Characters, Inventory}
   alias BezgelorCore.Zone
 
   require Logger
@@ -107,7 +107,21 @@ defmodule BezgelorProtocol.Handler.CharacterSelectHandler do
           unit_id: player_guid
         })
         path_initialise_data = encode_packet(ServerPathInitialise.from_character(character))
-        _player_create_data = encode_packet(ServerPlayerCreate.from_character(character))
+
+        # Load inventory items for the character
+        inventory_items = Inventory.get_items(character.id)
+        inventory_maps = Enum.map(inventory_items, fn item ->
+          %{
+            id: item.id,
+            item_id: item.item_id,
+            container_type: item.container_type,
+            slot: item.slot,
+            quantity: item.quantity,
+            durability: item.durability,
+            charges: 0
+          }
+        end)
+        player_create_data = encode_packet(ServerPlayerCreate.from_character(character, inventory_maps))
 
         # Store character info in session for WorldEntryHandler
         state = put_in(state.session_data[:character_id], character.id)
@@ -133,8 +147,6 @@ defmodule BezgelorProtocol.Handler.CharacterSelectHandler do
         # 8. Instance settings (difficulty, etc.)
         # 9. Movement control - gives player control of their character
         # 10. Player create - full player state (inventory, currencies, etc.)
-        # TODO: ServerPlayerCreate causes "Invalid Message Id #606" error -
-        # temporarily disabled to test if other packets allow loading to complete
         {:reply_multi_world_encrypted, [
           {:server_world_enter, world_enter_data},
           {:server_character_flags_updated, character_flags_data},
@@ -145,8 +157,8 @@ defmodule BezgelorProtocol.Handler.CharacterSelectHandler do
           {:server_time_of_day, time_of_day_data},
           {:server_housing_neighbors, housing_neighbors_data},
           {:server_instance_settings, instance_settings_data},
-          {:server_movement_control, movement_control_data}
-          # {:server_player_create, player_create_data}  # Disabled - causes Invalid Message Id #606
+          {:server_movement_control, movement_control_data},
+          {:server_player_create, player_create_data}
         ], state}
     end
   end
