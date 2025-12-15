@@ -27,10 +27,13 @@ defmodule BezgelorProtocol.MixProject do
   defp deps do
     [
       {:ranch, "~> 2.1"},
+      {:hammer, "~> 6.2"},
       {:bezgelor_core, in_umbrella: true},
       {:bezgelor_crypto, in_umbrella: true},
       {:bezgelor_data, in_umbrella: true},
-      {:bezgelor_db, in_umbrella: true}
+      {:bezgelor_db, in_umbrella: true},
+      # Property-based testing for packet fuzzing
+      {:stream_data, "~> 1.0", only: [:test, :dev]}
     ]
   end
 end
