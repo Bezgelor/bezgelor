@@ -597,9 +597,10 @@ defmodule BezgelorWorld.CreatureManager do
         {:no_change, creature_state}
 
       {:start_wander, new_ai} ->
-        # Creature is starting to wander - broadcast movement to nearby players
+        # Creature is starting to wander - broadcast movement to players in zone
+        world_id = Map.get(creature_state, :world_id)
         Logger.info("Creature #{entity.guid} starting wander: #{length(new_ai.movement_path)} points at speed #{new_ai.wander_speed}")
-        broadcast_creature_movement(entity.guid, new_ai.movement_path, new_ai.wander_speed)
+        broadcast_creature_movement(entity.guid, new_ai.movement_path, new_ai.wander_speed, world_id)
 
         # Update entity position to path end (client will animate the movement)
         end_position = List.last(new_ai.movement_path) || entity.position
@@ -613,9 +614,10 @@ defmodule BezgelorWorld.CreatureManager do
         {:updated, %{creature_state | ai: new_ai}}
 
       {:start_patrol, new_ai} ->
-        # Creature is starting a patrol segment - broadcast movement
+        # Creature is starting a patrol segment - broadcast movement to players in zone
+        world_id = Map.get(creature_state, :world_id)
         Logger.info("Creature #{entity.guid} starting patrol: #{length(new_ai.movement_path)} waypoints at speed #{new_ai.patrol_speed}")
-        broadcast_creature_movement(entity.guid, new_ai.movement_path, new_ai.patrol_speed)
+        broadcast_creature_movement(entity.guid, new_ai.movement_path, new_ai.patrol_speed, world_id)
 
         # Update entity position to path end (client will animate the movement)
         end_position = List.last(new_ai.movement_path) || entity.position
@@ -1054,10 +1056,11 @@ defmodule BezgelorWorld.CreatureManager do
     :ok
   end
 
-  # Broadcast creature movement to nearby players
-  defp broadcast_creature_movement(creature_guid, path, speed) when length(path) > 1 do
+  # Broadcast creature movement to players in the same zone
+  defp broadcast_creature_movement(creature_guid, path, speed, world_id) when length(path) > 1 do
     alias BezgelorProtocol.Packets.World.ServerEntityCommand
     alias BezgelorProtocol.PacketWriter
+    alias BezgelorWorld.Zone.Instance, as: ZoneInstance
 
     # Build movement commands using map format
     # Set move state (0x01 = Move flag)
@@ -1090,33 +1093,12 @@ defmodule BezgelorWorld.CreatureManager do
     {:ok, writer} = ServerEntityCommand.write(packet, writer)
     packet_data = PacketWriter.to_binary(writer)
 
-    # Broadcast to all connected players
-    # TODO: Filter to only nearby players once spatial partitioning is implemented
-    broadcast_to_all_players(:server_entity_command, packet_data)
+    # Broadcast to players in the same zone (instance_id = 1 for now)
+    # Zone.Instance.broadcast routes via WorldManager's zone_index
+    ZoneInstance.broadcast({world_id, 1}, {:server_entity_command, packet_data})
 
-    Logger.debug("Broadcast movement for creature #{creature_guid}, path length: #{length(path)}")
+    Logger.debug("Broadcast movement for creature #{creature_guid} in zone #{world_id}, path length: #{length(path)}")
   end
 
-  defp broadcast_creature_movement(_creature_guid, _path, _speed), do: :ok
-
-  # Broadcast packet to all connected players
-  defp broadcast_to_all_players(opcode, packet_data) do
-    for {_account_id, session} <- WorldManager.list_sessions() do
-      if session.entity_guid do
-        send_to_connection(session.connection_pid, opcode, packet_data)
-      end
-    end
-
-    :ok
-  end
-
-  defp send_to_connection(nil, _opcode, _data), do: :ok
-
-  defp send_to_connection(connection_pid, opcode, packet_data) do
-    try do
-      BezgelorProtocol.Connection.send_packet(connection_pid, opcode, packet_data)
-    catch
-      :exit, _ -> :ok
-    end
-  end
+  defp broadcast_creature_movement(_creature_guid, _path, _speed, _world_id), do: :ok
 end
