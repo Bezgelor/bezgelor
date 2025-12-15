@@ -86,6 +86,10 @@ defmodule BezgelorProtocol.Connection do
     {:ok, {client_ip, client_port}} = :inet.peername(socket)
     client_addr = "#{:inet.ntoa(client_ip)}:#{client_port}"
 
+    # Set connection ID for log tracing across sessions
+    conn_id = generate_conn_id(client_port)
+    Logger.metadata(conn_id: conn_id)
+
     Logger.info("[#{server_name(connection_type)}] New connection from #{client_addr}")
 
     state = %__MODULE__{
@@ -260,6 +264,8 @@ defmodule BezgelorProtocol.Connection do
 
   # Send an encrypted packet wrapped in ServerRealmEncrypted (world server).
   # Uses opcode 0x03DC instead of 0x0076.
+  defp do_send_encrypted_world_packet(%{state: :disconnected} = state, _opcode, _payload), do: state
+
   defp do_send_encrypted_world_packet(%{socket: socket, transport: transport, connection_type: conn_type, encryption: encryption} = state, opcode, payload) do
     opcode_int = if is_atom(opcode), do: Opcode.to_integer(opcode), else: opcode
 
@@ -297,8 +303,7 @@ defmodule BezgelorProtocol.Connection do
         state
 
       {:error, reason} ->
-        Logger.warning("[#{server_name(conn_type)}] Failed to send encrypted packet: #{inspect(reason)}")
-        state
+        handle_send_error(state, reason)
     end
   end
 
@@ -306,6 +311,8 @@ defmodule BezgelorProtocol.Connection do
   # This is used for realm server packets that need encryption.
   # The inner packet (opcode + payload) is encrypted with PacketCrypt,
   # then wrapped in a ServerAuthEncrypted container.
+  defp do_send_encrypted_packet(%{state: :disconnected} = state, _opcode, _payload), do: state
+
   defp do_send_encrypted_packet(%{socket: socket, transport: transport, connection_type: conn_type, encryption: encryption} = state, opcode, payload) do
     opcode_int = if is_atom(opcode), do: Opcode.to_integer(opcode), else: opcode
 
@@ -336,7 +343,22 @@ defmodule BezgelorProtocol.Connection do
         state
 
       {:error, reason} ->
-        Logger.warning("[#{server_name(conn_type)}] Failed to send encrypted packet: #{inspect(reason)}")
+        handle_send_error(state, reason)
+    end
+  end
+
+  # Handle send errors - mark connection as dead for fatal errors to prevent log floods
+  defp handle_send_error(%{connection_type: conn_type} = state, reason) do
+    case reason do
+      fatal when fatal in [:enotconn, :closed, :econnreset, :epipe, :etimedout] ->
+        # Only log once for fatal errors, mark as disconnected
+        if state.state != :disconnected do
+          Logger.warning("[#{server_name(conn_type)}] Connection lost: #{inspect(reason)}")
+        end
+        %{state | state: :disconnected}
+
+      _ ->
+        Logger.warning("[#{server_name(conn_type)}] Failed to send packet: #{inspect(reason)}")
         state
     end
   end
@@ -366,7 +388,10 @@ defmodule BezgelorProtocol.Connection do
 
     case Opcode.from_integer(opcode) do
       {:ok, opcode_atom} ->
-        Logger.debug("[#{server_name(state.connection_type)}] Recv: #{Opcode.name(opcode_atom)} (#{byte_size(payload)} bytes)")
+        # Skip logging outer encrypted packet wrapper - inner handler logs the actual opcode
+        unless opcode_atom in [:client_encrypted, :client_packed_world] do
+          Logger.info("[#{server_name(state.connection_type)}] Recv: #{Opcode.name(opcode_atom)} (#{byte_size(payload)} bytes)")
+        end
         result = dispatch_to_handler(opcode_atom, payload, state, start_time)
         result
 
@@ -375,6 +400,9 @@ defmodule BezgelorProtocol.Connection do
         {:ok, state}
     end
   end
+
+  # Wrapper opcodes that log inner content - suppress outer logging
+  @wrapper_opcodes [:client_encrypted, :client_packed_world]
 
   defp dispatch_to_handler(opcode_atom, payload, state, start_time) do
     alias BezgelorProtocol.PacketRegistry
@@ -389,9 +417,14 @@ defmodule BezgelorProtocol.Connection do
         elapsed_us = System.monotonic_time(:microsecond) - start_time
         elapsed_ms = elapsed_us / 1000
 
+        # Skip logging for wrapper packets (inner handler logs the actual opcode)
+        log_handler_result? = opcode_atom not in @wrapper_opcodes
+
         case result do
           {:ok, new_state} ->
-            Logger.debug("[#{server_name(state.connection_type)}] Handled #{Opcode.name(opcode_atom)} in #{Float.round(elapsed_ms, 2)}ms")
+            if log_handler_result? do
+              Logger.debug("[#{server_name(state.connection_type)}] Handled #{Opcode.name(opcode_atom)} in #{Float.round(elapsed_ms, 2)}ms")
+            end
             {:ok, new_state}
 
           {:reply, reply_opcode, reply_payload, new_state} ->
@@ -487,4 +520,11 @@ defmodule BezgelorProtocol.Connection do
   defp server_name(:realm), do: "Realm"
   defp server_name(:world), do: "World"
   defp server_name(other), do: "#{other}"
+
+  # Generate a short connection ID for log tracing
+  # Format: port + 3-char random suffix (e.g., "52341abc")
+  defp generate_conn_id(port) do
+    suffix = :crypto.strong_rand_bytes(2) |> Base.encode16(case: :lower) |> binary_part(0, 3)
+    "#{port}#{suffix}"
+  end
 end

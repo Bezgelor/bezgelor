@@ -62,9 +62,10 @@ config :tailwind,
   ]
 
 # Configure Elixir's Logger
+# Metadata appears at end: account (email), char (character name), conn_id (session ID)
 config :logger, :default_formatter,
-  format: "$time $metadata[$level] $message\n",
-  metadata: [:request_id]
+  format: "$time [$level] $message | $metadata\n",
+  metadata: [:account, :char, :conn_id]
 
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
@@ -95,6 +96,7 @@ config :bezgelor_realm,
   host: System.get_env("REALM_HOST", "0.0.0.0"),
   port: String.to_integer(System.get_env("REALM_PORT", "23115")),
   # Realm info sent to clients
+  realm_id: String.to_integer(System.get_env("REALM_ID", "1")),
   realm_name: System.get_env("REALM_NAME", "Bezgelor"),
   realm_type: :pve,  # :pve or :pvp
   realm_flags: 0,

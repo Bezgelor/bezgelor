@@ -72,6 +72,14 @@ defmodule BezgelorProtocol.Handler.CharacterSelectHandler do
         # Update last login time
         {:ok, _updated} = Characters.update_last_online(character)
 
+        # Debug: log appearance data
+        if character.appearance do
+          Logger.debug("Character appearance visuals: #{inspect(character.appearance.visuals)}")
+          Logger.debug("Character appearance bones: #{inspect(character.appearance.bones)}")
+        else
+          Logger.warning("Character #{character.id} has no appearance data!")
+        end
+
         # Get spawn location
         spawn = Zone.spawn_location(character)
 
@@ -83,7 +91,10 @@ defmodule BezgelorProtocol.Handler.CharacterSelectHandler do
         # Build packets
         world_enter_data = encode_packet(%ServerWorldEnter{} |> struct(ServerWorldEnter.from_spawn(spawn) |> Map.from_struct()))
         character_flags_data = encode_packet(%ServerCharacterFlagsUpdated{flags: 0})
-        entity_create_data = encode_packet(ServerEntityCreate.from_character(character, spawn))
+        entity_struct = ServerEntityCreate.from_character(character, spawn)
+        Logger.debug("ServerEntityCreate struct - visible_items: #{inspect(entity_struct.visible_items)}, bones: #{length(entity_struct.bones)}")
+        entity_create_data = encode_packet(entity_struct)
+        Logger.debug("ServerEntityCreate packet size: #{byte_size(entity_create_data)} bytes")
         # NexusForever sends these after ServerEntityCreate for player entities
         path_type_data = encode_packet(%ServerSetUnitPathType{unit_id: player_guid, path: character.active_path || 0})
         player_changed_data = encode_packet(%ServerPlayerChanged{guid: player_guid, unknown1: 1})
@@ -104,6 +115,9 @@ defmodule BezgelorProtocol.Handler.CharacterSelectHandler do
         state = put_in(state.session_data[:character], character)
         state = put_in(state.session_data[:spawn_location], spawn)
         state = put_in(state.session_data[:player_guid], player_guid)
+
+        # Set character metadata for log tracing
+        Logger.metadata(char: character.name)
 
         Logger.info("Account #{account_id} entering world with character '#{character.name}' (ID: #{character.id})")
 

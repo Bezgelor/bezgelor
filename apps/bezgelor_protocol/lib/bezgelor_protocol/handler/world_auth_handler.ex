@@ -52,6 +52,9 @@ defmodule BezgelorProtocol.Handler.WorldAuthHandler do
       new_encryption = PacketCrypt.new(new_key)
       state = %{state | encryption: new_encryption}
 
+      # Set account metadata for log tracing
+      Logger.metadata(account: packet.email)
+
       Logger.info(
         "World auth successful for account #{account.id} (#{packet.email}), " <>
           "switched to session-based encryption"
