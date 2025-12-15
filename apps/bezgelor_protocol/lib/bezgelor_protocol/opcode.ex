@@ -37,6 +37,12 @@ defmodule BezgelorProtocol.Opcode do
   @server_realm_messages 0x0593
   @server_realm_info 0x03DB
 
+  # Realm List Opcodes (World Server - character select screen)
+  @client_realm_list 0x07A4
+  @server_realm_list 0x0761
+  @client_realm_select 0x07DF
+  @server_new_realm 0x0760
+
   # World Server Opcodes
   @server_player_entered_world 0x0061
   @client_hello_realm 0x058F
@@ -47,6 +53,7 @@ defmodule BezgelorProtocol.Opcode do
   @client_storefront_request_catalog 0x082D
   @server_character_list 0x0117
   @server_max_character_level_achieved 0x0036
+  @server_reward_property_set 0x092C
   @server_account_currency_set 0x0966
   @server_account_entitlements 0x0968
   @server_account_tier 0x097F
@@ -77,6 +84,7 @@ defmodule BezgelorProtocol.Opcode do
 
   # Movement/Entity command opcodes
   @client_entity_command 0x0637
+  @client_entity_select 0x0185
   @client_zone_change 0x063A
   @client_player_movement_speed_update 0x063B
 
@@ -231,6 +239,22 @@ defmodule BezgelorProtocol.Opcode do
   @server_quest_offer 0x0351
   @server_quest_list 0x035F   # ServerQuestInit in NexusForever
 
+  # Cinematic opcodes
+  @server_cinematic_complete 0x0210
+  @server_cinematic_actor_attach 0x0213
+  @server_cinematic_camera_spline 0x0215
+  @server_cinematic_transition 0x0218
+  @server_cinematic_visual_effect 0x021C
+  @server_cinematic_actor_visibility 0x0220
+  @server_cinematic_transition_duration_set 0x0222
+  @server_cinematic_visual_effect_end 0x0225
+  @server_cinematic_scene 0x0227
+  @server_cinematic_actor 0x0228
+  @server_cinematic_text 0x022A
+  @server_cinematic_show_animate 0x022E
+  @server_cinematic_actor_angle 0x0230
+  @server_cinematic_notify 0x0232
+
   # Mapping from atom to integer
   @opcode_map %{
     # Connection state (ignored)
@@ -248,6 +272,11 @@ defmodule BezgelorProtocol.Opcode do
     server_auth_denied_realm: @server_auth_denied_realm,
     server_realm_messages: @server_realm_messages,
     server_realm_info: @server_realm_info,
+    # Realm List (World Server - character select screen)
+    client_realm_list: @client_realm_list,
+    server_realm_list: @server_realm_list,
+    client_realm_select: @client_realm_select,
+    server_new_realm: @server_new_realm,
     # World Server
     server_player_entered_world: @server_player_entered_world,
     client_hello_realm: @client_hello_realm,
@@ -258,6 +287,7 @@ defmodule BezgelorProtocol.Opcode do
     client_storefront_request_catalog: @client_storefront_request_catalog,
     server_character_list: @server_character_list,
     server_max_character_level_achieved: @server_max_character_level_achieved,
+    server_reward_property_set: @server_reward_property_set,
     server_account_currency_set: @server_account_currency_set,
     server_account_entitlements: @server_account_entitlements,
     server_account_tier: @server_account_tier,
@@ -285,6 +315,7 @@ defmodule BezgelorProtocol.Opcode do
     client_statistics_framerate: @client_statistics_framerate,
     # Movement/Entity commands
     client_entity_command: @client_entity_command,
+    client_entity_select: @client_entity_select,
     client_zone_change: @client_zone_change,
     client_player_movement_speed_update: @client_player_movement_speed_update,
     # Settings/Options
@@ -412,7 +443,22 @@ defmodule BezgelorProtocol.Opcode do
     client_npc_interact: @client_npc_interact,
     # Quests
     server_quest_offer: @server_quest_offer,
-    server_quest_list: @server_quest_list
+    server_quest_list: @server_quest_list,
+    # Cinematics
+    server_cinematic_complete: @server_cinematic_complete,
+    server_cinematic_actor_attach: @server_cinematic_actor_attach,
+    server_cinematic_camera_spline: @server_cinematic_camera_spline,
+    server_cinematic_transition: @server_cinematic_transition,
+    server_cinematic_visual_effect: @server_cinematic_visual_effect,
+    server_cinematic_actor_visibility: @server_cinematic_actor_visibility,
+    server_cinematic_transition_duration_set: @server_cinematic_transition_duration_set,
+    server_cinematic_visual_effect_end: @server_cinematic_visual_effect_end,
+    server_cinematic_scene: @server_cinematic_scene,
+    server_cinematic_actor: @server_cinematic_actor,
+    server_cinematic_text: @server_cinematic_text,
+    server_cinematic_show_animate: @server_cinematic_show_animate,
+    server_cinematic_actor_angle: @server_cinematic_actor_angle,
+    server_cinematic_notify: @server_cinematic_notify
   }
 
   # Reverse mapping from integer to atom
@@ -432,6 +478,10 @@ defmodule BezgelorProtocol.Opcode do
     server_auth_denied_realm: "ServerAuthDeniedRealm",
     server_realm_messages: "ServerRealmMessages",
     server_realm_info: "ServerRealmInfo",
+    client_realm_list: "ClientRealmList",
+    server_realm_list: "ServerRealmList",
+    client_realm_select: "ClientRealmSelect",
+    server_new_realm: "ServerNewRealm",
     server_player_entered_world: "ServerPlayerEnteredWorld",
     client_hello_realm: "ClientHelloRealm",
     server_realm_encrypted: "ServerRealmEncrypted",
@@ -441,6 +491,7 @@ defmodule BezgelorProtocol.Opcode do
     client_storefront_request_catalog: "ClientStorefrontRequestCatalog",
     server_character_list: "ServerCharacterList",
     server_max_character_level_achieved: "ServerMaxCharacterLevelAchieved",
+    server_reward_property_set: "ServerRewardPropertySet",
     server_account_currency_set: "ServerAccountCurrencySet",
     server_account_entitlements: "ServerAccountEntitlements",
     server_account_tier: "ServerAccountTier",
@@ -465,6 +516,7 @@ defmodule BezgelorProtocol.Opcode do
     client_statistics_framerate: "ClientStatisticsFramerate",
     # Movement/Entity commands
     client_entity_command: "ClientEntityCommand",
+    client_entity_select: "ClientEntitySelect",
     client_zone_change: "ClientZoneChange",
     client_player_movement_speed_update: "ClientPlayerMovementSpeedUpdate",
     # Settings/Options
@@ -582,7 +634,22 @@ defmodule BezgelorProtocol.Opcode do
     client_npc_interact: "ClientNpcInteract",
     # Quests
     server_quest_offer: "ServerQuestOffer",
-    server_quest_list: "ServerQuestList"
+    server_quest_list: "ServerQuestList",
+    # Cinematics
+    server_cinematic_complete: "ServerCinematicComplete",
+    server_cinematic_actor_attach: "ServerCinematicActorAttach",
+    server_cinematic_camera_spline: "ServerCinematicCameraSpline",
+    server_cinematic_transition: "ServerCinematicTransition",
+    server_cinematic_visual_effect: "ServerCinematicVisualEffect",
+    server_cinematic_actor_visibility: "ServerCinematicActorVisibility",
+    server_cinematic_transition_duration_set: "ServerCinematicTransitionDurationSet",
+    server_cinematic_visual_effect_end: "ServerCinematicVisualEffectEnd",
+    server_cinematic_scene: "ServerCinematicScene",
+    server_cinematic_actor: "ServerCinematicActor",
+    server_cinematic_text: "ServerCinematicText",
+    server_cinematic_show_animate: "ServerCinematicShowAnimate",
+    server_cinematic_actor_angle: "ServerCinematicActorAngle",
+    server_cinematic_notify: "ServerCinematicNotify"
   }
 
   @type t :: atom()

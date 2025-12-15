@@ -69,9 +69,8 @@ defmodule BezgelorProtocol.Handler.PackedWorldHandler do
       {:ok, inner_opcode, inner_payload} ->
         case lookup_handler(inner_opcode) do
           {:ok, handler} ->
-            Logger.debug(
-              "PackedWorldHandler: dispatching #{inner_opcode} (#{byte_size(inner_payload)} bytes)"
-            )
+            # Log with same format as Connection - shows the actual opcode being handled
+            Logger.info("[World] Recv: #{Opcode.name(inner_opcode)} (#{byte_size(inner_payload)} bytes)")
 
             handler.handle(inner_payload, state)
 

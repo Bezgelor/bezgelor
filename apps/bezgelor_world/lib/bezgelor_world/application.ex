@@ -33,6 +33,8 @@ defmodule BezgelorWorld.Application do
 
     # Always start WorldManager, CreatureManager, HarvestNodeManager, and Zone infrastructure
     base_children = [
+      # Realm health monitor (marks current realm online, monitors others)
+      BezgelorWorld.RealmMonitor,
       BezgelorWorld.WorldManager,
       BezgelorWorld.CreatureManager,
       BezgelorWorld.HarvestNodeManager,

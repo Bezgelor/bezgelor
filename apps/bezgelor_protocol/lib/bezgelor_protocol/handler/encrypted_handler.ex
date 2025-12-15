@@ -71,14 +71,18 @@ defmodule BezgelorProtocol.Handler.EncryptedHandler do
            {:ok, decrypted} <- decrypt_payload(cipher, encrypted_data),
            {:ok, inner_opcode, inner_payload} <- parse_inner_packet(decrypted),
            {:ok, handler} <- lookup_handler(inner_opcode) do
-        Logger.debug(
-          "EncryptedHandler: dispatching #{inner_opcode} (#{byte_size(inner_payload)} bytes)"
-        )
+        # Log with same format as Connection - shows the actual opcode being handled
+        server_name = server_name_from_state(state)
+        Logger.info("[#{server_name}] Recv: #{Opcode.name(inner_opcode)} (#{byte_size(inner_payload)} bytes)")
 
         handler.handle(inner_payload, state)
       end
     end
   end
+
+  defp server_name_from_state(%{connection_type: :realm}), do: "Realm"
+  defp server_name_from_state(%{connection_type: :world}), do: "World"
+  defp server_name_from_state(_), do: "Unknown"
 
   # Extract encrypted data from ClientEncrypted packet (skip 4-byte length prefix)
   defp extract_encrypted_data(payload) when byte_size(payload) < 4 do
@@ -95,7 +99,6 @@ defmodule BezgelorProtocol.Handler.EncryptedHandler do
       {:error, :payload_too_short}
     else
       encrypted_data = binary_part(rest, 0, encrypted_data_size)
-      Logger.debug("EncryptedHandler: payload size=#{byte_size(payload)}, length field=#{length}, encrypted_data size=#{byte_size(encrypted_data)}")
       {:ok, encrypted_data}
     end
   end
@@ -104,9 +107,6 @@ defmodule BezgelorProtocol.Handler.EncryptedHandler do
   defp decrypt_payload(cipher, payload) do
     try do
       decrypted = PacketCrypt.decrypt(cipher, payload)
-      # Debug: log first 16 bytes of decrypted data and input
-      Logger.debug("EncryptedHandler: input (first 16): #{Base.encode16(:binary.part(payload, 0, min(16, byte_size(payload))))}")
-      Logger.debug("EncryptedHandler: decrypted (first 16): #{Base.encode16(:binary.part(decrypted, 0, min(16, byte_size(decrypted))))}")
       {:ok, decrypted}
     rescue
       e ->

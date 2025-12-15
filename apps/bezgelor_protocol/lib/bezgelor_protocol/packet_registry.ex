@@ -94,6 +94,8 @@ defmodule BezgelorProtocol.PacketRegistry do
       client_character_create: Handler.CharacterCreateHandler,
       client_character_select: Handler.CharacterSelectHandler,
       client_character_delete: Handler.CharacterDeleteHandler,
+      client_realm_list: Handler.RealmListHandler,
+      client_realm_select: Handler.RealmSelectHandler,
       client_entered_world: Handler.WorldEntryHandler,
       client_logout_request: Handler.LogoutHandler,
       client_movement: Handler.MovementHandler,

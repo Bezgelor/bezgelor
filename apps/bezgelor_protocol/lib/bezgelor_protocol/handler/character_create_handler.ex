@@ -28,7 +28,7 @@ defmodule BezgelorProtocol.Handler.CharacterCreateHandler do
 
   alias BezgelorProtocol.{PacketReader, PacketWriter}
   alias BezgelorData.Store
-  alias BezgelorDb.Characters
+  alias BezgelorDb.{Characters, Inventory}
   alias BezgelorCore.Zone
 
   require Logger
@@ -90,9 +90,12 @@ defmodule BezgelorProtocol.Handler.CharacterCreateHandler do
     # Get starting location based on creation type and faction
     spawn = Zone.starting_location(creation_start, faction_id)
 
+    # Get current realm ID
+    realm_id = Application.get_env(:bezgelor_realm, :realm_id, 1)
+
     Logger.debug(
       "Creating character from template: race=#{race}, class=#{class}, sex=#{sex}, " <>
-        "faction=#{faction_id}, creation_start=#{creation_start}, world_id=#{spawn.world_id}"
+        "faction=#{faction_id}, creation_start=#{creation_start}, world_id=#{spawn.world_id}, realm_id=#{realm_id}"
     )
 
     character_attrs = %{
@@ -101,6 +104,7 @@ defmodule BezgelorProtocol.Handler.CharacterCreateHandler do
       race: race,
       class: class,
       faction_id: faction_id,
+      realm_id: realm_id,
       world_id: spawn.world_id,
       world_zone_id: spawn.zone_id,
       location_x: elem(spawn.position, 0),
@@ -123,6 +127,11 @@ defmodule BezgelorProtocol.Handler.CharacterCreateHandler do
     case Characters.create_character(account_id, character_attrs, customization_attrs) do
       {:ok, character} ->
         Logger.info("Created character '#{character.name}' (ID: #{character.id}) for account #{account_id} in world #{character.world_id}")
+
+        # Initialize inventory bags and add starting gear
+        Inventory.init_bags(character.id)
+        add_starting_gear(character.id, creation_entry)
+
         response = ServerCharacterCreate.success(character.id, character.world_id)
         {:reply_world_encrypted, :server_character_create, encode_packet(response), state}
 
@@ -159,5 +168,56 @@ defmodule BezgelorProtocol.Handler.CharacterCreateHandler do
   defp compute_visuals(race, sex, labels, values) do
     customizations = Enum.zip(labels, values)
     Store.get_item_visuals(race, sex, customizations)
+  end
+
+  # Add starting gear from the character creation template
+  defp add_starting_gear(character_id, creation_entry) do
+    # CharacterCreation has itemId0 through itemId015
+    item_keys = for i <- 0..15, do: item_key(i)
+
+    item_keys
+    |> Enum.map(fn key -> get_item_id(creation_entry, key) end)
+    |> Enum.filter(&(&1 > 0))
+    |> Enum.each(fn item_id -> add_equipped_item(character_id, item_id) end)
+  end
+
+  # Generate the key for itemId fields (itemId0, itemId01, itemId02, etc.)
+  defp item_key(0), do: "itemId0"
+  defp item_key(n) when n < 10, do: "itemId0#{n}"
+  defp item_key(n), do: "itemId0#{n}"
+
+  defp get_item_id(entry, key) do
+    Map.get(entry, key) || Map.get(entry, String.to_atom(key)) || 0
+  end
+
+  # Add a single item to the character's equipped container
+  defp add_equipped_item(character_id, item_id) do
+    case Store.get_item_slot(item_id) do
+      nil ->
+        Logger.debug("Item #{item_id} has no slot, skipping")
+
+      slot when slot > 0 ->
+        # Add item to equipped container at the correct slot
+        attrs = %{
+          character_id: character_id,
+          item_id: item_id,
+          container_type: :equipped,
+          bag_index: 0,
+          slot: slot,
+          quantity: 1,
+          max_stack: 1
+        }
+
+        case BezgelorDb.Repo.insert(BezgelorDb.Schema.InventoryItem.changeset(%BezgelorDb.Schema.InventoryItem{}, attrs)) do
+          {:ok, _item} ->
+            Logger.debug("Added starting item #{item_id} to slot #{slot}")
+
+          {:error, changeset} ->
+            Logger.warning("Failed to add starting item #{item_id}: #{inspect(changeset.errors)}")
+        end
+
+      _ ->
+        :ok
+    end
   end
 end

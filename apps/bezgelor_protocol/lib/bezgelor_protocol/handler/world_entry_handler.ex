@@ -16,9 +16,7 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
   """
 
   @behaviour BezgelorProtocol.Handler
-  @compile {:no_warn_undefined, [BezgelorWorld.Quest.QuestCache, BezgelorWorld.Handler.AchievementHandler]}
-
-  import Bitwise
+  @compile {:no_warn_undefined, [BezgelorWorld.Quest.QuestCache, BezgelorWorld.Handler.AchievementHandler, BezgelorWorld.Cinematic.CinematicManager, BezgelorWorld.TriggerManager, BezgelorWorld.Creature.ZoneManager, BezgelorWorld.CreatureManager]}
 
   alias BezgelorProtocol.Packets.World.{ServerEntityCreate, ServerQuestList, ServerPlayerEnteredWorld}
   alias BezgelorProtocol.PacketWriter
@@ -26,6 +24,8 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
   alias BezgelorWorld.Handler.AchievementHandler
   alias BezgelorWorld.Quest.QuestCache
   alias BezgelorWorld.TriggerManager
+  alias BezgelorWorld.Cinematic.CinematicManager
+  alias BezgelorWorld.CreatureManager
 
   require Logger
 
@@ -42,14 +42,33 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
   end
 
   defp spawn_player(character, state) do
-    # Generate unique entity GUID
-    guid = generate_guid(character)
+    # Get spawn location from session or use character's last location
+    # spawn_location comes from Zone.spawn_location/1 which returns:
+    # %{world_id, zone_id, position: {x, y, z}, rotation: {rx, ry, rz}}
+    spawn_location = state.session_data[:spawn_location]
 
-    # Create entity from character data
+    spawn =
+      if spawn_location do
+        %{
+          position: spawn_location.position,
+          rotation: spawn_location.rotation
+        }
+      else
+        %{
+          position: {character.location_x || 0.0, character.location_y || 0.0, character.location_z || 0.0},
+          rotation: {character.rotation_x || 0.0, character.rotation_y || 0.0, character.rotation_z || 0.0}
+        }
+      end
+
+    # Build entity spawn packet directly from character (preserves appearance data)
+    entity_packet = ServerEntityCreate.from_character(character, spawn)
+
+    # The GUID from from_character is character.id + 0x2000_0000
+    guid = entity_packet.guid
+
+    # Create entity for internal state tracking
     entity = Entity.from_character(character, guid)
-
-    # Build entity spawn packet
-    entity_packet = ServerEntityCreate.from_entity(entity)
+    entity = %{entity | position: spawn.position, rotation: spawn.rotation}
 
     # Encode entity packet
     writer = PacketWriter.new()
@@ -103,8 +122,8 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
     Logger.debug("Loaded #{length(triggers)} trigger volumes for zone #{zone_id}")
 
     Logger.info(
-      "Player '#{character.name}' (GUID: #{guid}) entered world at " <>
-        "#{inspect(entity.position)} with #{map_size(active_quests)} quests"
+      "Player '#{character.name}' (GUID: #{guid}, Level: #{character.level}) entered world " <>
+        "zone_id=#{zone_id} world_id=#{world_id} at #{inspect(entity.position)} with #{map_size(active_quests)} quests"
     )
 
     # Schedule periodic quest persistence timer
@@ -115,11 +134,74 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
     {:ok, entered_world_writer} = ServerPlayerEnteredWorld.write(%ServerPlayerEnteredWorld{}, entered_world_writer)
     entered_world_data = PacketWriter.to_binary(entered_world_writer)
 
-    {:reply_multi_world_encrypted, [
+    # Check for zone entry cinematics (e.g., tutorial intro)
+    cinematic_packets = build_cinematic_packets(state.session_data, zone_id)
+
+    # Build creature spawn packets for creatures near the player
+    creature_packets = build_creature_packets(spawn.position)
+
+    Logger.debug("Sending #{length(creature_packets)} creature entity packets to player at #{inspect(spawn.position)}")
+
+    # Base packets always sent
+    base_packets = [
       {:server_entity_create, entity_packet_data},
-      {:server_quest_list, quest_packet_data},
-      {:server_player_entered_world, entered_world_data}
-    ], state}
+      {:server_quest_list, quest_packet_data}
+    ]
+
+    # Order: player entity, creatures, quest list, cinematics, entered_world (dismisses loading)
+    final_packets =
+      base_packets ++
+      creature_packets ++
+      cinematic_packets ++
+      [{:server_player_entered_world, entered_world_data}]
+
+    {:reply_multi_world_encrypted, final_packets, state}
+  end
+
+  # Build creature entity packets for creatures near the player
+  # Uses range filtering to avoid overwhelming the client with too many entities
+  @creature_view_range 200.0
+
+  defp build_creature_packets(position) do
+    # Get creatures within view range of the player's position
+    creatures = CreatureManager.get_creatures_in_range(position, @creature_view_range)
+
+    Enum.map(creatures, fn creature_state ->
+      # Skip dead creatures
+      if creature_state.ai.state == :dead do
+        nil
+      else
+        packet = ServerEntityCreate.from_creature(creature_state)
+        writer = PacketWriter.new()
+        {:ok, writer} = ServerEntityCreate.write(packet, writer)
+        data = PacketWriter.to_binary(writer)
+        {:server_entity_create, data}
+      end
+    end)
+    |> Enum.reject(&is_nil/1)
+  end
+
+  # Build cinematic packets if a cinematic should play on zone entry
+  defp build_cinematic_packets(session_data, zone_id) do
+    case CinematicManager.on_zone_enter(session_data, zone_id) do
+      {:play, packets} ->
+        Logger.info("Playing zone entry cinematic with #{length(packets)} packets")
+        encode_cinematic_packets(packets)
+
+      :none ->
+        []
+    end
+  end
+
+  # Encode a list of cinematic packet structs to binary format
+  defp encode_cinematic_packets(packets) do
+    Enum.map(packets, fn packet ->
+      opcode = packet.__struct__.opcode()
+      writer = PacketWriter.new()
+      {:ok, writer} = packet.__struct__.write(packet, writer)
+      data = PacketWriter.to_binary(writer)
+      {opcode, data}
+    end)
   end
 
   # Convert session quests to format expected by ServerQuestList packet
@@ -142,18 +224,5 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
       end)
 
     %ServerQuestList{quests: quests}
-  end
-
-  # Generate a unique GUID for the entity
-  # In a production system, this would be managed by WorldManager
-  defp generate_guid(character) do
-    # Simple GUID: combine character ID with timestamp for uniqueness
-    # High bits: entity type (1 = player)
-    # Low bits: character_id + monotonic counter
-    entity_type = 1
-    counter = :erlang.unique_integer([:positive, :monotonic])
-
-    # Format: [type:4][reserved:12][character_id:24][counter:24]
-    bsl(entity_type, 60) ||| bsl(character.id &&& 0xFFFFFF, 24) ||| (counter &&& 0xFFFFFF)
   end
 end
