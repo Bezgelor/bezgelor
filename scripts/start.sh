@@ -9,14 +9,16 @@ if [ -z "$WORLD_PUBLIC_ADDRESS" ]; then
 fi
 
 # Ensure database is running
-if ! docker compose ps postgres | grep -q "running"; then
+if ! docker compose ps postgres 2>&1 | grep -q "running"; then
   echo "==> Starting PostgreSQL..."
-  docker compose up -d
+  docker compose up -d 2>&1 | cat
+  stty sane 2>/dev/null || true
 
   echo "==> Waiting for database to be ready..."
   until docker compose exec -T postgres pg_isready -U bezgelor -d bezgelor_dev > /dev/null 2>&1; do
     sleep 1
   done
+  stty sane 2>/dev/null || true
 fi
 
 echo "==> Starting Bezgelor servers..."

@@ -24,17 +24,25 @@ defmodule BezgelorWorld.Zone.Manager do
 
   require Logger
 
+  # Tutorial arkship worlds that need to be started even without spawn data
+  # These are the "Cryo Awakening Protocol" instances where new characters spawn
+  @tutorial_worlds [
+    {1634, 4844, "Gambler's Ruin (Exile Tutorial)"},
+    {1537, 4813, "Destiny (Dominion Tutorial)"}
+  ]
+
   @doc """
   Initialize default zone instances.
 
   Called at application startup to create the main world zone instances.
+  Also starts tutorial zones which may not have spawn data.
   """
   @spec initialize_zones() :: :ok
   def initialize_zones do
-    # Only start zones that have spawn data (from NexusForever WorldDatabase)
+    # Start zones that have spawn data (from NexusForever WorldDatabase)
     spawn_zones = BezgelorData.Store.get_all_spawn_zones()
 
-    started =
+    spawn_started =
       for zone_data <- spawn_zones do
         zone_id = zone_data.world_id
         zone_name = zone_data.zone_name
@@ -57,13 +65,46 @@ defmodule BezgelorWorld.Zone.Manager do
         end
       end
 
-    Logger.info("Initialized #{Enum.sum(started)} zone instances from spawn data")
+    # Start tutorial zones (they don't have spawn data but need to be running)
+    tutorial_started = start_tutorial_zones()
+
+    total = Enum.sum(spawn_started) + tutorial_started
+    Logger.info("Initialized #{total} zone instances (#{Enum.sum(spawn_started)} spawn zones + #{tutorial_started} tutorial zones)")
     :ok
   rescue
     # BezgelorData may not be started yet, or no zones defined
     error ->
       Logger.warning("Failed to initialize zones: #{inspect(error)}")
       :ok
+  end
+
+  # Start tutorial zones even though they don't have creature spawn data
+  defp start_tutorial_zones do
+    @tutorial_worlds
+    |> Enum.map(fn {world_id, zone_id, name} ->
+      zone = %{
+        id: zone_id,
+        world_id: world_id,
+        name: name,
+        is_tutorial: true
+      }
+
+      case InstanceSupervisor.start_instance(world_id, 1, zone) do
+        {:ok, _pid} ->
+          Logger.info("Started tutorial zone: world=#{world_id} zone=#{zone_id} (#{name})")
+          1
+
+        {:error, {:already_started, _pid}} ->
+          # Already started from spawn data, that's fine
+          Logger.debug("Tutorial zone already running: #{name}")
+          0
+
+        {:error, reason} ->
+          Logger.warning("Failed to start tutorial zone #{name}: #{inspect(reason)}")
+          0
+      end
+    end)
+    |> Enum.sum()
   end
 
   @doc """

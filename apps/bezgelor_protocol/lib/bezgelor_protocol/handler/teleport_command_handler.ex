@@ -15,6 +15,9 @@ defmodule BezgelorProtocol.Handler.TeleportCommandHandler do
       /teleport 100 50 200  # Teleport to x=100, y=50, z=200 in current zone
   """
 
+  # Suppress compile-order warning - module is in bezgelor_world which compiles after protocol
+  @compile {:no_warn_undefined, BezgelorWorld.Teleport}
+
   alias BezgelorWorld.Teleport
 
   require Logger
