@@ -87,17 +87,20 @@ defmodule BezgelorWorld.Zone.Instance do
     GenServer.cast(via_tuple(zone_id, instance_id), {:remove_entity, guid})
   end
 
+  # Timeout for GenServer calls to prevent deadlocks (10 seconds)
+  @call_timeout 10_000
+
   @doc """
   Get an entity by GUID.
   """
   @spec get_entity(pid() | {non_neg_integer(), instance_id()}, non_neg_integer()) ::
           {:ok, Entity.t()} | :error
   def get_entity(instance, guid) when is_pid(instance) do
-    GenServer.call(instance, {:get_entity, guid})
+    GenServer.call(instance, {:get_entity, guid}, @call_timeout)
   end
 
   def get_entity({zone_id, instance_id}, guid) do
-    GenServer.call(via_tuple(zone_id, instance_id), {:get_entity, guid})
+    GenServer.call(via_tuple(zone_id, instance_id), {:get_entity, guid}, @call_timeout)
   end
 
   @doc """
@@ -109,11 +112,11 @@ defmodule BezgelorWorld.Zone.Instance do
   @spec get_entity_creature_id(pid() | {non_neg_integer(), instance_id()}, non_neg_integer()) ::
           {:ok, non_neg_integer()} | :error
   def get_entity_creature_id(instance, guid) when is_pid(instance) do
-    GenServer.call(instance, {:get_entity_creature_id, guid})
+    GenServer.call(instance, {:get_entity_creature_id, guid}, @call_timeout)
   end
 
   def get_entity_creature_id({zone_id, instance_id}, guid) do
-    GenServer.call(via_tuple(zone_id, instance_id), {:get_entity_creature_id, guid})
+    GenServer.call(via_tuple(zone_id, instance_id), {:get_entity_creature_id, guid}, @call_timeout)
   end
 
   @doc """
@@ -122,11 +125,11 @@ defmodule BezgelorWorld.Zone.Instance do
   @spec update_entity(pid() | {non_neg_integer(), instance_id()}, non_neg_integer(), (Entity.t() -> Entity.t())) ::
           :ok | :error
   def update_entity(instance, guid, update_fn) when is_pid(instance) do
-    GenServer.call(instance, {:update_entity, guid, update_fn})
+    GenServer.call(instance, {:update_entity, guid, update_fn}, @call_timeout)
   end
 
   def update_entity({zone_id, instance_id}, guid, update_fn) do
-    GenServer.call(via_tuple(zone_id, instance_id), {:update_entity, guid, update_fn})
+    GenServer.call(via_tuple(zone_id, instance_id), {:update_entity, guid, update_fn}, @call_timeout)
   end
 
   @doc """
@@ -138,11 +141,11 @@ defmodule BezgelorWorld.Zone.Instance do
   @spec update_entity_position(pid() | {non_neg_integer(), instance_id()}, non_neg_integer(), Entity.position()) ::
           :ok | :error
   def update_entity_position(instance, guid, position) when is_pid(instance) do
-    GenServer.call(instance, {:update_entity_position, guid, position})
+    GenServer.call(instance, {:update_entity_position, guid, position}, @call_timeout)
   end
 
   def update_entity_position({zone_id, instance_id}, guid, position) do
-    GenServer.call(via_tuple(zone_id, instance_id), {:update_entity_position, guid, position})
+    GenServer.call(via_tuple(zone_id, instance_id), {:update_entity_position, guid, position}, @call_timeout)
   end
 
   @doc """
@@ -151,11 +154,11 @@ defmodule BezgelorWorld.Zone.Instance do
   @spec entities_in_range(pid() | {non_neg_integer(), instance_id()}, Entity.position(), float()) ::
           [Entity.t()]
   def entities_in_range(instance, position, radius) when is_pid(instance) do
-    GenServer.call(instance, {:entities_in_range, position, radius})
+    GenServer.call(instance, {:entities_in_range, position, radius}, @call_timeout)
   end
 
   def entities_in_range({zone_id, instance_id}, position, radius) do
-    GenServer.call(via_tuple(zone_id, instance_id), {:entities_in_range, position, radius})
+    GenServer.call(via_tuple(zone_id, instance_id), {:entities_in_range, position, radius}, @call_timeout)
   end
 
   @doc """
@@ -163,11 +166,11 @@ defmodule BezgelorWorld.Zone.Instance do
   """
   @spec list_players(pid() | {non_neg_integer(), instance_id()}) :: [Entity.t()]
   def list_players(instance) when is_pid(instance) do
-    GenServer.call(instance, :list_players)
+    GenServer.call(instance, :list_players, @call_timeout)
   end
 
   def list_players({zone_id, instance_id}) do
-    GenServer.call(via_tuple(zone_id, instance_id), :list_players)
+    GenServer.call(via_tuple(zone_id, instance_id), :list_players, @call_timeout)
   end
 
   @doc """
@@ -175,11 +178,11 @@ defmodule BezgelorWorld.Zone.Instance do
   """
   @spec player_count(pid() | {non_neg_integer(), instance_id()}) :: non_neg_integer()
   def player_count(instance) when is_pid(instance) do
-    GenServer.call(instance, :player_count)
+    GenServer.call(instance, :player_count, @call_timeout)
   end
 
   def player_count({zone_id, instance_id}) do
-    GenServer.call(via_tuple(zone_id, instance_id), :player_count)
+    GenServer.call(via_tuple(zone_id, instance_id), :player_count, @call_timeout)
   end
 
   @doc """
@@ -199,11 +202,11 @@ defmodule BezgelorWorld.Zone.Instance do
   """
   @spec info(pid() | {non_neg_integer(), instance_id()}) :: map()
   def info(instance) when is_pid(instance) do
-    GenServer.call(instance, :info)
+    GenServer.call(instance, :info, @call_timeout)
   end
 
   def info({zone_id, instance_id}) do
-    GenServer.call(via_tuple(zone_id, instance_id), :info)
+    GenServer.call(via_tuple(zone_id, instance_id), :info, @call_timeout)
   end
 
   # Server Callbacks
@@ -293,12 +296,30 @@ defmodule BezgelorWorld.Zone.Instance do
 
   @impl true
   def handle_cast({:broadcast, message}, state) do
-    # Broadcast to all player connection processes
-    # This requires knowing the connection PIDs, which we'd get from WorldManager sessions
-    # For now, log and skip actual broadcast
-    Logger.debug(
-      "Zone #{state.zone_id} broadcast: #{inspect(message)} to #{MapSet.size(state.players)} players"
-    )
+    # Broadcast to all player connection processes in this zone instance
+    sessions = BezgelorWorld.WorldManager.get_zone_instance_sessions(state.zone_id, state.instance_id)
+
+    case message do
+      # Packet broadcast: {opcode, packet_data}
+      {opcode, packet_data} when is_atom(opcode) and is_binary(packet_data) ->
+        Enum.each(sessions, fn session ->
+          BezgelorWorld.WorldManager.send_packet(session.connection_pid, opcode, packet_data)
+        end)
+
+      # Packet broadcast with exclusion: {opcode, packet_data, exclude_guid}
+      {opcode, packet_data, exclude_guid} when is_atom(opcode) and is_binary(packet_data) ->
+        Enum.each(sessions, fn session ->
+          if session.entity_guid != exclude_guid do
+            BezgelorWorld.WorldManager.send_packet(session.connection_pid, opcode, packet_data)
+          end
+        end)
+
+      # Legacy/debug message format
+      _ ->
+        Logger.debug(
+          "Zone #{state.zone_id} broadcast: #{inspect(message)} to #{length(sessions)} players"
+        )
+    end
 
     {:noreply, state}
   end

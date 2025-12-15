@@ -31,10 +31,14 @@ defmodule BezgelorWorld.Zone.Manager do
     {1537, 4813, "Destiny (Dominion Tutorial)"}
   ]
 
+  # Maximum concurrent zone starts to avoid overwhelming the scheduler
+  @max_concurrent_zone_starts 20
+
   @doc """
-  Initialize default zone instances.
+  Initialize default zone instances asynchronously.
 
   Called at application startup to create the main world zone instances.
+  Zones are started concurrently using Task.async_stream for faster startup.
   Also starts tutorial zones which may not have spawn data.
   """
   @spec initialize_zones() :: :ok
@@ -42,40 +46,65 @@ defmodule BezgelorWorld.Zone.Manager do
     # Start zones that have spawn data (from NexusForever WorldDatabase)
     spawn_zones = BezgelorData.Store.get_all_spawn_zones()
 
+    Logger.info("Starting #{length(spawn_zones)} spawn zones asynchronously...")
+
+    # Start zones concurrently with bounded parallelism
     spawn_started =
-      for zone_data <- spawn_zones do
-        zone_id = zone_data.world_id
-        zone_name = zone_data.zone_name
-
-        # Get zone metadata if available, otherwise create minimal stub
-        zone =
-          case BezgelorData.get_zone(zone_id) do
-            {:ok, z} -> z
-            :error -> %{id: zone_id, name: zone_name}
-          end
-
-        case InstanceSupervisor.start_instance(zone_id, 1, zone) do
-          {:ok, _pid} ->
-            Logger.info("Started zone instance: zone=#{zone_id} (#{zone_name})")
-            1
-
-          {:error, reason} ->
-            Logger.warning("Failed to start zone #{zone_id}: #{inspect(reason)}")
-            0
-        end
-      end
+      spawn_zones
+      |> Task.async_stream(
+        fn zone_data ->
+          start_spawn_zone(zone_data)
+        end,
+        max_concurrency: @max_concurrent_zone_starts,
+        timeout: 30_000,
+        on_timeout: :kill_task
+      )
+      |> Enum.reduce(0, fn
+        {:ok, 1}, acc -> acc + 1
+        {:ok, 0}, acc -> acc
+        {:exit, reason}, acc ->
+          Logger.warning("Zone start task crashed: #{inspect(reason)}")
+          acc
+      end)
 
     # Start tutorial zones (they don't have spawn data but need to be running)
     tutorial_started = start_tutorial_zones()
 
-    total = Enum.sum(spawn_started) + tutorial_started
-    Logger.info("Initialized #{total} zone instances (#{Enum.sum(spawn_started)} spawn zones + #{tutorial_started} tutorial zones)")
+    total = spawn_started + tutorial_started
+    Logger.info("Initialized #{total} zone instances (#{spawn_started} spawn zones + #{tutorial_started} tutorial zones)")
     :ok
   rescue
     # BezgelorData may not be started yet, or no zones defined
     error ->
       Logger.warning("Failed to initialize zones: #{inspect(error)}")
       :ok
+  end
+
+  # Start a single spawn zone (called from async task)
+  defp start_spawn_zone(zone_data) do
+    zone_id = zone_data.world_id
+    zone_name = zone_data.zone_name
+
+    # Get zone metadata if available, otherwise create minimal stub
+    zone =
+      case BezgelorData.get_zone(zone_id) do
+        {:ok, z} -> z
+        :error -> %{id: zone_id, name: zone_name}
+      end
+
+    case InstanceSupervisor.start_instance(zone_id, 1, zone) do
+      {:ok, _pid} ->
+        Logger.debug("Started zone instance: zone=#{zone_id} (#{zone_name})")
+        1
+
+      {:error, {:already_started, _pid}} ->
+        # Already started, that's fine
+        0
+
+      {:error, reason} ->
+        Logger.warning("Failed to start zone #{zone_id}: #{inspect(reason)}")
+        0
+    end
   end
 
   # Start tutorial zones even though they don't have creature spawn data
@@ -114,7 +143,7 @@ defmodule BezgelorWorld.Zone.Manager do
   For dungeons, creates a new instance.
   """
   @spec get_instance_for_zone(non_neg_integer()) :: {:ok, pid()} | {:error, term()}
-  def get_instance_for_zone(zone_id) do
+  def get_instance_for_zone(zone_id) when is_integer(zone_id) and zone_id > 0 do
     zone_data = get_zone_data(zone_id)
 
     if Map.get(zone_data, :is_dungeon, false) do
@@ -127,6 +156,8 @@ defmodule BezgelorWorld.Zone.Manager do
     end
   end
 
+  def get_instance_for_zone(_zone_id), do: {:error, :invalid_zone_id}
+
   @doc """
   Get the best instance for a player to join.
 
@@ -134,7 +165,9 @@ defmodule BezgelorWorld.Zone.Manager do
   """
   @spec get_instance_for_player(non_neg_integer(), keyword()) ::
           {:ok, {non_neg_integer(), pid()}} | {:error, term()}
-  def get_instance_for_player(zone_id, opts \\ []) do
+  def get_instance_for_player(zone_id, opts \\ [])
+
+  def get_instance_for_player(zone_id, opts) when is_integer(zone_id) and zone_id > 0 do
     zone_data = get_zone_data(zone_id)
     max_players = Keyword.get(opts, :max_players, 100)
 
@@ -167,11 +200,14 @@ defmodule BezgelorWorld.Zone.Manager do
     end
   end
 
+  def get_instance_for_player(_zone_id, _opts), do: {:error, :invalid_zone_id}
+
   @doc """
   Add an entity to a zone instance.
   """
   @spec add_entity_to_zone(non_neg_integer(), non_neg_integer(), Entity.t()) :: :ok
-  def add_entity_to_zone(zone_id, instance_id, entity) do
+  def add_entity_to_zone(zone_id, instance_id, entity)
+      when is_integer(zone_id) and zone_id > 0 and is_integer(instance_id) and instance_id > 0 do
     Instance.add_entity({zone_id, instance_id}, entity)
   end
 
@@ -179,7 +215,8 @@ defmodule BezgelorWorld.Zone.Manager do
   Remove an entity from a zone instance.
   """
   @spec remove_entity_from_zone(non_neg_integer(), non_neg_integer(), non_neg_integer()) :: :ok
-  def remove_entity_from_zone(zone_id, instance_id, entity_guid) do
+  def remove_entity_from_zone(zone_id, instance_id, entity_guid)
+      when is_integer(zone_id) and zone_id > 0 and is_integer(instance_id) and instance_id > 0 do
     Instance.remove_entity({zone_id, instance_id}, entity_guid)
   end
 
@@ -188,7 +225,10 @@ defmodule BezgelorWorld.Zone.Manager do
   """
   @spec transfer_player(Entity.t(), {non_neg_integer(), non_neg_integer()}, non_neg_integer()) ::
           {:ok, {non_neg_integer(), non_neg_integer()}} | {:error, term()}
-  def transfer_player(entity, {from_zone_id, from_instance_id}, to_zone_id) do
+  def transfer_player(entity, {from_zone_id, from_instance_id}, to_zone_id)
+      when is_integer(from_zone_id) and from_zone_id > 0 and
+           is_integer(from_instance_id) and from_instance_id > 0 and
+           is_integer(to_zone_id) and to_zone_id > 0 do
     # Remove from old zone
     Instance.remove_entity({from_zone_id, from_instance_id}, entity.guid)
 
@@ -205,6 +245,8 @@ defmodule BezgelorWorld.Zone.Manager do
         error
     end
   end
+
+  def transfer_player(_entity, _from, _to), do: {:error, :invalid_zone_id}
 
   @doc """
   Get zone status information.
