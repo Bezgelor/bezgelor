@@ -105,12 +105,12 @@ defmodule BezgelorProtocol.Handler.EncryptedHandler do
 
   # Decrypt the encrypted payload
   defp decrypt_payload(cipher, payload) do
-    try do
-      decrypted = PacketCrypt.decrypt(cipher, payload)
-      {:ok, decrypted}
-    rescue
-      e ->
-        Logger.warning("EncryptedHandler: decryption failed - #{inspect(e)}")
+    case PacketCrypt.decrypt(cipher, payload) do
+      {:ok, decrypted} ->
+        {:ok, decrypted}
+
+      {:error, reason} ->
+        Logger.warning("EncryptedHandler: decryption failed - #{inspect(reason)}")
         {:error, :decryption_failed}
     end
   end

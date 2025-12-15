@@ -20,10 +20,10 @@ defmodule BezgelorCrypto.PacketCrypt do
       crypt = BezgelorCrypto.PacketCrypt.new(key)
 
       # Encrypt outgoing packet
-      encrypted = BezgelorCrypto.PacketCrypt.encrypt(crypt, packet_data)
+      {:ok, encrypted} = BezgelorCrypto.PacketCrypt.encrypt(crypt, packet_data)
 
       # Decrypt incoming packet
-      decrypted = BezgelorCrypto.PacketCrypt.decrypt(crypt, incoming_data)
+      {:ok, decrypted} = BezgelorCrypto.PacketCrypt.decrypt(crypt, incoming_data)
   """
 
   @crypt_multiplier 0xAA7F8EA9
@@ -57,81 +57,128 @@ defmodule BezgelorCrypto.PacketCrypt do
 
   Note: This creates a new state buffer for each operation. The cipher
   state is not modified between calls.
+
+  Returns `{:ok, decrypted_binary}` on success, `{:error, reason}` on failure.
   """
-  @spec decrypt(t(), binary()) :: binary()
+  @spec decrypt(t(), binary()) :: {:ok, binary()} | {:error, atom()}
   def decrypt(%__MODULE__{key: key, key_value: key_value}, buffer) when is_binary(buffer) do
     length = byte_size(buffer)
-    # State initialized from key_value, reversed byte order for decrypt
-    state = <<key_value::little-64>> |> reverse_bytes()
 
-    v4 = band(@crypt_multiplier_2 * length, 0xFFFFFFFF)
+    # Validate key is properly initialized
+    if key == nil or byte_size(key) < 128 do
+      {:error, :invalid_key}
+    else
+      # State initialized from key_value, reversed byte order for decrypt
+      state = <<key_value::little-64>> |> reverse_bytes()
 
-    {output, _state, _v4, _v9} =
-      buffer
-      |> :binary.bin_to_list()
-      |> Enum.with_index()
-      |> Enum.reduce({[], state, v4, 0}, fn {byte, i}, {acc, state, v4, v9} ->
-        state_index = rem(i, 8)
+      v4 = band(@crypt_multiplier_2 * length, 0xFFFFFFFF)
 
-        {v4, v9} =
-          if state_index == 0 do
-            {v4 + 1, band(v4, 0xF) * 8}
+      result =
+        buffer
+        |> :binary.bin_to_list()
+        |> Enum.with_index()
+        |> Enum.reduce_while({[], state, v4, 0}, fn {byte, i}, {acc, state, v4, v9} ->
+          state_index = rem(i, 8)
+
+          {v4, v9} =
+            if state_index == 0 do
+              {v4 + 1, band(v4, 0xF) * 8}
+            else
+              {v4, v9}
+            end
+
+          # Safely access bytes with bounds checking
+          state_pos = 7 - state_index
+          key_pos = v9 + state_index
+
+          if state_pos < 0 or state_pos >= byte_size(state) or key_pos < 0 or key_pos >= byte_size(key) do
+            {:halt, {:error, :index_out_of_bounds}}
           else
-            {v4, v9}
+            state_byte = :binary.at(state, state_pos)
+            key_byte = :binary.at(key, key_pos)
+
+            output_byte = bxor(bxor(state_byte, byte), key_byte) |> band(0xFF)
+
+            # Update state with input byte (decrypt)
+            new_state = replace_byte(state, state_pos, byte)
+
+            {:cont, {[output_byte | acc], new_state, v4, v9}}
           end
+        end)
 
-        state_byte = :binary.at(state, 7 - state_index)
-        key_byte = :binary.at(key, v9 + state_index)
+      case result do
+        {:error, reason} ->
+          {:error, reason}
 
-        output_byte = bxor(bxor(state_byte, byte), key_byte) |> band(0xFF)
-
-        # Update state with input byte (decrypt)
-        new_state = replace_byte(state, 7 - state_index, byte)
-
-        {[output_byte | acc], new_state, v4, v9}
-      end)
-
-    output |> Enum.reverse() |> :binary.list_to_bin()
+        {output, _state, _v4, _v9} ->
+          {:ok, output |> Enum.reverse() |> :binary.list_to_bin()}
+      end
+    end
   end
+
+  def decrypt(_crypt, _buffer), do: {:error, :invalid_cipher}
 
   @doc """
   Encrypt a packet buffer.
+
+  Returns `{:ok, encrypted_binary}` on success, `{:error, reason}` on failure.
   """
-  @spec encrypt(t(), binary()) :: binary()
+  @spec encrypt(t(), binary()) :: {:ok, binary()} | {:error, atom()}
   def encrypt(%__MODULE__{key: key, key_value: key_value}, buffer) when is_binary(buffer) do
     length = byte_size(buffer)
-    # State initialized from key_value, normal byte order for encrypt
-    state = <<key_value::little-64>>
 
-    v4 = band(@crypt_multiplier_2 * length, 0xFFFFFFFF)
+    # Validate key is properly initialized
+    if key == nil or byte_size(key) < 128 do
+      {:error, :invalid_key}
+    else
+      # State initialized from key_value, normal byte order for encrypt
+      state = <<key_value::little-64>>
 
-    {output, _state, _v4, _v9} =
-      buffer
-      |> :binary.bin_to_list()
-      |> Enum.with_index()
-      |> Enum.reduce({[], state, v4, 0}, fn {byte, i}, {acc, state, v4, v9} ->
-        state_index = rem(i, 8)
+      v4 = band(@crypt_multiplier_2 * length, 0xFFFFFFFF)
 
-        {v4, v9} =
-          if state_index == 0 do
-            {v4 + 1, band(v4, 0xF) * 8}
+      result =
+        buffer
+        |> :binary.bin_to_list()
+        |> Enum.with_index()
+        |> Enum.reduce_while({[], state, v4, 0}, fn {byte, i}, {acc, state, v4, v9} ->
+          state_index = rem(i, 8)
+
+          {v4, v9} =
+            if state_index == 0 do
+              {v4 + 1, band(v4, 0xF) * 8}
+            else
+              {v4, v9}
+            end
+
+          # Safely access bytes with bounds checking
+          key_pos = v9 + state_index
+
+          if state_index < 0 or state_index >= byte_size(state) or key_pos < 0 or key_pos >= byte_size(key) do
+            {:halt, {:error, :index_out_of_bounds}}
           else
-            {v4, v9}
+            state_byte = :binary.at(state, state_index)
+            key_byte = :binary.at(key, key_pos)
+
+            output_byte = bxor(bxor(state_byte, byte), key_byte) |> band(0xFF)
+
+            # Update state with output byte (encrypt)
+            new_state = replace_byte(state, state_index, output_byte)
+
+            {:cont, {[output_byte | acc], new_state, v4, v9}}
           end
+        end)
 
-        state_byte = :binary.at(state, state_index)
-        key_byte = :binary.at(key, v9 + state_index)
+      case result do
+        {:error, reason} ->
+          {:error, reason}
 
-        output_byte = bxor(bxor(state_byte, byte), key_byte) |> band(0xFF)
-
-        # Update state with output byte (encrypt)
-        new_state = replace_byte(state, state_index, output_byte)
-
-        {[output_byte | acc], new_state, v4, v9}
-      end)
-
-    output |> Enum.reverse() |> :binary.list_to_bin()
+        {output, _state, _v4, _v9} ->
+          {:ok, output |> Enum.reverse() |> :binary.list_to_bin()}
+      end
+    end
   end
+
+  def encrypt(_crypt, _buffer), do: {:error, :invalid_cipher}
 
   @doc """
   Generate encryption key from client build and auth message.

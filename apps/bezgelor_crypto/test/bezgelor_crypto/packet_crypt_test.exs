@@ -15,8 +15,8 @@ defmodule BezgelorCrypto.PacketCryptTest do
       crypt = PacketCrypt.new(0xDEADBEEF)
       original = "Hello, WildStar!"
 
-      encrypted = PacketCrypt.encrypt(crypt, original)
-      decrypted = PacketCrypt.decrypt(crypt, encrypted)
+      assert {:ok, encrypted} = PacketCrypt.encrypt(crypt, original)
+      assert {:ok, decrypted} = PacketCrypt.decrypt(crypt, encrypted)
 
       assert decrypted == original
     end
@@ -25,8 +25,47 @@ defmodule BezgelorCrypto.PacketCryptTest do
       crypt = PacketCrypt.new(0xDEADBEEF)
       original = "Secret message"
 
-      encrypted = PacketCrypt.encrypt(crypt, original)
+      assert {:ok, encrypted} = PacketCrypt.encrypt(crypt, original)
       assert encrypted != original
+    end
+
+    test "handles empty buffer" do
+      crypt = PacketCrypt.new(0xDEADBEEF)
+
+      assert {:ok, encrypted} = PacketCrypt.encrypt(crypt, "")
+      assert {:ok, decrypted} = PacketCrypt.decrypt(crypt, encrypted)
+      assert decrypted == ""
+    end
+
+    test "handles large buffer" do
+      crypt = PacketCrypt.new(0xDEADBEEF)
+      original = :crypto.strong_rand_bytes(4096)
+
+      assert {:ok, encrypted} = PacketCrypt.encrypt(crypt, original)
+      assert {:ok, decrypted} = PacketCrypt.decrypt(crypt, encrypted)
+      assert decrypted == original
+    end
+  end
+
+  describe "error handling" do
+    test "encrypt returns error for invalid cipher" do
+      assert {:error, :invalid_cipher} = PacketCrypt.encrypt(nil, "data")
+      assert {:error, :invalid_cipher} = PacketCrypt.encrypt("not_a_cipher", "data")
+    end
+
+    test "decrypt returns error for invalid cipher" do
+      assert {:error, :invalid_cipher} = PacketCrypt.decrypt(nil, "data")
+      assert {:error, :invalid_cipher} = PacketCrypt.decrypt("not_a_cipher", "data")
+    end
+
+    test "encrypt returns error for cipher with nil key" do
+      invalid_crypt = %PacketCrypt{key: nil, key_value: 0}
+      assert {:error, :invalid_key} = PacketCrypt.encrypt(invalid_crypt, "data")
+    end
+
+    test "decrypt returns error for cipher with nil key" do
+      invalid_crypt = %PacketCrypt{key: nil, key_value: 0}
+      assert {:error, :invalid_key} = PacketCrypt.decrypt(invalid_crypt, "data")
     end
   end
 
