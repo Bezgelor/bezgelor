@@ -463,7 +463,7 @@ defmodule BezgelorWorld.CreatureManager do
       patrol_count = Enum.count(state.creatures, fn {_, c} -> c.ai.patrol_enabled end)
       wander_count = Enum.count(state.creatures, fn {_, c} -> c.ai.wander_enabled end)
 
-      Logger.info(
+      Logger.debug(
         "AI tick: #{length(creatures_needing_update)}/#{creatures_in_active_zones} creatures in #{active_zone_count} active zones (#{total} total, #{patrol_count} patrol, #{wander_count} wander)"
       )
     end
