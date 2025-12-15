@@ -1,0 +1,223 @@
+{
+  "source": "NexusForever.WorldDatabase",
+  "zone_spawns": [
+    {
+      "world_id": 3460,
+      "zone_name": "New Player Experience",
+      "creature_spawns": [
+        {
+          "id": 2,
+          "creature_id": 74767,
+          "position": [
+            32.585106,
+            -854.60675,
+            -544.7932
+          ],
+          "rotation": [
+            -3.1415925,
+            -0.0,
+            0.0
+          ],
+          "area_id": 0,
+          "display_info": 29333,
+          "outfit_info": 0,
+          "faction1": 219,
+          "faction2": 219,
+          "respawn_time_ms": 300000,
+          "patrol_path_id": null
+        },
+        {
+          "id": 3,
+          "creature_id": 74768,
+          "position": [
+            54.138687,
+            -854.5886,
+            -540.2051
+          ],
+          "rotation": [
+            -3.1415925,
+            -0.0,
+            0.0
+          ],
+          "area_id": 0,
+          "display_info": 29333,
+          "outfit_info": 0,
+          "faction1": 219,
+          "faction2": 219,
+          "respawn_time_ms": 300000,
+          "patrol_path_id": null
+        },
+        {
+          "id": 4,
+          "creature_id": 74769,
+          "position": [
+            48.97903,
+            -851.74207,
+            -519.22485
+          ],
+          "rotation": [
+            3.1399665,
+            -0.07943479,
+            0.08616329
+          ],
+          "area_id": 0,
+          "display_info": 29333,
+          "outfit_info": 0,
+          "faction1": 219,
+          "faction2": 219,
+          "respawn_time_ms": 300000,
+          "patrol_path_id": null
+        },
+        {
+          "id": 5,
+          "creature_id": 70939,
+          "position": [
+            32.5681,
+            -853.8421,
+            -544.807
+          ],
+          "rotation": [
+            -3.1415925,
+            -0.0,
+            0.0
+          ],
+          "area_id": 0,
+          "display_info": 30327,
+          "outfit_info": 0,
+          "faction1": 219,
+          "faction2": 219,
+          "respawn_time_ms": 300000,
+          "patrol_path_id": null
+        },
+        {
+          "id": 7,
+          "creature_id": 70939,
+          "position": [
+            54.0914,
+            -853.87,
+            -540.177
+          ],
+          "rotation": [
+            -3.1415925,
+            -0.0,
+            0.0
+          ],
+          "area_id": 0,
+          "display_info": 30327,
+          "outfit_info": 0,
+          "faction1": 219,
+          "faction2": 219,
+          "respawn_time_ms": 300000,
+          "patrol_path_id": null
+        },
+        {
+          "id": 9,
+          "creature_id": 70939,
+          "position": [
+            48.8309,
+            -851.4624,
+            -519.369
+          ],
+          "rotation": [
+            -3.1415925,
+            -0.0,
+            0.0
+          ],
+          "area_id": 0,
+          "display_info": 30327,
+          "outfit_info": 0,
+          "faction1": 219,
+          "faction2": 219,
+          "respawn_time_ms": 300000,
+          "patrol_path_id": null
+        },
+        {
+          "id": 11,
+          "creature_id": 70939,
+          "position": [
+            57.397274,
+            -847.7159,
+            -504.74612
+          ],
+          "rotation": [
+            -2.6179943,
+            -0.0,
+            0.0
+          ],
+          "area_id": 0,
+          "display_info": 30327,
+          "outfit_info": 0,
+          "faction1": 219,
+          "faction2": 219,
+          "respawn_time_ms": 300000,
+          "patrol_path_id": null
+        },
+        {
+          "id": 9,
+          "creature_id": 73498,
+          "position": [
+            577.75,
+            -425.9503,
+            233.97064
+          ],
+          "rotation": [
+            -1.5004599,
+            -0.0,
+            0.0
+          ],
+          "area_id": 0,
+          "display_info": 24574,
+          "outfit_info": 0,
+          "faction1": 219,
+          "faction2": 219,
+          "respawn_time_ms": 300000,
+          "patrol_path_id": null
+        },
+        {
+          "id": 10,
+          "creature_id": 74745,
+          "position": [
+            539.45654,
+            -425.9503,
+            262.74786
+          ],
+          "rotation": [
+            0.07033732,
+            -0.0,
+            0.0
+          ],
+          "area_id": 0,
+          "display_info": 24574,
+          "outfit_info": 0,
+          "faction1": 219,
+          "faction2": 219,
+          "respawn_time_ms": 300000,
+          "patrol_path_id": null
+        },
+        {
+          "id": 11,
+          "creature_id": 74746,
+          "position": [
+            513.22064,
+            -425.95026,
+            257.39117
+          ],
+          "rotation": [
+            1.6411324,
+            -0.0,
+            0.0
+          ],
+          "area_id": 0,
+          "display_info": 24574,
+          "outfit_info": 0,
+          "faction1": 219,
+          "faction2": 219,
+          "respawn_time_ms": 300000,
+          "patrol_path_id": null
+        }
+      ],
+      "resource_spawns": [],
+      "object_spawns": []
+    }
+  ]
+}
