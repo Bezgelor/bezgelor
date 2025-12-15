@@ -106,3 +106,4 @@ Phases 1-6 complete. Phase 7 (Game Systems) in progress: Social, Reputation, Inv
 
 Plans and design docs in `docs/plans/`.
 NexusForever source is at ../nexusforever/
+- NexusForever writes everything as bit-packed with NO byte alignment in between.
