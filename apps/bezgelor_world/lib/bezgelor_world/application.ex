@@ -36,10 +36,10 @@ defmodule BezgelorWorld.Application do
       # Realm health monitor (marks current realm online, monitors others)
       BezgelorWorld.RealmMonitor,
       BezgelorWorld.WorldManager,
+      # TickScheduler must start before CreatureManager and BuffManager (they register with it)
+      BezgelorWorld.TickScheduler,
       BezgelorWorld.CreatureManager,
       BezgelorWorld.HarvestNodeManager,
-      # TickScheduler must start before BuffManager (BuffManager registers with it)
-      BezgelorWorld.TickScheduler,
       BezgelorWorld.BuffManager,
       # Corpse manager for loot pickup
       BezgelorWorld.CorpseManager,
@@ -49,10 +49,10 @@ defmodule BezgelorWorld.Application do
       {Registry, keys: :unique, name: BezgelorWorld.Creature.Registry},
       # Registry for instance processes (must start before supervisors)
       BezgelorWorld.Instance.Registry,
-      # Dynamic supervisor for zone instances
-      BezgelorWorld.Zone.InstanceSupervisor,
-      # Dynamic supervisor for dungeon/raid instances
-      BezgelorWorld.Instance.Supervisor,
+      # Dynamic supervisor for zone instances (5s shutdown)
+      Supervisor.child_spec(BezgelorWorld.Zone.InstanceSupervisor, shutdown: 5000),
+      # Dynamic supervisor for dungeon/raid instances (5s shutdown)
+      Supervisor.child_spec(BezgelorWorld.Instance.Supervisor, shutdown: 5000),
       # Group finder matchmaking
       BezgelorWorld.GroupFinder.GroupFinder,
       # Lockout reset manager
@@ -61,28 +61,28 @@ defmodule BezgelorWorld.Application do
       BezgelorWorld.MythicPlus.MythicManager,
       # Registry for EventManager processes
       {Registry, keys: :unique, name: BezgelorWorld.EventRegistry},
-      # Dynamic supervisor for EventManagers
-      BezgelorWorld.EventManagerSupervisor,
+      # Dynamic supervisor for EventManagers (5s shutdown)
+      Supervisor.child_spec(BezgelorWorld.EventManagerSupervisor, shutdown: 5000),
       # Global event scheduler
       BezgelorWorld.EventScheduler,
       # PvP duel manager
       BezgelorWorld.PvP.DuelManager,
       # Registry for battleground instances
       {Registry, keys: :unique, name: BezgelorWorld.PvP.BattlegroundRegistry},
-      # Dynamic supervisor for battleground instances
-      BezgelorWorld.PvP.BattlegroundSupervisor,
+      # Dynamic supervisor for battleground instances (5s shutdown)
+      Supervisor.child_spec(BezgelorWorld.PvP.BattlegroundSupervisor, shutdown: 5000),
       # Battleground queue manager
       BezgelorWorld.PvP.BattlegroundQueue,
       # Registry for arena instances
       {Registry, keys: :unique, name: BezgelorWorld.PvP.ArenaRegistry},
-      # Dynamic supervisor for arena instances
-      BezgelorWorld.PvP.ArenaSupervisor,
+      # Dynamic supervisor for arena instances (5s shutdown)
+      Supervisor.child_spec(BezgelorWorld.PvP.ArenaSupervisor, shutdown: 5000),
       # Arena queue manager
       BezgelorWorld.PvP.ArenaQueue,
       # Registry for warplot instances
       {Registry, keys: :unique, name: BezgelorWorld.PvP.WarplotRegistry},
-      # Dynamic supervisor for warplot instances
-      BezgelorWorld.PvP.WarplotSupervisor,
+      # Dynamic supervisor for warplot instances (5s shutdown)
+      Supervisor.child_spec(BezgelorWorld.PvP.WarplotSupervisor, shutdown: 5000),
       # Warplot manager
       BezgelorWorld.PvP.WarplotManager,
       # PvP season scheduler (rating decay & season transitions)
