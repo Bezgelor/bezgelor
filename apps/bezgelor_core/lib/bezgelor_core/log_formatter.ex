@@ -48,6 +48,6 @@ defmodule BezgelorCore.LogFormatter do
       |> Enum.reject(&is_nil/1)
       |> Enum.map(&to_string/1)
 
-    Enum.join(parts, " ")
+    Enum.join(parts, ", ")
   end
 end
