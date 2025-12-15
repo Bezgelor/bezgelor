@@ -111,8 +111,9 @@ defmodule BezgelorDb.Schema.Character do
     field :time_played_level, :integer, default: 0
     field :flags, :integer, default: 0
     # Gear visibility bitmask: set bit = visible, clear bit = hidden
-    # 0xFFFFFFFF = all visible (default), 0 = all hidden
-    field :gear_mask, :integer, default: 0xFFFFFFFF
+    # All bits set = all visible (default), 0 = all hidden
+    # Stored as -1 (signed) which equals 0xFFFFFFFF (unsigned) in two's complement
+    field :gear_mask, :integer, default: -1
 
     # Timestamps
     field :last_online, :utc_datetime

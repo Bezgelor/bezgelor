@@ -408,11 +408,9 @@ defmodule BezgelorProtocol.Packets.World.ServerCharacterList do
           is_locked: false,
           requires_rename: false,
           # Gear visibility: set bit = visible, 0xFFFFFFFF = all visible
+          # Database stores as signed (-1 = all visible), convert to unsigned for client
           # Treat 0 as "all visible" for backward compatibility (old records have 0)
-          gear_mask: case Map.get(char, :gear_mask, 0xFFFFFFFF) do
-            0 -> 0xFFFFFFFF
-            mask -> mask
-          end,
+          gear_mask: normalize_gear_mask(Map.get(char, :gear_mask, -1)),
           labels: labels,
           values: values,
           bones: bones,
@@ -473,4 +471,13 @@ defmodule BezgelorProtocol.Packets.World.ServerCharacterList do
   end
 
   defp convert_visuals_to_item_visuals(_), do: []
+
+  # Convert gear_mask from database (signed) to protocol (unsigned)
+  # -1 (signed) = 0xFFFFFFFF (unsigned) = all visible
+  # 0 = treat as all visible for backward compatibility
+  defp normalize_gear_mask(0), do: 0xFFFFFFFF
+  defp normalize_gear_mask(-1), do: 0xFFFFFFFF
+  defp normalize_gear_mask(nil), do: 0xFFFFFFFF
+  defp normalize_gear_mask(mask) when mask < 0, do: mask + 0x100000000
+  defp normalize_gear_mask(mask), do: mask
 end
