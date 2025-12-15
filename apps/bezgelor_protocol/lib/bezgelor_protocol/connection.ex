@@ -35,12 +35,21 @@ defmodule BezgelorProtocol.Connection do
 
   alias BezgelorProtocol.{Framing, Opcode, PacketWriter}
   alias BezgelorCrypto.PacketCrypt
+  alias BezgelorDb.Characters
   alias BezgelorWorld.Quest.{QuestPersistence, SessionQuestManager}
 
   @behaviour :ranch_protocol
 
   # Persist dirty quests every 30 seconds
   @quest_persist_interval 30_000
+
+  # ServerHello packet protocol constants (WildStar specific)
+  @auth_version 16042
+  @default_realm_id 1
+  @default_realm_group_id 21
+  @auth_message 0x97998A0
+  @connection_type_world 11
+  @connection_type_auth 3
 
   defstruct [
     :socket,
@@ -218,19 +227,19 @@ defmodule BezgelorProtocol.Connection do
     # Build ServerHello packet matching NexusForever's format exactly.
     # IMPORTANT: NexusForever writes ALL values as continuous bits with NO byte alignment.
     # After writing ConnectionType (5 bits), AuthMessage continues from bit 5, not a new byte.
-    # ConnectionType: auth/realm = 3, world = 11
-    connection_type_value = if state.connection_type == :world, do: 11, else: 3
+    connection_type_value =
+      if state.connection_type == :world, do: @connection_type_world, else: @connection_type_auth
 
     # Write all fields as bits to match NexusForever's GamePacketWriter behavior
     writer = PacketWriter.new()
-    |> PacketWriter.write_bits(16042, 32)     # AuthVersion
-    |> PacketWriter.write_bits(1, 32)         # RealmId
-    |> PacketWriter.write_bits(21, 32)        # RealmGroupId
+    |> PacketWriter.write_bits(@auth_version, 32)
+    |> PacketWriter.write_bits(@default_realm_id, 32)
+    |> PacketWriter.write_bits(@default_realm_group_id, 32)
     |> PacketWriter.write_bits(0, 32)         # RealmGroupEnum (unused)
     |> PacketWriter.write_bits(0, 64)         # StartupTime (unused)
     |> PacketWriter.write_bits(0, 16)         # ListenPort (unused)
-    |> PacketWriter.write_bits(connection_type_value, 5)  # ConnectionType (5 bits)
-    |> PacketWriter.write_bits(0x97998A0, 32) # AuthMessage (continues from bit 5!)
+    |> PacketWriter.write_bits(connection_type_value, 5)
+    |> PacketWriter.write_bits(@auth_message, 32)
     |> PacketWriter.write_bits(0, 32)         # ProcessId (unused)
     |> PacketWriter.write_bits(0, 64)         # ProcessCreationTime (unused)
     |> PacketWriter.write_bits(0, 32)         # Unused
@@ -277,25 +286,30 @@ defmodule BezgelorProtocol.Connection do
     |> PacketWriter.to_binary()
 
     # Encrypt the inner packet
-    encrypted = PacketCrypt.encrypt(encryption, inner)
+    case PacketCrypt.encrypt(encryption, inner) do
+      {:ok, encrypted} ->
+        # Build ServerRealmEncrypted payload: size (data length + 4) + encrypted data
+        encrypted_payload = PacketWriter.new()
+        |> PacketWriter.write_bits(byte_size(encrypted) + 4, 32)
+        |> PacketWriter.write_bytes(encrypted)
+        |> PacketWriter.flush_bits()
+        |> PacketWriter.to_binary()
 
-    # Build ServerRealmEncrypted payload: size (data length + 4) + encrypted data
-    encrypted_payload = PacketWriter.new()
-    |> PacketWriter.write_bits(byte_size(encrypted) + 4, 32)
-    |> PacketWriter.write_bytes(encrypted)
-    |> PacketWriter.flush_bits()
-    |> PacketWriter.to_binary()
+        # Frame with ServerRealmEncrypted opcode (0x03DC) for world server
+        packet = Framing.frame_packet(Opcode.to_integer(:server_realm_encrypted), encrypted_payload)
 
-    # Frame with ServerRealmEncrypted opcode (0x03DC) for world server
-    packet = Framing.frame_packet(Opcode.to_integer(:server_realm_encrypted), encrypted_payload)
+        case transport.send(socket, packet) do
+          :ok ->
+            Logger.debug("[#{server_name(conn_type)}] Sent encrypted (world): #{Opcode.name(opcode)} (#{byte_size(payload)} bytes)")
+            state
 
-    case transport.send(socket, packet) do
-      :ok ->
-        Logger.debug("[#{server_name(conn_type)}] Sent encrypted (world): #{Opcode.name(opcode)} (#{byte_size(payload)} bytes)")
-        state
+          {:error, reason} ->
+            handle_send_error(state, reason)
+        end
 
       {:error, reason} ->
-        handle_send_error(state, reason)
+        Logger.error("[#{server_name(conn_type)}] Encryption failed for #{Opcode.name(opcode)}: #{inspect(reason)}")
+        state
     end
   end
 
@@ -316,26 +330,31 @@ defmodule BezgelorProtocol.Connection do
     |> PacketWriter.to_binary()
 
     # Encrypt the inner packet
-    encrypted = PacketCrypt.encrypt(encryption, inner)
+    case PacketCrypt.encrypt(encryption, inner) do
+      {:ok, encrypted} ->
+        # Build ServerAuthEncrypted payload: size (data length + 4) + encrypted data
+        # The +4 accounts for the size field itself
+        encrypted_payload = PacketWriter.new()
+        |> PacketWriter.write_bits(byte_size(encrypted) + 4, 32)
+        |> PacketWriter.write_bytes(encrypted)
+        |> PacketWriter.flush_bits()
+        |> PacketWriter.to_binary()
 
-    # Build ServerAuthEncrypted payload: size (data length + 4) + encrypted data
-    # The +4 accounts for the size field itself
-    encrypted_payload = PacketWriter.new()
-    |> PacketWriter.write_bits(byte_size(encrypted) + 4, 32)
-    |> PacketWriter.write_bytes(encrypted)
-    |> PacketWriter.flush_bits()
-    |> PacketWriter.to_binary()
+        # Frame with ServerAuthEncrypted opcode (0x0076)
+        packet = Framing.frame_packet(Opcode.to_integer(:server_auth_encrypted), encrypted_payload)
 
-    # Frame with ServerAuthEncrypted opcode (0x0076)
-    packet = Framing.frame_packet(Opcode.to_integer(:server_auth_encrypted), encrypted_payload)
+        case transport.send(socket, packet) do
+          :ok ->
+            Logger.debug("[#{server_name(conn_type)}] Sent encrypted: #{Opcode.name(opcode)} (#{byte_size(payload)} bytes)")
+            state
 
-    case transport.send(socket, packet) do
-      :ok ->
-        Logger.debug("[#{server_name(conn_type)}] Sent encrypted: #{Opcode.name(opcode)} (#{byte_size(payload)} bytes)")
-        state
+          {:error, reason} ->
+            handle_send_error(state, reason)
+        end
 
       {:error, reason} ->
-        handle_send_error(state, reason)
+        Logger.error("[#{server_name(conn_type)}] Encryption failed for #{Opcode.name(opcode)}: #{inspect(reason)}")
+        state
     end
   end
 
@@ -470,7 +489,7 @@ defmodule BezgelorProtocol.Connection do
     end
   end
 
-  # Terminate callback - persist quests on disconnect and clean up handlers
+  # Terminate callback - persist quests and position on disconnect, clean up handlers
   @impl GenServer
   def terminate(_reason, state) do
     # Cancel the persistence timer if running
@@ -488,9 +507,36 @@ defmodule BezgelorProtocol.Connection do
 
     if character && character.id do
       QuestPersistence.persist_on_logout(character.id, state.session_data)
+      persist_position_on_logout(character, state.session_data)
     end
 
+    # Broadcast player despawn and unregister session for multiplayer
+    broadcast_player_despawn(state)
+
     :ok
+  end
+
+  # Broadcast player despawn to other players and unregister from WorldManager
+  defp broadcast_player_despawn(state) do
+    entity_guid = get_in(state.session_data, [:entity_guid])
+    zone_id = get_in(state.session_data, [:zone_id])
+    instance_id = get_in(state.session_data, [:instance_id]) || 1
+    account_id = get_in(state.session_data, [:account_id])
+
+    # Broadcast despawn to other players in the zone
+    if entity_guid && zone_id do
+      BezgelorWorld.VisibilityBroadcaster.broadcast_player_despawn(
+        entity_guid,
+        zone_id,
+        instance_id,
+        :disconnect
+      )
+    end
+
+    # Unregister session from WorldManager
+    if account_id do
+      BezgelorWorld.WorldManager.unregister_session(account_id)
+    end
   end
 
   # Persist dirty quests and return updated state
@@ -498,12 +544,53 @@ defmodule BezgelorProtocol.Connection do
     character = get_in(state.session_data, [:character])
 
     if character && character.id do
-      {:ok, _count, updated_session_data} =
+      {:ok, _success_count, _failure_count, updated_session_data} =
         QuestPersistence.persist_dirty_quests(character.id, state.session_data)
 
       %{state | session_data: updated_session_data}
     else
       state
+    end
+  end
+
+  # Persist character position on logout
+  defp persist_position_on_logout(character, session_data) do
+    entity = session_data[:entity]
+    zone_id = session_data[:zone_id]
+    world_id = session_data[:world_id]
+
+    # Only persist if we have valid entity position data
+    if entity && entity.position do
+      {x, y, z} = entity.position
+
+      {rot_x, rot_y, rot_z} =
+        case entity.rotation do
+          {rx, ry, rz} -> {rx, ry, rz}
+          _ -> {0.0, 0.0, 0.0}
+        end
+
+      position_attrs = %{
+        location_x: x,
+        location_y: y,
+        location_z: z,
+        rotation_x: rot_x,
+        rotation_y: rot_y,
+        rotation_z: rot_z,
+        world_zone_id: zone_id,
+        world_id: world_id
+      }
+
+      case Characters.update_position(character, position_attrs) do
+        {:ok, _} ->
+          Logger.debug("Saved position for character #{character.id} at logout: #{inspect({x, y, z})}")
+          :ok
+
+        {:error, reason} ->
+          Logger.error("Failed to save position for character #{character.id}: #{inspect(reason)}")
+          :ok
+      end
+    else
+      :ok
     end
   end
 

@@ -26,6 +26,8 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
   alias BezgelorWorld.TriggerManager
   alias BezgelorWorld.Cinematic.CinematicManager
   alias BezgelorWorld.CreatureManager
+  alias BezgelorWorld.WorldManager
+  alias BezgelorWorld.VisibilityBroadcaster
 
   require Logger
 
@@ -120,6 +122,7 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
     state = put_in(state.session_data[:zone_triggers], triggers)
     state = put_in(state.session_data[:active_triggers], MapSet.new())
     state = put_in(state.session_data[:zone_id], zone_id)
+    state = put_in(state.session_data[:instance_id], 1)  # Single instance per zone for now
     state = put_in(state.session_data[:world_id], world_id)
 
     Logger.debug("Loaded #{length(triggers)} trigger volumes for zone #{zone_id}")
@@ -128,6 +131,16 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
       "Player '#{character.name}' (GUID: #{guid}, Level: #{character.level}) entered world " <>
         "zone_id=#{zone_id} world_id=#{world_id} at #{inspect(entity.position)} with #{map_size(active_quests)} quests"
     )
+
+    # Register session with WorldManager for multiplayer visibility
+    # instance_id = 1 for now (single instance per zone)
+    instance_id = 1
+    WorldManager.register_session(account_id, character.id, character.name, self())
+    WorldManager.set_entity_guid(account_id, guid)
+    WorldManager.update_session_zone(account_id, zone_id, instance_id)
+
+    # Broadcast player spawn to other players in the zone
+    VisibilityBroadcaster.broadcast_player_spawn(character, zone_id, instance_id, guid)
 
     # Schedule periodic quest persistence timer
     send(self(), :schedule_quest_persistence)

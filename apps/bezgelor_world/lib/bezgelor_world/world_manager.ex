@@ -162,7 +162,7 @@ defmodule BezgelorWorld.WorldManager do
   @doc "Send a packet to a specific connection process."
   @spec send_packet(pid(), atom(), binary()) :: :ok
   def send_packet(connection_pid, opcode, packet_data) do
-    send(connection_pid, {:send_packet, opcode, packet_data})
+    GenServer.cast(connection_pid, {:send_packet, opcode, packet_data})
     :ok
   end
 
