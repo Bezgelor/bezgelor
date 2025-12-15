@@ -276,12 +276,8 @@ defmodule BezgelorProtocol.Connection do
     |> PacketWriter.flush_bits()
     |> PacketWriter.to_binary()
 
-    Logger.debug("[#{server_name(conn_type)}] Inner packet (#{byte_size(inner)} bytes): #{Base.encode16(inner)}")
-
     # Encrypt the inner packet
     encrypted = PacketCrypt.encrypt(encryption, inner)
-
-    Logger.debug("[#{server_name(conn_type)}] Encrypted (#{byte_size(encrypted)} bytes): #{Base.encode16(encrypted)}")
 
     # Build ServerRealmEncrypted payload: size (data length + 4) + encrypted data
     encrypted_payload = PacketWriter.new()
@@ -290,12 +286,8 @@ defmodule BezgelorProtocol.Connection do
     |> PacketWriter.flush_bits()
     |> PacketWriter.to_binary()
 
-    Logger.debug("[#{server_name(conn_type)}] ServerRealmEncrypted payload (#{byte_size(encrypted_payload)} bytes): #{Base.encode16(encrypted_payload)}")
-
     # Frame with ServerRealmEncrypted opcode (0x03DC) for world server
     packet = Framing.frame_packet(Opcode.to_integer(:server_realm_encrypted), encrypted_payload)
-
-    Logger.debug("[#{server_name(conn_type)}] Full packet (#{byte_size(packet)} bytes): #{Base.encode16(packet)}")
 
     case transport.send(socket, packet) do
       :ok ->

@@ -204,6 +204,53 @@ defmodule BezgelorDb.Accounts do
   end
 
   @doc """
+  Validate a session key with account ID verification (atomic).
+
+  This function validates the session key AND account ID in a single database
+  query to prevent race conditions where the account could change between
+  session validation and account ID verification.
+
+  ## Parameters
+
+  - `email` - The account email address
+  - `session_key` - The session key to validate (hex string)
+  - `account_id` - The expected account ID
+
+  ## Returns
+
+  - `{:ok, account}` if session is valid, not expired, and account ID matches
+  - `{:error, :session_not_found}` if no matching session
+  - `{:error, :session_expired}` if session has expired
+  - `{:error, :account_mismatch}` if account ID doesn't match
+  """
+  @spec validate_session_key_with_account(String.t(), String.t(), integer()) ::
+          {:ok, Account.t()} | {:error, :session_not_found | :session_expired | :account_mismatch}
+  def validate_session_key_with_account(email, session_key, account_id)
+      when is_binary(email) and is_binary(session_key) and is_integer(account_id) do
+    # Query with all three parameters atomically
+    query =
+      from a in Account,
+        where: a.email == ^String.downcase(email) and a.session_key == ^session_key and a.id == ^account_id
+
+    case Repo.one(query) do
+      nil ->
+        # Determine specific error - check if session exists but ID mismatches
+        case get_by_session_key(email, session_key) do
+          nil -> {:error, :session_not_found}
+          _account -> {:error, :account_mismatch}
+        end
+
+      account ->
+        if session_expired?(account) do
+          clear_session_key(account)
+          {:error, :session_expired}
+        else
+          {:ok, account}
+        end
+    end
+  end
+
+  @doc """
   Check if a session has expired.
   """
   @spec session_expired?(Account.t()) :: boolean()
@@ -265,6 +312,10 @@ defmodule BezgelorDb.Accounts do
   """
   @spec create_account(String.t(), String.t()) :: {:ok, Account.t()} | {:error, Ecto.Changeset.t()}
   def create_account(email, password) do
+    # Note: This function creates accounts without requiring email verification.
+    # This is intentional for game client auto-registration where the user proves
+    # ownership through SRP6 authentication. For web portal registration that
+    # requires email verification, use register_account/2 instead.
     {salt, verifier} = BezgelorCrypto.Password.generate_salt_and_verifier(email, password)
 
     Repo.transaction(fn ->

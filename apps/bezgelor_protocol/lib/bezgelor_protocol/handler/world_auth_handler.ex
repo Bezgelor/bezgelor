@@ -74,7 +74,9 @@ defmodule BezgelorProtocol.Handler.WorldAuthHandler do
     # Session key comes as raw bytes, need to convert to hex for comparison
     session_key_hex = Base.encode16(packet.session_key)
 
-    case Accounts.validate_session_key(packet.email, session_key_hex) do
+    # Use atomic validation that checks email + session_key + account_id together
+    # to prevent race conditions between session lookup and account ID verification
+    case Accounts.validate_session_key_with_account(packet.email, session_key_hex, packet.account_id) do
       {:error, :session_not_found} ->
         Logger.debug("Invalid session for email: #{packet.email}")
         {:error, :invalid_session}
@@ -83,14 +85,12 @@ defmodule BezgelorProtocol.Handler.WorldAuthHandler do
         Logger.info("Session expired for email: #{packet.email}")
         {:error, :session_expired}
 
+      {:error, :account_mismatch} ->
+        Logger.warning("Account ID mismatch for email: #{packet.email}")
+        {:error, :account_mismatch}
+
       {:ok, account} ->
-        # Also verify account ID matches
-        if account.id == packet.account_id do
-          {:ok, account}
-        else
-          Logger.warning("Account ID mismatch: expected #{account.id}, got #{packet.account_id}")
-          {:error, :account_mismatch}
-        end
+        {:ok, account}
     end
   end
 end

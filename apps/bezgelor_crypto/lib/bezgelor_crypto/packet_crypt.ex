@@ -30,6 +30,10 @@ defmodule BezgelorCrypto.PacketCrypt do
   @crypt_multiplier_2 0xAA7F8EAA
   @crypt_initial_value 0x718DA9074F2DEB91
 
+  # Default client build number and auth message - can be overridden via config
+  @default_client_build 16042
+  @default_auth_message 0x97998A0
+
   defstruct [:key, :key_value]
 
   @type t :: %__MODULE__{
@@ -133,14 +137,21 @@ defmodule BezgelorCrypto.PacketCrypt do
   Generate encryption key from client build and auth message.
 
   This is used for the auth server connection before session is established.
-  Hardcoded for build 16042.
+  The client build and auth message can be configured via:
+
+      config :bezgelor_crypto,
+        client_build: 16042,
+        auth_message: 0x97998A0
   """
   @spec key_from_auth_build() :: non_neg_integer()
   def key_from_auth_build do
+    client_build = Application.get_env(:bezgelor_crypto, :client_build, @default_client_build)
+    auth_message = Application.get_env(:bezgelor_crypto, :auth_message, @default_auth_message)
+
     key = @crypt_initial_value + 0x5B88D61139619662
     key = band(key * @crypt_multiplier, 0xFFFFFFFFFFFFFFFF)
-    key = band((key + 16042) * @crypt_multiplier, 0xFFFFFFFFFFFFFFFF)
-    band((key + 0x97998A0) * @crypt_multiplier, 0xFFFFFFFFFFFFFFFF)
+    key = band((key + client_build) * @crypt_multiplier, 0xFFFFFFFFFFFFFFFF)
+    band((key + auth_message) * @crypt_multiplier, 0xFFFFFFFFFFFFFFFF)
   end
 
   @doc """
@@ -148,13 +159,12 @@ defmodule BezgelorCrypto.PacketCrypt do
 
   This is used for world server connections after authentication.
   The session key must be exactly 16 bytes.
+
+  Returns the key integer directly for valid input. Raises ArgumentError
+  for invalid session key length to fail fast on programming errors.
   """
   @spec key_from_ticket(binary()) :: non_neg_integer()
-  def key_from_ticket(session_key) when is_binary(session_key) do
-    if byte_size(session_key) != 16 do
-      raise ArgumentError, "session key must be exactly 16 bytes"
-    end
-
+  def key_from_ticket(session_key) when is_binary(session_key) and byte_size(session_key) == 16 do
     key =
       session_key
       |> :binary.bin_to_list()
@@ -163,6 +173,11 @@ defmodule BezgelorCrypto.PacketCrypt do
       end)
 
     band((key + key_from_auth_build()) * @crypt_multiplier, 0xFFFFFFFFFFFFFFFF)
+  end
+
+  def key_from_ticket(session_key) when is_binary(session_key) do
+    raise ArgumentError,
+          "session key must be exactly 16 bytes, got #{byte_size(session_key)} bytes"
   end
 
   # ============================================================================

@@ -80,10 +80,6 @@ defmodule BezgelorProtocol.Packets.Realm.ServerRealmInfo do
       |> PacketWriter.write_bits(packet.note_text_id, 21)
       |> PacketWriter.flush_bits()
 
-    # Debug: dump packet bytes
-    bytes = PacketWriter.to_binary(writer)
-    Logger.debug("[ServerRealmInfo] Packet bytes (#{byte_size(bytes)}): #{Base.encode16(bytes)}")
-
     {:ok, writer}
   end
 
