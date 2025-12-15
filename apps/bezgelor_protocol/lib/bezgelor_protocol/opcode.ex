@@ -90,6 +90,8 @@ defmodule BezgelorProtocol.Opcode do
 
   # Settings/Options opcodes
   @client_options 0x012B
+  @client_request_input_key_set 0x0570
+  @bi_input_key_set 0x056F
 
   # Marketplace/Auction opcodes
   @client_request_owned_commodity_orders 0x03EC
@@ -239,6 +241,13 @@ defmodule BezgelorProtocol.Opcode do
   @server_quest_offer 0x0351
   @server_quest_list 0x035F   # ServerQuestInit in NexusForever
 
+  # Item/Inventory opcodes
+  @server_item_add 0x0111
+  @server_item_delete 0x0148
+  @server_item_move 0x0569
+  @server_item_swap 0x0568
+  @server_item_stack_count_update 0x017F
+
   # Cinematic opcodes
   @server_cinematic_complete 0x0210
   @server_cinematic_actor_attach 0x0213
@@ -320,6 +329,8 @@ defmodule BezgelorProtocol.Opcode do
     client_player_movement_speed_update: @client_player_movement_speed_update,
     # Settings/Options
     client_options: @client_options,
+    client_request_input_key_set: @client_request_input_key_set,
+    bi_input_key_set: @bi_input_key_set,
     # Marketplace/Auction
     client_request_owned_commodity_orders: @client_request_owned_commodity_orders,
     client_request_owned_item_auctions: @client_request_owned_item_auctions,
@@ -444,6 +455,12 @@ defmodule BezgelorProtocol.Opcode do
     # Quests
     server_quest_offer: @server_quest_offer,
     server_quest_list: @server_quest_list,
+    # Items/Inventory
+    server_item_add: @server_item_add,
+    server_item_delete: @server_item_delete,
+    server_item_move: @server_item_move,
+    server_item_swap: @server_item_swap,
+    server_item_stack_count_update: @server_item_stack_count_update,
     # Cinematics
     server_cinematic_complete: @server_cinematic_complete,
     server_cinematic_actor_attach: @server_cinematic_actor_attach,
@@ -521,6 +538,8 @@ defmodule BezgelorProtocol.Opcode do
     client_player_movement_speed_update: "ClientPlayerMovementSpeedUpdate",
     # Settings/Options
     client_options: "ClientOptions",
+    client_request_input_key_set: "ClientRequestInputKeySet",
+    bi_input_key_set: "BiInputKeySet",
     # Marketplace/Auction
     client_request_owned_commodity_orders: "ClientRequestOwnedCommodityOrders",
     client_request_owned_item_auctions: "ClientRequestOwnedItemAuctions",
@@ -635,6 +654,12 @@ defmodule BezgelorProtocol.Opcode do
     # Quests
     server_quest_offer: "ServerQuestOffer",
     server_quest_list: "ServerQuestList",
+    # Items/Inventory
+    server_item_add: "ServerItemAdd",
+    server_item_delete: "ServerItemDelete",
+    server_item_move: "ServerItemMove",
+    server_item_swap: "ServerItemSwap",
+    server_item_stack_count_update: "ServerItemStackCountUpdate",
     # Cinematics
     server_cinematic_complete: "ServerCinematicComplete",
     server_cinematic_actor_attach: "ServerCinematicActorAttach",

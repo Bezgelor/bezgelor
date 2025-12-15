@@ -111,6 +111,12 @@ defmodule BezgelorProtocol.PacketRegistry do
       client_player_movement_speed_update: Handler.MovementSpeedUpdateHandler,
       # Settings/Options
       client_options: Handler.OptionsHandler,
+      # Keybindings
+      client_request_input_key_set: Handler.InputKeySetHandler,
+      # Entity targeting/selection
+      client_entity_select: Handler.EntitySelectHandler,
+      # Dialog acknowledgment
+      client_dialog_opened: Handler.DialogOpenedHandler,
       # Marketplace/Auction
       client_request_owned_commodity_orders: Handler.CommodityOrdersHandler,
       client_request_owned_item_auctions: Handler.ItemAuctionsHandler,
