@@ -2770,38 +2770,42 @@ defmodule BezgelorData.Store do
           0
       end
 
-    # Load Spline2Node (spline waypoints)
-    nodes_path = Path.join(data_directory(), "Spline2Node.json")
-
+    # Load Spline2Node (spline waypoints) - split across multiple files
     node_count =
-      case load_json_raw(nodes_path) do
-        {:ok, data} ->
-          nodes = Map.get(data, :spline2node, [])
+      1..4
+      |> Enum.map(fn part ->
+        nodes_path = Path.join(data_directory(), "Spline2Node_part#{part}.json")
 
-          for node <- nodes do
-            normalized = %{
-              id: node[:ID],
-              spline_id: node[:splineId],
-              ordinal: node[:ordinal],
-              position0: node[:position0],
-              position1: node[:position1],
-              position2: node[:position2],
-              facing0: node[:facing0],
-              facing1: node[:facing1],
-              facing2: node[:facing2],
-              facing3: node[:facing3],
-              delay: node[:delay],
-              frame_time: node[:frameTime]
-            }
+        case load_json_raw(nodes_path) do
+          {:ok, data} ->
+            nodes = Map.get(data, :spline2node, [])
 
-            :ets.insert(nodes_table, {node[:ID], normalized})
-          end
+            for node <- nodes do
+              normalized = %{
+                id: node[:ID],
+                spline_id: node[:splineId],
+                ordinal: node[:ordinal],
+                position0: node[:position0],
+                position1: node[:position1],
+                position2: node[:position2],
+                facing0: node[:facing0],
+                facing1: node[:facing1],
+                facing2: node[:facing2],
+                facing3: node[:facing3],
+                delay: node[:delay],
+                frame_time: node[:frameTime]
+              }
 
-          length(nodes)
+              :ets.insert(nodes_table, {node[:ID], normalized})
+            end
 
-        {:error, _reason} ->
-          0
-      end
+            length(nodes)
+
+          {:error, _reason} ->
+            0
+        end
+      end)
+      |> Enum.sum()
 
     if spline_count > 0 do
       Logger.debug("Loaded #{spline_count} splines with #{node_count} waypoints")
