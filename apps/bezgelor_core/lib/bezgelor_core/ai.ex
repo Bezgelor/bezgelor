@@ -5,6 +5,7 @@ defmodule BezgelorCore.AI do
   ## States
 
   - `:idle` - Standing at spawn, not in combat
+  - `:wandering` - Random wandering within leash radius
   - `:patrol` - Following patrol path (future)
   - `:combat` - Engaged with target
   - `:evade` - Returning to spawn (leashed)
@@ -12,7 +13,9 @@ defmodule BezgelorCore.AI do
 
   ## Transitions
 
-  - idle + player_in_range -> combat (if aggressive)
+  - idle -> wandering (random chance each tick)
+  - wandering + path_complete -> idle
+  - idle/wandering + player_in_range -> combat (if aggressive)
   - combat + target_dead -> idle
   - combat + target_out_of_leash -> evade
   - evade + at_spawn -> idle
@@ -20,7 +23,7 @@ defmodule BezgelorCore.AI do
   - dead + respawn_timer -> idle
   """
 
-  @type state :: :idle | :patrol | :combat | :evade | :dead
+  @type state :: :idle | :wandering | :patrol | :combat | :evade | :dead
 
   @type t :: %__MODULE__{
           state: state(),
@@ -29,7 +32,25 @@ defmodule BezgelorCore.AI do
           last_attack_time: integer() | nil,
           combat_start_time: integer() | nil,
           threat_table: %{non_neg_integer() => non_neg_integer()},
-          combat_participants: MapSet.t(non_neg_integer())
+          combat_participants: MapSet.t(non_neg_integer()),
+          # Wandering fields
+          wander_enabled: boolean(),
+          wander_range: float(),
+          wander_speed: float(),
+          last_wander_time: integer() | nil,
+          wander_cooldown: non_neg_integer(),
+          # Movement fields (shared by wander and patrol)
+          movement_path: [{float(), float(), float()}],
+          movement_start_time: integer() | nil,
+          movement_duration: non_neg_integer(),
+          # Patrol fields
+          patrol_enabled: boolean(),
+          patrol_waypoints: [map()],
+          patrol_current_index: non_neg_integer(),
+          patrol_speed: float(),
+          patrol_mode: :cyclic | :back_and_forth,
+          patrol_direction: :forward | :backward,
+          patrol_pause_until: integer() | nil
         }
 
   defstruct state: :idle,
@@ -38,15 +59,56 @@ defmodule BezgelorCore.AI do
             last_attack_time: nil,
             combat_start_time: nil,
             threat_table: %{},
-            combat_participants: MapSet.new()
+            combat_participants: MapSet.new(),
+            # Wandering defaults
+            wander_enabled: true,
+            wander_range: 10.0,
+            wander_speed: 2.0,
+            last_wander_time: nil,
+            wander_cooldown: 5000,
+            # Movement (shared)
+            movement_path: [],
+            movement_start_time: nil,
+            movement_duration: 0,
+            # Patrol defaults
+            patrol_enabled: false,
+            patrol_waypoints: [],
+            patrol_current_index: 0,
+            patrol_speed: 2.0,
+            patrol_mode: :cyclic,
+            patrol_direction: :forward,
+            patrol_pause_until: nil
 
   @doc """
   Create new AI state for a creature.
+
+  ## Options
+
+  - `:wander_enabled` - Enable random wandering (default: true)
+  - `:wander_range` - Maximum wander distance from spawn (default: 10.0)
+  - `:wander_speed` - Movement speed while wandering (default: 2.0)
+  - `:wander_cooldown` - Minimum ms between wanders (default: 5000)
+  - `:patrol_waypoints` - List of waypoint maps with :position and :pause_ms keys
+  - `:patrol_speed` - Movement speed while patrolling (default: 2.0)
+  - `:patrol_mode` - :cyclic or :back_and_forth (default: :cyclic)
   """
-  @spec new(position :: {float(), float(), float()}) :: t()
-  def new(spawn_position) do
+  @spec new(position :: {float(), float(), float()}, opts :: keyword()) :: t()
+  def new(spawn_position, opts \\ []) do
+    patrol_waypoints = Keyword.get(opts, :patrol_waypoints, [])
+    patrol_enabled = length(patrol_waypoints) > 1
+
     %__MODULE__{
-      spawn_position: spawn_position
+      spawn_position: spawn_position,
+      # Wandering - disabled if patrol is enabled
+      wander_enabled: Keyword.get(opts, :wander_enabled, true) and not patrol_enabled,
+      wander_range: Keyword.get(opts, :wander_range, 10.0),
+      wander_speed: Keyword.get(opts, :wander_speed, 2.0),
+      wander_cooldown: Keyword.get(opts, :wander_cooldown, 5000),
+      # Patrol
+      patrol_enabled: patrol_enabled,
+      patrol_waypoints: patrol_waypoints,
+      patrol_speed: Keyword.get(opts, :patrol_speed, 2.0),
+      patrol_mode: Keyword.get(opts, :patrol_mode, :cyclic)
     }
   end
 
@@ -263,19 +325,176 @@ defmodule BezgelorCore.AI do
     distance(creature_pos, target_pos) <= aggro_range
   end
 
+  # Wandering functions
+
+  @doc """
+  Check if creature can start wandering.
+
+  Returns true if:
+  - Wandering is enabled
+  - Creature is idle
+  - Cooldown has elapsed since last wander
+  """
+  @spec can_wander?(t(), integer()) :: boolean()
+  def can_wander?(%__MODULE__{wander_enabled: false}, _now), do: false
+  def can_wander?(%__MODULE__{state: state}, _now) when state != :idle, do: false
+  def can_wander?(%__MODULE__{last_wander_time: nil}, _now), do: true
+
+  def can_wander?(%__MODULE__{last_wander_time: last, wander_cooldown: cooldown}, now) do
+    now - last >= cooldown
+  end
+
+  @doc """
+  Start wandering along a path.
+
+  ## Parameters
+    - `ai` - AI state
+    - `path` - List of waypoint positions
+    - `duration` - Time to complete path in milliseconds
+    - `now` - Current timestamp
+  """
+  @spec start_wander(t(), [{float(), float(), float()}], non_neg_integer(), integer()) :: t()
+  def start_wander(%__MODULE__{} = ai, path, duration, now) do
+    %{
+      ai
+      | state: :wandering,
+        movement_path: path,
+        movement_start_time: now,
+        movement_duration: duration,
+        last_wander_time: now
+    }
+  end
+
+  @doc """
+  Complete wandering, return to idle.
+  """
+  @spec complete_wander(t()) :: t()
+  def complete_wander(%__MODULE__{} = ai) do
+    %{
+      ai
+      | state: :idle,
+        movement_path: [],
+        movement_start_time: nil,
+        movement_duration: 0
+    }
+  end
+
+  @doc """
+  Check if wandering movement is complete.
+  """
+  @spec wander_complete?(t(), integer()) :: boolean()
+  def wander_complete?(%__MODULE__{state: :wandering, movement_start_time: start, movement_duration: duration}, now) do
+    now - start >= duration
+  end
+
+  def wander_complete?(_, _), do: false
+
+  @doc """
+  Get current position along movement path based on progress.
+  """
+  @spec get_movement_position(t(), integer()) :: {float(), float(), float()} | nil
+  def get_movement_position(%__MODULE__{movement_path: []}, _now), do: nil
+  def get_movement_position(%__MODULE__{movement_path: [single]}, _now), do: single
+
+  def get_movement_position(
+        %__MODULE__{movement_path: path, movement_start_time: start, movement_duration: duration},
+        now
+      ) do
+    elapsed = now - start
+    progress = min(1.0, elapsed / max(1, duration))
+
+    # Use Movement module for interpolation
+    BezgelorCore.Movement.interpolate_path(path, progress)
+  end
+
   @doc """
   Process AI tick - returns action to take.
 
   Actions:
   - {:attack, target_guid} - Attack the target
   - {:move_to, position} - Move towards position
+  - {:start_wander, ai} - Start wandering (returns updated AI with path)
+  - {:wander_complete, ai} - Wandering finished (returns updated AI)
+  - {:start_patrol, ai} - Start patrol movement (returns updated AI with path)
+  - {:patrol_segment_complete, ai} - Patrol segment done, may pause or continue
   - :none - No action needed
   """
   @spec tick(t(), map()) ::
-          {:attack, non_neg_integer()} | {:move_to, {float(), float(), float()}} | :none
+          {:attack, non_neg_integer()}
+          | {:move_to, {float(), float(), float()}}
+          | {:start_wander, t()}
+          | {:wander_complete, t()}
+          | {:start_patrol, t()}
+          | {:patrol_segment_complete, t()}
+          | :none
   def tick(%__MODULE__{state: :dead}, _context), do: :none
 
-  def tick(%__MODULE__{state: :idle}, _context), do: :none
+  def tick(%__MODULE__{state: :idle, patrol_enabled: true} = ai, context) do
+    # Patrol takes priority over wandering
+    now = System.monotonic_time(:millisecond)
+    current_position = Map.get(context, :position, ai.spawn_position)
+    start_next_patrol_segment(ai, current_position, now)
+  end
+
+  def tick(%__MODULE__{state: :idle} = ai, context) do
+    now = System.monotonic_time(:millisecond)
+    current_position = Map.get(context, :position, ai.spawn_position)
+
+    # Check if creature should start wandering
+    if can_wander?(ai, now) and should_wander?(ai, now) do
+      # Generate random path
+      path =
+        BezgelorCore.Movement.random_path(
+          current_position,
+          ai.spawn_position,
+          ai.wander_range
+        )
+
+      if length(path) > 1 do
+        duration = BezgelorCore.Movement.path_duration(path, ai.wander_speed)
+        new_ai = start_wander(ai, path, duration, now)
+        {:start_wander, new_ai}
+      else
+        :none
+      end
+    else
+      :none
+    end
+  end
+
+  def tick(%__MODULE__{state: :wandering} = ai, _context) do
+    now = System.monotonic_time(:millisecond)
+
+    if wander_complete?(ai, now) do
+      {:wander_complete, complete_wander(ai)}
+    else
+      :none
+    end
+  end
+
+  def tick(%__MODULE__{state: :patrol} = ai, context) do
+    now = System.monotonic_time(:millisecond)
+
+    cond do
+      # Still paused at waypoint
+      ai.patrol_pause_until != nil and now < ai.patrol_pause_until ->
+        :none
+
+      # Pause ended, start next segment
+      ai.patrol_pause_until != nil ->
+        current_position = Map.get(context, :position, ai.spawn_position)
+        new_ai = %{ai | patrol_pause_until: nil}
+        start_next_patrol_segment(new_ai, current_position, now)
+
+      # Movement complete, handle waypoint arrival
+      patrol_segment_complete?(ai, now) ->
+        handle_patrol_waypoint_arrival(ai, now)
+
+      # Still moving
+      true ->
+        :none
+    end
+  end
 
   def tick(%__MODULE__{state: :evade, spawn_position: spawn}, _context) do
     {:move_to, spawn}
@@ -292,4 +511,134 @@ defmodule BezgelorCore.AI do
       :none
     end
   end
+
+  # Random chance to start wandering (20% per tick when cooldown elapsed)
+  defp should_wander?(_ai, _now) do
+    :rand.uniform() < 0.20
+  end
+
+  # Patrol helper functions
+
+  defp patrol_segment_complete?(%__MODULE__{movement_start_time: nil}, _now), do: false
+
+  defp patrol_segment_complete?(
+         %__MODULE__{movement_start_time: start, movement_duration: duration},
+         now
+       ) do
+    now - start >= duration
+  end
+
+  defp start_next_patrol_segment(%__MODULE__{patrol_waypoints: []} = _ai, _current_pos, _now) do
+    # No waypoints, can't patrol
+    :none
+  end
+
+  defp start_next_patrol_segment(%__MODULE__{} = ai, current_position, now) do
+    next_index = get_next_patrol_index(ai)
+    waypoint = Enum.at(ai.patrol_waypoints, next_index)
+
+    if waypoint do
+      target_position = waypoint_position(waypoint)
+
+      # Generate direct path to next waypoint
+      path = BezgelorCore.Movement.direct_path(current_position, target_position)
+
+      if length(path) > 1 do
+        duration = BezgelorCore.Movement.path_duration(path, ai.patrol_speed)
+
+        new_ai = %{
+          ai
+          | state: :patrol,
+            movement_path: path,
+            movement_start_time: now,
+            movement_duration: duration,
+            patrol_current_index: next_index
+        }
+
+        {:start_patrol, new_ai}
+      else
+        # Already at waypoint, handle arrival
+        handle_patrol_waypoint_arrival(%{ai | patrol_current_index: next_index}, now)
+      end
+    else
+      :none
+    end
+  end
+
+  defp handle_patrol_waypoint_arrival(%__MODULE__{} = ai, now) do
+    current_waypoint = Enum.at(ai.patrol_waypoints, ai.patrol_current_index)
+    pause_ms = if current_waypoint, do: Map.get(current_waypoint, :pause_ms, 0), else: 0
+
+    new_ai =
+      if pause_ms > 0 do
+        # Pause at this waypoint
+        %{
+          ai
+          | state: :patrol,
+            movement_path: [],
+            movement_start_time: nil,
+            movement_duration: 0,
+            patrol_pause_until: now + pause_ms
+        }
+      else
+        # Continue immediately - advance index for next tick
+        %{
+          ai
+          | movement_path: [],
+            movement_start_time: nil,
+            movement_duration: 0
+        }
+      end
+
+    {:patrol_segment_complete, new_ai}
+  end
+
+  defp get_next_patrol_index(%__MODULE__{
+         patrol_waypoints: waypoints,
+         patrol_current_index: current,
+         patrol_mode: mode,
+         patrol_direction: direction
+       }) do
+    max_index = length(waypoints) - 1
+
+    case {mode, direction} do
+      {:cyclic, _} ->
+        rem(current + 1, length(waypoints))
+
+      {:back_and_forth, :forward} when current >= max_index ->
+        # At end, reverse
+        max(0, current - 1)
+
+      {:back_and_forth, :forward} ->
+        current + 1
+
+      {:back_and_forth, :backward} when current <= 0 ->
+        # At start, go forward
+        min(max_index, current + 1)
+
+      {:back_and_forth, :backward} ->
+        current - 1
+    end
+  end
+
+  defp waypoint_position(%{position: [x, y, z]}), do: {x, y, z}
+  defp waypoint_position(%{position: {_, _, _} = pos}), do: pos
+  defp waypoint_position(_), do: {0.0, 0.0, 0.0}
+
+  @doc """
+  Check if creature is currently patrolling.
+  """
+  @spec patrolling?(t()) :: boolean()
+  def patrolling?(%__MODULE__{state: :patrol}), do: true
+  def patrolling?(_), do: false
+
+  @doc """
+  Resume patrol after combat/evade ends.
+  """
+  @spec resume_patrol(t()) :: t()
+  def resume_patrol(%__MODULE__{patrol_enabled: true} = ai) do
+    %{ai | state: :idle, patrol_pause_until: nil}
+  end
+
+  def resume_patrol(%__MODULE__{} = ai), do: %{ai | state: :idle}
 end

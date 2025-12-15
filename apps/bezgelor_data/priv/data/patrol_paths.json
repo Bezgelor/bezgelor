@@ -1,0 +1,43 @@
+{
+  "description": "Patrol path waypoints for creature movement. Each path is a named sequence of positions that creatures cycle through.",
+  "patrol_paths": {
+    "entrance_patrol_1": {
+      "name": "Stormtalon Entrance Patrol",
+      "instance_id": 1001,
+      "waypoints": [
+        {"position": [2480.0, 118.0, 1780.0], "pause_ms": 2000},
+        {"position": [2490.0, 118.0, 1790.0], "pause_ms": 0},
+        {"position": [2500.0, 119.0, 1795.0], "pause_ms": 3000},
+        {"position": [2495.0, 118.5, 1785.0], "pause_ms": 0},
+        {"position": [2480.0, 118.0, 1780.0], "pause_ms": 2000}
+      ],
+      "mode": "cyclic",
+      "speed": 3.0
+    },
+    "osun_patrol_1": {
+      "name": "Kel Voreth Osun Patrol",
+      "instance_id": 1002,
+      "waypoints": [
+        {"position": [1020.0, 85.0, 2020.0], "pause_ms": 1000},
+        {"position": [1030.0, 86.0, 2030.0], "pause_ms": 0},
+        {"position": [1040.0, 87.0, 2040.0], "pause_ms": 2000},
+        {"position": [1035.0, 86.5, 2035.0], "pause_ms": 0},
+        {"position": [1025.0, 85.5, 2025.0], "pause_ms": 1000},
+        {"position": [1020.0, 85.0, 2020.0], "pause_ms": 1000}
+      ],
+      "mode": "cyclic",
+      "speed": 2.5
+    },
+    "guard_post_back_forth": {
+      "name": "Generic Guard Post Patrol",
+      "waypoints": [
+        {"position": [0.0, 0.0, 0.0], "pause_ms": 3000},
+        {"position": [10.0, 0.0, 0.0], "pause_ms": 1000},
+        {"position": [10.0, 0.0, 10.0], "pause_ms": 3000},
+        {"position": [0.0, 0.0, 10.0], "pause_ms": 1000}
+      ],
+      "mode": "cyclic",
+      "speed": 2.0
+    }
+  }
+}

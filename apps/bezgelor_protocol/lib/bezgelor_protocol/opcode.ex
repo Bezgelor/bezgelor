@@ -84,6 +84,7 @@ defmodule BezgelorProtocol.Opcode do
 
   # Movement/Entity command opcodes
   @client_entity_command 0x0637
+  @server_entity_command 0x0638
   @client_entity_select 0x0185
   @client_zone_change 0x063A
   @client_player_movement_speed_update 0x063B
@@ -324,6 +325,7 @@ defmodule BezgelorProtocol.Opcode do
     client_statistics_framerate: @client_statistics_framerate,
     # Movement/Entity commands
     client_entity_command: @client_entity_command,
+    server_entity_command: @server_entity_command,
     client_entity_select: @client_entity_select,
     client_zone_change: @client_zone_change,
     client_player_movement_speed_update: @client_player_movement_speed_update,
@@ -533,6 +535,7 @@ defmodule BezgelorProtocol.Opcode do
     client_statistics_framerate: "ClientStatisticsFramerate",
     # Movement/Entity commands
     client_entity_command: "ClientEntityCommand",
+    server_entity_command: "ServerEntityCommand",
     client_entity_select: "ClientEntitySelect",
     client_zone_change: "ClientZoneChange",
     client_player_movement_speed_update: "ClientPlayerMovementSpeedUpdate",

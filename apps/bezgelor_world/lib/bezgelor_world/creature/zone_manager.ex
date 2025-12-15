@@ -27,7 +27,7 @@ defmodule BezgelorWorld.Creature.ZoneManager do
   require Logger
 
   alias BezgelorCore.{AI, CreatureTemplate, Entity}
-  alias BezgelorWorld.{CombatBroadcaster, CreatureDeath, WorldManager}
+  alias BezgelorWorld.{CombatBroadcaster, CreatureDeath, TickScheduler, WorldManager}
   alias BezgelorData.Store
 
   alias BezgelorWorld.Zone.Instance, as: ZoneInstance
@@ -44,12 +44,8 @@ defmodule BezgelorWorld.Creature.ZoneManager do
           zone_id: non_neg_integer(),
           instance_id: non_neg_integer(),
           creatures: %{non_neg_integer() => creature_state()},
-          spawn_definitions: [map()],
-          ai_tick_interval: non_neg_integer()
+          spawn_definitions: [map()]
         }
-
-  # AI tick interval in milliseconds
-  @default_ai_tick_interval 1000
 
   # Maximum creatures to process per tick (batching for fairness)
   @max_creatures_per_tick 100
@@ -149,22 +145,30 @@ defmodule BezgelorWorld.Creature.ZoneManager do
   def init(opts) do
     zone_id = Keyword.fetch!(opts, :zone_id)
     instance_id = Keyword.fetch!(opts, :instance_id)
-    ai_tick_interval = Keyword.get(opts, :ai_tick_interval, @default_ai_tick_interval)
+
+    # Build spatial index for efficient spline lookups during spawn
+    # This is done once at startup rather than per-creature for performance
+    spline_index = Store.build_spline_spatial_index()
 
     state = %{
       zone_id: zone_id,
       instance_id: instance_id,
       creatures: %{},
       spawn_definitions: [],
-      ai_tick_interval: ai_tick_interval
+      spline_index: spline_index
     }
 
-    # Start AI tick timer
-    if ai_tick_interval > 0 do
-      Process.send_after(self(), :ai_tick, ai_tick_interval)
+    # Register with TickScheduler to receive tick notifications
+    # This ensures all systems (buffs, AI, etc.) tick in sync
+    # In tests, TickScheduler may not be running, so we handle that gracefully
+    try do
+      TickScheduler.register_listener(self())
+      Logger.info("Creature.ZoneManager started for zone #{zone_id} instance #{instance_id}, registered with TickScheduler")
+    catch
+      :exit, _ ->
+        Logger.info("Creature.ZoneManager started for zone #{zone_id} instance #{instance_id} (TickScheduler not available)")
     end
 
-    Logger.info("Creature.ZoneManager started for zone #{zone_id} instance #{instance_id}")
     {:ok, state}
   end
 
@@ -322,13 +326,10 @@ defmodule BezgelorWorld.Creature.ZoneManager do
   end
 
   @impl true
-  def handle_info(:ai_tick, state) do
-    # Process AI for all creatures in this zone
+  def handle_info({:tick, _tick_number}, state) do
+    # Process AI for all creatures in this zone on the shared tick
+    # This keeps creature AI in sync with buffs and other periodic effects
     state = process_ai_tick(state)
-
-    # Schedule next tick
-    Process.send_after(self(), :ai_tick, state.ai_tick_interval)
-
     {:noreply, state}
   end
 
@@ -456,6 +457,8 @@ defmodule BezgelorWorld.Creature.ZoneManager do
   defp needs_ai_processing?(%{ai: ai}, _now) do
     ai.state == :combat or
       ai.state == :evade or
+      ai.state == :patrol or
+      (ai.state == :idle and ai.patrol_enabled) or
       map_size(ai.threat_table) > 0
   end
 
@@ -571,7 +574,10 @@ defmodule BezgelorWorld.Creature.ZoneManager do
           max_health: template.max_health
         }
 
-        ai = AI.new(position)
+        # Build AI options, including patrol path if specified
+        # Pass zone_id, position, and spline_index for efficient automatic spline matching
+        ai_opts = build_ai_options(spawn_def, state.zone_id, position, state.spline_index)
+        ai = AI.new(position, ai_opts)
 
         creature_state = %{
           entity: entity,
@@ -587,6 +593,82 @@ defmodule BezgelorWorld.Creature.ZoneManager do
         )
 
         {:ok, guid, creature_state}
+    end
+  end
+
+  # Build AI options from spawn definition
+  # Supports:
+  #   - patrol_path: "path_name" - named patrol path from patrol_paths.json
+  #   - spline_id: 123 - numeric spline ID from client Spline2.tbl data
+  #   - auto_spline: true - automatically find nearest spline within threshold
+  #   - (default) - automatic spline matching when no explicit patrol is set
+  defp build_ai_options(spawn_def, world_id, position, spline_index) do
+    cond do
+      # Check for explicit spline_id first (numeric client spline)
+      spline_id = Map.get(spawn_def, :spline_id) ->
+        case Store.get_spline_as_patrol(spline_id) do
+          {:ok, patrol_data} ->
+            [
+              patrol_waypoints: patrol_data.waypoints,
+              patrol_speed: Map.get(spawn_def, :spline_speed, patrol_data.speed),
+              patrol_mode: Map.get(spawn_def, :spline_mode, patrol_data.mode)
+            ]
+
+          :error ->
+            Logger.warning("Spline #{spline_id} not found for creature spawn")
+            []
+        end
+
+      # Check for named patrol_path
+      path_name = Map.get(spawn_def, :patrol_path) ->
+        case Store.get_patrol_path(path_name) do
+          {:ok, patrol_data} ->
+            [
+              patrol_waypoints: patrol_data.waypoints,
+              patrol_speed: patrol_data.speed,
+              patrol_mode: patrol_data.mode
+            ]
+
+          :error ->
+            Logger.warning("Patrol path '#{path_name}' not found for creature spawn")
+            []
+        end
+
+      # Auto-match to nearest spline within threshold (default behavior)
+      # Only triggers for creatures without explicit spline/patrol assignments
+      Map.get(spawn_def, :auto_spline, true) ->
+        find_auto_spline(spline_index, world_id, position)
+
+      true ->
+        []
+    end
+  end
+
+  # Find the nearest spline to the spawn position for automatic patrol assignment
+  # Uses pre-built spatial index for efficient O(n) lookup instead of O(n*m)
+  defp find_auto_spline(spline_index, world_id, position) do
+    # 15-unit threshold balances coverage (~11.6% of spawns) with accuracy
+    # Tighter than 50 units (which catches incidental proximity)
+    case Store.find_nearest_spline_indexed(spline_index, world_id, position, max_distance: 15.0) do
+      {:ok, spline_id, distance} ->
+        case Store.get_spline_as_patrol(spline_id) do
+          {:ok, patrol_data} ->
+            Logger.debug(
+              "Auto-assigned spline #{spline_id} to creature at #{inspect(position)} (distance: #{Float.round(distance, 1)})"
+            )
+
+            [
+              patrol_waypoints: patrol_data.waypoints,
+              patrol_speed: patrol_data.speed,
+              patrol_mode: patrol_data.mode
+            ]
+
+          :error ->
+            []
+        end
+
+      :none ->
+        []
     end
   end
 

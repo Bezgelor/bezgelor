@@ -31,9 +31,10 @@ defmodule BezgelorWorld.CreatureManager do
   require Logger
 
   alias BezgelorCore.{AI, CreatureTemplate, Entity}
-  alias BezgelorWorld.{CombatBroadcaster, CreatureDeath, WorldManager}
+  alias BezgelorWorld.{CombatBroadcaster, CreatureDeath, TickScheduler, WorldManager}
   alias BezgelorData.Store
   alias BezgelorWorld.Zone.Instance, as: ZoneInstance
+  alias BezgelorWorld.Zone.InstanceSupervisor
 
   @type creature_state :: %{
           entity: Entity.t(),
@@ -45,12 +46,8 @@ defmodule BezgelorWorld.CreatureManager do
 
   @type state :: %{
           creatures: %{non_neg_integer() => creature_state()},
-          spawn_definitions: [map()],
-          ai_tick_interval: non_neg_integer()
+          spawn_definitions: [map()]
         }
-
-  # AI tick interval in milliseconds
-  @default_ai_tick_interval 1000
 
   # Maximum creatures to process per tick (for batching)
   @max_creatures_per_tick 100
@@ -152,21 +149,29 @@ defmodule BezgelorWorld.CreatureManager do
   ## Server Callbacks
 
   @impl true
-  def init(opts) do
-    ai_tick_interval = Keyword.get(opts, :ai_tick_interval, @default_ai_tick_interval)
+  def init(_opts) do
+    # Build spatial index for efficient spline lookups during spawn
+    # This is done once at startup rather than per-creature for performance
+    spline_index = Store.build_spline_spatial_index()
+    Logger.info("Built spline spatial index for #{map_size(spline_index)} worlds")
 
     state = %{
       creatures: %{},
       spawn_definitions: [],
-      ai_tick_interval: ai_tick_interval
+      spline_index: spline_index
     }
 
-    # Start AI tick timer
-    if ai_tick_interval > 0 do
-      Process.send_after(self(), :ai_tick, ai_tick_interval)
+    # Register with TickScheduler to receive tick notifications
+    # This ensures all systems (buffs, AI, etc.) tick in sync
+    # In tests, TickScheduler may not be running, so we handle that gracefully
+    try do
+      TickScheduler.register_listener(self())
+      Logger.info("CreatureManager started, registered with TickScheduler")
+    catch
+      :exit, _ ->
+        Logger.info("CreatureManager started (TickScheduler not available)")
     end
 
-    Logger.info("CreatureManager started")
     {:ok, state}
   end
 
@@ -269,7 +274,7 @@ defmodule BezgelorWorld.CreatureManager do
   def handle_call({:load_zone_spawns, world_id}, _from, state) do
     case Store.get_creature_spawns(world_id) do
       {:ok, zone_data} ->
-        {spawned_count, new_state} = spawn_from_definitions(zone_data.creature_spawns, state)
+        {spawned_count, new_state} = spawn_from_definitions(zone_data.creature_spawns, world_id, state)
         Logger.info("Loaded #{spawned_count} creature spawns for world #{world_id}")
         {:reply, {:ok, spawned_count}, new_state}
 
@@ -286,7 +291,7 @@ defmodule BezgelorWorld.CreatureManager do
     if Enum.empty?(spawns) do
       {:reply, {:error, :no_spawn_data}, state}
     else
-      {spawned_count, new_state} = spawn_from_definitions(spawns, state)
+      {spawned_count, new_state} = spawn_from_definitions(spawns, world_id, state)
       Logger.info("Loaded #{spawned_count} creature spawns for world #{world_id} area #{area_id}")
       {:reply, {:ok, spawned_count}, new_state}
     end
@@ -328,13 +333,10 @@ defmodule BezgelorWorld.CreatureManager do
   end
 
   @impl true
-  def handle_info(:ai_tick, state) do
-    # Process AI for all creatures
+  def handle_info({:tick, _tick_number}, state) do
+    # Process AI for all creatures on the shared tick
+    # This keeps creature AI in sync with buffs and other periodic effects
     state = process_ai_tick(state)
-
-    # Schedule next tick
-    Process.send_after(self(), :ai_tick, state.ai_tick_interval)
-
     {:noreply, state}
   end
 
@@ -432,14 +434,39 @@ defmodule BezgelorWorld.CreatureManager do
   defp process_ai_tick(state) do
     now = System.monotonic_time(:millisecond)
 
-    # Filter to only creatures that need AI processing (in combat, evading, or have threat)
-    # This optimization skips idle creatures with no targets
+    # Get zones with active players - only process creatures in these zones
+    # This is a major optimization: we skip all AI for zones without players
+    active_zones = InstanceSupervisor.list_zones_with_players()
+
+    # Filter to only creatures in active zones (or in combat regardless of zone)
+    # Then apply the existing needs_ai_processing? filter
     creatures_needing_update =
       state.creatures
+      |> Enum.filter(fn {_guid, creature_state} ->
+        in_active_zone_or_combat?(creature_state, active_zones)
+      end)
       |> Enum.filter(fn {_guid, creature_state} ->
         needs_ai_processing?(creature_state, now)
       end)
       |> Enum.take(@max_creatures_per_tick)
+
+    # Debug: log AI stats periodically (every ~10 seconds)
+    if rem(now, 10_000) < 1000 do
+      total = map_size(state.creatures)
+      active_zone_count = MapSet.size(active_zones)
+
+      creatures_in_active_zones =
+        Enum.count(state.creatures, fn {_, c} ->
+          MapSet.member?(active_zones, Map.get(c, :world_id))
+        end)
+
+      patrol_count = Enum.count(state.creatures, fn {_, c} -> c.ai.patrol_enabled end)
+      wander_count = Enum.count(state.creatures, fn {_, c} -> c.ai.wander_enabled end)
+
+      Logger.info(
+        "AI tick: #{length(creatures_needing_update)}/#{creatures_in_active_zones} creatures in #{active_zone_count} active zones (#{total} total, #{patrol_count} patrol, #{wander_count} wander)"
+      )
+    end
 
     # Process the filtered creatures
     creatures =
@@ -456,15 +483,35 @@ defmodule BezgelorWorld.CreatureManager do
     %{state | creatures: creatures}
   end
 
+  # Check if creature is in an active zone (has players) or is in combat
+  # Creatures in combat continue processing even if players leave the zone
+  defp in_active_zone_or_combat?(creature_state, active_zones) do
+    world_id = Map.get(creature_state, :world_id)
+    ai = creature_state.ai
+
+    # Always process creatures in combat or evading
+    ai.state == :combat or ai.state == :evade or
+      # Process creatures in zones with players
+      MapSet.member?(active_zones, world_id)
+  end
+
   # Determine if a creature needs AI processing this tick
-  defp needs_ai_processing?(%{ai: ai}, _now) do
+  defp needs_ai_processing?(%{ai: ai}, now) do
     # Process if:
     # - In combat (needs to attack/check threat)
     # - Evading (needs to return to spawn)
     # - Has targets in threat table (should be in combat)
+    # - Idle with patrol enabled (always needs processing to start patrol)
+    # - Idle and can wander (for ambient movement)
+    # - Currently wandering (need to check completion)
+    # - Currently patrolling (need to check segment completion)
     ai.state == :combat or
       ai.state == :evade or
-      map_size(ai.threat_table) > 0
+      ai.state == :wandering or
+      ai.state == :patrol or
+      map_size(ai.threat_table) > 0 or
+      (ai.state == :idle and ai.patrol_enabled) or
+      (ai.state == :idle and AI.can_wander?(ai, now))
   end
 
   defp process_creature_ai(%{ai: ai, template: template, entity: entity} = creature_state, now) do
@@ -483,7 +530,8 @@ defmodule BezgelorWorld.CreatureManager do
       end
 
     context = %{
-      attack_speed: template.attack_speed
+      attack_speed: template.attack_speed,
+      position: entity.position
     }
 
     case AI.tick(ai, context) do
@@ -522,6 +570,37 @@ defmodule BezgelorWorld.CreatureManager do
       {:move_to, _position} ->
         # Movement would be handled here
         {:no_change, creature_state}
+
+      {:start_wander, new_ai} ->
+        # Creature is starting to wander - broadcast movement to nearby players
+        Logger.info("Creature #{entity.guid} starting wander: #{length(new_ai.movement_path)} points at speed #{new_ai.wander_speed}")
+        broadcast_creature_movement(entity.guid, new_ai.movement_path, new_ai.wander_speed)
+
+        # Update entity position to path end (client will animate the movement)
+        end_position = List.last(new_ai.movement_path) || entity.position
+
+        new_entity = %{entity | position: end_position}
+        {:updated, %{creature_state | ai: new_ai, entity: new_entity}}
+
+      {:wander_complete, new_ai} ->
+        # Wandering finished, creature is now idle
+        # Position should already be at path end from start_wander
+        {:updated, %{creature_state | ai: new_ai}}
+
+      {:start_patrol, new_ai} ->
+        # Creature is starting a patrol segment - broadcast movement
+        Logger.info("Creature #{entity.guid} starting patrol: #{length(new_ai.movement_path)} waypoints at speed #{new_ai.patrol_speed}")
+        broadcast_creature_movement(entity.guid, new_ai.movement_path, new_ai.patrol_speed)
+
+        # Update entity position to path end (client will animate the movement)
+        end_position = List.last(new_ai.movement_path) || entity.position
+
+        new_entity = %{entity | position: end_position}
+        {:updated, %{creature_state | ai: new_ai, entity: new_entity}}
+
+      {:patrol_segment_complete, new_ai} ->
+        # Patrol segment finished, creature may be pausing or continuing
+        {:updated, %{creature_state | ai: new_ai}}
     end
   end
 
@@ -531,14 +610,17 @@ defmodule BezgelorWorld.CreatureManager do
   defp faction_to_int(_), do: 0
 
   # Spawn creatures from static data definitions
-  defp spawn_from_definitions(spawn_defs, state) do
+  defp spawn_from_definitions(spawn_defs, world_id, state) do
     # Store definitions for reference
     state = %{state | spawn_definitions: state.spawn_definitions ++ spawn_defs}
+
+    # Extract spline index for efficient lookups
+    spline_index = state.spline_index
 
     # Spawn each creature
     {spawned_count, creatures} =
       Enum.reduce(spawn_defs, {0, state.creatures}, fn spawn_def, {count, creatures} ->
-        case spawn_creature_from_def(spawn_def) do
+        case spawn_creature_from_def(spawn_def, world_id, spline_index) do
           {:ok, guid, creature_state} ->
             {count + 1, Map.put(creatures, guid, creature_state)}
 
@@ -555,7 +637,7 @@ defmodule BezgelorWorld.CreatureManager do
   end
 
   # Spawn a single creature from a spawn definition
-  defp spawn_creature_from_def(spawn_def) do
+  defp spawn_creature_from_def(spawn_def, world_id, spline_index) do
     creature_id = spawn_def.creature_id
     [x, y, z] = spawn_def.position
     position = {x, y, z}
@@ -564,7 +646,7 @@ defmodule BezgelorWorld.CreatureManager do
       {:error, reason} ->
         {:error, reason}
 
-      {:ok, template, display_info} ->
+      {:ok, template, display_info, outfit_info} ->
         guid = WorldManager.generate_guid(:creature)
 
         entity = %Entity{
@@ -572,6 +654,7 @@ defmodule BezgelorWorld.CreatureManager do
           type: :creature,
           name: template.name,
           display_info: display_info,
+          outfit_info: outfit_info,
           faction: spawn_def[:faction1] || faction_to_int(template.faction),
           level: template.level,
           position: position,
@@ -580,7 +663,10 @@ defmodule BezgelorWorld.CreatureManager do
           max_health: template.max_health
         }
 
-        ai = AI.new(position)
+        # Build AI options, including patrol path if specified
+        # Pass world_id, position, and spline_index for efficient automatic spline matching
+        ai_opts = build_ai_options(spawn_def, world_id, position, spline_index)
+        ai = AI.new(position, ai_opts)
 
         creature_state = %{
           entity: entity,
@@ -588,7 +674,8 @@ defmodule BezgelorWorld.CreatureManager do
           ai: ai,
           spawn_position: position,
           respawn_timer: nil,
-          spawn_def: spawn_def
+          spawn_def: spawn_def,
+          world_id: world_id
         }
 
         Logger.debug(
@@ -599,7 +686,85 @@ defmodule BezgelorWorld.CreatureManager do
     end
   end
 
+  # Build AI options from spawn definition
+  # Supports:
+  #   - patrol_path: "path_name" - named patrol path from patrol_paths.json
+  #   - spline_id: 123 - numeric spline ID from client Spline2.tbl data
+  #   - auto_spline: true - automatically find nearest spline within threshold
+  #   - (default) - automatic spline matching when no explicit patrol is set
+  defp build_ai_options(spawn_def, world_id, position, spline_index) do
+    cond do
+      # Check for explicit spline_id first (numeric client spline)
+      spline_id = Map.get(spawn_def, :spline_id) ->
+        case BezgelorData.Store.get_spline_as_patrol(spline_id) do
+          {:ok, patrol_data} ->
+            [
+              patrol_waypoints: patrol_data.waypoints,
+              patrol_speed: Map.get(spawn_def, :spline_speed, patrol_data.speed),
+              patrol_mode: Map.get(spawn_def, :spline_mode, patrol_data.mode)
+            ]
+
+          :error ->
+            Logger.warning("Spline #{spline_id} not found for creature spawn")
+            []
+        end
+
+      # Check for named patrol_path
+      path_name = Map.get(spawn_def, :patrol_path) ->
+        case BezgelorData.Store.get_patrol_path(path_name) do
+          {:ok, patrol_data} ->
+            [
+              patrol_waypoints: patrol_data.waypoints,
+              patrol_speed: patrol_data.speed,
+              patrol_mode: patrol_data.mode
+            ]
+
+          :error ->
+            Logger.warning("Patrol path '#{path_name}' not found for creature spawn")
+            []
+        end
+
+      # Auto-match to nearest spline within threshold (default behavior)
+      # Only triggers for creatures without explicit spline/patrol assignments
+      Map.get(spawn_def, :auto_spline, true) ->
+        find_auto_spline(spline_index, world_id, position)
+
+      true ->
+        []
+    end
+  end
+
+  # Find the nearest spline to the spawn position for automatic patrol assignment
+  # Uses pre-built spatial index for efficient O(n) lookup instead of O(n*m)
+  defp find_auto_spline(spline_index, world_id, position) do
+    # 15-unit threshold balances coverage (~11.6% of spawns) with accuracy
+    # Tighter than 50 units (which catches incidental proximity)
+    case Store.find_nearest_spline_indexed(spline_index, world_id, position, max_distance: 15.0) do
+      {:ok, spline_id, distance} ->
+        case Store.get_spline_as_patrol(spline_id) do
+          {:ok, patrol_data} ->
+            Logger.debug(
+              "Auto-assigned spline #{spline_id} (#{length(patrol_data.waypoints)} waypoints) to creature at #{inspect(position)} (distance: #{Float.round(distance, 1)})"
+            )
+
+            [
+              patrol_waypoints: patrol_data.waypoints,
+              patrol_speed: patrol_data.speed,
+              patrol_mode: patrol_data.mode
+            ]
+
+          :error ->
+            Logger.warning("Spline #{spline_id} found but get_spline_as_patrol failed")
+            []
+        end
+
+      :none ->
+        []
+    end
+  end
+
   # Get creature template - first try hardcoded test templates, then BezgelorData
+  # Returns {:ok, template, display_info, outfit_info} or {:error, reason}
   defp get_creature_template(creature_id, spawn_def) do
     case CreatureTemplate.get(creature_id) do
       nil ->
@@ -621,7 +786,10 @@ defmodule BezgelorWorld.CreatureManager do
             template.display_info
           end
 
-        {:ok, template, display_info}
+        # Get outfit_info from spawn if provided (hardcoded templates don't have outfit_info)
+        outfit_info = spawn_def[:outfit_info] || 0
+
+        {:ok, template, display_info, outfit_info}
     end
   end
 
@@ -665,7 +833,7 @@ defmodule BezgelorWorld.CreatureManager do
       attack_speed: 2000
     }
 
-    # Use display_info from spawn if provided
+    # Use display_info from spawn if provided, otherwise from creature data
     display_info =
       if spawn_def[:display_info] && spawn_def.display_info > 0 do
         spawn_def.display_info
@@ -673,7 +841,16 @@ defmodule BezgelorWorld.CreatureManager do
         template.display_info
       end
 
-    {:ok, template, display_info}
+    # Get outfit_info from spawn if provided, otherwise from creature data
+    # outfit_group_id controls the creature's clothing/appearance
+    outfit_info =
+      if spawn_def[:outfit_info] && spawn_def.outfit_info > 0 do
+        spawn_def.outfit_info
+      else
+        Map.get(creature_data, :outfit_group_id, 0)
+      end
+
+    {:ok, template, display_info, outfit_info}
   end
 
   defp get_creature_name(creature_data) do
@@ -850,5 +1027,71 @@ defmodule BezgelorWorld.CreatureManager do
     CombatBroadcaster.broadcast_entity_death(player_entity.guid, killer_guid, [player_entity.guid])
 
     :ok
+  end
+
+  # Broadcast creature movement to nearby players
+  defp broadcast_creature_movement(creature_guid, path, speed) when length(path) > 1 do
+    alias BezgelorProtocol.Packets.World.ServerEntityCommand
+    alias BezgelorProtocol.PacketWriter
+
+    # Build movement commands using map format
+    # Set move state (0x01 = Move flag)
+    state_command = %{type: :set_state, state: 0x01}
+
+    # Reset move direction to defaults
+    move_defaults = %{type: :set_move_defaults, blend: false}
+
+    # Path following command
+    path_command = %{
+      type: :set_position_path,
+      positions: path,
+      speed: speed,
+      spline_type: :linear,
+      spline_mode: :one_shot,
+      offset: 0,
+      blend: true
+    }
+
+    packet = %ServerEntityCommand{
+      guid: creature_guid,
+      time: System.monotonic_time(:millisecond) |> rem(0xFFFFFFFF),
+      time_reset: false,
+      server_controlled: true,
+      commands: [state_command, move_defaults, path_command]
+    }
+
+    # Serialize the packet
+    writer = PacketWriter.new()
+    {:ok, writer} = ServerEntityCommand.write(packet, writer)
+    packet_data = PacketWriter.to_binary(writer)
+
+    # Broadcast to all connected players
+    # TODO: Filter to only nearby players once spatial partitioning is implemented
+    broadcast_to_all_players(:server_entity_command, packet_data)
+
+    Logger.debug("Broadcast movement for creature #{creature_guid}, path length: #{length(path)}")
+  end
+
+  defp broadcast_creature_movement(_creature_guid, _path, _speed), do: :ok
+
+  # Broadcast packet to all connected players
+  defp broadcast_to_all_players(opcode, packet_data) do
+    for {_account_id, session} <- WorldManager.list_sessions() do
+      if session.entity_guid do
+        send_to_connection(session.connection_pid, opcode, packet_data)
+      end
+    end
+
+    :ok
+  end
+
+  defp send_to_connection(nil, _opcode, _data), do: :ok
+
+  defp send_to_connection(connection_pid, opcode, packet_data) do
+    try do
+      BezgelorProtocol.Connection.send_packet(connection_pid, opcode, packet_data)
+    catch
+      :exit, _ -> :ok
+    end
   end
 end

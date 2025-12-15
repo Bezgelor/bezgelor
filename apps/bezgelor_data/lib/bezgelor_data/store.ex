@@ -83,7 +83,12 @@ defmodule BezgelorData.Store do
     # Character customization (label/value -> slot/displayId mapping)
     :character_customizations,
     # Item display source entries (for level-scaled item visuals)
-    :item_display_sources
+    :item_display_sources,
+    # Patrol paths for creature movement
+    :patrol_paths,
+    # Spline data (from client Spline2.tbl and Spline2Node.tbl)
+    :splines,
+    :spline_nodes
   ]
 
   # Secondary index tables for efficient lookups by foreign key
@@ -122,7 +127,9 @@ defmodule BezgelorData.Store do
     # Character customization indexes (race, sex) -> list of customization entries
     :customizations_by_race_sex,
     # Item display source entries indexed by source_id for efficient lookup
-    :display_sources_by_source_id
+    :display_sources_by_source_id,
+    # Spline nodes indexed by spline_id for efficient lookup
+    :spline_nodes_by_spline
   ]
 
   # Client API
@@ -867,6 +874,198 @@ defmodule BezgelorData.Store do
         length(zone_data.resource_spawns) +
         length(zone_data.object_spawns)
     end)
+  end
+
+  # Patrol path queries
+
+  @doc """
+  Get a patrol path by name.
+  Returns the path definition with waypoints, mode, speed etc.
+  """
+  @spec get_patrol_path(String.t()) :: {:ok, map()} | :error
+  def get_patrol_path(path_name) do
+    case :ets.lookup(table_name(:patrol_paths), path_name) do
+      [{^path_name, data}] -> {:ok, data}
+      [] -> :error
+    end
+  end
+
+  @doc """
+  Get all patrol paths.
+  """
+  @spec list_patrol_paths() :: [map()]
+  def list_patrol_paths do
+    table_name(:patrol_paths)
+    |> :ets.tab2list()
+    |> Enum.map(fn {_name, data} -> data end)
+  end
+
+  # Spline queries (from WildStar client Spline2.tbl / Spline2Node.tbl)
+
+  @doc """
+  Get a spline definition by ID.
+  Returns the spline with its waypoints (nodes).
+  """
+  @spec get_spline(non_neg_integer()) :: {:ok, map()} | :error
+  def get_spline(spline_id) do
+    case get(:splines, spline_id) do
+      {:ok, spline} ->
+        nodes = get_spline_nodes(spline_id)
+        {:ok, Map.put(spline, :nodes, nodes)}
+
+      :error ->
+        :error
+    end
+  end
+
+  @doc """
+  Get spline nodes for a spline ID.
+  Returns nodes sorted by ordinal (waypoint order).
+  """
+  @spec get_spline_nodes(non_neg_integer()) :: [map()]
+  def get_spline_nodes(spline_id) do
+    ids = lookup_index(:spline_nodes_by_spline, spline_id)
+    fetch_by_ids(:spline_nodes, ids)
+    |> Enum.sort_by(& &1.ordinal)
+  end
+
+  @doc """
+  Get all splines for a world/zone.
+  """
+  @spec get_splines_for_world(non_neg_integer()) :: [map()]
+  def get_splines_for_world(world_id) do
+    list(:splines)
+    |> Enum.filter(fn s -> s.world_id == world_id end)
+  end
+
+  @doc """
+  Find the nearest spline to a position in a given world.
+  Returns {:ok, spline_id, distance} if found within max_distance, :none otherwise.
+
+  Options:
+    - max_distance: maximum distance to search (default: 5.0 units)
+  """
+  @spec find_nearest_spline(non_neg_integer(), {float(), float(), float()}, keyword()) ::
+          {:ok, non_neg_integer(), float()} | :none
+  def find_nearest_spline(world_id, {px, py, pz} = _position, opts \\ []) do
+    max_distance = Keyword.get(opts, :max_distance, 5.0)
+
+    # Get all splines for this world with their first node position
+    splines_with_start =
+      get_splines_for_world(world_id)
+      |> Enum.map(fn spline ->
+        nodes = get_spline_nodes(spline.id)
+
+        case nodes do
+          [first | _] ->
+            {spline.id, {first.position0, first.position1, first.position2}}
+
+          [] ->
+            nil
+        end
+      end)
+      |> Enum.reject(&is_nil/1)
+
+    # Find the closest spline by distance to first waypoint
+    result =
+      splines_with_start
+      |> Enum.map(fn {spline_id, {sx, sy, sz}} ->
+        distance = :math.sqrt(:math.pow(px - sx, 2) + :math.pow(py - sy, 2) + :math.pow(pz - sz, 2))
+        {spline_id, distance}
+      end)
+      |> Enum.filter(fn {_id, dist} -> dist <= max_distance end)
+      |> Enum.min_by(fn {_id, dist} -> dist end, fn -> nil end)
+
+    case result do
+      {spline_id, distance} -> {:ok, spline_id, distance}
+      nil -> :none
+    end
+  end
+
+  @doc """
+  Build a spatial index of spline starting positions for efficient lookups.
+  Returns a map of %{world_id => [{spline_id, {x, y, z}}]}.
+  """
+  @spec build_spline_spatial_index() :: map()
+  def build_spline_spatial_index do
+    list(:splines)
+    |> Enum.reduce(%{}, fn spline, acc ->
+      nodes = get_spline_nodes(spline.id)
+
+      case nodes do
+        [first | _] ->
+          entry = {spline.id, {first.position0, first.position1, first.position2}}
+          world_entries = Map.get(acc, spline.world_id, [])
+          Map.put(acc, spline.world_id, [entry | world_entries])
+
+        [] ->
+          acc
+      end
+    end)
+  end
+
+  @doc """
+  Find nearest spline using a pre-built spatial index (more efficient for batch lookups).
+  """
+  @spec find_nearest_spline_indexed(map(), non_neg_integer(), {float(), float(), float()}, keyword()) ::
+          {:ok, non_neg_integer(), float()} | :none
+  def find_nearest_spline_indexed(spatial_index, world_id, {px, py, pz}, opts \\ []) do
+    max_distance = Keyword.get(opts, :max_distance, 5.0)
+
+    case Map.get(spatial_index, world_id, []) do
+      [] ->
+        :none
+
+      splines ->
+        result =
+          splines
+          |> Enum.map(fn {spline_id, {sx, sy, sz}} ->
+            distance =
+              :math.sqrt(:math.pow(px - sx, 2) + :math.pow(py - sy, 2) + :math.pow(pz - sz, 2))
+
+            {spline_id, distance}
+          end)
+          |> Enum.filter(fn {_id, dist} -> dist <= max_distance end)
+          |> Enum.min_by(fn {_id, dist} -> dist end, fn -> nil end)
+
+        case result do
+          {spline_id, distance} -> {:ok, spline_id, distance}
+          nil -> :none
+        end
+    end
+  end
+
+  @doc """
+  Get spline as patrol path format (compatible with AI patrol system).
+  Converts spline nodes to waypoints with position and pause_ms.
+  """
+  @spec get_spline_as_patrol(non_neg_integer()) :: {:ok, map()} | :error
+  def get_spline_as_patrol(spline_id) do
+    case get_spline(spline_id) do
+      {:ok, spline} ->
+        waypoints =
+          Enum.map(spline.nodes, fn node ->
+            %{
+              position: {node.position0, node.position1, node.position2},
+              pause_ms: trunc(node.delay * 1000)
+            }
+          end)
+
+        patrol = %{
+          name: "spline_#{spline_id}",
+          display_name: "Spline #{spline_id}",
+          world_id: spline.world_id,
+          spline_type: spline.spline_type,
+          waypoints: waypoints,
+          mode: :cyclic,
+          speed: 3.0
+        }
+
+        {:ok, patrol}
+
+      :error ->
+        :error
+    end
   end
 
   # Quest queries
@@ -1872,6 +2071,12 @@ defmodule BezgelorData.Store do
     # Item display source entries (for level-scaled item visuals)
     load_item_display_sources()
 
+    # Patrol paths for creature movement
+    load_patrol_paths()
+
+    # Spline data (client extracted - for NPC movement/patrols)
+    load_splines()
+
     # Validate loot data
     validate_loot_data()
 
@@ -2487,6 +2692,122 @@ defmodule BezgelorData.Store do
     end
   end
 
+  # Load patrol paths for creature movement (uses string keys like "entrance_patrol_1")
+  defp load_patrol_paths do
+    table_name = table_name(:patrol_paths)
+
+    # Clear existing data
+    :ets.delete_all_objects(table_name)
+
+    json_path = Path.join(data_directory(), "patrol_paths.json")
+
+    case load_json_raw(json_path) do
+      {:ok, data} ->
+        patrol_paths = Map.get(data, :patrol_paths, %{})
+
+        for {path_name, path_data} <- patrol_paths do
+          # Convert atom key to string if needed
+          name_str =
+            if is_atom(path_name), do: Atom.to_string(path_name), else: path_name
+
+          # Convert waypoint positions from lists to tuples for Vector3 compatibility
+          waypoints =
+            Enum.map(path_data.waypoints, fn wp ->
+              [x, y, z] = wp.position
+              %{position: {x, y, z}, pause_ms: wp.pause_ms}
+            end)
+
+          # Store with normalized data
+          normalized = %{
+            name: name_str,
+            display_name: Map.get(path_data, :name, name_str),
+            instance_id: Map.get(path_data, :instance_id),
+            waypoints: waypoints,
+            mode: String.to_atom(path_data.mode),
+            speed: path_data.speed
+          }
+
+          :ets.insert(table_name, {name_str, normalized})
+        end
+
+        Logger.debug("Loaded #{map_size(patrol_paths)} patrol paths")
+
+      {:error, reason} ->
+        Logger.warning("Failed to load patrol paths: #{inspect(reason)}")
+    end
+  end
+
+  # Load splines from client-extracted data (Spline2.tbl and Spline2Node.tbl)
+  defp load_splines do
+    splines_table = table_name(:splines)
+    nodes_table = table_name(:spline_nodes)
+
+    # Clear existing data
+    :ets.delete_all_objects(splines_table)
+    :ets.delete_all_objects(nodes_table)
+
+    # Load Spline2 (spline definitions)
+    splines_path = Path.join(data_directory(), "Spline2.json")
+
+    spline_count =
+      case load_json_raw(splines_path) do
+        {:ok, data} ->
+          splines = Map.get(data, :spline2, [])
+
+          for spline <- splines do
+            normalized = %{
+              id: spline[:ID],
+              world_id: spline[:worldId],
+              spline_type: spline[:splineType]
+            }
+
+            :ets.insert(splines_table, {spline[:ID], normalized})
+          end
+
+          length(splines)
+
+        {:error, _reason} ->
+          0
+      end
+
+    # Load Spline2Node (spline waypoints)
+    nodes_path = Path.join(data_directory(), "Spline2Node.json")
+
+    node_count =
+      case load_json_raw(nodes_path) do
+        {:ok, data} ->
+          nodes = Map.get(data, :spline2node, [])
+
+          for node <- nodes do
+            normalized = %{
+              id: node[:ID],
+              spline_id: node[:splineId],
+              ordinal: node[:ordinal],
+              position0: node[:position0],
+              position1: node[:position1],
+              position2: node[:position2],
+              facing0: node[:facing0],
+              facing1: node[:facing1],
+              facing2: node[:facing2],
+              facing3: node[:facing3],
+              delay: node[:delay],
+              frame_time: node[:frameTime]
+            }
+
+            :ets.insert(nodes_table, {node[:ID], normalized})
+          end
+
+          length(nodes)
+
+        {:error, _reason} ->
+          0
+      end
+
+    if spline_count > 0 do
+      Logger.debug("Loaded #{spline_count} splines with #{node_count} waypoints")
+    end
+  end
+
   # Secondary index building
 
   defp build_all_indexes do
@@ -2538,6 +2859,9 @@ defmodule BezgelorData.Store do
     # Build world location indexes
     build_index(:world_locations, :world_locations_by_world, :worldId)
     build_index(:world_locations, :world_locations_by_zone, :worldZoneId)
+
+    # Build spline node index
+    build_index(:spline_nodes, :spline_nodes_by_spline, :spline_id)
 
     Logger.debug("Secondary indexes built")
   end

@@ -199,4 +199,24 @@ defmodule BezgelorWorld.Zone.InstanceSupervisor do
         end
     end
   end
+
+  @doc """
+  List zone IDs (world_ids) that have at least one player.
+
+  Used for AI optimization to only process creatures in zones with active players.
+  Returns a MapSet of zone_ids for O(1) membership checking.
+  """
+  @spec list_zones_with_players() :: MapSet.t(non_neg_integer())
+  def list_zones_with_players do
+    list_instances()
+    |> Enum.filter(fn {_zone_id, _instance_id, pid} ->
+      try do
+        Instance.player_count(pid) > 0
+      catch
+        :exit, _ -> false
+      end
+    end)
+    |> Enum.map(fn {zone_id, _instance_id, _pid} -> zone_id end)
+    |> MapSet.new()
+  end
 end
