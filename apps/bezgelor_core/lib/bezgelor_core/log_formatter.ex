@@ -40,10 +40,14 @@ defmodule BezgelorCore.LogFormatter do
   end
 
   defp format_metadata(metadata) do
-    # Only format the user-context metadata keys
-    metadata
-    |> Keyword.take([:account, :char, :conn_id])
-    |> Enum.map(fn {key, value} -> "#{key}=#{value}" end)
-    |> Enum.join(" ")
+    # Only format the user-context metadata keys, showing just values
+    # Order: account, char, conn_id (most relevant first)
+    parts =
+      [:account, :char, :conn_id]
+      |> Enum.map(fn key -> Keyword.get(metadata, key) end)
+      |> Enum.reject(&is_nil/1)
+      |> Enum.map(&to_string/1)
+
+    Enum.join(parts, " ")
   end
 end
