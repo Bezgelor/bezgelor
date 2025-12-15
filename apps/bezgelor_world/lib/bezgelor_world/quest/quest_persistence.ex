@@ -15,7 +15,7 @@ defmodule BezgelorWorld.Quest.QuestPersistence do
   ## Usage
 
       # Persist all dirty quests for a character
-      {:ok, count} = QuestPersistence.persist_dirty_quests(character_id, session_data)
+      {:ok, success, failures, updated_session} = QuestPersistence.persist_dirty_quests(character_id, session_data)
 
       # Persist a single quest
       :ok = QuestPersistence.persist_quest(character_id, session_quest)
@@ -30,7 +30,7 @@ defmodule BezgelorWorld.Quest.QuestPersistence do
   Persist all dirty quests from session data to the database.
 
   Returns the number of quests persisted and updated session_data with
-  dirty flags cleared.
+  dirty flags cleared only for successfully persisted quests.
 
   ## Parameters
 
@@ -39,38 +39,42 @@ defmodule BezgelorWorld.Quest.QuestPersistence do
 
   ## Returns
 
-  `{:ok, count, updated_session_data}` on success
-  `{:error, reason}` on failure
+  `{:ok, success_count, failure_count, updated_session_data}`
   """
-  @spec persist_dirty_quests(non_neg_integer(), map()) :: {:ok, non_neg_integer(), map()}
+  @spec persist_dirty_quests(non_neg_integer(), map()) ::
+          {:ok, non_neg_integer(), non_neg_integer(), map()}
   def persist_dirty_quests(character_id, session_data) do
     active_quests = session_data[:active_quests] || %{}
     dirty_quests = QuestCache.get_dirty_quests(active_quests)
 
     if dirty_quests == [] do
-      {:ok, 0, session_data}
+      {:ok, 0, 0, session_data}
     else
       Logger.debug("Persisting #{length(dirty_quests)} dirty quests for character #{character_id}")
 
-      # Persist each dirty quest
+      # Persist each dirty quest and track results
       results =
         Enum.map(dirty_quests, fn quest ->
-          persist_quest(character_id, quest)
+          {quest.quest_id, persist_quest(character_id, quest)}
         end)
 
-      # Count successes
-      success_count = Enum.count(results, &(&1 == :ok))
-      failure_count = length(results) - success_count
+      # Separate successes from failures
+      {successes, failures} = Enum.split_with(results, fn {_id, result} -> result == :ok end)
+
+      success_count = length(successes)
+      failure_count = length(failures)
 
       if failure_count > 0 do
-        Logger.warning("Failed to persist #{failure_count} quests for character #{character_id}")
+        failed_ids = Enum.map(failures, fn {id, _} -> id end)
+        Logger.warning("Failed to persist #{failure_count} quests for character #{character_id}: #{inspect(failed_ids)}")
       end
 
-      # Clear dirty flags on successfully persisted quests
-      updated_active_quests = QuestCache.clear_dirty_flags(active_quests)
+      # Only clear dirty flags for quests that succeeded
+      succeeded_quest_ids = Enum.map(successes, fn {id, _} -> id end)
+      updated_active_quests = QuestCache.clear_dirty_flags(active_quests, succeeded_quest_ids)
       updated_session_data = Map.put(session_data, :active_quests, updated_active_quests)
 
-      {:ok, success_count, updated_session_data}
+      {:ok, success_count, failure_count, updated_session_data}
     end
   end
 
@@ -105,11 +109,17 @@ defmodule BezgelorWorld.Quest.QuestPersistence do
     end
   end
 
+  # Maximum retry attempts for logout persistence
+  @logout_max_retries 3
+  # Delay between retries in milliseconds
+  @logout_retry_delay_ms 100
+
   @doc """
   Persist all quests on logout/disconnect.
 
   This is a synchronous operation that ensures all quest state is saved
-  before the connection terminates.
+  before the connection terminates. Will retry failed quests up to
+  #{@logout_max_retries} times with exponential backoff.
 
   ## Parameters
 
@@ -122,12 +132,33 @@ defmodule BezgelorWorld.Quest.QuestPersistence do
   """
   @spec persist_on_logout(non_neg_integer(), map()) :: :ok
   def persist_on_logout(character_id, session_data) do
+    persist_with_retry(character_id, session_data, @logout_max_retries)
+  end
+
+  defp persist_with_retry(character_id, session_data, attempts_remaining) do
     case persist_dirty_quests(character_id, session_data) do
-      {:ok, count, _} when count > 0 ->
-        Logger.info("Persisted #{count} quests on logout for character #{character_id}")
+      {:ok, success_count, 0, _updated_session_data} ->
+        # All quests persisted successfully
+        if success_count > 0 do
+          Logger.info("Persisted #{success_count} quests on logout for character #{character_id}")
+        end
         :ok
 
-      {:ok, 0, _} ->
+      {:ok, success_count, failure_count, updated_session_data} when attempts_remaining > 1 ->
+        # Some quests failed, retry with remaining dirty quests
+        Logger.warning(
+          "Quest persistence: #{success_count} succeeded, #{failure_count} failed for character #{character_id}. " <>
+          "Retrying (#{attempts_remaining - 1} attempts remaining)..."
+        )
+        Process.sleep(@logout_retry_delay_ms * (@logout_max_retries - attempts_remaining + 1))
+        persist_with_retry(character_id, updated_session_data, attempts_remaining - 1)
+
+      {:ok, success_count, failure_count, _updated_session_data} ->
+        # Final attempt failed
+        Logger.error(
+          "Quest persistence FAILED after #{@logout_max_retries} attempts for character #{character_id}: " <>
+          "#{success_count} succeeded, #{failure_count} lost"
+        )
         :ok
     end
   end

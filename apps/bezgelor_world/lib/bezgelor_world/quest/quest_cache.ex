@@ -185,15 +185,36 @@ defmodule BezgelorWorld.Quest.QuestCache do
   @doc """
   Clear dirty flag on all quests (after successful persistence).
 
+  ## Parameters
+
+  - `active_quests` - The active quests map
+  - `quest_ids` - Optional list of quest IDs to clear. If nil, clears all.
+
   ## Returns
 
-  Updated active_quests map with all dirty flags cleared.
+  Updated active_quests map with dirty flags cleared.
   """
-  @spec clear_dirty_flags(%{non_neg_integer() => session_quest()}) ::
+  @spec clear_dirty_flags(%{non_neg_integer() => session_quest()}, [non_neg_integer()] | nil) ::
           %{non_neg_integer() => session_quest()}
-  def clear_dirty_flags(active_quests) do
+  def clear_dirty_flags(active_quests, quest_ids \\ nil)
+
+  def clear_dirty_flags(active_quests, nil) do
+    # Clear all dirty flags (legacy behavior)
     Map.new(active_quests, fn {quest_id, quest} ->
       {quest_id, %{quest | dirty: false}}
+    end)
+  end
+
+  def clear_dirty_flags(active_quests, quest_ids) when is_list(quest_ids) do
+    # Only clear dirty flags for specified quest IDs
+    quest_id_set = MapSet.new(quest_ids)
+
+    Map.new(active_quests, fn {quest_id, quest} ->
+      if MapSet.member?(quest_id_set, quest_id) do
+        {quest_id, %{quest | dirty: false}}
+      else
+        {quest_id, quest}
+      end
     end)
   end
 
