@@ -11,34 +11,39 @@ Generated: 2025-12-15
 
 ## 🟠 High Priority
 
-- [ ] **[SECURITY]** Add anti-cheat validation in `apps/bezgelor_protocol/lib/bezgelor_protocol/handler/movement_speed_update_handler.ex` - No speed/teleport bounds checking
-- [ ] **[SECURITY]** Add character name validation in `apps/bezgelor_protocol/lib/bezgelor_protocol/handler/character_create_handler.ex` - Whitelist allowed characters
-- [ ] **[SECURITY]** Reduce session TTL from 1 hour in `apps/bezgelor_db/lib/bezgelor_db/accounts.ex:161` - Implement sliding window expiration
-- [ ] **[BUG]** Handle encryption exceptions in `apps/bezgelor_crypto/lib/bezgelor_crypto/packet_crypt.ex:154-156` - Return error tuple instead of raising
-- [ ] **[PERFORMANCE]** Make zone initialization async in `apps/bezgelor_world/lib/bezgelor_world/zone/manager.ex:42-79` - Blocking startup with 100+ zones
-- [ ] **[SECURITY]** Add authentication rate limiting in `apps/bezgelor_protocol/lib/bezgelor_protocol/handler/auth_handler.ex` - Enable brute force, account enumeration
+- [x] **[SECURITY]** Add anti-cheat validation in `apps/bezgelor_protocol/lib/bezgelor_protocol/handler/movement_speed_update_handler.ex` - Added speed bounds checking and violation tracking
+- [x] **[SECURITY]** Add character name validation in `apps/bezgelor_protocol/lib/bezgelor_protocol/handler/character_create_handler.ex` - Added regex validation, length checks, no consecutive spaces
+- [x] **[SECURITY]** Reduce session TTL from 1 hour in `apps/bezgelor_db/lib/bezgelor_db/accounts.ex:161` - Reduced to 30 minutes with sliding window refresh
+- [x] **[BUG]** Handle encryption exceptions in `apps/bezgelor_crypto/lib/bezgelor_crypto/packet_crypt.ex:154-156` - Now returns `{:ok, binary}` or `{:error, reason}` tuples
+- [x] **[PERFORMANCE]** Make zone initialization async in `apps/bezgelor_world/lib/bezgelor_world/zone/manager.ex:42-79` - Now uses Task.async_stream with bounded parallelism
+- [x] **[SECURITY]** Add authentication rate limiting in `apps/bezgelor_protocol/lib/bezgelor_protocol/handler/auth_handler.ex` - Added Hammer rate limiting (5 attempts/minute per IP)
 
 ## 🟡 Medium Priority
 
-- [ ] **[SECURITY]** Validate zone_id as positive integer in `apps/bezgelor_world/lib/bezgelor_world/zone/manager.ex:223-232`
-- [ ] **[BUG]** Add explicit GenServer timeouts in `apps/bezgelor_world/lib/bezgelor_world/zone/instance.ex:95-101` - Deadlock risk
-- [ ] **[SECURITY]** Add permission checks in `apps/bezgelor_protocol/lib/bezgelor_protocol/handler/item_auctions_handler.ex` - Cross-account access
-- [ ] **[SECURITY]** Validate customization data in `apps/bezgelor_protocol/lib/bezgelor_protocol/handler/character_create_handler.ex:119-125`
-- [ ] **[BUG]** Add transaction timeouts in `apps/bezgelor_db/lib/bezgelor_db/accounts.ex:310-322` - Could hang indefinitely
-- [ ] **[FEATURE]** Implement actual broadcast in `apps/bezgelor_world/lib/bezgelor_world/zone/instance.ex:295-304` - Currently stubbed
-- [ ] **[DOCS]** Document ETS table concurrency model in `apps/bezgelor_data/lib/bezgelor_data/store.ex:15-92`
-- [ ] **[SECURITY]** Add maximum limit enforcement in `apps/bezgelor_db/lib/bezgelor_db/accounts.ex:697-727`
-- [ ] **[TESTING]** Add property-based tests for packet fuzzing - Unguarded handler error paths
-- [ ] **[TESTING]** Add encryption/decryption round-trip tests - No crypto test coverage
+- [x] **[SECURITY]** Validate zone_id as positive integer in `apps/bezgelor_world/lib/bezgelor_world/zone/manager.ex` - Added guards to public functions with fallbacks
+- [x] **[BUG]** Add explicit GenServer timeouts in `apps/bezgelor_world/lib/bezgelor_world/zone/instance.ex` - Added 10s timeout to all GenServer.call functions
+- [x] **[SECURITY]** Add permission checks in `apps/bezgelor_protocol/lib/bezgelor_protocol/handler/item_auctions_handler.ex` - Validates account_id and character_id
+- [x] **[SECURITY]** Validate customization data in `apps/bezgelor_protocol/lib/bezgelor_protocol/handler/character_create_handler.ex` - Added limits for labels, values, and bones
+- [x] **[BUG]** Add transaction timeouts in `apps/bezgelor_db/lib/bezgelor_db/accounts.ex` - Added 30s timeout to Repo.transaction calls
+- [x] **[FEATURE]** Implement actual broadcast in `apps/bezgelor_world/lib/bezgelor_world/zone/instance.ex:295-304` - Zone.Instance.broadcast routes via WorldManager zone_index
+- [x] **[DOCS]** Document ETS table concurrency model in `apps/bezgelor_data/lib/bezgelor_data/store.ex` - Comprehensive documentation added
+- [x] **[SECURITY]** Add maximum limit enforcement in `apps/bezgelor_db/lib/bezgelor_db/accounts.ex` - Capped at 500 with non-negative offset enforcement
+- [x] **[TESTING]** Add property-based tests for packet fuzzing - Added StreamData tests for PacketReader and handlers
+- [x] **[TESTING]** Add encryption/decryption round-trip tests - Added comprehensive tests including error cases
 
 ## 🟢 Low Priority
 
-- [ ] **[CLEANUP]** Use environment-based debug flags in `apps/bezgelor_crypto/lib/bezgelor_crypto/srp6.ex:231-245`
-- [ ] **[REFACTOR]** Extract magic numbers to constants in `apps/bezgelor_protocol/lib/bezgelor_protocol/connection.ex:226-237`
-- [ ] **[FEATURE]** Complete TODO handlers (movement_speed_update, item_auctions, etc.)
-- [ ] **[BUG]** Add persistence confirmation in `apps/bezgelor_protocol/lib/bezgelor_protocol/connection.ex:482-502` - Quest changes lost on DB failure
-- [ ] **[DOCS]** Add JSDoc-style documentation to public API functions
+- [x] **[CLEANUP]** Use environment-based debug flags in `apps/bezgelor_crypto/lib/bezgelor_crypto/srp6.ex:231-245` - N/A: no debug flags exist; true/false params are cryptographic protocol requirements
+- [x] **[REFACTOR]** Extract magic numbers to constants in `apps/bezgelor_protocol/lib/bezgelor_protocol/connection.ex:226-237` - Extracted to module attributes: @auth_version, @default_realm_id, @default_realm_group_id, @auth_message, @connection_type_world/auth
+- [x] **[FEATURE]** Complete TODO handlers (movement_speed_update, item_auctions, etc.) - movement_speed_update implemented with anti-cheat
+- [x] **[BUG]** Add persistence confirmation in `apps/bezgelor_world/lib/bezgelor_world/quest/quest_persistence.ex` - Fixed dirty flag bug (only clears on success), added 3-retry with backoff on logout
+- [x] **[DOCS]** Add JSDoc-style documentation to public API functions - Already complete: all REST API controllers have @moduledoc and @doc
 
-## Completed
+## Summary
 
-_None yet_
+**Critical Priority:** 4/4 complete
+**High Priority:** 6/6 complete
+**Medium Priority:** 10/10 complete
+**Low Priority:** 5/5 complete
+
+**Total:** 25/25 items addressed (100%)

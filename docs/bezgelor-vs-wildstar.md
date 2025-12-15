@@ -119,6 +119,30 @@ These are performance optimizations that may differ from original WildStar serve
 
 ---
 
+### Basic Speed Hack Detection
+
+**Original Behavior:** Unknown. WildStar likely had comprehensive server-side movement validation with state-aware speed checking.
+
+**Bezgelor Behavior:** Basic bounds-only speed validation. The server validates that client-reported speeds don't exceed absolute maximums but doesn't correlate with movement state.
+
+**What's Validated:**
+- Negative/invalid speed values → violation recorded
+- Speed > 35.0 units/sec → violation recorded (definite cheat)
+- Speed > 25.0 units/sec → logged as suspicious (may be legitimate with buffs)
+- 3+ violations in 60 seconds → alert logged for admin review
+
+**What's NOT Validated:**
+- State-aware checks (e.g., "player reports 12 units/sec but isn't mounted or sprinting")
+- Position-based teleport detection
+- Movement acceleration validation
+
+**Rationale:** Full state-aware validation requires correlating `ClientPlayerMovementSpeedUpdate` packets with `ClientMovement` flags and server-side buff tracking. The current implementation catches obvious speed hacks (>35 units/sec) while avoiding false positives from legitimate buff stacking.
+
+**Files Changed:**
+- `apps/bezgelor_protocol/lib/bezgelor_protocol/handler/movement_speed_update_handler.ex`
+
+---
+
 ## Future Differences
 
 This section will be updated as more intentional deviations are implemented.

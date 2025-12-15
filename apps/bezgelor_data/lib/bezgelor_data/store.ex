@@ -4,6 +4,50 @@ defmodule BezgelorData.Store do
 
   Each data type gets its own ETS table for fast concurrent reads.
   Data is loaded at application startup from ETF files (compiled from JSON).
+
+  ## Concurrency Model
+
+  This module uses ETS (Erlang Term Storage) for storing static game data.
+  The concurrency model is designed for a write-once, read-many pattern:
+
+  ### Table Configuration
+
+  All ETS tables are created with the following options:
+  - `:named_table` - Tables are accessible by name globally
+  - `:set` - Each key has at most one entry (O(1) lookup)
+  - `:public` - Any process can read from the tables
+  - `read_concurrency: true` - Optimized for concurrent reads
+
+  ### Write Safety
+
+  Writes are only performed during application startup by the Store GenServer.
+  No writes should occur after initialization is complete. This is safe because:
+
+  1. **Single Writer**: Only the Store GenServer writes to tables during `init/1`
+  2. **Atomic Writes**: ETS inserts are atomic per-row
+  3. **No Updates**: Data is static and never modified after loading
+
+  ### Read Safety
+
+  Reads are safe from any process at any time:
+
+  1. **Concurrent Reads**: ETS supports unlimited concurrent readers
+  2. **No Locks**: `read_concurrency: true` eliminates reader locks
+  3. **No Copying**: Data is read directly from shared ETS storage
+
+  ### Thread Safety Guarantees
+
+  - `:ets.lookup/2` is always safe for concurrent access
+  - `:ets.insert/2` is atomic per-row
+  - No coordination needed between readers
+  - Writers are serialized through the GenServer (startup only)
+
+  ### Performance Characteristics
+
+  - Read: O(1) for direct key lookup
+  - Read: O(n) for full table scans (via `:ets.tab2list/1`)
+  - Memory: Data stored once, shared across all processes
+  - No garbage collection pressure from read operations
   """
 
   use GenServer
