@@ -90,7 +90,11 @@ config :bezgelor_db, BezgelorDb.Repo,
 # Auth Server (STS) configuration
 config :bezgelor_auth,
   host: System.get_env("AUTH_HOST", "0.0.0.0"),
-  port: String.to_integer(System.get_env("AUTH_PORT", "6600"))
+  port: String.to_integer(System.get_env("AUTH_PORT", "6600")),
+  # Allow game clients to auto-register accounts (default: false)
+  # Note: SRP6 doesn't support inline registration - this would require
+  # a separate registration packet flow if implemented.
+  allow_game_client_registration: false
 
 # Realm Server configuration
 config :bezgelor_realm,

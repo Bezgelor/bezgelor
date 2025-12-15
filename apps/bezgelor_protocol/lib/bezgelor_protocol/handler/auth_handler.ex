@@ -26,6 +26,11 @@ defmodule BezgelorProtocol.Handler.AuthHandler do
 
   @expected_build 16042
 
+  # Check if game client auto-registration is enabled (default: false)
+  defp auto_registration_enabled? do
+    Application.get_env(:bezgelor_auth, :allow_game_client_registration, false)
+  end
+
   @impl true
   def handle(payload, state) do
     reader = PacketReader.new(payload)

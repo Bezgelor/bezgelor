@@ -313,9 +313,15 @@ defmodule BezgelorDb.Accounts do
   @spec create_account(String.t(), String.t()) :: {:ok, Account.t()} | {:error, Ecto.Changeset.t()}
   def create_account(email, password) do
     # Note: This function creates accounts without requiring email verification.
-    # This is intentional for game client auto-registration where the user proves
-    # ownership through SRP6 authentication. For web portal registration that
-    # requires email verification, use register_account/2 instead.
+    # It is intended for administrative/testing use only. Production accounts
+    # should be created via register_account/2 which requires email verification.
+    #
+    # Game client auto-registration is controlled by:
+    #   config :bezgelor_auth, allow_game_client_registration: false  (default)
+    #
+    # Note: SRP6 authentication does not support inline registration since
+    # the password is never sent over the wire. Any auto-registration would
+    # require a separate registration packet flow.
     {salt, verifier} = BezgelorCrypto.Password.generate_salt_and_verifier(email, password)
 
     Repo.transaction(fn ->
