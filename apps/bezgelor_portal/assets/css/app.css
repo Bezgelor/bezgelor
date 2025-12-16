@@ -141,6 +141,49 @@
 }
 
 /* ============================================
+   LOGO OVERLAP STYLES
+   Logo extends from navbar into body content
+   ============================================ */
+
+.logo-overlap {
+  position: relative;
+  display: block;
+  z-index: 50;
+  margin-top: -2rem;
+  margin-left: -2.5rem;
+}
+
+.logo-overlap-img {
+  height: 200px;
+  width: auto;
+  /* Extend the logo below the navbar */
+  margin-bottom: -100px;
+  /* Smooth transition for hover effects */
+  transition: transform 0.3s ease, filter 0.3s ease;
+  /* Add subtle drop shadow for depth */
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));
+}
+
+.logo-overlap-img:hover {
+  transform: scale(1.05);
+  filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.4));
+}
+
+/* Shrink navbar height to match gaming navbar */
+.navbar.bg-base-100 {
+  min-height: auto;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+/* Ensure main content doesn't overlap the extended logo */
+.navbar + main,
+.navbar + .flex-1 {
+  position: relative;
+  z-index: 30;
+}
+
+/* ============================================
    GAMING BACKGROUND EFFECTS
    ============================================ */
 
@@ -515,7 +558,7 @@
   left: 0;
   right: 0;
   z-index: 1000;
-  padding: 1rem 2rem;
+  padding: 0 2rem;
   background: transparent;
   transition: background 0.3s ease, backdrop-filter 0.3s ease;
 }
@@ -554,6 +597,28 @@
 
 .navbar-gaming-logo:hover::after {
   transform: scaleX(1);
+}
+
+/* Gaming Navbar Logo Image (overlaps into body) */
+.navbar-gaming-logo-link {
+  position: relative;
+  display: block;
+  z-index: 1001;
+  margin-top: -2rem;
+  margin-left: -2.5rem;
+}
+
+.navbar-gaming-logo-img {
+  height: 200px;
+  width: auto;
+  margin-bottom: -100px;
+  filter: drop-shadow(0 4px 12px rgba(0, 240, 255, 0.3));
+  transition: transform 0.3s ease, filter 0.3s ease;
+}
+
+.navbar-gaming-logo-img:hover {
+  transform: scale(1.05);
+  filter: drop-shadow(0 6px 16px rgba(0, 240, 255, 0.5));
 }
 
 .navbar-gaming-link {

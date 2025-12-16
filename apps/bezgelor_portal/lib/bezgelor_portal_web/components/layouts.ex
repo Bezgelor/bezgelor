@@ -110,11 +110,11 @@ defmodule BezgelorPortalWeb.Layouts do
 
   def navbar(assigns) do
     ~H"""
-    <header class="navbar bg-base-100 shadow-sm px-4 sm:px-6 lg:px-8">
-      <!-- Left: Logo -->
+    <header class="navbar bg-base-100 shadow-sm px-4 sm:px-6 lg:px-8 relative z-40">
+      <!-- Left: Logo - overlaps into body -->
       <div class="flex-1">
-        <a href="/" class="flex items-center gap-2">
-          <span class="text-xl font-bold text-primary">Bezgelor</span>
+        <a href="/" class="logo-overlap">
+          <img src={~p"/images/bezgelor_logotype_b_squash.png"} alt="Bezgelor" class="logo-overlap-img" />
         </a>
       </div>
 
@@ -528,8 +528,8 @@ defmodule BezgelorPortalWeb.Layouts do
   def gaming_navbar(assigns) do
     ~H"""
     <nav class="navbar-gaming flex items-center justify-between">
-      <a href="/" class="navbar-gaming-logo">
-        Bezgelor
+      <a href="/" class="navbar-gaming-logo-link">
+        <img src={~p"/images/bezgelor_logotype_b_squash.png"} alt="Bezgelor" class="navbar-gaming-logo-img" />
       </a>
 
       <div class="hidden md:flex items-center gap-2">
@@ -562,7 +562,7 @@ defmodule BezgelorPortalWeb.Layouts do
     <div id="mobile-menu" class="hidden fixed inset-0 z-50 bg-[var(--gaming-bg-dark)] md:hidden">
       <div class="flex flex-col h-full p-6">
         <div class="flex justify-between items-center mb-8">
-          <span class="navbar-gaming-logo">Bezgelor</span>
+          <img src={~p"/images/bezgelor_logotype_b_squash.png"} alt="Bezgelor" class="h-10 w-auto" />
           <button onclick="document.getElementById('mobile-menu').classList.add('hidden')">
             <.icon name="hero-x-mark" class="size-6 text-white" />
           </button>
