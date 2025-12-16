@@ -138,19 +138,6 @@ defmodule BezgelorWorld.HarvestNodeManager do
   end
 
   @impl true
-  def handle_cast({:load_zone_spawns_async, world_id}, state) do
-    resource_spawns = Store.get_resource_spawns(world_id)
-
-    if Enum.empty?(resource_spawns) do
-      {:noreply, state}
-    else
-      {spawned_count, new_state} = spawn_from_definitions(resource_spawns, state)
-      Logger.info("Loaded #{spawned_count} harvest node spawns for world #{world_id}")
-      {:noreply, new_state}
-    end
-  end
-
-  @impl true
   def handle_call({:get_node, guid}, _from, state) do
     {:reply, Map.get(state.nodes, guid), state}
   end
@@ -202,6 +189,19 @@ defmodule BezgelorWorld.HarvestNodeManager do
 
     Logger.info("Cleared #{map_size(state.nodes)} harvest nodes")
     {:reply, :ok, %{state | nodes: %{}, spawn_definitions: []}}
+  end
+
+  @impl true
+  def handle_cast({:load_zone_spawns_async, world_id}, state) do
+    resource_spawns = Store.get_resource_spawns(world_id)
+
+    if Enum.empty?(resource_spawns) do
+      {:noreply, state}
+    else
+      {spawned_count, new_state} = spawn_from_definitions(resource_spawns, state)
+      Logger.info("Loaded #{spawned_count} harvest node spawns for world #{world_id}")
+      {:noreply, new_state}
+    end
   end
 
   @impl true

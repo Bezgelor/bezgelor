@@ -295,21 +295,6 @@ defmodule BezgelorWorld.CreatureManager do
   end
 
   @impl true
-  def handle_cast({:load_zone_spawns_async, world_id}, state) do
-    case Store.get_creature_spawns(world_id) do
-      {:ok, zone_data} ->
-        {spawned_count, new_state} = spawn_from_definitions(zone_data.creature_spawns, world_id, state)
-        Logger.info("Loaded #{spawned_count} creature spawns for world #{world_id}")
-        {:noreply, new_state}
-
-      :error ->
-        # Tutorial zones may not have spawn data - don't warn for known empty zones
-        Logger.debug("No spawn data found for world #{world_id}")
-        {:noreply, state}
-    end
-  end
-
-  @impl true
   def handle_call({:load_area_spawns, world_id, area_id}, _from, state) do
     spawns = Store.get_spawns_in_area(world_id, area_id)
 
@@ -336,6 +321,21 @@ defmodule BezgelorWorld.CreatureManager do
   @impl true
   def handle_call(:get_spawn_definitions, _from, state) do
     {:reply, state.spawn_definitions, state}
+  end
+
+  @impl true
+  def handle_cast({:load_zone_spawns_async, world_id}, state) do
+    case Store.get_creature_spawns(world_id) do
+      {:ok, zone_data} ->
+        {spawned_count, new_state} = spawn_from_definitions(zone_data.creature_spawns, world_id, state)
+        Logger.info("Loaded #{spawned_count} creature spawns for world #{world_id}")
+        {:noreply, new_state}
+
+      :error ->
+        # Tutorial zones may not have spawn data - don't warn for known empty zones
+        Logger.debug("No spawn data found for world #{world_id}")
+        {:noreply, state}
+    end
   end
 
   @impl true
