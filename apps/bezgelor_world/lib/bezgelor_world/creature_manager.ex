@@ -673,9 +673,32 @@ defmodule BezgelorWorld.CreatureManager do
   end
 
   defp process_creature_ai_tick(creature_state, ai, template, entity, now) do
+    # Check for leash distance first (only in combat)
+    if ai.state == :combat do
+      current_pos = entity.position
+      leash_range = template.leash_range || 40.0
+
+      case AI.check_leash(ai, current_pos, leash_range) do
+        :evade ->
+          # Start evading back to spawn
+          new_ai = AI.start_evade(ai)
+          Logger.info("Creature #{entity.name} leashing back to spawn")
+          {:updated, %{creature_state | ai: new_ai}}
+
+        :ok ->
+          # Continue with normal combat processing
+          process_combat_ai_tick(creature_state, ai, template, entity, now)
+      end
+    else
+      # Non-combat processing
+      process_normal_ai_tick(creature_state, ai, template, entity, now)
+    end
+  end
+
+  defp process_combat_ai_tick(creature_state, ai, template, entity, now) do
     # Check for combat timeout - exit combat if no activity for too long
     ai =
-      if ai.state == :combat and ai.combat_start_time do
+      if ai.combat_start_time do
         combat_duration = now - ai.combat_start_time
 
         if combat_duration > @combat_timeout_ms and map_size(ai.threat_table) == 0 do
@@ -687,6 +710,33 @@ defmodule BezgelorWorld.CreatureManager do
         ai
       end
 
+    context = %{
+      attack_speed: template.attack_speed,
+      position: entity.position
+    }
+
+    case AI.tick(ai, context) do
+      :none ->
+        {:no_change, creature_state}
+
+      {:attack, target_guid} ->
+        # Record attack time
+        new_ai = AI.record_attack(ai)
+
+        # Apply damage to target (if player)
+        apply_creature_attack(entity, template, target_guid)
+
+        {:updated, %{creature_state | ai: new_ai}}
+
+      {:move_to, _position} ->
+        {:no_change, creature_state}
+
+      _ ->
+        {:no_change, creature_state}
+    end
+  end
+
+  defp process_normal_ai_tick(creature_state, ai, template, entity, _now) do
     context = %{
       attack_speed: template.attack_speed,
       position: entity.position
@@ -716,17 +766,7 @@ defmodule BezgelorWorld.CreatureManager do
           {:no_change, creature_state}
         end
 
-      {:attack, target_guid} ->
-        # Record attack time
-        new_ai = AI.record_attack(ai)
-
-        # Apply damage to target (if player)
-        apply_creature_attack(entity, template, target_guid)
-
-        {:updated, %{creature_state | ai: new_ai}}
-
       {:move_to, _position} ->
-        # Movement would be handled here
         {:no_change, creature_state}
 
       {:start_wander, new_ai} ->
@@ -758,6 +798,10 @@ defmodule BezgelorWorld.CreatureManager do
       {:patrol_segment_complete, new_ai} ->
         # Patrol segment finished, creature may be pausing or continuing
         {:updated, %{creature_state | ai: new_ai}}
+
+      _ ->
+        # Handle any unexpected results
+        {:no_change, creature_state}
     end
   end
 
