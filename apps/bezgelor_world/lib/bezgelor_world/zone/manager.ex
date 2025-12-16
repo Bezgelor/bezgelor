@@ -31,8 +31,8 @@ defmodule BezgelorWorld.Zone.Manager do
     {1537, 4813, "Destiny (Dominion Tutorial)"}
   ]
 
-  # Maximum concurrent zone starts to avoid overwhelming the scheduler
-  @max_concurrent_zone_starts 20
+  # Maximum concurrent zone starts - scales with CPU cores (minimum 20 for 4-core, up to 50 for 8+ cores)
+  @max_concurrent_zone_starts max(20, min(50, System.schedulers_online() * 5))
 
   @doc """
   Initialize default zone instances asynchronously.
