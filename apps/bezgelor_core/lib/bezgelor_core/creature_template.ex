@@ -24,6 +24,9 @@ defmodule BezgelorCore.CreatureTemplate do
 
   @type reputation_reward :: {faction_id :: non_neg_integer(), amount :: integer()}
 
+  # Default social aggro range in meters
+  @social_aggro_range 10.0
+
   @type t :: %__MODULE__{
           id: non_neg_integer(),
           name: String.t(),
@@ -34,6 +37,7 @@ defmodule BezgelorCore.CreatureTemplate do
           ai_type: ai_type(),
           aggro_range: float(),
           leash_range: float(),
+          social_aggro_range: float() | nil,
           respawn_time: non_neg_integer(),
           xp_reward: non_neg_integer(),
           loot_table_id: non_neg_integer() | nil,
@@ -53,6 +57,7 @@ defmodule BezgelorCore.CreatureTemplate do
     ai_type: :passive,
     aggro_range: 10.0,
     leash_range: 40.0,
+    social_aggro_range: nil,
     respawn_time: 30_000,
     xp_reward: 50,
     loot_table_id: nil,
@@ -101,6 +106,16 @@ defmodule BezgelorCore.CreatureTemplate do
   @spec hostile?(t()) :: boolean()
   def hostile?(%__MODULE__{faction: :hostile}), do: true
   def hostile?(_), do: false
+
+  @doc """
+  Get social aggro range, with default fallback.
+
+  Social aggro is the range within which nearby creatures of the same
+  faction will join combat when one is attacked.
+  """
+  @spec social_aggro_range(t()) :: float()
+  def social_aggro_range(%__MODULE__{social_aggro_range: range}) when is_number(range), do: range
+  def social_aggro_range(_), do: @social_aggro_range
 
   @doc """
   Calculate damage for an attack.
