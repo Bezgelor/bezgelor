@@ -88,6 +88,7 @@ defmodule BezgelorData.Store do
     :warplot_plugs,
     # Spawn data
     :creature_spawns,
+    :bindpoint_spawns,
     # Quest data (extracted from client)
     :quests,
     :quest_objectives,
@@ -134,7 +135,10 @@ defmodule BezgelorData.Store do
     :splines,
     :spline_nodes,
     # Entity spline mappings (from NexusForever.WorldDatabase)
-    :entity_splines
+    :entity_splines,
+    # Telegraph data (shape-based spell targeting)
+    :telegraph_damage,
+    :spell_telegraphs
   ]
 
   # Secondary index tables for efficient lookups by foreign key
@@ -175,7 +179,9 @@ defmodule BezgelorData.Store do
     # Item display source entries indexed by source_id for efficient lookup
     :display_sources_by_source_id,
     # Spline nodes indexed by spline_id for efficient lookup
-    :spline_nodes_by_spline
+    :spline_nodes_by_spline,
+    # Telegraph lookups by spell ID
+    :telegraphs_by_spell
   ]
 
   # Client API
@@ -327,144 +333,22 @@ defmodule BezgelorData.Store do
     GenServer.call(__MODULE__, :reload)
   end
 
-  # Tradeskill-specific queries
-
-  @doc """
-  Get a profession by ID.
-  """
-  @spec get_profession(non_neg_integer()) :: {:ok, map()} | :error
-  def get_profession(id), do: get(:tradeskill_professions, id)
-
-  @doc """
-  Get all professions of a specific type.
-  """
-  @spec get_professions_by_type(atom()) :: [map()]
-  def get_professions_by_type(type) when type in [:crafting, :gathering] do
-    type_str = Atom.to_string(type)
-
-    list(:tradeskill_professions)
-    |> Enum.filter(fn p -> p.type == type_str end)
-  end
-
-  @doc """
-  Get a schematic by ID.
-  """
-  @spec get_schematic(non_neg_integer()) :: {:ok, map()} | :error
-  def get_schematic(id), do: get(:tradeskill_schematics, id)
-
-  @doc """
-  Get all schematics for a profession.
-
-  Uses secondary index for O(1) lookup instead of scanning all schematics.
-  """
-  @spec get_schematics_for_profession(non_neg_integer()) :: [map()]
-  def get_schematics_for_profession(profession_id) do
-    ids = lookup_index(:schematics_by_profession, profession_id)
-    fetch_by_ids(:tradeskill_schematics, ids)
-  end
-
-  @doc """
-  Get schematics available at a skill level.
-  """
-  @spec get_available_schematics(non_neg_integer(), non_neg_integer()) :: [map()]
-  def get_available_schematics(profession_id, skill_level) do
-    list(:tradeskill_schematics)
-    |> Enum.filter(fn s ->
-      s.profession_id == profession_id and s.min_level <= skill_level
-    end)
-  end
-
-  @doc """
-  Get a talent by ID.
-  """
-  @spec get_talent(non_neg_integer()) :: {:ok, map()} | :error
-  def get_talent(id), do: get(:tradeskill_talents, id)
-
-  @doc """
-  Get all talents for a profession.
-
-  Uses secondary index for O(1) lookup instead of scanning all talents.
-  """
-  @spec get_talents_for_profession(non_neg_integer()) :: [map()]
-  def get_talents_for_profession(profession_id) do
-    ids = lookup_index(:talents_by_profession, profession_id)
-
-    fetch_by_ids(:tradeskill_talents, ids)
-    |> Enum.sort_by(fn t -> {t.tier, t.id} end)
-  end
-
-  @doc """
-  Get an additive by ID.
-  """
-  @spec get_additive(non_neg_integer()) :: {:ok, map()} | :error
-  def get_additive(id), do: get(:tradeskill_additives, id)
-
-  @doc """
-  Get additive by item ID.
-  """
-  @spec get_additive_by_item(non_neg_integer()) :: {:ok, map()} | :error
-  def get_additive_by_item(item_id) do
-    case Enum.find(list(:tradeskill_additives), fn a -> a.item_id == item_id end) do
-      nil -> :error
-      additive -> {:ok, additive}
-    end
-  end
-
-  @doc """
-  Get a node type by ID.
-  """
-  @spec get_node_type(non_neg_integer()) :: {:ok, map()} | :error
-  def get_node_type(id), do: get(:tradeskill_nodes, id)
-
-  @doc """
-  Get all node types for a profession.
-
-  Uses secondary index for O(1) lookup instead of scanning all nodes.
-  """
-  @spec get_node_types_for_profession(non_neg_integer()) :: [map()]
-  def get_node_types_for_profession(profession_id) do
-    ids = lookup_index(:nodes_by_profession, profession_id)
-    fetch_by_ids(:tradeskill_nodes, ids)
-  end
-
-  @doc """
-  Get node types for a level range.
-  """
-  @spec get_node_types_for_level(non_neg_integer(), non_neg_integer()) :: [map()]
-  def get_node_types_for_level(profession_id, level) do
-    list(:tradeskill_nodes)
-    |> Enum.filter(fn n ->
-      n.profession_id == profession_id and n.min_level <= level and n.max_level >= level
-    end)
-  end
-
-  @doc """
-  Get a work order template by ID.
-  """
-  @spec get_work_order_template(non_neg_integer()) :: {:ok, map()} | :error
-  def get_work_order_template(id), do: get(:tradeskill_work_orders, id)
-
-  @doc """
-  Get all work order templates for a profession.
-
-  Uses secondary index for O(1) lookup instead of scanning all work orders.
-  """
-  @spec get_work_orders_for_profession(non_neg_integer()) :: [map()]
-  def get_work_orders_for_profession(profession_id) do
-    ids = lookup_index(:work_orders_by_profession, profession_id)
-    fetch_by_ids(:tradeskill_work_orders, ids)
-  end
-
-  @doc """
-  Get available work order templates at a skill level.
-  """
-  @spec get_available_work_orders(non_neg_integer(), non_neg_integer()) :: [map()]
-  def get_available_work_orders(profession_id, skill_level) do
-    list(:tradeskill_work_orders)
-    |> Enum.filter(fn wo ->
-      wo.profession_id == profession_id and wo.min_level <= skill_level
-    end)
-  end
+  # Tradeskill queries - delegated to Queries.Tradeskill module
+  defdelegate get_profession(id), to: BezgelorData.Queries.Tradeskill
+  defdelegate get_professions_by_type(type), to: BezgelorData.Queries.Tradeskill
+  defdelegate get_schematic(id), to: BezgelorData.Queries.Tradeskill
+  defdelegate get_schematics_for_profession(profession_id), to: BezgelorData.Queries.Tradeskill
+  defdelegate get_available_schematics(profession_id, skill_level), to: BezgelorData.Queries.Tradeskill
+  defdelegate get_talent(id), to: BezgelorData.Queries.Tradeskill
+  defdelegate get_talents_for_profession(profession_id), to: BezgelorData.Queries.Tradeskill
+  defdelegate get_additive(id), to: BezgelorData.Queries.Tradeskill
+  defdelegate get_additive_by_item(item_id), to: BezgelorData.Queries.Tradeskill
+  defdelegate get_node_type(id), to: BezgelorData.Queries.Tradeskill
+  defdelegate get_node_types_for_profession(profession_id), to: BezgelorData.Queries.Tradeskill
+  defdelegate get_node_types_for_level(profession_id, level), to: BezgelorData.Queries.Tradeskill
+  defdelegate get_work_order_template(id), to: BezgelorData.Queries.Tradeskill
+  defdelegate get_work_orders_for_profession(profession_id), to: BezgelorData.Queries.Tradeskill
+  defdelegate get_available_work_orders(profession_id, skill_level), to: BezgelorData.Queries.Tradeskill
 
   # Public Events queries
 
@@ -562,364 +446,109 @@ defmodule BezgelorData.Store do
     end
   end
 
-  # Instance/Dungeon queries
+  # Instance/Dungeon queries - delegated to Queries.Instances module
+  defdelegate get_instance(id), to: BezgelorData.Queries.Instances
+  defdelegate get_instances_by_type(type), to: BezgelorData.Queries.Instances
+  defdelegate get_available_instances(player_level), to: BezgelorData.Queries.Instances
+  defdelegate get_instances_with_difficulty(difficulty), to: BezgelorData.Queries.Instances
+  defdelegate get_instance_boss(id), to: BezgelorData.Queries.Instances
+  defdelegate get_bosses_for_instance(instance_id), to: BezgelorData.Queries.Instances
+  defdelegate get_required_bosses(instance_id), to: BezgelorData.Queries.Instances
+  defdelegate get_optional_bosses(instance_id), to: BezgelorData.Queries.Instances
+  defdelegate get_mythic_affix(id), to: BezgelorData.Queries.Instances
+  defdelegate get_all_mythic_affixes(), to: BezgelorData.Queries.Instances
+  defdelegate get_affixes_for_level(keystone_level), to: BezgelorData.Queries.Instances
+  defdelegate get_affixes_by_tier(tier), to: BezgelorData.Queries.Instances
+  defdelegate get_weekly_affix_rotation(week), to: BezgelorData.Queries.Instances
+
+  # PvP queries - delegated to Queries.PvP module
+  defdelegate get_battleground(id), to: BezgelorData.Queries.PvP
+  defdelegate get_all_battlegrounds(), to: BezgelorData.Queries.PvP
+  defdelegate get_available_battlegrounds(player_level), to: BezgelorData.Queries.PvP
+  defdelegate get_battlegrounds_by_type(type), to: BezgelorData.Queries.PvP
+  defdelegate get_arena(id), to: BezgelorData.Queries.PvP
+  defdelegate get_all_arenas(), to: BezgelorData.Queries.PvP
+  defdelegate get_arenas_for_bracket(bracket), to: BezgelorData.Queries.PvP
+  defdelegate get_arena_bracket(bracket), to: BezgelorData.Queries.PvP
+  defdelegate get_arena_rating_rewards(), to: BezgelorData.Queries.PvP
+  defdelegate get_warplot_plug(id), to: BezgelorData.Queries.PvP
+  defdelegate get_all_warplot_plugs(), to: BezgelorData.Queries.PvP
+  defdelegate get_warplot_plugs_by_category(category), to: BezgelorData.Queries.PvP
+  defdelegate get_warplot_plug_categories(), to: BezgelorData.Queries.PvP
+  defdelegate get_warplot_socket_layout(), to: BezgelorData.Queries.PvP
+  defdelegate get_warplot_settings(), to: BezgelorData.Queries.PvP
+
+  # Creature Spawn queries - delegated to Queries.Spawns module
+  defdelegate get_creature_spawns(world_id), to: BezgelorData.Queries.Spawns
+  defdelegate get_all_spawn_zones(), to: BezgelorData.Queries.Spawns
+  defdelegate get_spawns_in_area(world_id, area_id), to: BezgelorData.Queries.Spawns
+  defdelegate get_spawns_for_creature(creature_id), to: BezgelorData.Queries.Spawns
+  defdelegate get_resource_spawns(world_id), to: BezgelorData.Queries.Spawns
+  defdelegate get_object_spawns(world_id), to: BezgelorData.Queries.Spawns
+  defdelegate get_spawn_count(world_id), to: BezgelorData.Queries.Spawns
+  defdelegate get_total_spawn_count(), to: BezgelorData.Queries.Spawns
+
+  # Bindpoint/Graveyard queries - delegated to Queries.Spawns module
+  defdelegate get_all_bindpoints(), to: BezgelorData.Queries.Spawns
+  defdelegate get_bindpoints_for_world(world_id), to: BezgelorData.Queries.Spawns
+  defdelegate find_nearest_bindpoint(world_id, position), to: BezgelorData.Queries.Spawns
+  defdelegate get_bindpoint_by_creature_id(creature_id), to: BezgelorData.Queries.Spawns
+
+  # Telegraph queries (shape-based spell targeting)
 
   @doc """
-  Get an instance definition by ID.
-  """
-  @spec get_instance(non_neg_integer()) :: {:ok, map()} | :error
-  def get_instance(id), do: get(:instances, id)
+  Get a telegraph damage shape definition by ID.
 
-  @doc """
-  Get all instances of a specific type.
-
-  Uses secondary index for O(1) lookup instead of scanning all instances.
+  Returns the telegraph shape data including:
+  - damageShapeEnum: Shape type (0=Circle, 2=Square, 4=Cone, 5=Pie, 7=Rectangle, 8=LongCone)
+  - param00-param05: Shape parameters (radius, angle, dimensions vary by shape)
+  - telegraphTimeStartMs/EndMs: Telegraph timing
+  - xPositionOffset/yPositionOffset/zPositionOffset: Position offsets from caster
+  - rotationDegrees: Rotation offset
   """
-  @spec get_instances_by_type(String.t()) :: [map()]
-  def get_instances_by_type(type) when type in ["dungeon", "adventure", "raid", "expedition"] do
-    ids = lookup_index(:instances_by_type, type)
-    fetch_by_ids(:instances, ids)
+  @spec get_telegraph_damage(non_neg_integer()) :: {:ok, map()} | :error
+  def get_telegraph_damage(telegraph_id) do
+    get(:telegraph_damage, telegraph_id)
   end
 
   @doc """
-  Get instances available for a player level.
+  Get all telegraph damage IDs associated with a spell.
+
+  Returns a list of telegraph_damage IDs that should be checked for this spell.
+  A single spell may have multiple telegraphs (e.g., different phases).
   """
-  @spec get_available_instances(non_neg_integer()) :: [map()]
-  def get_available_instances(player_level) do
-    list(:instances)
-    |> Enum.filter(fn i -> i.min_level <= player_level and i.max_level >= player_level end)
-  end
-
-  @doc """
-  Get instances with a specific difficulty.
-  """
-  @spec get_instances_with_difficulty(String.t()) :: [map()]
-  def get_instances_with_difficulty(difficulty) do
-    list(:instances)
-    |> Enum.filter(fn i -> difficulty in i.difficulties end)
-  end
-
-  @doc """
-  Get an instance boss definition by ID.
-  """
-  @spec get_instance_boss(non_neg_integer()) :: {:ok, map()} | :error
-  def get_instance_boss(id), do: get(:instance_bosses, id)
-
-  @doc """
-  Get all bosses for an instance.
-
-  Uses secondary index for O(1) lookup instead of scanning all bosses.
-  """
-  @spec get_bosses_for_instance(non_neg_integer()) :: [map()]
-  def get_bosses_for_instance(instance_id) do
-    ids = lookup_index(:bosses_by_instance, instance_id)
-
-    fetch_by_ids(:instance_bosses, ids)
-    |> Enum.sort_by(fn b -> b.order end)
-  end
-
-  @doc """
-  Get required bosses for an instance (non-optional).
-  """
-  @spec get_required_bosses(non_neg_integer()) :: [map()]
-  def get_required_bosses(instance_id) do
-    get_bosses_for_instance(instance_id)
-    |> Enum.filter(fn b -> not b.is_optional end)
-  end
-
-  @doc """
-  Get optional bosses for an instance.
-  """
-  @spec get_optional_bosses(non_neg_integer()) :: [map()]
-  def get_optional_bosses(instance_id) do
-    get_bosses_for_instance(instance_id)
-    |> Enum.filter(fn b -> b.is_optional end)
-  end
-
-  @doc """
-  Get a mythic affix by ID.
-  """
-  @spec get_mythic_affix(non_neg_integer()) :: {:ok, map()} | :error
-  def get_mythic_affix(id), do: get(:mythic_affixes, id)
-
-  @doc """
-  Get all mythic affixes.
-  """
-  @spec get_all_mythic_affixes() :: [map()]
-  def get_all_mythic_affixes, do: list(:mythic_affixes)
-
-  @doc """
-  Get affixes available at a keystone level.
-  """
-  @spec get_affixes_for_level(non_neg_integer()) :: [map()]
-  def get_affixes_for_level(keystone_level) do
-    list(:mythic_affixes)
-    |> Enum.filter(fn a -> a.min_level <= keystone_level end)
-  end
-
-  @doc """
-  Get affixes by tier.
-  """
-  @spec get_affixes_by_tier(non_neg_integer()) :: [map()]
-  def get_affixes_by_tier(tier) when tier in 1..4 do
-    list(:mythic_affixes)
-    |> Enum.filter(fn a -> a.tier == tier end)
-  end
-
-  @doc """
-  Get the weekly affix rotation for a given week.
-  Returns nil if week is out of range or data not loaded.
-  """
-  @spec get_weekly_affix_rotation(non_neg_integer()) :: [map()] | nil
-  def get_weekly_affix_rotation(week) when week >= 1 and week <= 12 do
-    # This uses a special metadata key to store rotation data
-    case :ets.lookup(table_name(:mythic_affixes), :weekly_rotation) do
-      [{:weekly_rotation, rotations}] ->
-        rotation = Enum.find(rotations, fn r -> r.week == week end)
-
-        if rotation do
-          Enum.map(rotation.affixes, fn affix_id ->
-            case get_mythic_affix(affix_id) do
-              {:ok, affix} -> affix
-              :error -> nil
-            end
-          end)
-          |> Enum.reject(&is_nil/1)
-        else
-          nil
-        end
-
-      [] ->
-        nil
-    end
-  end
-
-  def get_weekly_affix_rotation(_week), do: nil
-
-  # PvP queries
-
-  @doc """
-  Get a battleground definition by ID.
-  """
-  @spec get_battleground(non_neg_integer()) :: {:ok, map()} | :error
-  def get_battleground(id), do: get(:battlegrounds, id)
-
-  @doc """
-  Get all battlegrounds.
-  """
-  @spec get_all_battlegrounds() :: [map()]
-  def get_all_battlegrounds, do: list(:battlegrounds)
-
-  @doc """
-  Get battlegrounds available for a player level.
-  """
-  @spec get_available_battlegrounds(non_neg_integer()) :: [map()]
-  def get_available_battlegrounds(player_level) do
-    list(:battlegrounds)
-    |> Enum.filter(fn bg -> bg.min_level <= player_level and bg.max_level >= player_level end)
-  end
-
-  @doc """
-  Get battlegrounds by type.
-  """
-  @spec get_battlegrounds_by_type(String.t()) :: [map()]
-  def get_battlegrounds_by_type(type) do
-    list(:battlegrounds)
-    |> Enum.filter(fn bg -> bg.type == type end)
-  end
-
-  @doc """
-  Get an arena definition by ID.
-  """
-  @spec get_arena(non_neg_integer()) :: {:ok, map()} | :error
-  def get_arena(id), do: get(:arenas, id)
-
-  @doc """
-  Get all arenas.
-  """
-  @spec get_all_arenas() :: [map()]
-  def get_all_arenas, do: list(:arenas)
-
-  @doc """
-  Get arenas that support a specific bracket.
-  """
-  @spec get_arenas_for_bracket(String.t()) :: [map()]
-  def get_arenas_for_bracket(bracket) do
-    list(:arenas)
-    |> Enum.filter(fn arena -> bracket in arena.brackets end)
-  end
-
-  @doc """
-  Get arena bracket configuration.
-  Returns nil if bracket data not loaded or bracket not found.
-  """
-  @spec get_arena_bracket(String.t()) :: map() | nil
-  def get_arena_bracket(bracket) do
-    case :ets.lookup(table_name(:arenas), :brackets) do
-      [{:brackets, brackets}] -> Map.get(brackets, String.to_atom(bracket))
-      [] -> nil
+  @spec get_telegraphs_for_spell(non_neg_integer()) :: [non_neg_integer()]
+  def get_telegraphs_for_spell(spell_id) do
+    case :ets.lookup(index_table_name(:telegraphs_by_spell), spell_id) do
+      [{^spell_id, telegraph_ids}] -> telegraph_ids
+      [] -> []
     end
   end
 
   @doc """
-  Get arena rating rewards configuration.
+  Get all telegraph damage definitions for a spell.
+
+  Returns a list of complete telegraph damage definitions.
   """
-  @spec get_arena_rating_rewards() :: map() | nil
-  def get_arena_rating_rewards do
-    case :ets.lookup(table_name(:arenas), :rating_rewards) do
-      [{:rating_rewards, rewards}] -> rewards
-      [] -> nil
-    end
-  end
-
-  @doc """
-  Get a warplot plug definition by ID.
-  """
-  @spec get_warplot_plug(non_neg_integer()) :: {:ok, map()} | :error
-  def get_warplot_plug(id), do: get(:warplot_plugs, id)
-
-  @doc """
-  Get all warplot plugs.
-  """
-  @spec get_all_warplot_plugs() :: [map()]
-  def get_all_warplot_plugs, do: list(:warplot_plugs)
-
-  @doc """
-  Get warplot plugs by category.
-  """
-  @spec get_warplot_plugs_by_category(String.t()) :: [map()]
-  def get_warplot_plugs_by_category(category) do
-    list(:warplot_plugs)
-    |> Enum.filter(fn plug -> plug.category == category end)
-  end
-
-  @doc """
-  Get warplot plug categories with descriptions.
-  """
-  @spec get_warplot_plug_categories() :: map() | nil
-  def get_warplot_plug_categories do
-    case :ets.lookup(table_name(:warplot_plugs), :categories) do
-      [{:categories, categories}] -> categories
-      [] -> nil
-    end
-  end
-
-  @doc """
-  Get warplot socket layout.
-  """
-  @spec get_warplot_socket_layout() :: map() | nil
-  def get_warplot_socket_layout do
-    case :ets.lookup(table_name(:warplot_plugs), :socket_layout) do
-      [{:socket_layout, layout}] -> layout
-      [] -> nil
-    end
-  end
-
-  @doc """
-  Get warplot settings.
-  """
-  @spec get_warplot_settings() :: map() | nil
-  def get_warplot_settings do
-    case :ets.lookup(table_name(:warplot_plugs), :warplot_settings) do
-      [{:warplot_settings, settings}] -> settings
-      [] -> nil
-    end
-  end
-
-  # Creature Spawn queries
-
-  @doc """
-  Get creature spawns for a world/zone.
-  Returns a map with creature_spawns, resource_spawns, and object_spawns.
-  """
-  @spec get_creature_spawns(non_neg_integer()) :: {:ok, map()} | :error
-  def get_creature_spawns(world_id), do: get(:creature_spawns, world_id)
-
-  @doc """
-  Get all zone spawn data.
-  """
-  @spec get_all_spawn_zones() :: [map()]
-  def get_all_spawn_zones, do: list(:creature_spawns)
-
-  @doc """
-  Get creature spawns for a specific area within a zone.
-  """
-  @spec get_spawns_in_area(non_neg_integer(), non_neg_integer()) :: [map()]
-  def get_spawns_in_area(world_id, area_id) do
-    case get_creature_spawns(world_id) do
-      {:ok, zone_data} ->
-        Enum.filter(zone_data.creature_spawns, fn spawn ->
-          spawn.area_id == area_id
-        end)
-
-      :error ->
-        []
-    end
-  end
-
-  @doc """
-  Get all spawns for a specific creature template ID across all zones.
-  """
-  @spec get_spawns_for_creature(non_neg_integer()) :: [map()]
-  def get_spawns_for_creature(creature_id) do
-    list(:creature_spawns)
-    |> Enum.flat_map(fn zone_data ->
-      Enum.filter(zone_data.creature_spawns, fn spawn ->
-        spawn.creature_id == creature_id
-      end)
+  @spec get_telegraph_shapes_for_spell(non_neg_integer()) :: [map()]
+  def get_telegraph_shapes_for_spell(spell_id) do
+    spell_id
+    |> get_telegraphs_for_spell()
+    |> Enum.map(fn tid ->
+      case get_telegraph_damage(tid) do
+        {:ok, data} -> data
+        :error -> nil
+      end
     end)
+    |> Enum.reject(&is_nil/1)
   end
 
   @doc """
-  Get resource spawns for a world/zone.
+  Check if a spell has any telegraph definitions.
   """
-  @spec get_resource_spawns(non_neg_integer()) :: [map()]
-  def get_resource_spawns(world_id) do
-    case get_creature_spawns(world_id) do
-      {:ok, zone_data} -> zone_data.resource_spawns
-      :error -> []
-    end
-  end
-
-  @doc """
-  Get object spawns for a world/zone.
-  """
-  @spec get_object_spawns(non_neg_integer()) :: [map()]
-  def get_object_spawns(world_id) do
-    case get_creature_spawns(world_id) do
-      {:ok, zone_data} -> zone_data.object_spawns
-      :error -> []
-    end
-  end
-
-  @doc """
-  Get spawn count for a world/zone.
-  """
-  @spec get_spawn_count(non_neg_integer()) :: non_neg_integer()
-  def get_spawn_count(world_id) do
-    case get_creature_spawns(world_id) do
-      {:ok, zone_data} ->
-        length(zone_data.creature_spawns) +
-          length(zone_data.resource_spawns) +
-          length(zone_data.object_spawns)
-
-      :error ->
-        0
-    end
-  end
-
-  @doc """
-  Get total spawn count across all zones.
-  """
-  @spec get_total_spawn_count() :: non_neg_integer()
-  def get_total_spawn_count do
-    list(:creature_spawns)
-    |> Enum.reduce(0, fn zone_data, acc ->
-      acc +
-        length(zone_data.creature_spawns) +
-        length(zone_data.resource_spawns) +
-        length(zone_data.object_spawns)
-    end)
+  @spec spell_has_telegraphs?(non_neg_integer()) :: boolean()
+  def spell_has_telegraphs?(spell_id) do
+    get_telegraphs_for_spell(spell_id) != []
   end
 
   # Patrol path queries
@@ -1185,368 +814,55 @@ defmodule BezgelorData.Store do
     }
   end
 
-  # Quest queries
+  # Quest queries - delegated to Queries.Quests module
+  defdelegate get_quest(id), to: BezgelorData.Queries.Quests
+  defdelegate get_quests_for_zone(zone_id), to: BezgelorData.Queries.Quests
+  defdelegate get_quests_by_type(type), to: BezgelorData.Queries.Quests
+  defdelegate get_quest_objective(id), to: BezgelorData.Queries.Quests
+  defdelegate get_quest_rewards(quest_id), to: BezgelorData.Queries.Quests
+  defdelegate get_quest_category(id), to: BezgelorData.Queries.Quests
+  defdelegate get_quest_hub(id), to: BezgelorData.Queries.Quests
+  defdelegate get_quests_for_creature_giver(creature_id), to: BezgelorData.Queries.Quests
+  defdelegate get_quests_for_creature_receiver(creature_id), to: BezgelorData.Queries.Quests
+  defdelegate get_quest_with_objectives(quest_id), to: BezgelorData.Queries.Quests
+  defdelegate creature_quest_giver?(creature_id), to: BezgelorData.Queries.Quests
+  defdelegate creature_quest_receiver?(creature_id), to: BezgelorData.Queries.Quests
 
-  @doc """
-  Get a quest definition by ID.
-  """
-  @spec get_quest(non_neg_integer()) :: {:ok, map()} | :error
-  def get_quest(id), do: get(:quests, id)
+  # NPC/Vendor queries - delegated to Queries.Quests module
+  defdelegate get_vendor(id), to: BezgelorData.Queries.Quests
+  defdelegate get_vendor_by_creature(creature_id), to: BezgelorData.Queries.Quests
+  defdelegate get_vendors_by_type(vendor_type), to: BezgelorData.Queries.Quests
+  defdelegate get_all_vendors(), to: BezgelorData.Queries.Quests
+  defdelegate get_vendor_inventory(vendor_id), to: BezgelorData.Queries.Quests
+  defdelegate get_vendor_items_for_creature(creature_id), to: BezgelorData.Queries.Quests
+  defdelegate get_creature_affiliation(id), to: BezgelorData.Queries.Quests
+  defdelegate get_creature_full(id), to: BezgelorData.Queries.Quests
 
-  @doc """
-  Get all quests for a zone.
-  Uses secondary index for O(1) lookup.
-  """
-  @spec get_quests_for_zone(non_neg_integer()) :: [map()]
-  def get_quests_for_zone(zone_id) do
-    ids = lookup_index(:quests_by_zone, zone_id)
-    fetch_by_ids(:quests, ids)
-  end
+  # Gossip/Dialogue queries - delegated to Queries.Quests module
+  defdelegate get_gossip_entry(id), to: BezgelorData.Queries.Quests
+  defdelegate get_gossip_entries_for_set(set_id), to: BezgelorData.Queries.Quests
+  defdelegate get_gossip_set(id), to: BezgelorData.Queries.Quests
 
-  @doc """
-  Get all quests of a specific type.
-  """
-  @spec get_quests_by_type(non_neg_integer()) :: [map()]
-  def get_quests_by_type(type) do
-    list(:quests)
-    |> Enum.filter(fn q -> q.type == type end)
-  end
+  # Achievement queries - delegated to Queries.Achievements module
+  defdelegate get_achievement(id), to: BezgelorData.Queries.Achievements
+  defdelegate get_achievements_for_category(category_id), to: BezgelorData.Queries.Achievements
+  defdelegate get_achievements_for_zone(zone_id), to: BezgelorData.Queries.Achievements
+  defdelegate get_achievement_category(id), to: BezgelorData.Queries.Achievements
+  defdelegate get_achievement_checklists(achievement_id), to: BezgelorData.Queries.Achievements
 
-  @doc """
-  Get a quest objective by ID.
-  """
-  @spec get_quest_objective(non_neg_integer()) :: {:ok, map()} | :error
-  def get_quest_objective(id), do: get(:quest_objectives, id)
+  # Path queries - delegated to Queries.Achievements module
+  defdelegate get_path_mission(id), to: BezgelorData.Queries.Achievements
+  defdelegate get_path_missions_for_episode(episode_id), to: BezgelorData.Queries.Achievements
+  defdelegate get_path_missions_by_type(path_type), to: BezgelorData.Queries.Achievements
+  defdelegate get_path_episode(id), to: BezgelorData.Queries.Achievements
+  defdelegate get_path_reward(id), to: BezgelorData.Queries.Achievements
+  defdelegate get_path_episodes_for_zone(world_id, zone_id), to: BezgelorData.Queries.Achievements
+  defdelegate get_zone_path_missions(world_id, zone_id, path_type), to: BezgelorData.Queries.Achievements
 
-  @doc """
-  Get quest rewards by quest ID.
-  Uses secondary index for O(1) lookup.
-  """
-  @spec get_quest_rewards(non_neg_integer()) :: [map()]
-  def get_quest_rewards(quest_id) do
-    ids = lookup_index(:quest_rewards_by_quest, quest_id)
-    fetch_by_ids(:quest_rewards, ids)
-  end
-
-  @doc """
-  Get a quest category by ID.
-  """
-  @spec get_quest_category(non_neg_integer()) :: {:ok, map()} | :error
-  def get_quest_category(id), do: get(:quest_categories, id)
-
-  @doc """
-  Get a quest hub by ID.
-  """
-  @spec get_quest_hub(non_neg_integer()) :: {:ok, map()} | :error
-  def get_quest_hub(id), do: get(:quest_hubs, id)
-
-  @doc """
-  Get quest IDs that a creature can give.
-  Extracts non-zero questIdGiven00-24 fields from the full creature record.
-  """
-  @spec get_quests_for_creature_giver(non_neg_integer()) :: [non_neg_integer()]
-  def get_quests_for_creature_giver(creature_id) do
-    case get_creature_full(creature_id) do
-      {:ok, creature} ->
-        0..24
-        |> Enum.map(fn i ->
-          key = String.to_atom("questIdGiven#{String.pad_leading(Integer.to_string(i), 2, "0")}")
-          Map.get(creature, key)
-        end)
-        |> Enum.reject(&(&1 == 0 or is_nil(&1)))
-
-      :error ->
-        []
-    end
-  end
-
-  @doc """
-  Get quest IDs that a creature can receive turn-ins for.
-  Extracts non-zero questIdReceive00-24 fields from the full creature record.
-  """
-  @spec get_quests_for_creature_receiver(non_neg_integer()) :: [non_neg_integer()]
-  def get_quests_for_creature_receiver(creature_id) do
-    case get_creature_full(creature_id) do
-      {:ok, creature} ->
-        0..24
-        |> Enum.map(fn i ->
-          key = String.to_atom("questIdReceive#{String.pad_leading(Integer.to_string(i), 2, "0")}")
-          Map.get(creature, key)
-        end)
-        |> Enum.reject(&(&1 == 0 or is_nil(&1)))
-
-      :error ->
-        []
-    end
-  end
-
-  @doc """
-  Get quest definition with all objective definitions included.
-  Joins the quest with its objectives based on objective0-5 fields.
-  """
-  @spec get_quest_with_objectives(non_neg_integer()) :: {:ok, map()} | :error
-  def get_quest_with_objectives(quest_id) do
-    case get(:quests, quest_id) do
-      {:ok, quest} ->
-        objectives =
-          0..5
-          |> Enum.map(fn i ->
-            key = String.to_atom("objective#{i}")
-            Map.get(quest, key)
-          end)
-          |> Enum.reject(&(&1 == 0 or is_nil(&1)))
-          |> Enum.map(&get(:quest_objectives, &1))
-          |> Enum.filter(&match?({:ok, _}, &1))
-          |> Enum.map(fn {:ok, obj} -> obj end)
-
-        {:ok, Map.put(quest, :objectives, objectives)}
-
-      :error ->
-        :error
-    end
-  end
-
-  @doc """
-  Check if creature is a quest giver.
-  """
-  @spec creature_quest_giver?(non_neg_integer()) :: boolean()
-  def creature_quest_giver?(creature_id) do
-    get_quests_for_creature_giver(creature_id) != []
-  end
-
-  @doc """
-  Check if creature is a quest receiver (turn-in NPC).
-  """
-  @spec creature_quest_receiver?(non_neg_integer()) :: boolean()
-  def creature_quest_receiver?(creature_id) do
-    get_quests_for_creature_receiver(creature_id) != []
-  end
-
-  # NPC/Vendor queries
-
-  @doc """
-  Get vendor data by vendor ID.
-  """
-  @spec get_vendor(non_neg_integer()) :: {:ok, map()} | :error
-  def get_vendor(id), do: get(:npc_vendors, id)
-
-  @doc """
-  Get vendor by creature ID.
-  Uses secondary index for O(1) lookup.
-  """
-  @spec get_vendor_by_creature(non_neg_integer()) :: {:ok, map()} | :error
-  def get_vendor_by_creature(creature_id) do
-    case lookup_index(:vendors_by_creature, creature_id) do
-      [id | _] -> get(:npc_vendors, id)
-      [] -> :error
-    end
-  end
-
-  @doc """
-  Get all vendors of a specific type.
-  Uses secondary index for O(1) lookup.
-  """
-  @spec get_vendors_by_type(String.t()) :: [map()]
-  def get_vendors_by_type(vendor_type) do
-    ids = lookup_index(:vendors_by_type, vendor_type)
-    fetch_by_ids(:npc_vendors, ids)
-  end
-
-  @doc """
-  Get all vendors.
-  """
-  @spec get_all_vendors() :: [map()]
-  def get_all_vendors, do: list(:npc_vendors)
-
-  @doc """
-  Get vendor inventory by vendor ID.
-  """
-  @spec get_vendor_inventory(non_neg_integer()) :: {:ok, map()} | :error
-  def get_vendor_inventory(vendor_id), do: get(:vendor_inventories, vendor_id)
-
-  @doc """
-  Get vendor inventory items for a creature.
-  Returns the list of items the vendor sells, or empty list if not a vendor.
-  """
-  @spec get_vendor_items_for_creature(non_neg_integer()) :: [map()]
-  def get_vendor_items_for_creature(creature_id) do
-    case get_vendor_by_creature(creature_id) do
-      {:ok, vendor} ->
-        case get_vendor_inventory(vendor.id) do
-          {:ok, inventory} -> inventory.items
-          :error -> []
-        end
-
-      :error ->
-        []
-    end
-  end
-
-  @doc """
-  Get creature affiliation by ID.
-  """
-  @spec get_creature_affiliation(non_neg_integer()) :: {:ok, map()} | :error
-  def get_creature_affiliation(id), do: get(:creature_affiliations, id)
-
-  @doc """
-  Get full creature data by ID.
-  Returns complete creature2 record with all 173 fields.
-  """
-  @spec get_creature_full(non_neg_integer()) :: {:ok, map()} | :error
-  def get_creature_full(id), do: get(:creatures_full, id)
-
-  # Gossip/Dialogue queries
-
-  @doc """
-  Get a gossip entry by ID.
-  """
-  @spec get_gossip_entry(non_neg_integer()) :: {:ok, map()} | :error
-  def get_gossip_entry(id), do: get(:gossip_entries, id)
-
-  @doc """
-  Get gossip entries for a gossip set.
-  Uses secondary index for O(1) lookup.
-  """
-  @spec get_gossip_entries_for_set(non_neg_integer()) :: [map()]
-  def get_gossip_entries_for_set(set_id) do
-    ids = lookup_index(:gossip_entries_by_set, set_id)
-    fetch_by_ids(:gossip_entries, ids)
-  end
-
-  @doc """
-  Get a gossip set by ID.
-  """
-  @spec get_gossip_set(non_neg_integer()) :: {:ok, map()} | :error
-  def get_gossip_set(id), do: get(:gossip_sets, id)
-
-  # Achievement queries
-
-  @doc """
-  Get an achievement by ID.
-  """
-  @spec get_achievement(non_neg_integer()) :: {:ok, map()} | :error
-  def get_achievement(id), do: get(:achievements, id)
-
-  @doc """
-  Get achievements for a category.
-  Uses secondary index for O(1) lookup.
-  """
-  @spec get_achievements_for_category(non_neg_integer()) :: [map()]
-  def get_achievements_for_category(category_id) do
-    ids = lookup_index(:achievements_by_category, category_id)
-    fetch_by_ids(:achievements, ids)
-  end
-
-  @doc """
-  Get achievements for a zone.
-  Uses secondary index for O(1) lookup.
-  """
-  @spec get_achievements_for_zone(non_neg_integer()) :: [map()]
-  def get_achievements_for_zone(zone_id) do
-    ids = lookup_index(:achievements_by_zone, zone_id)
-    fetch_by_ids(:achievements, ids)
-  end
-
-  @doc """
-  Get an achievement category by ID.
-  """
-  @spec get_achievement_category(non_neg_integer()) :: {:ok, map()} | :error
-  def get_achievement_category(id), do: get(:achievement_categories, id)
-
-  @doc """
-  Get achievement checklist items for an achievement.
-  """
-  @spec get_achievement_checklists(non_neg_integer()) :: [map()]
-  def get_achievement_checklists(achievement_id) do
-    list(:achievement_checklists)
-    |> Enum.filter(fn c -> c.achievementId == achievement_id end)
-    |> Enum.sort_by(fn c -> c.bit end)
-  end
-
-  # Path queries
-
-  @doc """
-  Get a path mission by ID.
-  """
-  @spec get_path_mission(non_neg_integer()) :: {:ok, map()} | :error
-  def get_path_mission(id), do: get(:path_missions, id)
-
-  @doc """
-  Get path missions for an episode.
-  Uses secondary index for O(1) lookup.
-  """
-  @spec get_path_missions_for_episode(non_neg_integer()) :: [map()]
-  def get_path_missions_for_episode(episode_id) do
-    ids = lookup_index(:path_missions_by_episode, episode_id)
-    fetch_by_ids(:path_missions, ids)
-  end
-
-  @doc """
-  Get path missions by path type (0=Soldier, 1=Settler, 2=Scientist, 3=Explorer).
-  Uses secondary index for O(1) lookup.
-  """
-  @spec get_path_missions_by_type(non_neg_integer()) :: [map()]
-  def get_path_missions_by_type(path_type) do
-    ids = lookup_index(:path_missions_by_type, path_type)
-    fetch_by_ids(:path_missions, ids)
-  end
-
-  @doc """
-  Get a path episode by ID.
-  """
-  @spec get_path_episode(non_neg_integer()) :: {:ok, map()} | :error
-  def get_path_episode(id), do: get(:path_episodes, id)
-
-  @doc """
-  Get a path reward by ID.
-  """
-  @spec get_path_reward(non_neg_integer()) :: {:ok, map()} | :error
-  def get_path_reward(id), do: get(:path_rewards, id)
-
-  @doc """
-  Get path episodes for a zone.
-  Uses composite index for O(1) lookup.
-  """
-  @spec get_path_episodes_for_zone(non_neg_integer(), non_neg_integer()) :: [map()]
-  def get_path_episodes_for_zone(world_id, zone_id) do
-    ids = lookup_index(:path_episodes_by_zone, {world_id, zone_id})
-    fetch_by_ids(:path_episodes, ids)
-  end
-
-  @doc """
-  Get path missions for a zone and path type.
-  Returns all missions available in the zone for the specified path.
-  """
-  @spec get_zone_path_missions(non_neg_integer(), non_neg_integer(), non_neg_integer()) :: [map()]
-  def get_zone_path_missions(world_id, zone_id, path_type) do
-    get_path_episodes_for_zone(world_id, zone_id)
-    |> Enum.filter(fn ep -> ep["pathTypeEnum"] == path_type end)
-    |> Enum.flat_map(fn ep -> get_path_missions_for_episode(ep["ID"]) end)
-  end
-
-  # Challenge queries
-
-  @doc """
-  Get a challenge by ID.
-  """
-  @spec get_challenge(non_neg_integer()) :: {:ok, map()} | :error
-  def get_challenge(id), do: get(:challenges, id)
-
-  @doc """
-  Get challenges for a zone.
-  Uses secondary index for O(1) lookup.
-  """
-  @spec get_challenges_for_zone(non_neg_integer()) :: [map()]
-  def get_challenges_for_zone(zone_id) do
-    ids = lookup_index(:challenges_by_zone, zone_id)
-    fetch_by_ids(:challenges, ids)
-  end
-
-  @doc """
-  Get a challenge tier by ID.
-  """
-  @spec get_challenge_tier(non_neg_integer()) :: {:ok, map()} | :error
-  def get_challenge_tier(id), do: get(:challenge_tiers, id)
+  # Challenge queries - delegated to Queries.Achievements module
+  defdelegate get_challenge(id), to: BezgelorData.Queries.Achievements
+  defdelegate get_challenges_for_zone(zone_id), to: BezgelorData.Queries.Achievements
+  defdelegate get_challenge_tier(id), to: BezgelorData.Queries.Achievements
 
   # World Location queries
 
@@ -2080,10 +1396,21 @@ defmodule BezgelorData.Store do
     {:reply, :ok, state}
   end
 
-  # Private functions
+  # Table name helpers - public for query modules
 
-  defp table_name(table), do: :"bezgelor_data_#{table}"
-  defp index_table_name(table), do: :"bezgelor_index_#{table}"
+  @doc """
+  Get the ETS table name for a data table.
+  Used by query modules for direct ETS access.
+  """
+  @spec table_name(atom()) :: atom()
+  def table_name(table), do: :"bezgelor_data_#{table}"
+
+  @doc """
+  Get the ETS table name for an index table.
+  Used by query modules for direct ETS access.
+  """
+  @spec index_table_name(atom()) :: atom()
+  def index_table_name(table), do: :"bezgelor_index_#{table}"
 
   defp load_all_data do
     start_time = System.monotonic_time(:millisecond)
@@ -2144,6 +1471,7 @@ defmodule BezgelorData.Store do
       fn -> load_warplot_plugs() end,
       # Spawn data
       fn -> load_creature_spawns() end,
+      fn -> load_bindpoint_spawns() end,
       # Quest data
       fn -> load_client_table(:quests, "quests.json", "quest2") end,
       fn -> load_client_table(:quest_objectives, "quest_objectives.json", "questobjective") end,
@@ -2189,7 +1517,9 @@ defmodule BezgelorData.Store do
       # Spline data
       fn -> load_splines() end,
       # Entity spline mappings (from NexusForever database)
-      fn -> load_entity_splines() end
+      fn -> load_entity_splines() end,
+      # Telegraph data (shape-based spell targeting)
+      fn -> load_telegraph_data() end
     ]
 
     Enum.each(table_loaders, fn loader -> loader.() end)
@@ -3296,6 +2626,33 @@ defmodule BezgelorData.Store do
     end
   end
 
+  # Load bindpoint/graveyard spawn data
+  defp load_bindpoint_spawns do
+    table_name = table_name(:bindpoint_spawns)
+
+    # Clear existing data
+    :ets.delete_all_objects(table_name)
+
+    json_path = Path.join(data_directory(), "bindpoint_spawns.json")
+
+    case load_json_raw(json_path) do
+      {:ok, data} ->
+        bindpoints = Map.get(data, :bindpoint_spawns, [])
+
+        # Store each bindpoint keyed by world_id for efficient per-zone lookup
+        by_world = Enum.group_by(bindpoints, & &1.world_id)
+
+        for {world_id, world_bindpoints} <- by_world do
+          :ets.insert(table_name, {world_id, world_bindpoints})
+        end
+
+        Logger.info("Loaded #{length(bindpoints)} bindpoint spawn locations across #{map_size(by_world)} worlds")
+
+      {:error, reason} ->
+        Logger.warning("No bindpoint spawn data found: #{inspect(reason)}")
+    end
+  end
+
   # Load entity spline mappings from NexusForever.WorldDatabase
   # This tells us which creatures should follow which patrol paths
   defp load_entity_splines do
@@ -3330,6 +2687,82 @@ defmodule BezgelorData.Store do
       {:error, reason} ->
         Logger.warning("No entity spline data found: #{inspect(reason)}")
     end
+  end
+
+  # Load telegraph data (shape-based spell targeting from TelegraphDamage.tbl and Spell4Telegraph.tbl)
+  defp load_telegraph_data do
+    # Load telegraph damage shapes (circles, cones, rectangles, etc.)
+    telegraph_table = table_name(:telegraph_damage)
+    :ets.delete_all_objects(telegraph_table)
+
+    telegraph_path = Path.join(data_directory(), "telegraph_damage.json")
+
+    telegraph_count =
+      case load_json_raw(telegraph_path) do
+        {:ok, data} ->
+          items = Map.get(data, :telegraphdamage, [])
+
+          tuples =
+            items
+            |> Enum.filter(fn item -> Map.has_key?(item, :ID) end)
+            |> Enum.map(fn item ->
+              id = Map.get(item, :ID)
+              normalized = item |> Map.put(:id, id) |> Map.delete(:ID)
+              {id, normalized}
+            end)
+
+          :ets.insert(telegraph_table, tuples)
+          length(tuples)
+
+        {:error, reason} ->
+          Logger.warning("Failed to load telegraph damage data: #{inspect(reason)}")
+          0
+      end
+
+    # Load spell->telegraph mappings
+    spell_telegraph_table = table_name(:spell_telegraphs)
+    index_table = index_table_name(:telegraphs_by_spell)
+    :ets.delete_all_objects(spell_telegraph_table)
+    :ets.delete_all_objects(index_table)
+
+    spell_telegraph_path = Path.join(data_directory(), "spell4_telegraph.json")
+
+    spell_telegraph_count =
+      case load_json_raw(spell_telegraph_path) do
+        {:ok, data} ->
+          items = Map.get(data, :spell4telegraph, [])
+
+          tuples =
+            items
+            |> Enum.filter(fn item -> Map.has_key?(item, :ID) end)
+            |> Enum.map(fn item ->
+              id = Map.get(item, :ID)
+              normalized = item |> Map.put(:id, id) |> Map.delete(:ID)
+              {id, normalized}
+            end)
+
+          :ets.insert(spell_telegraph_table, tuples)
+
+          # Build index: spell_id -> [telegraph_damage_id, ...]
+          by_spell =
+            items
+            |> Enum.group_by(fn item -> Map.get(item, :spell4Id) end)
+
+          for {spell_id, entries} <- by_spell, spell_id != nil do
+            telegraph_ids = Enum.map(entries, fn e -> Map.get(e, :telegraphDamageId) end)
+            :ets.insert(index_table, {spell_id, telegraph_ids})
+          end
+
+          length(tuples)
+
+        {:error, reason} ->
+          Logger.warning("Failed to load spell telegraph data: #{inspect(reason)}")
+          0
+      end
+
+    Logger.info(
+      "Loaded #{telegraph_count} telegraph shapes and #{spell_telegraph_count} spell->telegraph mappings"
+    )
   end
 
   # Secondary index building
@@ -3436,16 +2869,28 @@ defmodule BezgelorData.Store do
     :ets.insert(index_name, tuples)
   end
 
-  # Lookup IDs from an index, returns empty list if key not found
-  defp lookup_index(index_table, key) do
+  @doc """
+  Lookup IDs from a secondary index table.
+
+  Returns empty list if key not found. Used by query modules to perform
+  indexed lookups before fetching full records.
+  """
+  @spec lookup_index(atom(), term()) :: [non_neg_integer()]
+  def lookup_index(index_table, key) do
     case :ets.lookup(index_table_name(index_table), key) do
       [{^key, ids}] -> ids
       [] -> []
     end
   end
 
-  # Fetch full records from a table for a list of IDs
-  defp fetch_by_ids(table, ids) do
+  @doc """
+  Fetch full records from a table for a list of IDs.
+
+  Returns only the records that exist (nil results are filtered out).
+  Used by query modules after looking up IDs from an index.
+  """
+  @spec fetch_by_ids(atom(), [non_neg_integer()]) :: [map()]
+  def fetch_by_ids(table, ids) do
     table_name = table_name(table)
 
     ids

@@ -1,0 +1,796 @@
+{
+  "bindpoint_spawns": [
+    {
+      "id": 39,
+      "bindpoint_id": 10483,
+      "position": [
+        4136.58,
+        -1058.25,
+        -4088.81
+      ],
+      "rotation": [
+        2.908661,
+        0.03703955,
+        -0.1524573
+      ],
+      "area_id": 21,
+      "faction1": 219,
+      "faction2": 219,
+      "world_id": 51
+    },
+    {
+      "id": 40,
+      "bindpoint_id": 10485,
+      "position": [
+        4392.089,
+        -1099.351,
+        -3913.989
+      ],
+      "rotation": [
+        -2.661713,
+        -3.011755e-07,
+        5.786745e-07
+      ],
+      "area_id": 28,
+      "faction1": 219,
+      "faction2": 219,
+      "world_id": 51
+    },
+    {
+      "id": 214,
+      "bindpoint_id": 13559,
+      "position": [
+        3700.844,
+        -1019.913,
+        -4656.762
+      ],
+      "rotation": [
+        -2.276689,
+        0.0,
+        0.0
+      ],
+      "area_id": 23,
+      "faction1": 219,
+      "faction2": 219,
+      "world_id": 51
+    },
+    {
+      "id": 966,
+      "bindpoint_id": 31058,
+      "position": [
+        1065.947,
+        -950.287,
+        -2486.33
+      ],
+      "rotation": [
+        -3.141593,
+        0.0,
+        0.0
+      ],
+      "area_id": 1570,
+      "faction1": 219,
+      "faction2": 219,
+      "world_id": 51
+    },
+    {
+      "id": 1939,
+      "bindpoint_id": 32573,
+      "position": [
+        2622.689,
+        -931.467,
+        -2424.406
+      ],
+      "rotation": [
+        -0.7964262,
+        0.0,
+        0.0
+      ],
+      "area_id": 300,
+      "faction1": 219,
+      "faction2": 219,
+      "world_id": 51
+    },
+    {
+      "id": 13,
+      "bindpoint_id": 10499,
+      "position": [
+        5061.829,
+        -878.5881,
+        -3182.662
+      ],
+      "rotation": [
+        -0.8336167,
+        0.0,
+        0.0
+      ],
+      "area_id": 1146,
+      "faction1": 219,
+      "faction2": 219,
+      "world_id": 51
+    },
+    {
+      "id": 14,
+      "bindpoint_id": 10503,
+      "position": [
+        5777.53,
+        -867.8051,
+        -2556.31
+      ],
+      "rotation": [
+        1.502088,
+        0.0,
+        0.0
+      ],
+      "area_id": 973,
+      "faction1": 219,
+      "faction2": 219,
+      "world_id": 51
+    },
+    {
+      "id": 15,
+      "bindpoint_id": 10504,
+      "position": [
+        5093.79,
+        -902.3741,
+        -2305.591
+      ],
+      "rotation": [
+        0.9743298,
+        0.0,
+        0.0
+      ],
+      "area_id": 1101,
+      "faction1": 219,
+      "faction2": 219,
+      "world_id": 51
+    },
+    {
+      "id": 16,
+      "bindpoint_id": 10508,
+      "position": [
+        5396.587,
+        -996.2255,
+        -2794.858
+      ],
+      "rotation": [
+        2.560273,
+        0.0,
+        0.0
+      ],
+      "area_id": 941,
+      "faction1": 219,
+      "faction2": 219,
+      "world_id": 51
+    },
+    {
+      "id": 2690,
+      "bindpoint_id": 21532,
+      "position": [
+        5156.069,
+        -874.4468,
+        -2875.79
+      ],
+      "rotation": [
+        -0.2633525,
+        -0.03062605,
+        0.07542401
+      ],
+      "area_id": 1015,
+      "faction1": 219,
+      "faction2": 219,
+      "world_id": 51
+    },
+    {
+      "id": 94,
+      "bindpoint_id": 20897,
+      "position": [
+        4261.58,
+        -810.838,
+        -2211.159
+      ],
+      "rotation": [
+        -0.2674015,
+        0.0,
+        0.0
+      ],
+      "area_id": 122,
+      "faction1": 219,
+      "faction2": 219,
+      "world_id": 51
+    },
+    {
+      "id": 698,
+      "bindpoint_id": 20177,
+      "position": [
+        4793.343,
+        -940.3117,
+        -709.7235
+      ],
+      "rotation": [
+        -1.978185,
+        0.0,
+        0.0
+      ],
+      "area_id": 240,
+      "faction1": 219,
+      "faction2": 219,
+      "world_id": 51
+    },
+    {
+      "id": 699,
+      "bindpoint_id": 20178,
+      "position": [
+        5825.474,
+        -942.2735,
+        -1106.178
+      ],
+      "rotation": [
+        0.8394622,
+        0.0,
+        0.0
+      ],
+      "area_id": 363,
+      "faction1": 219,
+      "faction2": 219,
+      "world_id": 51
+    },
+    {
+      "id": 700,
+      "bindpoint_id": 20179,
+      "position": [
+        5193.846,
+        -972.035,
+        -39.24224
+      ],
+      "rotation": [
+        -1.78491,
+        -0.2343657,
+        -0.005523142
+      ],
+      "area_id": 1091,
+      "faction1": 219,
+      "faction2": 219,
+      "world_id": 51
+    },
+    {
+      "id": 2747,
+      "bindpoint_id": 23712,
+      "position": [
+        2131.647,
+        -959.9645,
+        -669.1121
+      ],
+      "rotation": [
+        -0.5727827,
+        0.0,
+        0.0
+      ],
+      "area_id": 1151,
+      "faction1": 219,
+      "faction2": 219,
+      "world_id": 51
+    },
+    {
+      "id": 4639,
+      "bindpoint_id": 26294,
+      "position": [
+        3447.618,
+        -943.3118,
+        -398.8342
+      ],
+      "rotation": [
+        -1.367446,
+        -0.1770789,
+        0.1669305
+      ],
+      "area_id": 227,
+      "faction1": 219,
+      "faction2": 219,
+      "world_id": 51
+    },
+    {
+      "id": 4640,
+      "bindpoint_id": 26295,
+      "position": [
+        3483.07,
+        -960.4476,
+        177.243
+      ],
+      "rotation": [
+        -1.176258,
+        0.06014154,
+        0.0250208
+      ],
+      "area_id": 1907,
+      "faction1": 219,
+      "faction2": 219,
+      "world_id": 51
+    },
+    {
+      "id": 4641,
+      "bindpoint_id": 26296,
+      "position": [
+        4075.162,
+        -960.1776,
+        172.7318
+      ],
+      "rotation": [
+        -1.177011,
+        0.0,
+        0.0
+      ],
+      "area_id": 1965,
+      "faction1": 219,
+      "faction2": 219,
+      "world_id": 51
+    },
+    {
+      "id": 4642,
+      "bindpoint_id": 26298,
+      "position": [
+        3051.45,
+        -1028.028,
+        721.1098
+      ],
+      "rotation": [
+        -0.5727827,
+        0.0,
+        0.0
+      ],
+      "area_id": 1312,
+      "faction1": 219,
+      "faction2": 219,
+      "world_id": 51
+    },
+    {
+      "id": 1817,
+      "bindpoint_id": 59813,
+      "position": [
+        3133.219,
+        -964.0983,
+        -6135.603
+      ],
+      "rotation": [
+        2.875688,
+        0.0,
+        0.0
+      ],
+      "area_id": 4307,
+      "faction1": 219,
+      "faction2": 219,
+      "world_id": 1061
+    },
+    {
+      "id": 3850,
+      "bindpoint_id": 37134,
+      "position": [
+        1677.727,
+        -963.3771,
+        4220.702
+      ],
+      "rotation": [
+        -2.390428,
+        0.0,
+        0.0
+      ],
+      "area_id": 430,
+      "faction1": 219,
+      "faction2": 219,
+      "world_id": 1061
+    },
+    {
+      "id": 3851,
+      "bindpoint_id": 37135,
+      "position": [
+        1651.439,
+        -815.9563,
+        2946.921
+      ],
+      "rotation": [
+        -2.456257,
+        0.0,
+        0.0
+      ],
+      "area_id": 427,
+      "faction1": 219,
+      "faction2": 219,
+      "world_id": 1061
+    },
+    {
+      "id": 1288,
+      "bindpoint_id": 39698,
+      "position": [
+        2761.734,
+        -1003.429,
+        293.3561
+      ],
+      "rotation": [
+        1.960384,
+        0.0,
+        0.0
+      ],
+      "area_id": 2083,
+      "faction1": 219,
+      "faction2": 219,
+      "world_id": 1061
+    },
+    {
+      "id": 1578,
+      "bindpoint_id": 40723,
+      "position": [
+        999.4286,
+        -916.2209,
+        -36.73117
+      ],
+      "rotation": [
+        -1.9046,
+        9.207904e-06,
+        6.516821e-07
+      ],
+      "area_id": 2686,
+      "faction1": 219,
+      "faction2": 219,
+      "world_id": 1061
+    },
+    {
+      "id": 1675,
+      "bindpoint_id": 59815,
+      "position": [
+        4210.224,
+        -935.5069,
+        -4374.654
+      ],
+      "rotation": [
+        -2.893562,
+        0.0,
+        0.0
+      ],
+      "area_id": 3020,
+      "faction1": 219,
+      "faction2": 219,
+      "world_id": 1061
+    },
+    {
+      "id": 1676,
+      "bindpoint_id": 59816,
+      "position": [
+        3923.473,
+        -930.1055,
+        -4408.628
+      ],
+      "rotation": [
+        2.331789,
+        0.0,
+        0.0
+      ],
+      "area_id": 3020,
+      "faction1": 219,
+      "faction2": 219,
+      "world_id": 1061
+    },
+    {
+      "id": 1873,
+      "bindpoint_id": 59811,
+      "position": [
+        345.2675,
+        -890.1627,
+        -4057.784
+      ],
+      "rotation": [
+        1.570796,
+        0.0,
+        0.0
+      ],
+      "area_id": 4246,
+      "faction1": 219,
+      "faction2": 219,
+      "world_id": 1061
+    },
+    {
+      "id": 1874,
+      "bindpoint_id": 59812,
+      "position": [
+        345.2675,
+        -890.1627,
+        -4134.578
+      ],
+      "rotation": [
+        1.570796,
+        0.0,
+        0.0
+      ],
+      "area_id": 4247,
+      "faction1": 219,
+      "faction2": 219,
+      "world_id": 1061
+    },
+    {
+      "id": 37,
+      "bindpoint_id": 24473,
+      "position": [
+        -2542.626,
+        -869.4005,
+        -1913.771
+      ],
+      "rotation": [
+        -2.100357,
+        -0.0110993,
+        0.006258849
+      ],
+      "area_id": 38,
+      "faction1": 219,
+      "faction2": 219,
+      "world_id": 22
+    },
+    {
+      "id": 77,
+      "bindpoint_id": 26660,
+      "position": [
+        -1904.207,
+        -882.9664,
+        -2039.839
+      ],
+      "rotation": [
+        -2.186127,
+        0.0,
+        0.0
+      ],
+      "area_id": 72,
+      "faction1": 219,
+      "faction2": 219,
+      "world_id": 22
+    },
+    {
+      "id": 78,
+      "bindpoint_id": 26661,
+      "position": [
+        -1605.097,
+        -920.2156,
+        -2032.349
+      ],
+      "rotation": [
+        -0.5770119,
+        0.0,
+        0.0
+      ],
+      "area_id": 1373,
+      "faction1": 219,
+      "faction2": 219,
+      "world_id": 22
+    },
+    {
+      "id": 102,
+      "bindpoint_id": 27734,
+      "position": [
+        -1983.924,
+        -892.1659,
+        -989.4126
+      ],
+      "rotation": [
+        -1.513249,
+        0.0,
+        0.0
+      ],
+      "area_id": 805,
+      "faction1": 219,
+      "faction2": 219,
+      "world_id": 22
+    },
+    {
+      "id": 103,
+      "bindpoint_id": 27735,
+      "position": [
+        -1748.044,
+        -939.3796,
+        -1208.36
+      ],
+      "rotation": [
+        -0.7527036,
+        0.0,
+        0.0
+      ],
+      "area_id": 1401,
+      "faction1": 219,
+      "faction2": 219,
+      "world_id": 22
+    },
+    {
+      "id": 189,
+      "bindpoint_id": 31704,
+      "position": [
+        -1293.593,
+        -889.0092,
+        -1071.492
+      ],
+      "rotation": [
+        1.49116,
+        0.0,
+        0.0
+      ],
+      "area_id": 41,
+      "faction1": 219,
+      "faction2": 219,
+      "world_id": 22
+    },
+    {
+      "id": 190,
+      "bindpoint_id": 31705,
+      "position": [
+        -1913.293,
+        -919.4151,
+        -354.4289
+      ],
+      "rotation": [
+        -2.354278,
+        0.0,
+        0.0
+      ],
+      "area_id": 1550,
+      "faction1": 219,
+      "faction2": 219,
+      "world_id": 22
+    },
+    {
+      "id": 53,
+      "bindpoint_id": 10817,
+      "position": [
+        -5598.124,
+        -983.4636,
+        -782.9216
+      ],
+      "rotation": [
+        -2.876639,
+        0.0,
+        0.0
+      ],
+      "area_id": 484,
+      "faction1": 219,
+      "faction2": 219,
+      "world_id": 22
+    },
+    {
+      "id": 59,
+      "bindpoint_id": 11498,
+      "position": [
+        -4988.712,
+        -941.7614,
+        -1543.182
+      ],
+      "rotation": [
+        1.923687,
+        0.0,
+        0.0
+      ],
+      "area_id": 584,
+      "faction1": 219,
+      "faction2": 219,
+      "world_id": 22
+    },
+    {
+      "id": 62,
+      "bindpoint_id": 12329,
+      "position": [
+        -4946.033,
+        -934.3041,
+        -135.2447
+      ],
+      "rotation": [
+        1.740851,
+        0.0,
+        0.0
+      ],
+      "area_id": 620,
+      "faction1": 219,
+      "faction2": 219,
+      "world_id": 22
+    },
+    {
+      "id": 63,
+      "bindpoint_id": 12330,
+      "position": [
+        -4385.778,
+        -968.9304,
+        -605.0894
+      ],
+      "rotation": [
+        0.6743427,
+        0.0,
+        0.0
+      ],
+      "area_id": 637,
+      "faction1": 219,
+      "faction2": 219,
+      "world_id": 22
+    },
+    {
+      "id": 184,
+      "bindpoint_id": 30219,
+      "position": [
+        -4700.282,
+        -911.7519,
+        -1518.968
+      ],
+      "rotation": [
+        -2.876639,
+        0.0,
+        0.0
+      ],
+      "area_id": 1703,
+      "faction1": 219,
+      "faction2": 219,
+      "world_id": 22
+    },
+    {
+      "id": 193,
+      "bindpoint_id": 34955,
+      "position": [
+        -2527.476,
+        -765.5346,
+        -3418.925
+      ],
+      "rotation": [
+        -2.491343,
+        0.0,
+        0.0
+      ],
+      "area_id": 327,
+      "faction1": 219,
+      "faction2": 219,
+      "world_id": 22
+    },
+    {
+      "id": 43,
+      "bindpoint_id": 54673,
+      "position": [
+        -3408.856,
+        -890.5308,
+        -746.5488
+      ],
+      "rotation": [
+        -1.570797,
+        0.0,
+        0.0
+      ],
+      "area_id": 2193,
+      "faction1": 219,
+      "faction2": 219,
+      "world_id": 22
+    },
+    {
+      "id": 26,
+      "bindpoint_id": 29729,
+      "position": [
+        2231.518,
+        -846.4366,
+        -1780.847
+      ],
+      "rotation": [
+        3.00651,
+        0.0,
+        0.0
+      ],
+      "area_id": 1403,
+      "faction1": 219,
+      "faction2": 219,
+      "world_id": 22
+    },
+    {
+      "id": 159,
+      "bindpoint_id": 47487,
+      "position": [
+        1262.934,
+        -722.6733,
+        -2067.226
+      ],
+      "rotation": [
+        2.700209,
+        0.0,
+        0.0
+      ],
+      "area_id": 1404,
+      "faction1": 219,
+      "faction2": 219,
+      "world_id": 22
+    }
+  ]
+}

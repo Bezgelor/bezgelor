@@ -26,13 +26,14 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 
-# NexusForever entity types
+# NexusForever entity types (from NexusForever.Game.Static.Entity.EntityType)
 class EntityType:
     """Entity type constants from NexusForever."""
     NPC = 0           # Non-player character (vendors, quest givers)
     RESOURCE = 5      # Gathering nodes
     OBJECT = 8        # Interactive objects
     CREATURE = 10     # Standard creatures/mobs
+    BINDPOINT = 19    # Resurrection/graveyard bindpoints
     STRUCTURE = 32    # Buildings, collision objects
 
 
@@ -316,13 +317,15 @@ def convert_to_bezgelor_format(
         creatures = [e for e in world_entities if e.entity_type in (EntityType.NPC, EntityType.CREATURE)]
         resources = [e for e in world_entities if e.entity_type == EntityType.RESOURCE]
         objects = [e for e in world_entities if e.entity_type == EntityType.OBJECT]
+        bindpoints = [e for e in world_entities if e.entity_type == EntityType.BINDPOINT]
 
         zone_data = {
             "world_id": world_id,
             "zone_name": zone_name,
             "creature_spawns": [],
             "resource_spawns": [],
-            "object_spawns": []
+            "object_spawns": [],
+            "bindpoint_spawns": []
         }
 
         # Process creature spawns
@@ -365,6 +368,18 @@ def convert_to_bezgelor_format(
                 "rotation": entity.rotation,
                 "area_id": entity.area_id,
                 "display_info": entity.display_info,
+                "faction1": entity.faction1,
+                "faction2": entity.faction2
+            })
+
+        # Process bindpoint (resurrection/graveyard) spawns
+        for entity in bindpoints:
+            zone_data["bindpoint_spawns"].append({
+                "id": entity.id,
+                "bindpoint_id": entity.creature_id,  # Links to bind_points.json
+                "position": entity.position,
+                "rotation": entity.rotation,
+                "area_id": entity.area_id,
                 "faction1": entity.faction1,
                 "faction2": entity.faction2
             })
@@ -429,7 +444,8 @@ def process_single_file(input_path: Path, output_path: Optional[Path] = None):
     creatures = sum(1 for e in entities if e.entity_type in (EntityType.NPC, EntityType.CREATURE))
     resources = sum(1 for e in entities if e.entity_type == EntityType.RESOURCE)
     objects = sum(1 for e in entities if e.entity_type == EntityType.OBJECT)
-    print(f"  Breakdown: {creatures} creatures, {resources} resources, {objects} objects")
+    bindpoints = sum(1 for e in entities if e.entity_type == EntityType.BINDPOINT)
+    print(f"  Breakdown: {creatures} creatures, {resources} resources, {objects} objects, {bindpoints} bindpoints")
 
     result = convert_to_bezgelor_format(entities, splines, stats, zone_name)
 
@@ -478,6 +494,7 @@ def merge_to_single_file(input_dir: Path, output_path: Path):
             merged[world_id]["creature_spawns"].extend(zone["creature_spawns"])
             merged[world_id]["resource_spawns"].extend(zone["resource_spawns"])
             merged[world_id]["object_spawns"].extend(zone["object_spawns"])
+            merged[world_id]["bindpoint_spawns"].extend(zone["bindpoint_spawns"])
 
     output = {
         "source": "NexusForever.WorldDatabase",
@@ -492,7 +509,8 @@ def merge_to_single_file(input_dir: Path, output_path: Path):
     total_creatures = sum(len(z["creature_spawns"]) for z in merged.values())
     total_resources = sum(len(z["resource_spawns"]) for z in merged.values())
     total_objects = sum(len(z["object_spawns"]) for z in merged.values())
-    print(f"Total spawns: {total_creatures} creatures, {total_resources} resources, {total_objects} objects")
+    total_bindpoints = sum(len(z["bindpoint_spawns"]) for z in merged.values())
+    print(f"Total spawns: {total_creatures} creatures, {total_resources} resources, {total_objects} objects, {total_bindpoints} bindpoints")
 
 
 def main():
