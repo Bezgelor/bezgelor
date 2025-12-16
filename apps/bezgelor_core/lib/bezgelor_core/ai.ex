@@ -169,6 +169,38 @@ defmodule BezgelorCore.AI do
   end
 
   @doc """
+  Check for players in aggro range, filtering by faction hostility.
+
+  Only returns players that are hostile to the creature's faction.
+  """
+  @spec check_aggro_with_faction(t(), [map()], float(), Faction.faction()) ::
+          {:aggro, non_neg_integer()} | nil
+  def check_aggro_with_faction(%__MODULE__{state: state}, _nearby_players, _aggro_range, _faction)
+      when state in [:combat, :evade, :dead] do
+    nil
+  end
+
+  def check_aggro_with_faction(%__MODULE__{spawn_position: spawn_pos}, nearby_players, aggro_range, creature_faction) do
+    alias BezgelorCore.Faction
+
+    nearby_players
+    |> Enum.filter(fn player ->
+      player_faction = Map.get(player, :faction, :exile)
+      Faction.hostile?(creature_faction, player_faction)
+    end)
+    |> Enum.map(fn player ->
+      dist = distance(spawn_pos, player.position)
+      {dist, player.guid}
+    end)
+    |> Enum.filter(fn {dist, _guid} -> dist <= aggro_range end)
+    |> Enum.min_by(fn {dist, _guid} -> dist end, fn -> nil end)
+    |> case do
+      nil -> nil
+      {_dist, guid} -> {:aggro, guid}
+    end
+  end
+
+  @doc """
   Check if creature is dead.
   """
   @spec dead?(t()) :: boolean()

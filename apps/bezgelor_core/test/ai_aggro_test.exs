@@ -3,6 +3,67 @@ defmodule BezgelorCore.AIAggroTest do
 
   alias BezgelorCore.AI
 
+  describe "check_aggro_with_faction/4" do
+    test "only aggros hostile faction players" do
+      ai = AI.new({0.0, 0.0, 0.0})
+
+      nearby_players = [
+        %{guid: 11111, position: {5.0, 0.0, 0.0}, faction: :exile},
+        %{guid: 22222, position: {6.0, 0.0, 0.0}, faction: :dominion}
+      ]
+
+      # Creature is hostile faction - aggros both (takes closest)
+      result = AI.check_aggro_with_faction(ai, nearby_players, 10.0, :hostile)
+      assert result == {:aggro, 11111}
+    end
+
+    test "friendly creatures don't aggro" do
+      ai = AI.new({0.0, 0.0, 0.0})
+
+      nearby_players = [
+        %{guid: 12345, position: {5.0, 0.0, 0.0}, faction: :exile}
+      ]
+
+      result = AI.check_aggro_with_faction(ai, nearby_players, 10.0, :friendly)
+      assert result == nil
+    end
+
+    test "neutral creatures don't aggro" do
+      ai = AI.new({0.0, 0.0, 0.0})
+
+      nearby_players = [
+        %{guid: 12345, position: {5.0, 0.0, 0.0}, faction: :exile}
+      ]
+
+      result = AI.check_aggro_with_faction(ai, nearby_players, 10.0, :neutral)
+      assert result == nil
+    end
+
+    test "exile creature only aggros dominion players" do
+      ai = AI.new({0.0, 0.0, 0.0})
+
+      nearby_players = [
+        %{guid: 11111, position: {5.0, 0.0, 0.0}, faction: :exile},  # Same faction
+        %{guid: 22222, position: {6.0, 0.0, 0.0}, faction: :dominion}  # Enemy
+      ]
+
+      result = AI.check_aggro_with_faction(ai, nearby_players, 10.0, :exile)
+      assert result == {:aggro, 22222}
+    end
+
+    test "returns nil when no hostile players in range" do
+      ai = AI.new({0.0, 0.0, 0.0})
+
+      nearby_players = [
+        %{guid: 11111, position: {5.0, 0.0, 0.0}, faction: :exile}
+      ]
+
+      # Exile creature won't aggro exile players
+      result = AI.check_aggro_with_faction(ai, nearby_players, 10.0, :exile)
+      assert result == nil
+    end
+  end
+
   describe "check_aggro/3" do
     test "returns target when player in aggro range" do
       ai = AI.new({0.0, 0.0, 0.0})
