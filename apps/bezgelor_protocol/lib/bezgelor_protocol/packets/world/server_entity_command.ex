@@ -70,6 +70,7 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCommand do
   @cmd_set_move 11
   @cmd_set_move_defaults 13
   @cmd_set_rotation 14
+  @cmd_set_rotation_defaults 21
   @cmd_set_state 24
 
   # Spline types (2 bits)
@@ -105,6 +106,7 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCommand do
             }
           | %{type: :set_state, state: non_neg_integer()}
           | %{type: :set_rotation, rotation: position(), blend: boolean()}
+          | %{type: :set_rotation_defaults, blend: boolean()}
           | %{type: :set_move, move: position(), blend: boolean()}
           | %{type: :set_move_defaults, blend: boolean()}
 
@@ -175,6 +177,12 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCommand do
     writer
     |> PacketWriter.write_bits(@cmd_set_rotation, 5)
     |> PacketWriter.write_vector3(Map.get(cmd, :rotation, {0.0, 0.0, 0.0}))
+    |> PacketWriter.write_bits(bool_to_bit(Map.get(cmd, :blend, false)), 1)
+  end
+
+  defp write_command(%{type: :set_rotation_defaults} = cmd, writer) do
+    writer
+    |> PacketWriter.write_bits(@cmd_set_rotation_defaults, 5)
     |> PacketWriter.write_bits(bool_to_bit(Map.get(cmd, :blend, false)), 1)
   end
 

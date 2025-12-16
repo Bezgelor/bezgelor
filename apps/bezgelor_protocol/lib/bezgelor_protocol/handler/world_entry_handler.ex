@@ -137,10 +137,11 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
     instance_id = 1
     WorldManager.register_session(account_id, character.id, character.name, self())
     WorldManager.set_entity_guid(account_id, guid)
-    WorldManager.update_session_zone(account_id, zone_id, instance_id)
+    # Use world_id (not zone_id) since Zone.Instance is keyed by world_id
+    WorldManager.update_session_zone(account_id, world_id, instance_id)
 
-    # Broadcast player spawn to other players in the zone
-    VisibilityBroadcaster.broadcast_player_spawn(character, zone_id, instance_id, guid)
+    # Broadcast player spawn to other players in the zone (use world_id to match Zone.Instance)
+    VisibilityBroadcaster.broadcast_player_spawn(character, world_id, instance_id, guid)
 
     # Schedule periodic quest persistence timer
     send(self(), :schedule_quest_persistence)
@@ -177,25 +178,220 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
 
   # Build creature entity packets for creatures near the player
   # Uses range filtering to avoid overwhelming the client with too many entities
+  # Also sends movement packets for creatures that are already moving
   @creature_view_range 200.0
 
   defp build_creature_packets(position) do
-    # Get creatures within view range of the player's position
-    creatures = CreatureManager.get_creatures_in_range(position, @creature_view_range)
+    alias BezgelorProtocol.Packets.World.ServerEntityCommand
 
-    Enum.map(creatures, fn creature_state ->
+    # Get creatures within view range of the player's position
+    # Use a short timeout to avoid blocking login if spawn loading is in progress
+    creatures =
+      try do
+        CreatureManager.get_creatures_in_range(position, @creature_view_range)
+      catch
+        :exit, {:timeout, _} ->
+          Logger.warning("CreatureManager timeout - spawn loading may still be in progress")
+          []
+
+        :exit, _ ->
+          []
+      end
+
+    # Build packets and count what we're sending
+    {packets, stats} = Enum.reduce(creatures, {[], %{entities: 0, movements: 0, skipped_stale: 0, initial_patrol: 0}}, fn creature_state, {acc_packets, acc_stats} ->
       # Skip dead creatures
       if creature_state.ai.state == :dead do
-        nil
+        {acc_packets, acc_stats}
       else
-        packet = ServerEntityCreate.from_creature(creature_state)
+        # Build entity create packet
+        create_packet = ServerEntityCreate.from_creature(creature_state)
         writer = PacketWriter.new()
-        {:ok, writer} = ServerEntityCreate.write(packet, writer)
-        data = PacketWriter.to_binary(writer)
-        {:server_entity_create, data}
+        {:ok, writer} = ServerEntityCreate.write(create_packet, writer)
+        create_data = PacketWriter.to_binary(writer)
+
+        # Build movement packets based on creature state
+        ai = creature_state.ai
+        {movement_packets, updated_stats} =
+          cond do
+            # Already moving - send current movement
+            ai.state in [:patrol, :wandering] and length(ai.movement_path) > 1 ->
+              packets = build_movement_packet(creature_state)
+              if packets == [] do
+                {[], Map.update(acc_stats, :skipped_stale, 1, &(&1 + 1))}
+              else
+                {packets, Map.update(acc_stats, :movements, 1, &(&1 + 1))}
+              end
+
+            # Idle but should be patrolling - start patrol now!
+            ai.state == :idle and ai.patrol_enabled and length(ai.patrol_waypoints) > 0 ->
+              packets = build_initial_patrol_packet(creature_state)
+              if packets == [] do
+                Logger.warning("build_initial_patrol_packet returned empty for creature with #{length(ai.patrol_waypoints)} waypoints")
+                {[], acc_stats}
+              else
+                {packets, Map.update(acc_stats, :initial_patrol, 1, &(&1 + 1))}
+              end
+
+            # Idle with patrol_enabled but no waypoints - log for debug
+            ai.state == :idle and ai.patrol_enabled ->
+              Logger.warning("Creature has patrol_enabled but #{length(ai.patrol_waypoints)} waypoints")
+              {[], acc_stats}
+
+            # Nothing to do
+            true ->
+              {[], acc_stats}
+          end
+
+        new_stats = Map.update(updated_stats, :entities, 1, &(&1 + 1))
+        {acc_packets ++ [{:server_entity_create, create_data}] ++ movement_packets, new_stats}
       end
     end)
-    |> Enum.reject(&is_nil/1)
+
+    Logger.info("Zone entry packets: #{inspect(stats)}")
+    packets
+  end
+
+  # Build patrol movement packet for a creature that should start patrolling
+  defp build_initial_patrol_packet(creature_state) do
+    alias BezgelorProtocol.Packets.World.ServerEntityCommand
+    alias BezgelorCore.Movement
+
+    ai = creature_state.ai
+    guid = creature_state.entity.guid
+    position = creature_state.entity.position
+
+    # Get first waypoint as target
+    first_waypoint = Enum.at(ai.patrol_waypoints, 0)
+
+    if first_waypoint do
+      target_pos = case first_waypoint do
+        %{position: {x, y, z}} -> {x, y, z}
+        %{position: [x, y, z]} -> {x, y, z}
+        {x, y, z} -> {x, y, z}
+        [x, y, z] -> {x, y, z}
+        _ -> nil
+      end
+
+      if target_pos do
+        # Generate path from current position to first waypoint
+        path = Movement.direct_path(position, target_pos)
+
+        if length(path) > 1 do
+          speed = ai.patrol_speed || 3.0
+
+          state_command = %{type: :set_state, state: 0x02}
+          move_defaults = %{type: :set_move_defaults, blend: false}
+          rotation_defaults = %{type: :set_rotation_defaults, blend: false}
+
+          path_command = %{
+            type: :set_position_path,
+            positions: path,
+            speed: speed,
+            spline_type: :linear,
+            spline_mode: :one_shot,
+            offset: 0,
+            blend: true
+          }
+
+          packet = %ServerEntityCommand{
+            guid: guid,
+            time: System.monotonic_time(:millisecond) |> rem(0xFFFFFFFF),
+            time_reset: false,
+            server_controlled: true,
+            commands: [state_command, move_defaults, rotation_defaults, path_command]
+          }
+
+          writer = PacketWriter.new()
+          {:ok, writer} = ServerEntityCommand.write(packet, writer)
+          data = PacketWriter.to_binary(writer)
+
+          Logger.debug("Starting initial patrol for creature #{guid} to #{inspect(target_pos)}")
+          [{:server_entity_command, data}]
+        else
+          []
+        end
+      else
+        []
+      end
+    else
+      []
+    end
+  end
+
+  # Build a movement packet for a creature that's already moving
+  # Calculates remaining path based on elapsed time to avoid sending stale movement
+  defp build_movement_packet(creature_state) do
+    alias BezgelorProtocol.Packets.World.ServerEntityCommand
+    alias BezgelorCore.Movement
+
+    ai = creature_state.ai
+    guid = creature_state.entity.guid
+    path = ai.movement_path
+    speed = if ai.state == :patrol, do: ai.patrol_speed, else: ai.wander_speed
+
+    # Calculate how much time has elapsed since movement started
+    now = System.monotonic_time(:millisecond)
+    elapsed = if ai.movement_start_time, do: now - ai.movement_start_time, else: 0
+    duration = ai.movement_duration || 0
+
+    # If more than 80% of movement time has elapsed, the AI tick will soon
+    # determine movement is complete and start a new segment. Don't send stale movement.
+    # Instead, let the creature appear at its last path point (destination).
+    if duration > 0 and elapsed >= duration * 0.8 do
+      []
+    else
+      # Calculate remaining path from estimated current position
+      {adjusted_path, _remaining_duration} =
+        if elapsed > 0 and duration > 0 and length(path) >= 2 do
+          # Estimate current position along the path
+          progress = min(1.0, elapsed / duration)
+          current_pos = Movement.interpolate_path(path, progress)
+
+          # Build remaining path from current position to destination
+          destination = List.last(path)
+          remaining_path = Movement.direct_path(current_pos, destination)
+          remaining_duration = max(100, duration - elapsed)  # At least 100ms
+
+          {remaining_path, remaining_duration}
+        else
+          {path, duration}
+        end
+
+      # Only send if we have a valid path
+      if length(adjusted_path) >= 2 do
+        # Build movement commands (same as CreatureManager.broadcast_creature_movement)
+        state_command = %{type: :set_state, state: 0x02}
+        move_defaults = %{type: :set_move_defaults, blend: false}
+        rotation_defaults = %{type: :set_rotation_defaults, blend: false}
+
+        path_command = %{
+          type: :set_position_path,
+          positions: adjusted_path,
+          speed: speed,
+          spline_type: :linear,
+          spline_mode: :one_shot,
+          offset: 0,
+          blend: true
+        }
+
+        packet = %ServerEntityCommand{
+          guid: guid,
+          time: System.monotonic_time(:millisecond) |> rem(0xFFFFFFFF),
+          time_reset: false,
+          server_controlled: true,
+          commands: [state_command, move_defaults, rotation_defaults, path_command]
+        }
+
+        writer = PacketWriter.new()
+        {:ok, writer} = ServerEntityCommand.write(packet, writer)
+        data = PacketWriter.to_binary(writer)
+
+        [{:server_entity_command, data}]
+      else
+        []
+      end
+    end
   end
 
   # Build cinematic packets if a cinematic should play on zone entry
