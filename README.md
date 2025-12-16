@@ -149,9 +149,9 @@ Application.started_applications()
 
 1. **Create an account** at http://localhost:4000/register (required before login)
 
-2. Download [`tools/Wildstar - Bezgelor.bat`](tools/Wildstar%20-%20Bezgelor.bat) and place it in your WildStar folder
+2. Download [`tools/Wildstar - Bezgelor.bat`](tools/Wildstar%20-%20Bezgelor.bat)
 
-3. Run the batch file to launch WildStar
+3. Run the batch file to launch WildStar (can be run from anywhere)
 
 4. Log in with your Bezgelor account credentials
 
