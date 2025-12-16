@@ -80,4 +80,46 @@ defmodule BezgelorCore.MovementChaseTest do
       assert path == []
     end
   end
+
+  describe "rotation_toward/2" do
+    test "calculates rotation to face positive X direction" do
+      current = {0.0, 0.0, 0.0}
+      target = {10.0, 0.0, 0.0}
+
+      rotation = Movement.rotation_toward(current, target)
+
+      # Facing +X should be PI/2 radians (90 degrees)
+      assert_in_delta rotation, :math.pi() / 2, 0.01
+    end
+
+    test "calculates rotation to face positive Z direction" do
+      current = {0.0, 0.0, 0.0}
+      target = {0.0, 0.0, 10.0}
+
+      rotation = Movement.rotation_toward(current, target)
+
+      # Facing +Z should be 0 radians
+      assert_in_delta rotation, 0.0, 0.01
+    end
+
+    test "calculates rotation to face negative X direction" do
+      current = {0.0, 0.0, 0.0}
+      target = {-10.0, 0.0, 0.0}
+
+      rotation = Movement.rotation_toward(current, target)
+
+      # Facing -X should be -PI/2 radians (-90 degrees)
+      assert_in_delta rotation, -:math.pi() / 2, 0.01
+    end
+
+    test "ignores Y coordinate difference" do
+      current = {0.0, 0.0, 0.0}
+      target = {10.0, 100.0, 0.0}  # Large Y difference
+
+      rotation = Movement.rotation_toward(current, target)
+
+      # Should still face +X direction
+      assert_in_delta rotation, :math.pi() / 2, 0.01
+    end
+  end
 end

@@ -380,6 +380,28 @@ defmodule BezgelorCore.Movement do
   end
 
   @doc """
+  Calculate rotation to face a target position.
+
+  Returns rotation in radians (yaw around Y axis).
+  Uses atan2(dx, dz) convention where +Z is 0, +X is PI/2.
+
+  ## Parameters
+
+  - `current` - Current position as {x, y, z}
+  - `target` - Target position as {x, y, z}
+
+  ## Returns
+
+  Rotation in radians.
+  """
+  @spec rotation_toward(position(), position()) :: float()
+  def rotation_toward({cx, _cy, cz}, {tx, _ty, tz}) do
+    dx = tx - cx
+    dz = tz - cz
+    :math.atan2(dx, dz)
+  end
+
+  @doc """
   Check if a position is within leash range of spawn.
   """
   @spec within_leash?(position(), position(), float()) :: boolean()
