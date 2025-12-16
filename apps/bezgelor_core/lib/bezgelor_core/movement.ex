@@ -312,6 +312,74 @@ defmodule BezgelorCore.Movement do
   end
 
   @doc """
+  Generate path for ranged creature to maintain optimal distance.
+
+  Moves to the middle of the min/max range to maintain safe attack distance.
+  Will move backward if too close to target, forward if too far.
+
+  ## Parameters
+
+  - `current_pos` - Current position
+  - `target_pos` - Target position
+  - `min_range` - Minimum safe distance
+  - `max_range` - Maximum attack range
+
+  ## Returns
+
+  Path to optimal position (middle of min/max range from target).
+  Returns empty list if already in optimal range.
+  """
+  @spec ranged_position_path(position(), position(), float(), float()) :: path()
+  def ranged_position_path(current_pos, target_pos, min_range, max_range) do
+    {cx, cy, cz} = current_pos
+    {tx, ty, tz} = target_pos
+
+    dx = tx - cx
+    dy = ty - cy
+    dz = tz - cz
+    current_distance = :math.sqrt(dx * dx + dy * dy + dz * dz)
+
+    optimal_distance = (min_range + max_range) / 2
+
+    cond do
+      # Already in optimal zone
+      current_distance >= min_range and current_distance <= max_range ->
+        []
+
+      # Too close - back away from target
+      current_distance < min_range ->
+        # Normalize direction AWAY from target
+        nx = -dx / current_distance
+        ny = -dy / current_distance
+        nz = -dz / current_distance
+
+        # Move to optimal distance
+        move_distance = optimal_distance - current_distance
+
+        generate_path_direction({cx, cy, cz}, {nx, ny, nz}, move_distance)
+
+      # Too far - move closer (use chase_path logic)
+      current_distance > max_range ->
+        chase_path(current_pos, target_pos, optimal_distance)
+    end
+  end
+
+  # Generate path in a specific direction for a given distance
+  defp generate_path_direction({cx, cy, cz}, {nx, ny, nz}, distance) do
+    num_steps = ceil(distance / @step_size)
+
+    0..num_steps
+    |> Enum.map(fn step ->
+      progress = min(step * @step_size / distance, 1.0)
+      {
+        cx + nx * distance * progress,
+        cy + ny * distance * progress,
+        cz + nz * distance * progress
+      }
+    end)
+  end
+
+  @doc """
   Check if a position is within leash range of spawn.
   """
   @spec within_leash?(position(), position(), float()) :: boolean()
