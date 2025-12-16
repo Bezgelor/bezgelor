@@ -598,13 +598,25 @@ defmodule BezgelorWorld.Creature.ZoneManager do
 
   # Build AI options from spawn definition
   # Supports:
+  #   - patrol_waypoints: [...] - pre-enriched patrol waypoints from entity_spline matching
   #   - patrol_path: "path_name" - named patrol path from patrol_paths.json
   #   - spline_id: 123 - numeric spline ID from client Spline2.tbl data
   #   - auto_spline: true - automatically find nearest spline within threshold
   #   - (default) - automatic spline matching when no explicit patrol is set
   defp build_ai_options(spawn_def, world_id, position, spline_index) do
+    # Check for pre-enriched patrol data first (from entity_spline matching during load)
+    waypoints = Map.get(spawn_def, :patrol_waypoints)
+
     cond do
-      # Check for explicit spline_id first (numeric client spline)
+      # Pre-enriched patrol waypoints from entity_spline matching
+      is_list(waypoints) and length(waypoints) > 1 ->
+        [
+          patrol_waypoints: waypoints,
+          patrol_speed: Map.get(spawn_def, :patrol_speed, 3.0),
+          patrol_mode: Map.get(spawn_def, :patrol_mode, :cyclic)
+        ]
+
+      # Check for explicit spline_id (numeric client spline)
       spline_id = Map.get(spawn_def, :spline_id) ->
         case Store.get_spline_as_patrol(spline_id) do
           {:ok, patrol_data} ->

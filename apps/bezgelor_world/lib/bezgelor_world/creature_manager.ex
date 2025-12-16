@@ -49,8 +49,9 @@ defmodule BezgelorWorld.CreatureManager do
           spawn_definitions: [map()]
         }
 
-  # Maximum creatures to process per tick (for batching)
-  @max_creatures_per_tick 100
+  # NOTE: Removed @max_creatures_per_tick - the needs_ai_processing? filter
+  # already limits to creatures that actually need updates. Batching with
+  # Enum.take() was causing most creatures to never get processed.
 
   # Combat timeout - creatures exit combat after this many ms without activity
   @combat_timeout_ms 30_000
@@ -473,25 +474,7 @@ defmodule BezgelorWorld.CreatureManager do
       |> Enum.filter(fn {_guid, creature_state} ->
         needs_ai_processing?(creature_state, now)
       end)
-      |> Enum.take(@max_creatures_per_tick)
 
-    # Debug: log AI stats periodically (every ~10 seconds)
-    if rem(now, 10_000) < 1000 do
-      total = map_size(state.creatures)
-      active_zone_count = MapSet.size(active_zones)
-
-      creatures_in_active_zones =
-        Enum.count(state.creatures, fn {_, c} ->
-          MapSet.member?(active_zones, Map.get(c, :world_id))
-        end)
-
-      patrol_count = Enum.count(state.creatures, fn {_, c} -> c.ai.patrol_enabled end)
-      wander_count = Enum.count(state.creatures, fn {_, c} -> c.ai.wander_enabled end)
-
-      Logger.debug(
-        "AI tick: #{length(creatures_needing_update)}/#{creatures_in_active_zones} creatures in #{active_zone_count} active zones (#{total} total, #{patrol_count} patrol, #{wander_count} wander)"
-      )
-    end
 
     # Process the filtered creatures
     creatures =
@@ -599,7 +582,6 @@ defmodule BezgelorWorld.CreatureManager do
       {:start_wander, new_ai} ->
         # Creature is starting to wander - broadcast movement to players in zone
         world_id = Map.get(creature_state, :world_id)
-        Logger.info("Creature #{entity.guid} starting wander: #{length(new_ai.movement_path)} points at speed #{new_ai.wander_speed}")
         broadcast_creature_movement(entity.guid, new_ai.movement_path, new_ai.wander_speed, world_id)
 
         # Update entity position to path end (client will animate the movement)
@@ -610,13 +592,11 @@ defmodule BezgelorWorld.CreatureManager do
 
       {:wander_complete, new_ai} ->
         # Wandering finished, creature is now idle
-        # Position should already be at path end from start_wander
         {:updated, %{creature_state | ai: new_ai}}
 
       {:start_patrol, new_ai} ->
         # Creature is starting a patrol segment - broadcast movement to players in zone
         world_id = Map.get(creature_state, :world_id)
-        Logger.info("Creature #{entity.guid} starting patrol: #{length(new_ai.movement_path)} waypoints at speed #{new_ai.patrol_speed}")
         broadcast_creature_movement(entity.guid, new_ai.movement_path, new_ai.patrol_speed, world_id)
 
         # Update entity position to path end (client will animate the movement)
@@ -695,6 +675,10 @@ defmodule BezgelorWorld.CreatureManager do
         ai_opts = build_ai_options(spawn_def, world_id, position, spline_index)
         ai = AI.new(position, ai_opts)
 
+        # Don't start movement on spawn - wait for players to enter zone
+        # Movement will be triggered by AI tick once zone has players
+        # This keeps server/client timing in sync
+
         creature_state = %{
           entity: entity,
           template: template,
@@ -705,23 +689,31 @@ defmodule BezgelorWorld.CreatureManager do
           world_id: world_id
         }
 
-        Logger.debug(
-          "Spawned creature #{template.name} (#{guid}) at #{inspect(position)} from creature_id #{spawn_def.creature_id}"
-        )
-
         {:ok, guid, creature_state}
     end
   end
 
   # Build AI options from spawn definition
   # Supports:
+  #   - patrol_waypoints: [...] - pre-enriched patrol waypoints from entity_spline matching
   #   - patrol_path: "path_name" - named patrol path from patrol_paths.json
   #   - spline_id: 123 - numeric spline ID from client Spline2.tbl data
   #   - auto_spline: true - automatically find nearest spline within threshold
   #   - (default) - automatic spline matching when no explicit patrol is set
   defp build_ai_options(spawn_def, world_id, position, spline_index) do
+    # Check for pre-enriched patrol data first (from entity_spline matching during load)
+    waypoints = Map.get(spawn_def, :patrol_waypoints)
+
     cond do
-      # Check for explicit spline_id first (numeric client spline)
+      # Pre-enriched patrol waypoints from entity_spline matching
+      is_list(waypoints) and length(waypoints) > 1 ->
+        [
+          patrol_waypoints: waypoints,
+          patrol_speed: Map.get(spawn_def, :patrol_speed, 3.0),
+          patrol_mode: Map.get(spawn_def, :patrol_mode, :cyclic)
+        ]
+
+      # Check for explicit spline_id (numeric client spline)
       spline_id = Map.get(spawn_def, :spline_id) ->
         case BezgelorData.Store.get_spline_as_patrol(spline_id) do
           {:ok, patrol_data} ->
@@ -1063,11 +1055,15 @@ defmodule BezgelorWorld.CreatureManager do
     alias BezgelorWorld.Zone.Instance, as: ZoneInstance
 
     # Build movement commands using map format
-    # Set move state (0x01 = Move flag)
-    state_command = %{type: :set_state, state: 0x01}
+    # Set move state (0x02 = Move flag per NexusForever StateFlags)
+    state_command = %{type: :set_state, state: 0x02}
 
     # Reset move direction to defaults
     move_defaults = %{type: :set_move_defaults, blend: false}
+
+    # SetRotationDefaults makes entity auto-face along path movement
+    # (delegates to position command's GetRotation when path/spline/keys active)
+    rotation_defaults = %{type: :set_rotation_defaults, blend: false}
 
     # Path following command
     path_command = %{
@@ -1085,7 +1081,7 @@ defmodule BezgelorWorld.CreatureManager do
       time: System.monotonic_time(:millisecond) |> rem(0xFFFFFFFF),
       time_reset: false,
       server_controlled: true,
-      commands: [state_command, move_defaults, path_command]
+      commands: [state_command, move_defaults, rotation_defaults, path_command]
     }
 
     # Serialize the packet
