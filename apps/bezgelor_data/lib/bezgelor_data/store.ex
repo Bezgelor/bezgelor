@@ -56,9 +56,6 @@ defmodule BezgelorData.Store do
 
   alias BezgelorData.Compiler
 
-  # Number of concurrent data loading tasks (based on CPU cores)
-  @max_concurrent_loads System.schedulers_online() * 2
-
   @tables [
     :creatures,
     :creatures_full,
@@ -135,7 +132,9 @@ defmodule BezgelorData.Store do
     :patrol_paths,
     # Spline data (from client Spline2.tbl and Spline2Node.tbl)
     :splines,
-    :spline_nodes
+    :spline_nodes,
+    # Entity spline mappings (from NexusForever.WorldDatabase)
+    :entity_splines
   ]
 
   # Secondary index tables for efficient lookups by foreign key
@@ -1115,6 +1114,77 @@ defmodule BezgelorData.Store do
     end
   end
 
+  @doc """
+  Look up entity spline configuration by world_id, creature_id, and position.
+
+  Returns {:ok, spline_config} if a matching entity spline is found, :none otherwise.
+  Matches entities within 5 units of the given position (to handle minor coordinate differences).
+
+  The spline_config contains:
+  - spline_id: The spline path to follow
+  - mode: SplineMode (0=OneShot, 1=BackAndForth, 2=Cyclic, etc.)
+  - speed: Movement speed (units/second), -1 means use default
+  - fx, fy, fz: Formation offsets from path
+  """
+  @spec find_entity_spline(non_neg_integer(), non_neg_integer(), {float(), float(), float()}) ::
+          {:ok, map()} | :none
+  def find_entity_spline(world_id, creature_id, {px, py, pz}) do
+    table_name = table_name(:entity_splines)
+
+    case :ets.lookup(table_name, world_id) do
+      [{^world_id, entities}] ->
+        # Find entity matching creature_id and position (within tolerance)
+        match =
+          Enum.find(entities, fn entity ->
+            entity_creature_id = entity[:creature_id] || entity["creature_id"]
+            position = entity[:position] || entity["position"]
+
+            # Handle both list and tuple positions
+            {ex, ey, ez} =
+              case position do
+                [x, y, z] -> {x, y, z}
+                {x, y, z} -> {x, y, z}
+                _ -> {0, 0, 0}
+              end
+
+            entity_creature_id == creature_id and
+              position_match?({px, py, pz}, {ex, ey, ez}, 5.0)
+          end)
+
+        case match do
+          nil ->
+            :none
+
+          entity ->
+            spline = entity[:spline] || entity["spline"]
+            {:ok, normalize_spline_config(spline)}
+        end
+
+      [] ->
+        :none
+    end
+  end
+
+  # Check if two positions are within distance of each other
+  defp position_match?({x1, y1, z1}, {x2, y2, z2}, max_dist) do
+    dx = x2 - x1
+    dy = y2 - y1
+    dz = z2 - z1
+    :math.sqrt(dx * dx + dy * dy + dz * dz) <= max_dist
+  end
+
+  # Normalize spline config from JSON (handles both atom and string keys)
+  defp normalize_spline_config(spline) do
+    %{
+      spline_id: spline[:spline_id] || spline["spline_id"],
+      mode: spline[:mode] || spline["mode"],
+      speed: spline[:speed] || spline["speed"],
+      fx: spline[:fx] || spline["fx"] || 0,
+      fy: spline[:fy] || spline["fy"] || 0,
+      fz: spline[:fz] || spline["fz"] || 0
+    }
+  end
+
   # Quest queries
 
   @doc """
@@ -2017,7 +2087,7 @@ defmodule BezgelorData.Store do
 
   defp load_all_data do
     start_time = System.monotonic_time(:millisecond)
-    Logger.info("Loading game data (parallel mode, max_concurrency: #{@max_concurrent_loads})...")
+    Logger.info("Loading game data...")
 
     # Compile all data files if needed
     compile_start = System.monotonic_time(:millisecond)
@@ -2030,22 +2100,17 @@ defmodule BezgelorData.Store do
     compile_time = System.monotonic_time(:millisecond) - compile_start
     Logger.info("Compile check: #{compile_time}ms")
 
-    # Phase 1: Load creatures first (creatures_full depends on it)
-    phase1_start = System.monotonic_time(:millisecond)
+    # Load creatures first (creatures_full depends on it)
+    creatures_start = System.monotonic_time(:millisecond)
     load_table(:creatures, "creatures.json", "creatures")
-    creatures_time = System.monotonic_time(:millisecond) - phase1_start
-
-    creatures_full_start = System.monotonic_time(:millisecond)
     load_creatures_full()
-    creatures_full_time = System.monotonic_time(:millisecond) - creatures_full_start
+    creatures_time = System.monotonic_time(:millisecond) - creatures_start
+    Logger.info("Loaded creatures in #{creatures_time}ms")
 
-    phase1_time = creatures_time + creatures_full_time
-    Logger.info("Phase 1: creatures=#{creatures_time}ms, creatures_full=#{creatures_full_time}ms, total=#{phase1_time}ms")
+    # Load all other tables
+    tables_start = System.monotonic_time(:millisecond)
 
-    # Phase 2: Parallel load of all independent tables
-    phase2_start = System.monotonic_time(:millisecond)
-
-    parallel_loads = [
+    table_loaders = [
       # Core data
       fn -> load_table(:zones, "zones.json", "zones") end,
       fn -> load_table(:spells, "spells.json", "spells") end,
@@ -2122,20 +2187,15 @@ defmodule BezgelorData.Store do
       # Patrol paths
       fn -> load_patrol_paths() end,
       # Spline data
-      fn -> load_splines() end
+      fn -> load_splines() end,
+      # Entity spline mappings (from NexusForever database)
+      fn -> load_entity_splines() end
     ]
 
-    parallel_loads
-    |> Task.async_stream(
-      fn loader -> loader.() end,
-      max_concurrency: @max_concurrent_loads,
-      timeout: 60_000,
-      on_timeout: :kill_task
-    )
-    |> Stream.run()
+    Enum.each(table_loaders, fn loader -> loader.() end)
 
-    phase2_time = System.monotonic_time(:millisecond) - phase2_start
-    Logger.info("Phase 2: #{length(parallel_loads)} tables parallel in #{phase2_time}ms")
+    tables_time = System.monotonic_time(:millisecond) - tables_start
+    Logger.info("Loaded #{length(table_loaders)} tables in #{tables_time}ms")
 
     # Validate loot data (requires loot tables loaded)
     validate_start = System.monotonic_time(:millisecond)
@@ -2143,11 +2203,19 @@ defmodule BezgelorData.Store do
     validate_time = System.monotonic_time(:millisecond) - validate_start
     Logger.info("Loot validation: #{validate_time}ms")
 
-    # Phase 3: Build secondary indexes in parallel
-    phase3_start = System.monotonic_time(:millisecond)
-    build_all_indexes_parallel()
-    phase3_time = System.monotonic_time(:millisecond) - phase3_start
-    Logger.info("Phase 3: indexes parallel in #{phase3_time}ms")
+    # Build secondary indexes
+    # This MUST happen before enrichment because get_spline_nodes uses the spline_nodes_by_spline index
+    index_start = System.monotonic_time(:millisecond)
+    build_all_indexes()
+    index_time = System.monotonic_time(:millisecond) - index_start
+    Logger.info("Built indexes in #{index_time}ms")
+
+    # Enrich creature spawns with pre-computed spline data
+    # This must happen AFTER indexes are built because get_spline_nodes requires spline_nodes_by_spline index
+    enrich_start = System.monotonic_time(:millisecond)
+    enrich_creature_spawns_with_splines()
+    enrich_time = System.monotonic_time(:millisecond) - enrich_start
+    Logger.info("Spawn enrichment: #{enrich_time}ms")
 
     # Build achievement event index for O(1) lookup
     ach_start = System.monotonic_time(:millisecond)
@@ -2347,9 +2415,14 @@ defmodule BezgelorData.Store do
     end
   end
 
+  # Get the compiled/cached ETF directory path
+  defp compiled_directory do
+    Application.app_dir(:bezgelor_data, "priv/compiled")
+  end
+
   # Generate ETF cache path for a JSON file
   defp etf_cache_path(json_path) do
-    compiled_dir = Application.app_dir(:bezgelor_data, "priv/compiled")
+    compiled_dir = compiled_directory()
     basename = Path.basename(json_path, ".json") <> ".etf"
     Path.join(compiled_dir, basename)
   end
@@ -2748,6 +2821,124 @@ defmodule BezgelorData.Store do
     # Clear existing data
     :ets.delete_all_objects(table_name)
 
+    # Try loading from pre-enriched ETF cache first
+    enriched_etf_path = Path.join(compiled_directory(), "creature_spawns_enriched.etf")
+    Logger.info("Creature spawns: checking ETF at #{enriched_etf_path}, exists? #{File.exists?(enriched_etf_path)}")
+    is_fresh = enriched_etf_cache_fresh?(enriched_etf_path)
+    Logger.info("Creature spawns: enriched ETF fresh? #{is_fresh}")
+
+    if is_fresh do
+      result = load_creature_spawns_from_etf(enriched_etf_path, table_name)
+      Logger.info("Loaded creature spawns from enriched ETF cache: #{result}")
+      result
+    else
+      Logger.info("Enriched ETF not fresh, loading from JSON and will re-enrich")
+      load_creature_spawns_from_json(table_name)
+    end
+  end
+
+  # Check if enriched ETF cache is newer than all source files
+  # Must check ALL files that contribute to enriched data:
+  # - creature_spawns.json (spawn positions)
+  # - harvest_spawns.json (resource spawns)
+  # - entity_splines.json (creature->spline mappings)
+  # - Spline2.json (spline definitions)
+  # - Spline2Node.json (spline waypoints)
+  defp enriched_etf_cache_fresh?(etf_path) do
+    data_dir = data_directory()
+    Logger.debug("Checking enriched ETF cache freshness")
+    Logger.debug("  ETF path: #{etf_path}")
+    Logger.debug("  Data dir: #{data_dir}")
+
+    json_path = Path.join(data_dir, "creature_spawns.json")
+    harvest_path = Path.join(data_dir, "harvest_spawns.json")
+    entity_splines_path = Path.join(data_dir, "entity_splines.json")
+    spline2_path = Path.join(data_dir, "Spline2.json")
+    spline2_nodes_path = Path.join(data_dir, "Spline2Node.json")
+
+    result = with {:ok, etf_stat} <- File.stat(etf_path),
+         {:ok, json_stat} <- File.stat(json_path),
+         true <- etf_stat.mtime >= json_stat.mtime,
+         # Check all optional source files
+         true <- file_not_newer?(harvest_path, etf_stat.mtime),
+         true <- file_not_newer?(entity_splines_path, etf_stat.mtime),
+         true <- file_not_newer?(spline2_path, etf_stat.mtime),
+         true <- file_not_newer?(spline2_nodes_path, etf_stat.mtime) do
+      true
+    else
+      {:error, :enoent} ->
+        Logger.debug("Enriched ETF cache check: file not found (#{etf_path})")
+        false
+      {:error, reason} ->
+        Logger.debug("Enriched ETF cache check failed: #{inspect(reason)}")
+        false
+      false ->
+        Logger.debug("Enriched ETF cache check: source file newer than ETF")
+        false
+      other ->
+        Logger.debug("Enriched ETF cache check failed: #{inspect(other)}")
+        false
+    end
+
+    Logger.debug("Enriched ETF cache fresh? #{result}")
+    result
+  end
+
+  # Returns true if file doesn't exist or is not newer than reference mtime
+  defp file_not_newer?(path, reference_mtime) do
+    case File.stat(path) do
+      {:ok, stat} -> stat.mtime <= reference_mtime
+      {:error, :enoent} -> true
+      _ -> false
+    end
+  end
+
+  # Load pre-enriched creature spawns directly from ETF cache
+  defp load_creature_spawns_from_etf(etf_path, table_name) do
+    case File.read(etf_path) do
+      {:ok, content} ->
+        try do
+          zone_data_list = :erlang.binary_to_term(content)
+
+          for {world_id, zone_data} <- zone_data_list do
+            :ets.insert(table_name, {world_id, zone_data})
+          end
+
+          total_creatures =
+            Enum.reduce(zone_data_list, 0, fn {_wid, z}, acc -> acc + length(z.creature_spawns) end)
+
+          total_resources =
+            Enum.reduce(zone_data_list, 0, fn {_wid, z}, acc -> acc + length(z.resource_spawns) end)
+
+          total_objects =
+            Enum.reduce(zone_data_list, 0, fn {_wid, z}, acc -> acc + length(z.object_spawns) end)
+
+          # Count enriched spawns for debugging
+          total_enriched =
+            Enum.reduce(zone_data_list, 0, fn {_wid, z}, acc ->
+              acc + Enum.count(z.creature_spawns, &Map.has_key?(&1, :patrol_waypoints))
+            end)
+
+          Logger.info(
+            "Loaded #{length(zone_data_list)} zones from enriched cache " <>
+            "(#{total_creatures} creatures, #{total_enriched} enriched with patrol, #{total_resources} resources, #{total_objects} objects)"
+          )
+
+          :from_cache
+        rescue
+          e ->
+            Logger.warning("Failed to parse enriched ETF cache: #{inspect(e)}, loading from JSON")
+            load_creature_spawns_from_json(table_name)
+        end
+
+      {:error, reason} ->
+        Logger.warning("Failed to read enriched ETF cache: #{inspect(reason)}, loading from JSON")
+        load_creature_spawns_from_json(table_name)
+    end
+  end
+
+  # Load creature spawns from JSON (non-enriched)
+  defp load_creature_spawns_from_json(table_name) do
     json_path = Path.join(data_directory(), "creature_spawns.json")
 
     # Also load harvest spawns from separate file
@@ -2784,10 +2975,187 @@ defmodule BezgelorData.Store do
           "Loaded #{length(zone_spawns)} zone spawn data (#{total_creatures} creatures, #{total_resources} resources, #{total_objects} objects)"
         )
 
+        :from_json
+
       {:error, reason} ->
         Logger.warning("Failed to load creature spawns: #{inspect(reason)}")
+        :error
     end
   end
+
+  # Enrich creature spawns with pre-computed spline data from entity_splines
+  # This runs once at data load time, not per-creature at spawn time
+  # Results are cached to ETF for fast subsequent loads
+  defp enrich_creature_spawns_with_splines do
+    enriched_etf_path = Path.join(compiled_directory(), "creature_spawns_enriched.etf")
+
+    # Skip if ETF cache is fresh (data was already loaded enriched)
+    is_fresh = enriched_etf_cache_fresh?(enriched_etf_path)
+    Logger.info("Spawn enrichment: ETF fresh? #{is_fresh}")
+
+    if is_fresh do
+      Logger.info("Spawn enrichment: skipping (using cached data)")
+      :skipped
+    else
+      Logger.info("Spawn enrichment: running enrichment process")
+      do_enrich_creature_spawns_with_splines(enriched_etf_path)
+    end
+  end
+
+  defp do_enrich_creature_spawns_with_splines(etf_path) do
+    creature_table = table_name(:creature_spawns)
+    spline_table = table_name(:entity_splines)
+
+    # Get all zone spawn data
+    zones = :ets.tab2list(creature_table)
+
+    enriched_zones =
+      Enum.map(zones, fn {world_id, zone_data} ->
+        # Get entity_splines for this world
+        entity_splines =
+          case :ets.lookup(spline_table, world_id) do
+            [{^world_id, entities}] -> entities
+            [] -> []
+          end
+
+        if entity_splines == [] do
+          {world_id, zone_data, 0}
+        else
+          # Build a lookup map for faster matching: {creature_id, position} -> spline_config
+          spline_lookup = build_spline_lookup(entity_splines)
+
+          # Enrich each creature spawn with spline data if it matches
+          {enriched_spawns, count} =
+            Enum.map_reduce(zone_data.creature_spawns, 0, fn spawn, acc ->
+              [x, y, z] = spawn.position
+              pos = {x, y, z}
+
+              case find_matching_spline(spline_lookup, spawn.creature_id, pos) do
+                nil ->
+                  {spawn, acc}
+
+                spline_config ->
+                  # Pre-fetch the actual patrol waypoints
+                  enriched =
+                    case get_spline_as_patrol(spline_config.spline_id) do
+                      {:ok, patrol_data} ->
+                        Map.merge(spawn, %{
+                          spline_config: spline_config,
+                          patrol_waypoints: patrol_data.waypoints,
+                          patrol_speed: if(spline_config.speed < 0, do: 3.0, else: spline_config.speed),
+                          patrol_mode: spline_mode_to_atom(spline_config.mode)
+                        })
+
+                      :error ->
+                        spawn
+                    end
+
+                  {enriched, acc + 1}
+              end
+            end)
+
+          updated_zone = %{zone_data | creature_spawns: enriched_spawns}
+          {world_id, updated_zone, count}
+        end
+      end)
+
+    # Update ETS with enriched data
+    total_enriched =
+      Enum.reduce(enriched_zones, 0, fn {world_id, zone_data, count}, acc ->
+        :ets.insert(creature_table, {world_id, zone_data})
+        acc + count
+      end)
+
+    # Save enriched data to ETF cache for fast subsequent loads
+    save_enriched_spawns_to_etf(etf_path, enriched_zones)
+
+    Logger.info("Enriched #{total_enriched} creature spawns with patrol paths (cached)")
+  end
+
+  # Save enriched creature spawn data to ETF cache
+  defp save_enriched_spawns_to_etf(etf_path, enriched_zones) do
+    # Convert to list of {world_id, zone_data} tuples (without count)
+    zone_data_list =
+      Enum.map(enriched_zones, fn {world_id, zone_data, _count} ->
+        {world_id, zone_data}
+      end)
+
+    # Ensure compiled directory exists
+    compiled_dir = Path.dirname(etf_path)
+    File.mkdir_p!(compiled_dir)
+
+    # Write compressed ETF
+    etf_content = :erlang.term_to_binary(zone_data_list, [:compressed])
+    File.write!(etf_path, etf_content)
+  rescue
+    error ->
+      Logger.warning("Failed to save enriched spawn cache: #{inspect(error)}")
+  end
+
+  # Build a lookup structure for efficient spline matching
+  defp build_spline_lookup(entity_splines) do
+    Enum.reduce(entity_splines, %{}, fn entity, acc ->
+      creature_id = entity[:creature_id] || entity["creature_id"]
+      position = entity[:position] || entity["position"]
+      spline = entity[:spline] || entity["spline"]
+
+      {x, y, z} =
+        case position do
+          [px, py, pz] -> {px, py, pz}
+          {px, py, pz} -> {px, py, pz}
+          _ -> {0, 0, 0}
+        end
+
+      # Use rounded position as key for faster lookup
+      key = {creature_id, round(x), round(y), round(z)}
+      Map.put(acc, key, {position, normalize_spline_config(spline)})
+    end)
+  end
+
+  # Find matching spline using lookup map
+  defp find_matching_spline(lookup, creature_id, {px, py, pz}) do
+    # Try exact rounded position first
+    key = {creature_id, round(px), round(py), round(pz)}
+
+    case Map.get(lookup, key) do
+      {_pos, spline_config} ->
+        spline_config
+
+      nil ->
+        # Fall back to nearby positions (within 5 units)
+        find_nearby_spline(lookup, creature_id, {px, py, pz}, 5.0)
+    end
+  end
+
+  defp find_nearby_spline(lookup, creature_id, {px, py, pz}, tolerance) do
+    # Search nearby rounded positions
+    Enum.find_value(-1..1, fn dx ->
+      Enum.find_value(-1..1, fn dy ->
+        Enum.find_value(-1..1, fn dz ->
+          key = {creature_id, round(px) + dx, round(py) + dy, round(pz) + dz}
+
+          case Map.get(lookup, key) do
+            {[ex, ey, ez], spline_config} ->
+              dist = :math.sqrt((px - ex) ** 2 + (py - ey) ** 2 + (pz - ez) ** 2)
+              if dist <= tolerance, do: spline_config, else: nil
+
+            _ ->
+              nil
+          end
+        end)
+      end)
+    end)
+  end
+
+  # Convert spline mode integer to atom (duplicated from CreatureManager for data loading)
+  defp spline_mode_to_atom(0), do: :one_shot
+  defp spline_mode_to_atom(1), do: :back_and_forth
+  defp spline_mode_to_atom(2), do: :cyclic
+  defp spline_mode_to_atom(3), do: :one_shot_reverse
+  defp spline_mode_to_atom(4), do: :back_and_forth_reverse
+  defp spline_mode_to_atom(5), do: :cyclic_reverse
+  defp spline_mode_to_atom(8), do: :cyclic
+  defp spline_mode_to_atom(_), do: :cyclic
 
   # Load harvest spawns from separate file and merge by world_id
   defp load_harvest_spawns(path) do
@@ -2928,11 +3296,47 @@ defmodule BezgelorData.Store do
     end
   end
 
+  # Load entity spline mappings from NexusForever.WorldDatabase
+  # This tells us which creatures should follow which patrol paths
+  defp load_entity_splines do
+    table_name = table_name(:entity_splines)
+
+    # Clear existing data
+    :ets.delete_all_objects(table_name)
+
+    json_path = Path.join(data_directory(), "entity_splines.json")
+
+    case load_json_raw(json_path) do
+      {:ok, data} ->
+        by_world = Map.get(data, :by_world, %{})
+
+        # Store keyed by world_id (integer) for efficient lookup
+        # JSON keys become atoms like :"1387" with keys: :atoms, so convert to integer
+        for {world_id_key, entities} <- by_world do
+          world_id =
+            cond do
+              is_integer(world_id_key) -> world_id_key
+              is_binary(world_id_key) -> String.to_integer(world_id_key)
+              is_atom(world_id_key) -> world_id_key |> Atom.to_string() |> String.to_integer()
+            end
+
+          :ets.insert(table_name, {world_id, entities})
+        end
+
+        total = Map.get(data, :total_count, 0)
+        worlds = map_size(by_world)
+        Logger.info("Loaded #{total} entity spline mappings across #{worlds} worlds")
+
+      {:error, reason} ->
+        Logger.warning("No entity spline data found: #{inspect(reason)}")
+    end
+  end
+
   # Secondary index building
 
-  # Parallel index building for faster startup
-  defp build_all_indexes_parallel do
-    Logger.debug("Building secondary indexes (parallel)...")
+  # Build all secondary indexes
+  defp build_all_indexes do
+    Logger.debug("Building secondary indexes...")
 
     # Clear all index tables EXCEPT customizations_by_race_sex
     # (which is built during load_character_customizations)
@@ -2977,16 +3381,9 @@ defmodule BezgelorData.Store do
       fn -> build_index(:spline_nodes, :spline_nodes_by_spline, :spline_id) end
     ]
 
-    index_builders
-    |> Task.async_stream(
-      fn builder -> builder.() end,
-      max_concurrency: @max_concurrent_loads,
-      timeout: 30_000,
-      on_timeout: :kill_task
-    )
-    |> Stream.run()
+    Enum.each(index_builders, fn builder -> builder.() end)
 
-    Logger.debug("Secondary indexes built (#{length(index_builders)} indexes)")
+    Logger.debug("Built #{length(index_builders)} secondary indexes")
   end
 
   # Build an index from a source table to an index table using an integer key field
