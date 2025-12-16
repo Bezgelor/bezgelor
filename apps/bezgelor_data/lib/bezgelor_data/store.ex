@@ -56,6 +56,9 @@ defmodule BezgelorData.Store do
 
   alias BezgelorData.Compiler
 
+  # Number of concurrent data loading tasks (based on CPU cores)
+  @max_concurrent_loads System.schedulers_online() * 2
+
   @tables [
     :creatures,
     :creatures_full,
@@ -2013,124 +2016,147 @@ defmodule BezgelorData.Store do
   defp index_table_name(table), do: :"bezgelor_index_#{table}"
 
   defp load_all_data do
-    Logger.info("Loading game data...")
+    start_time = System.monotonic_time(:millisecond)
+    Logger.info("Loading game data (parallel mode, max_concurrency: #{@max_concurrent_loads})...")
 
     # Compile all data files if needed
+    compile_start = System.monotonic_time(:millisecond)
+
     case Compiler.compile_all() do
       :ok -> Logger.debug("Data compilation complete")
       {:error, reason} -> Logger.warning("Compilation issue: #{inspect(reason)}")
     end
 
-    # Load each table
+    compile_time = System.monotonic_time(:millisecond) - compile_start
+    Logger.info("Compile check: #{compile_time}ms")
+
+    # Phase 1: Load creatures first (creatures_full depends on it)
+    phase1_start = System.monotonic_time(:millisecond)
     load_table(:creatures, "creatures.json", "creatures")
+    creatures_time = System.monotonic_time(:millisecond) - phase1_start
+
+    creatures_full_start = System.monotonic_time(:millisecond)
     load_creatures_full()
-    load_table(:zones, "zones.json", "zones")
-    load_table(:spells, "spells.json", "spells")
-    load_table(:items, "items.json", "items")
-    load_client_table(:item_types, "Item2Type.json", "item2type")
-    load_client_table(:creation_armor_sets, "CharacterCreationArmorSet.json", "charactercreationarmorset")
-    load_table(:texts, "texts.json", "texts")
-    load_table(:house_types, "house_types.json", "house_types")
-    load_table(:housing_decor, "housing_decor.json", "decor")
-    load_table(:housing_fabkits, "housing_fabkits.json", "fabkits")
-    load_table(:titles, "titles.json", "titles")
+    creatures_full_time = System.monotonic_time(:millisecond) - creatures_full_start
 
-    # Tradeskill data
-    load_table(:tradeskill_professions, "tradeskill_professions.json", "professions")
-    load_table(:tradeskill_schematics, "tradeskill_schematics.json", "schematics")
-    load_table(:tradeskill_talents, "tradeskill_talents.json", "talents")
-    load_table(:tradeskill_additives, "tradeskill_additives.json", "additives")
-    load_table(:tradeskill_nodes, "tradeskill_nodes.json", "node_types")
-    load_table(:tradeskill_work_orders, "tradeskill_work_orders.json", "work_order_templates")
+    phase1_time = creatures_time + creatures_full_time
+    Logger.info("Phase 1: creatures=#{creatures_time}ms, creatures_full=#{creatures_full_time}ms, total=#{phase1_time}ms")
 
-    # Public events data
-    load_table(:public_events, "public_events.json", "public_events")
-    load_table(:world_bosses, "world_bosses.json", "world_bosses")
-    load_table_by_zone(:event_spawn_points, "event_spawn_points.json", "event_spawn_points")
-    load_table(:event_loot_tables, "event_loot_tables.json", "event_loot_tables")
+    # Phase 2: Parallel load of all independent tables
+    phase2_start = System.monotonic_time(:millisecond)
 
-    # Instance/dungeon data
-    load_table(:instances, "instances.json", "instances")
-    load_table(:instance_bosses, "instance_bosses.json", "instance_bosses")
-    load_mythic_affixes()
+    parallel_loads = [
+      # Core data
+      fn -> load_table(:zones, "zones.json", "zones") end,
+      fn -> load_table(:spells, "spells.json", "spells") end,
+      fn -> load_table(:items, "items.json", "items") end,
+      fn -> load_client_table(:item_types, "Item2Type.json", "item2type") end,
+      fn -> load_client_table(:creation_armor_sets, "CharacterCreationArmorSet.json", "charactercreationarmorset") end,
+      fn -> load_table(:texts, "texts.json", "texts") end,
+      fn -> load_table(:house_types, "house_types.json", "house_types") end,
+      fn -> load_table(:housing_decor, "housing_decor.json", "decor") end,
+      fn -> load_table(:housing_fabkits, "housing_fabkits.json", "fabkits") end,
+      fn -> load_table(:titles, "titles.json", "titles") end,
+      # Tradeskill data
+      fn -> load_table(:tradeskill_professions, "tradeskill_professions.json", "professions") end,
+      fn -> load_table(:tradeskill_schematics, "tradeskill_schematics.json", "schematics") end,
+      fn -> load_table(:tradeskill_talents, "tradeskill_talents.json", "talents") end,
+      fn -> load_table(:tradeskill_additives, "tradeskill_additives.json", "additives") end,
+      fn -> load_table(:tradeskill_nodes, "tradeskill_nodes.json", "node_types") end,
+      fn -> load_table(:tradeskill_work_orders, "tradeskill_work_orders.json", "work_order_templates") end,
+      # Public events data
+      fn -> load_table(:public_events, "public_events.json", "public_events") end,
+      fn -> load_table(:world_bosses, "world_bosses.json", "world_bosses") end,
+      fn -> load_table_by_zone(:event_spawn_points, "event_spawn_points.json", "event_spawn_points") end,
+      fn -> load_table(:event_loot_tables, "event_loot_tables.json", "event_loot_tables") end,
+      # Instance/dungeon data
+      fn -> load_table(:instances, "instances.json", "instances") end,
+      fn -> load_table(:instance_bosses, "instance_bosses.json", "instance_bosses") end,
+      fn -> load_mythic_affixes() end,
+      # PvP data
+      fn -> load_battlegrounds() end,
+      fn -> load_arenas() end,
+      fn -> load_warplot_plugs() end,
+      # Spawn data
+      fn -> load_creature_spawns() end,
+      # Quest data
+      fn -> load_client_table(:quests, "quests.json", "quest2") end,
+      fn -> load_client_table(:quest_objectives, "quest_objectives.json", "questobjective") end,
+      fn -> load_client_table_with_fk(:quest_rewards, "quest_rewards.json", "quest2reward", :quest2Id) end,
+      fn -> load_client_table(:quest_categories, "quest_categories.json", "questcategory") end,
+      fn -> load_client_table(:quest_hubs, "quest_hubs.json", "questhub") end,
+      # NPC/Vendor data
+      fn -> load_table(:npc_vendors, "npc_vendors.json", "npc_vendors") end,
+      fn -> load_vendor_inventories() end,
+      fn -> load_client_table(:creature_affiliations, "creature_affiliations.json", "creature2affiliation") end,
+      # Dialogue data
+      fn -> load_client_table(:gossip_entries, "gossip_entries.json", "gossipentry") end,
+      fn -> load_client_table(:gossip_sets, "gossip_sets.json", "gossipset") end,
+      # Achievement data
+      fn -> load_client_table(:achievements, "achievements.json", "achievement") end,
+      fn -> load_client_table(:achievement_categories, "achievement_categories.json", "achievementcategory") end,
+      fn -> load_client_table(:achievement_checklists, "achievement_checklists.json", "achievementchecklist") end,
+      # Path data
+      fn -> load_client_table(:path_missions, "path_missions.json", "pathmission") end,
+      fn -> load_client_table(:path_episodes, "path_episodes.json", "pathepisode") end,
+      fn -> load_client_table(:path_rewards, "path_rewards.json", "pathreward") end,
+      # Challenge data
+      fn -> load_client_table(:challenges, "challenges.json", "challenge") end,
+      fn -> load_client_table(:challenge_tiers, "challenge_tiers.json", "challengetier") end,
+      # World location data
+      fn -> load_client_table(:world_locations, "world_locations.json", "worldlocation2") end,
+      fn -> load_client_table(:bind_points, "bind_points.json", "bindpoint") end,
+      # Prerequisites
+      fn -> load_client_table(:prerequisites, "prerequisites.json", "prerequisite") end,
+      # Loot data
+      fn -> load_loot_tables() end,
+      fn -> load_creature_loot_rules() end,
+      # Harvest node loot
+      fn -> load_harvest_loot() end,
+      # Character creation templates
+      fn -> load_client_table(:character_creations, "CharacterCreation.json", "charactercreation") end,
+      # Character customization
+      fn -> load_character_customizations() end,
+      # Item display source entries
+      fn -> load_item_display_sources() end,
+      # Patrol paths
+      fn -> load_patrol_paths() end,
+      # Spline data
+      fn -> load_splines() end
+    ]
 
-    # PvP data
-    load_battlegrounds()
-    load_arenas()
-    load_warplot_plugs()
+    parallel_loads
+    |> Task.async_stream(
+      fn loader -> loader.() end,
+      max_concurrency: @max_concurrent_loads,
+      timeout: 60_000,
+      on_timeout: :kill_task
+    )
+    |> Stream.run()
 
-    # Spawn data
-    load_creature_spawns()
+    phase2_time = System.monotonic_time(:millisecond) - phase2_start
+    Logger.info("Phase 2: #{length(parallel_loads)} tables parallel in #{phase2_time}ms")
 
-    # Quest data (extracted from client - uses uppercase ID)
-    load_client_table(:quests, "quests.json", "quest2")
-    load_client_table(:quest_objectives, "quest_objectives.json", "questobjective")
-    load_client_table_with_fk(:quest_rewards, "quest_rewards.json", "quest2reward", :quest2Id)
-    load_client_table(:quest_categories, "quest_categories.json", "questcategory")
-    load_client_table(:quest_hubs, "quest_hubs.json", "questhub")
-
-    # NPC/Vendor data
-    load_table(:npc_vendors, "npc_vendors.json", "npc_vendors")
-    load_vendor_inventories()
-    load_client_table(:creature_affiliations, "creature_affiliations.json", "creature2affiliation")
-
-    # Dialogue data
-    load_client_table(:gossip_entries, "gossip_entries.json", "gossipentry")
-    load_client_table(:gossip_sets, "gossip_sets.json", "gossipset")
-
-    # Achievement data
-    load_client_table(:achievements, "achievements.json", "achievement")
-    load_client_table(:achievement_categories, "achievement_categories.json", "achievementcategory")
-    load_client_table(:achievement_checklists, "achievement_checklists.json", "achievementchecklist")
-
-    # Path data
-    load_client_table(:path_missions, "path_missions.json", "pathmission")
-    load_client_table(:path_episodes, "path_episodes.json", "pathepisode")
-    load_client_table(:path_rewards, "path_rewards.json", "pathreward")
-
-    # Challenge data
-    load_client_table(:challenges, "challenges.json", "challenge")
-    load_client_table(:challenge_tiers, "challenge_tiers.json", "challengetier")
-
-    # World location data
-    load_client_table(:world_locations, "world_locations.json", "worldlocation2")
-    load_client_table(:bind_points, "bind_points.json", "bindpoint")
-
-    # Prerequisites
-    load_client_table(:prerequisites, "prerequisites.json", "prerequisite")
-
-    # Loot data
-    load_loot_tables()
-    load_creature_loot_rules()
-
-    # Harvest node loot
-    load_harvest_loot()
-
-    # Character creation templates
-    load_client_table(:character_creations, "CharacterCreation.json", "charactercreation")
-
-    # Character customization (for converting labels/values to appearance visuals)
-    load_character_customizations()
-
-    # Item display source entries (for level-scaled item visuals)
-    load_item_display_sources()
-
-    # Patrol paths for creature movement
-    load_patrol_paths()
-
-    # Spline data (client extracted - for NPC movement/patrols)
-    load_splines()
-
-    # Validate loot data
+    # Validate loot data (requires loot tables loaded)
+    validate_start = System.monotonic_time(:millisecond)
     validate_loot_data()
+    validate_time = System.monotonic_time(:millisecond) - validate_start
+    Logger.info("Loot validation: #{validate_time}ms")
 
-    # Build secondary indexes
-    build_all_indexes()
+    # Phase 3: Build secondary indexes in parallel
+    phase3_start = System.monotonic_time(:millisecond)
+    build_all_indexes_parallel()
+    phase3_time = System.monotonic_time(:millisecond) - phase3_start
+    Logger.info("Phase 3: indexes parallel in #{phase3_time}ms")
 
     # Build achievement event index for O(1) lookup
+    ach_start = System.monotonic_time(:millisecond)
     BezgelorData.AchievementIndex.build_index()
+    ach_time = System.monotonic_time(:millisecond) - ach_start
+    Logger.info("Achievement index: #{ach_time}ms")
 
-    Logger.info("Game data loaded: #{inspect(stats())}")
+    total_time = System.monotonic_time(:millisecond) - start_time
+    Logger.info("Game data loaded in #{total_time}ms: #{inspect(stats())}")
   end
 
   defp load_table(table, json_file, key) do
@@ -2141,27 +2167,26 @@ defmodule BezgelorData.Store do
 
     case Compiler.load_data(json_file, key) do
       {:ok, items} when is_list(items) ->
-        # Regular tables have lists of maps with :id
-        for item <- items do
-          :ets.insert(table_name, {item.id, item})
-        end
-
+        # Bulk insert is much faster than individual inserts
+        tuples = Enum.map(items, fn item -> {item.id, item} end)
+        :ets.insert(table_name, tuples)
         Logger.debug("Loaded #{length(items)} #{key}")
 
       {:ok, items} when is_map(items) ->
-        # Texts table is a map of id -> string
-        # Keys may be atoms (from :keys => :atoms) or strings
-        for {id, text} <- items do
-          int_id =
-            cond do
-              is_integer(id) -> id
-              is_binary(id) -> String.to_integer(id)
-              is_atom(id) -> id |> Atom.to_string() |> String.to_integer()
-            end
+        # Texts table is a map of id -> string - bulk convert and insert
+        tuples =
+          Enum.map(items, fn {id, text} ->
+            int_id =
+              cond do
+                is_integer(id) -> id
+                is_binary(id) -> String.to_integer(id)
+                is_atom(id) -> id |> Atom.to_string() |> String.to_integer()
+              end
 
-          :ets.insert(table_name, {int_id, text})
-        end
+            {int_id, text}
+          end)
 
+        :ets.insert(table_name, tuples)
         Logger.debug("Loaded #{map_size(items)} #{key}")
 
       {:error, reason} ->
@@ -2177,11 +2202,9 @@ defmodule BezgelorData.Store do
 
     case Compiler.load_data(json_file, key) do
       {:ok, items} when is_list(items) ->
-        # Items are indexed by zone_id
-        for item <- items do
-          :ets.insert(table_name, {item.zone_id, item})
-        end
-
+        # Bulk insert indexed by zone_id
+        tuples = Enum.map(items, fn item -> {item.zone_id, item} end)
+        :ets.insert(table_name, tuples)
         Logger.debug("Loaded #{length(items)} #{key}")
 
       {:error, reason} ->
@@ -2202,18 +2225,18 @@ defmodule BezgelorData.Store do
       {:ok, data} ->
         items = Map.get(data, String.to_atom(key), [])
 
-        for item <- items do
-          # Client data uses uppercase ID
-          id = Map.get(item, :ID)
-
-          if id do
-            # Normalize to lowercase :id for consistency
+        # Bulk insert with ID normalization
+        tuples =
+          items
+          |> Enum.filter(fn item -> Map.has_key?(item, :ID) end)
+          |> Enum.map(fn item ->
+            id = Map.get(item, :ID)
             normalized = item |> Map.put(:id, id) |> Map.delete(:ID)
-            :ets.insert(table_name, {id, normalized})
-          end
-        end
+            {id, normalized}
+          end)
 
-        Logger.debug("Loaded #{length(items)} #{key}")
+        :ets.insert(table_name, tuples)
+        Logger.debug("Loaded #{length(tuples)} #{key}")
 
       {:error, reason} ->
         Logger.warning("Failed to load #{key} from #{json_file}: #{inspect(reason)}")
@@ -2233,18 +2256,18 @@ defmodule BezgelorData.Store do
       {:ok, data} ->
         items = Map.get(data, String.to_atom(key), [])
 
-        for item <- items do
-          # Client data uses uppercase ID
-          id = Map.get(item, :ID)
-
-          if id do
-            # Normalize to lowercase :id for consistency
+        # Bulk insert with ID normalization
+        tuples =
+          items
+          |> Enum.filter(fn item -> Map.has_key?(item, :ID) end)
+          |> Enum.map(fn item ->
+            id = Map.get(item, :ID)
             normalized = item |> Map.put(:id, id) |> Map.delete(:ID)
-            :ets.insert(table_name, {id, normalized})
-          end
-        end
+            {id, normalized}
+          end)
 
-        Logger.debug("Loaded #{length(items)} #{key}")
+        :ets.insert(table_name, tuples)
+        Logger.debug("Loaded #{length(tuples)} #{key}")
 
       {:error, reason} ->
         Logger.warning("Failed to load #{key} from #{json_file}: #{inspect(reason)}")
@@ -2263,10 +2286,9 @@ defmodule BezgelorData.Store do
       {:ok, data} ->
         inventories = Map.get(data, :vendor_inventories, [])
 
-        for inv <- inventories do
-          # Index by vendor_id
-          :ets.insert(table_name, {inv.vendor_id, inv})
-        end
+        # Bulk insert indexed by vendor_id
+        tuples = Enum.map(inventories, fn inv -> {inv.vendor_id, inv} end)
+        :ets.insert(table_name, tuples)
 
         total_items = Enum.reduce(inventories, 0, fn inv, acc -> acc + length(inv.items) end)
         Logger.debug("Loaded #{length(inventories)} vendor inventories (#{total_items} total items)")
@@ -2306,11 +2328,56 @@ defmodule BezgelorData.Store do
     end
   end
 
+  # Load JSON with ETF caching for faster subsequent loads
   defp load_json_raw(path) do
-    with {:ok, content} <- File.read(path),
-         {:ok, data} <- Jason.decode(content, keys: :atoms) do
-      {:ok, data}
+    etf_path = etf_cache_path(path)
+
+    # Try loading from ETF cache first
+    case load_etf_cache(path, etf_path) do
+      {:ok, data} ->
+        {:ok, data}
+
+      :stale ->
+        # Parse JSON and cache to ETF
+        with {:ok, content} <- File.read(path),
+             {:ok, data} <- Jason.decode(content, keys: :atoms) do
+          cache_to_etf(etf_path, data)
+          {:ok, data}
+        end
     end
+  end
+
+  # Generate ETF cache path for a JSON file
+  defp etf_cache_path(json_path) do
+    compiled_dir = Application.app_dir(:bezgelor_data, "priv/compiled")
+    basename = Path.basename(json_path, ".json") <> ".etf"
+    Path.join(compiled_dir, basename)
+  end
+
+  # Load from ETF cache if fresh, returns :stale if cache is missing or outdated
+  defp load_etf_cache(json_path, etf_path) do
+    with {:ok, json_stat} <- File.stat(json_path),
+         {:ok, etf_stat} <- File.stat(etf_path),
+         true <- etf_stat.mtime >= json_stat.mtime,
+         {:ok, content} <- File.read(etf_path) do
+      try do
+        {:ok, :erlang.binary_to_term(content)}
+      rescue
+        _ -> :stale
+      end
+    else
+      _ -> :stale
+    end
+  end
+
+  # Cache parsed data to ETF file
+  defp cache_to_etf(etf_path, data) do
+    compiled_dir = Path.dirname(etf_path)
+    File.mkdir_p!(compiled_dir)
+    etf_content = :erlang.term_to_binary(data, [:compressed])
+    File.write(etf_path, etf_content)
+  rescue
+    _ -> :ok  # Silently ignore cache write failures
   end
 
   defp load_battlegrounds do
@@ -2423,7 +2490,7 @@ defmodule BezgelorData.Store do
     # Clear existing data
     :ets.delete_all_objects(table_name)
 
-    # Load from split part files (each under 100MB for GitHub)
+    # Load from split part files (each under 100MB for GitHub) - in parallel
     part_files = [
       "creatures_part1.json",
       "creatures_part2.json",
@@ -2431,28 +2498,33 @@ defmodule BezgelorData.Store do
       "creatures_part4.json"
     ]
 
-    total_loaded =
-      Enum.reduce(part_files, 0, fn filename, acc ->
-        json_path = Path.join(data_directory(), filename)
+    # Load all parts in parallel, then insert
+    results =
+      part_files
+      |> Task.async_stream(
+        fn filename ->
+          json_path = Path.join(data_directory(), filename)
 
-        case load_json_raw(json_path) do
-          {:ok, data} ->
-            creatures = Map.get(data, :creature2, [])
+          case load_json_raw(json_path) do
+            {:ok, data} ->
+              creatures = Map.get(data, :creature2, [])
+              tuples = Enum.map(creatures, fn creature -> {Map.get(creature, :ID), creature} end)
+              {:ok, tuples}
 
-            for creature <- creatures do
-              id = Map.get(creature, :ID)
-              :ets.insert(table_name, {id, creature})
-            end
+            {:error, reason} ->
+              Logger.warning("Failed to load #{filename}: #{inspect(reason)}")
+              {:ok, []}
+          end
+        end,
+        max_concurrency: 4,
+        timeout: 60_000
+      )
+      |> Enum.reduce([], fn {:ok, {:ok, tuples}}, acc -> acc ++ tuples end)
 
-            acc + length(creatures)
+    # Bulk insert all at once
+    :ets.insert(table_name, results)
 
-          {:error, reason} ->
-            Logger.warning("Failed to load #{filename}: #{inspect(reason)}")
-            acc
-        end
-      end)
-
-    Logger.debug("Loaded #{total_loaded} full creature records from #{length(part_files)} parts")
+    Logger.debug("Loaded #{length(results)} full creature records from #{length(part_files)} parts (parallel)")
   end
 
   defp load_loot_tables do
@@ -2466,11 +2538,9 @@ defmodule BezgelorData.Store do
     case load_json_raw(json_path) do
       {:ok, data} ->
         tables = Map.get(data, :loot_tables, [])
-
-        for table <- tables do
-          :ets.insert(table_name, {table.id, table})
-        end
-
+        # Bulk insert
+        tuples = Enum.map(tables, fn table -> {table.id, table} end)
+        :ets.insert(table_name, tuples)
         Logger.debug("Loaded #{length(tables)} loot tables")
 
       {:error, reason} ->
@@ -2560,20 +2630,22 @@ defmodule BezgelorData.Store do
       {:ok, data} ->
         items = Map.get(data, :charactercustomization, [])
 
-        for item <- items do
-          id = Map.get(item, :ID)
-
-          if id do
-            # Normalize to lowercase :id and keep original field names
+        # Bulk insert with ID normalization
+        tuples =
+          items
+          |> Enum.filter(fn item -> Map.has_key?(item, :ID) end)
+          |> Enum.map(fn item ->
+            id = Map.get(item, :ID)
             normalized = Map.put(item, :id, id)
-            :ets.insert(table_name, {id, normalized})
-          end
-        end
+            {id, normalized}
+          end)
+
+        :ets.insert(table_name, tuples)
 
         # Build the race/sex index
         build_customizations_index(items)
 
-        Logger.debug("Loaded #{length(items)} character customizations")
+        Logger.debug("Loaded #{length(tuples)} character customizations")
 
       {:error, reason} ->
         Logger.warning("Failed to load character customizations: #{inspect(reason)}")
@@ -2587,17 +2659,15 @@ defmodule BezgelorData.Store do
     # Clear existing index
     :ets.delete_all_objects(index_name)
 
-    # Group by {raceId, gender}
-    groups =
+    # Group by {raceId, gender} and bulk insert
+    tuples =
       items
       |> Enum.group_by(fn item ->
         {Map.get(item, :raceId, 0), Map.get(item, :gender, 0)}
       end)
+      |> Enum.map(fn {{race, sex}, entries} -> {{race, sex}, entries} end)
 
-    # Insert each group - store the full entry (not just ID) for efficient lookup
-    for {{race, sex}, entries} <- groups do
-      :ets.insert(index_name, {{race, sex}, entries})
-    end
+    :ets.insert(index_name, tuples)
   end
 
   # Load ItemDisplaySourceEntry data for level-scaled item visuals
@@ -2616,19 +2686,22 @@ defmodule BezgelorData.Store do
       {:ok, data} ->
         items = Map.get(data, :itemdisplaysourceentry, [])
 
-        for item <- items do
-          id = Map.get(item, :ID)
-
-          if id do
+        # Bulk insert with ID normalization
+        tuples =
+          items
+          |> Enum.filter(fn item -> Map.has_key?(item, :ID) end)
+          |> Enum.map(fn item ->
+            id = Map.get(item, :ID)
             normalized = Map.put(item, :id, id)
-            :ets.insert(table_name, {id, normalized})
-          end
-        end
+            {id, normalized}
+          end)
+
+        :ets.insert(table_name, tuples)
 
         # Build the source_id index for efficient lookup
         build_display_source_index(items)
 
-        Logger.debug("Loaded #{length(items)} item display source entries")
+        Logger.debug("Loaded #{length(tuples)} item display source entries")
 
       {:error, _reason} ->
         # ItemDisplaySourceEntry.json is optional - many items don't use it
@@ -2640,17 +2713,16 @@ defmodule BezgelorData.Store do
   defp build_display_source_index(items) do
     index_name = index_table_name(:display_sources_by_source_id)
 
-    # Group by ItemSourceId
-    groups =
+    # Group by ItemSourceId and bulk insert
+    tuples =
       items
       |> Enum.group_by(fn item ->
         Map.get(item, :ItemSourceId) || Map.get(item, "ItemSourceId") || 0
       end)
+      |> Enum.filter(fn {source_id, _} -> source_id > 0 end)
+      |> Enum.map(fn {source_id, entries} -> {source_id, entries} end)
 
-    # Insert each group - store the full entry (not just ID) for efficient lookup
-    for {source_id, entries} <- groups, source_id > 0 do
-      :ets.insert(index_name, {source_id, entries})
-    end
+    :ets.insert(index_name, tuples)
   end
 
   defp validate_loot_data do
@@ -2858,8 +2930,9 @@ defmodule BezgelorData.Store do
 
   # Secondary index building
 
-  defp build_all_indexes do
-    Logger.debug("Building secondary indexes...")
+  # Parallel index building for faster startup
+  defp build_all_indexes_parallel do
+    Logger.debug("Building secondary indexes (parallel)...")
 
     # Clear all index tables EXCEPT customizations_by_race_sex
     # (which is built during load_character_customizations)
@@ -2867,51 +2940,53 @@ defmodule BezgelorData.Store do
       :ets.delete_all_objects(index_table_name(table))
     end
 
-    # Build profession-based indexes
-    build_index(:tradeskill_schematics, :schematics_by_profession, :profession_id)
-    build_index(:tradeskill_talents, :talents_by_profession, :profession_id)
-    build_index(:tradeskill_nodes, :nodes_by_profession, :profession_id)
-    build_index(:tradeskill_work_orders, :work_orders_by_profession, :profession_id)
+    # All index builds are independent - run them in parallel
+    index_builders = [
+      # Profession-based indexes
+      fn -> build_index(:tradeskill_schematics, :schematics_by_profession, :profession_id) end,
+      fn -> build_index(:tradeskill_talents, :talents_by_profession, :profession_id) end,
+      fn -> build_index(:tradeskill_nodes, :nodes_by_profession, :profession_id) end,
+      fn -> build_index(:tradeskill_work_orders, :work_orders_by_profession, :profession_id) end,
+      # Zone-based indexes
+      fn -> build_index(:public_events, :events_by_zone, :zone_id) end,
+      fn -> build_index(:world_bosses, :world_bosses_by_zone, :zone_id) end,
+      # Instance indexes
+      fn -> build_index_string(:instances, :instances_by_type, :type) end,
+      fn -> build_index(:instance_bosses, :bosses_by_instance, :instance_id) end,
+      # Quest indexes
+      fn -> build_index(:quests, :quests_by_zone, :worldZoneId) end,
+      fn -> build_index(:quest_rewards, :quest_rewards_by_quest, :quest2Id) end,
+      # Vendor indexes
+      fn -> build_index(:npc_vendors, :vendors_by_creature, :creature_id) end,
+      fn -> build_index_string(:npc_vendors, :vendors_by_type, :vendor_type) end,
+      # Gossip indexes
+      fn -> build_index(:gossip_entries, :gossip_entries_by_set, :gossipSetId) end,
+      # Achievement indexes
+      fn -> build_index(:achievements, :achievements_by_category, :achievementCategoryId) end,
+      fn -> build_index(:achievements, :achievements_by_zone, :worldZoneId) end,
+      # Path indexes
+      fn -> build_index(:path_missions, :path_missions_by_episode, :pathEpisodeId) end,
+      fn -> build_index(:path_missions, :path_missions_by_type, :pathTypeEnum) end,
+      fn -> build_composite_index(:path_episodes, :path_episodes_by_zone, [:worldId, :worldZoneId]) end,
+      # Challenge indexes
+      fn -> build_index(:challenges, :challenges_by_zone, :worldZoneId) end,
+      # World location indexes
+      fn -> build_index(:world_locations, :world_locations_by_world, :worldId) end,
+      fn -> build_index(:world_locations, :world_locations_by_zone, :worldZoneId) end,
+      # Spline node index
+      fn -> build_index(:spline_nodes, :spline_nodes_by_spline, :spline_id) end
+    ]
 
-    # Build zone-based indexes
-    build_index(:public_events, :events_by_zone, :zone_id)
-    build_index(:world_bosses, :world_bosses_by_zone, :zone_id)
+    index_builders
+    |> Task.async_stream(
+      fn builder -> builder.() end,
+      max_concurrency: @max_concurrent_loads,
+      timeout: 30_000,
+      on_timeout: :kill_task
+    )
+    |> Stream.run()
 
-    # Build instance indexes
-    build_index_string(:instances, :instances_by_type, :type)
-    build_index(:instance_bosses, :bosses_by_instance, :instance_id)
-
-    # Build quest indexes
-    build_index(:quests, :quests_by_zone, :worldZoneId)
-    build_index(:quest_rewards, :quest_rewards_by_quest, :quest2Id)
-
-    # Build vendor indexes
-    build_index(:npc_vendors, :vendors_by_creature, :creature_id)
-    build_index_string(:npc_vendors, :vendors_by_type, :vendor_type)
-
-    # Build gossip indexes
-    build_index(:gossip_entries, :gossip_entries_by_set, :gossipSetId)
-
-    # Build achievement indexes
-    build_index(:achievements, :achievements_by_category, :achievementCategoryId)
-    build_index(:achievements, :achievements_by_zone, :worldZoneId)
-
-    # Build path indexes
-    build_index(:path_missions, :path_missions_by_episode, :pathEpisodeId)
-    build_index(:path_missions, :path_missions_by_type, :pathTypeEnum)
-    build_composite_index(:path_episodes, :path_episodes_by_zone, [:worldId, :worldZoneId])
-
-    # Build challenge indexes
-    build_index(:challenges, :challenges_by_zone, :worldZoneId)
-
-    # Build world location indexes
-    build_index(:world_locations, :world_locations_by_world, :worldId)
-    build_index(:world_locations, :world_locations_by_zone, :worldZoneId)
-
-    # Build spline node index
-    build_index(:spline_nodes, :spline_nodes_by_spline, :spline_id)
-
-    Logger.debug("Secondary indexes built")
+    Logger.debug("Secondary indexes built (#{length(index_builders)} indexes)")
   end
 
   # Build an index from a source table to an index table using an integer key field
@@ -2919,15 +2994,14 @@ defmodule BezgelorData.Store do
     source_name = table_name(source_table)
     index_name = index_table_name(index_table)
 
-    # Group items by the key field
-    groups =
+    # Group items by the key field and bulk insert
+    tuples =
       :ets.tab2list(source_name)
       |> Enum.group_by(fn {_id, data} -> Map.get(data, key_field) end, fn {id, _data} -> id end)
+      |> Enum.filter(fn {key, _ids} -> not is_nil(key) end)
+      |> Enum.map(fn {key, ids} -> {key, ids} end)
 
-    # Insert each group into the index table
-    for {key, ids} <- groups, not is_nil(key) do
-      :ets.insert(index_name, {key, ids})
-    end
+    :ets.insert(index_name, tuples)
   end
 
   # Build an index using a string key field (converted to atom for storage)
@@ -2935,15 +3009,14 @@ defmodule BezgelorData.Store do
     source_name = table_name(source_table)
     index_name = index_table_name(index_table)
 
-    # Group items by the key field (string keys)
-    groups =
+    # Group items by the key field (string keys) and bulk insert
+    tuples =
       :ets.tab2list(source_name)
       |> Enum.group_by(fn {_id, data} -> Map.get(data, key_field) end, fn {id, _data} -> id end)
+      |> Enum.filter(fn {key, _ids} -> not is_nil(key) end)
+      |> Enum.map(fn {key, ids} -> {key, ids} end)
 
-    # Insert each group into the index table
-    for {key, ids} <- groups, not is_nil(key) do
-      :ets.insert(index_name, {key, ids})
-    end
+    :ets.insert(index_name, tuples)
   end
 
   # Build a composite index using multiple key fields as a tuple key
@@ -2951,8 +3024,8 @@ defmodule BezgelorData.Store do
     source_name = table_name(source_table)
     index_name = index_table_name(index_table)
 
-    # Group items by a tuple of the key field values
-    groups =
+    # Group items by a tuple of the key field values and bulk insert
+    tuples =
       :ets.tab2list(source_name)
       |> Enum.group_by(
         fn {_id, data} ->
@@ -2960,11 +3033,10 @@ defmodule BezgelorData.Store do
         end,
         fn {id, _data} -> id end
       )
+      |> Enum.filter(fn {key, _ids} -> not Enum.any?(Tuple.to_list(key), &is_nil/1) end)
+      |> Enum.map(fn {key, ids} -> {key, ids} end)
 
-    # Insert each group into the index table
-    for {key, ids} <- groups, not Enum.any?(Tuple.to_list(key), &is_nil/1) do
-      :ets.insert(index_name, {key, ids})
-    end
+    :ets.insert(index_name, tuples)
   end
 
   # Lookup IDs from an index, returns empty list if key not found
