@@ -153,6 +153,10 @@ defmodule BezgelorWorld.DeathManager do
   end
 
   @impl true
+  def handle_call(:clear_all, _from, _state) do
+    {:reply, :ok, %{dead_players: %{}}}
+  end
+
   def handle_call({:is_dead, player_guid}, _from, state) do
     is_dead = Map.has_key?(state.dead_players, player_guid)
     {:reply, is_dead, state}
