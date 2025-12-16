@@ -13,6 +13,7 @@ defmodule BezgelorWorld.CombatBroadcaster do
 
   alias BezgelorDb.Achievements
 
+  alias BezgelorCore.Death
   alias BezgelorProtocol.Packets.World.{
     ServerBuffApply,
     ServerBuffRemove,
@@ -25,7 +26,7 @@ defmodule BezgelorWorld.CombatBroadcaster do
   }
 
   alias BezgelorProtocol.PacketWriter
-  alias BezgelorWorld.{EventManager, WorldManager}
+  alias BezgelorWorld.{DeathManager, EventManager, WorldManager}
 
   @doc """
   Broadcast entity death to a list of player GUIDs.
@@ -562,7 +563,80 @@ defmodule BezgelorWorld.CombatBroadcaster do
     end
   end
 
+  @doc """
+  Handle player damage and detect death.
+
+  When the damage dealt reduces health to 0 or below, the player is marked
+  as dead in DeathManager and a death event is triggered.
+
+  ## Parameters
+
+  - `player_guid` - The player entity GUID
+  - `zone_id` - Current zone ID
+  - `position` - Player position at time of damage
+  - `current_health` - Player's health before damage
+  - `damage` - Amount of damage dealt
+  - `attacker_guid` - GUID of the attacker (creature or player)
+
+  ## Returns
+
+  - `:alive` if player survives
+  - `:dead` if player died
+  """
+  @spec handle_player_damage(non_neg_integer(), non_neg_integer(), {float(), float(), float()}, non_neg_integer(), non_neg_integer(), non_neg_integer()) :: :alive | :dead
+  def handle_player_damage(player_guid, zone_id, position, current_health, damage, attacker_guid) do
+    new_health = current_health - damage
+
+    if new_health <= 0 do
+      # Player died
+      DeathManager.player_died(player_guid, zone_id, position, attacker_guid)
+
+      # Broadcast death to nearby players
+      if Death.is_player_guid?(player_guid) do
+        # Get nearby players for death broadcast
+        nearby_guids = get_nearby_player_guids(zone_id, position)
+        broadcast_entity_death(player_guid, attacker_guid, nearby_guids)
+      end
+
+      Logger.info("Player #{player_guid} died at zone #{zone_id}, killed by #{attacker_guid}")
+      :dead
+    else
+      :alive
+    end
+  end
+
+  @doc """
+  Handle environmental death (fall damage, drowning, hazards).
+
+  Called when a player dies from non-entity damage sources.
+
+  ## Parameters
+
+  - `player_guid` - The player entity GUID
+  - `zone_id` - Current zone ID
+  - `position` - Player position at time of death
+  - `death_type` - Type of death (:fall, :drown, :environment)
+  """
+  @spec handle_environmental_death(non_neg_integer(), non_neg_integer(), {float(), float(), float()}, atom()) :: :ok
+  def handle_environmental_death(player_guid, zone_id, position, death_type) do
+    # Environmental deaths have no killer
+    DeathManager.player_died(player_guid, zone_id, position, nil)
+
+    # Broadcast death
+    nearby_guids = get_nearby_player_guids(zone_id, position)
+    broadcast_entity_death(player_guid, 0, nearby_guids)
+
+    Logger.info("Player #{player_guid} died from #{death_type} at zone #{zone_id}")
+    :ok
+  end
+
   # Private helpers
+
+  defp get_nearby_player_guids(_zone_id, _position) do
+    # TODO: Integrate with SpatialGrid when available
+    # For now, return empty list (no broadcast)
+    []
+  end
 
   defp send_game_event(character_id, event_type, event_data) do
     case WorldManager.get_session_by_character(character_id) do
