@@ -1,5 +1,5 @@
 defmodule BezgelorProtocol.Connection do
-  @compile {:no_warn_undefined, [BezgelorWorld.Quest.SessionQuestManager, BezgelorWorld.Quest.QuestPersistence]}
+  @compile {:no_warn_undefined, [BezgelorWorld.Quest.SessionQuestManager, BezgelorWorld.Quest.QuestPersistence, BezgelorWorld.WorldManager, BezgelorWorld.VisibilityBroadcaster]}
 
   @moduledoc """
   GenServer handling a single client TCP connection.

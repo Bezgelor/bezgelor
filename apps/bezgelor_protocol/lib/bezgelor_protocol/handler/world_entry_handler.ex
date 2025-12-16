@@ -16,7 +16,7 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
   """
 
   @behaviour BezgelorProtocol.Handler
-  @compile {:no_warn_undefined, [BezgelorWorld.Quest.QuestCache, BezgelorWorld.Handler.AchievementHandler, BezgelorWorld.Cinematic.CinematicManager, BezgelorWorld.TriggerManager, BezgelorWorld.Creature.ZoneManager, BezgelorWorld.CreatureManager]}
+  @compile {:no_warn_undefined, [BezgelorWorld.Quest.QuestCache, BezgelorWorld.Handler.AchievementHandler, BezgelorWorld.Cinematic.CinematicManager, BezgelorWorld.TriggerManager, BezgelorWorld.Creature.ZoneManager, BezgelorWorld.CreatureManager, BezgelorWorld.WorldManager, BezgelorWorld.VisibilityBroadcaster]}
 
   alias BezgelorProtocol.Packets.World.{ServerEntityCreate, ServerQuestList, ServerPlayerEnteredWorld}
   alias BezgelorProtocol.PacketWriter

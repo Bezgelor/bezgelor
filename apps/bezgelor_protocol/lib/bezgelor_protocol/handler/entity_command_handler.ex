@@ -47,6 +47,7 @@ defmodule BezgelorProtocol.Handler.EntityCommandHandler do
   """
 
   @behaviour BezgelorProtocol.Handler
+  @compile {:no_warn_undefined, [BezgelorWorld.VisibilityBroadcaster]}
 
   alias BezgelorProtocol.PacketReader
   alias BezgelorWorld.VisibilityBroadcaster
