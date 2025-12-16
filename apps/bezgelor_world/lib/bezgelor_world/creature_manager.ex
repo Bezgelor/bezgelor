@@ -395,12 +395,39 @@ defmodule BezgelorWorld.CreatureManager do
           state
 
         creature_state ->
+          # Enter combat
           ai = AI.enter_combat(creature_state.ai, target_guid)
           new_creature_state = %{creature_state | ai: ai}
+
+          # Trigger social aggro for nearby same-faction creatures
+          state = trigger_social_aggro(creature_state, target_guid, state)
+
           %{state | creatures: Map.put(state.creatures, creature_guid, new_creature_state)}
       end
 
     {:noreply, state}
+  end
+
+  # Trigger social aggro for nearby creatures of the same faction
+  defp trigger_social_aggro(aggressor_state, target_guid, state) do
+    aggressor_faction = aggressor_state.template.faction
+    aggressor_pos = aggressor_state.entity.position
+    social_range = CreatureTemplate.social_aggro_range(aggressor_state.template)
+
+    # Find nearby creatures of same faction that are idle
+    state.creatures
+    |> Enum.filter(fn {guid, cs} ->
+      guid != aggressor_state.entity.guid and
+        cs.template.faction == aggressor_faction and
+        cs.ai.state == :idle and
+        AI.distance(aggressor_pos, cs.entity.position) <= social_range
+    end)
+    |> Enum.reduce(state, fn {guid, cs}, acc_state ->
+      new_ai = AI.social_aggro(cs.ai, target_guid)
+      Logger.debug("Social aggro: #{cs.entity.name} joining combat against #{target_guid}")
+      new_cs = %{cs | ai: new_ai}
+      %{acc_state | creatures: Map.put(acc_state.creatures, guid, new_cs)}
+    end)
   end
 
   @impl true
