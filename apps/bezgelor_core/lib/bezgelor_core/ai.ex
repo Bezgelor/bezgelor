@@ -56,7 +56,11 @@ defmodule BezgelorCore.AI do
             | :back_and_forth
             | :back_and_forth_reverse,
           patrol_direction: :forward | :backward,
-          patrol_pause_until: integer() | nil
+          patrol_pause_until: integer() | nil,
+          # Combat chase fields
+          chase_path: [{float(), float(), float()}] | nil,
+          chase_start_time: integer() | nil,
+          chase_duration: non_neg_integer() | nil
         }
 
   defstruct state: :idle,
@@ -83,7 +87,11 @@ defmodule BezgelorCore.AI do
             patrol_speed: 2.0,
             patrol_mode: :cyclic,
             patrol_direction: :forward,
-            patrol_pause_until: nil
+            patrol_pause_until: nil,
+            # Combat chase
+            chase_path: nil,
+            chase_start_time: nil,
+            chase_duration: nil
 
   @doc """
   Create new AI state for a creature.
@@ -408,6 +416,57 @@ defmodule BezgelorCore.AI do
   end
 
   def combat_action(%__MODULE__{}, _target_pos, _attack_range), do: :none
+
+  @doc """
+  Start chasing a target with a given path.
+  """
+  @spec start_chase(t(), [{float(), float(), float()}], non_neg_integer()) :: t()
+  def start_chase(%__MODULE__{state: :combat} = ai, path, duration) do
+    %{ai |
+      chase_path: path,
+      chase_start_time: System.monotonic_time(:millisecond),
+      chase_duration: duration
+    }
+  end
+
+  def start_chase(%__MODULE__{} = ai, _path, _duration), do: ai
+
+  @doc """
+  Check if currently in a chase movement.
+  """
+  @spec chasing?(t()) :: boolean()
+  def chasing?(%__MODULE__{chase_path: path, chase_start_time: start, chase_duration: duration})
+      when is_list(path) and is_integer(start) and is_integer(duration) do
+    elapsed = System.monotonic_time(:millisecond) - start
+    elapsed < duration
+  end
+
+  def chasing?(%__MODULE__{}), do: false
+
+  @doc """
+  Complete chase movement (reached destination or target moved).
+  """
+  @spec complete_chase(t()) :: t()
+  def complete_chase(%__MODULE__{} = ai) do
+    %{ai |
+      chase_path: nil,
+      chase_start_time: nil,
+      chase_duration: nil
+    }
+  end
+
+  @doc """
+  Get current position along chase path.
+  """
+  @spec get_chase_position(t()) :: {float(), float(), float()} | nil
+  def get_chase_position(%__MODULE__{chase_path: path, chase_start_time: start, chase_duration: duration})
+      when is_list(path) and is_integer(start) and is_integer(duration) do
+    elapsed = System.monotonic_time(:millisecond) - start
+    progress = min(elapsed / duration, 1.0)
+    BezgelorCore.Movement.interpolate_path(path, progress)
+  end
+
+  def get_chase_position(%__MODULE__{}), do: nil
 
   @doc """
   Check if creature can attack (attack speed cooldown).
