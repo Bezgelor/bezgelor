@@ -63,7 +63,7 @@ Bezgelor is an Elixir umbrella application that emulates WildStar game servers u
 ./scripts/start.sh
 ```
 
-That's it! The portal is at **http://localhost:4001** and all game servers are running.
+That's it! The portal is at **http://localhost:4000** and all game servers are running.
 
 ## Running the Server
 
@@ -73,7 +73,7 @@ When you start the server, the following services come online:
 
 | Service | Port | Description |
 |---------|------|-------------|
-| Portal (Website) | 4001 | Player dashboard & admin console |
+| Portal (Website) | 4000 | Player dashboard & admin console |
 | Auth Server (STS) | 6600 | Client authentication |
 | Realm Server | 23115 | Character selection |
 | World Server | 24000 | Game world |
@@ -147,25 +147,13 @@ Application.started_applications()
 
 ### Connecting a Game Client
 
-WildStar requires a special launcher to connect to private servers:
+1. **Create an account** at http://localhost:4000/register (required before login)
 
-1. Download the **NexusForever ClientConnector** from the [releases page](https://github.com/NexusForever/NexusForever/releases)
+2. Download [`tools/Wildstar - Bezgelor.bat`](tools/Wildstar%20-%20Bezgelor.bat) and place it in your WildStar folder
 
-2. Copy the ClientConnector files to your WildStar `Client64` folder
+3. Run the batch file to launch WildStar
 
-3. Create an account at http://localhost:4001/register
-
-4. Run `NexusForever.ClientConnector.exe` **as Administrator**
-
-5. When prompted, enter:
-   ```
-   Server: localhost
-   Language: en
-   ```
-
-6. Log in with your Bezgelor account credentials
-
-The connector saves your settings to `config.json`. To change servers, delete this file and run again.
+4. Log in with your Bezgelor account credentials
 
 ## Configuration
 
@@ -264,25 +252,6 @@ python tools/tbl_extractor/tbl_extractor.py Creature2.tbl
 # Extract localized text
 python tools/tbl_extractor/language_extractor.py en-US.bin
 ```
-
-## Project Status
-
-| Phase | Status |
-|-------|--------|
-| 1. Foundation | Complete |
-| 2. Protocol Layer | Complete |
-| 3. Authentication | Complete |
-| 4. Realm Server | Complete |
-| 5. Character Management | Complete |
-| 6. Core Gameplay | Complete |
-| 7. Game Systems | Complete |
-| 8. Tradeskills | Complete |
-| 9. Public Events | Complete |
-| 10. Dungeons & Instances | Complete |
-| 11. PvP | Complete |
-| 12. Account Portal | Complete |
-
-See [status.md](docs/status.md) for detailed implementation status.
 
 ## License
 
