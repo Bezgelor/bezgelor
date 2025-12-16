@@ -755,13 +755,38 @@ defmodule BezgelorWorld.CreatureManager do
         {:no_change, creature_state}
 
       {:attack, target_guid} ->
-        # In range - attack!
-        new_ai = AI.record_attack(ai)
+        # In range - check if ranged creature needs to back away first
+        current_pos = entity.position
+        {tx, ty, tz} = target_pos
+        {cx, cy, cz} = current_pos
+        current_distance = :math.sqrt((tx - cx) * (tx - cx) + (ty - cy) * (ty - cy) + (tz - cz) * (tz - cz))
 
-        # Apply damage to target (if player)
-        apply_creature_attack(entity, template, target_guid)
+        min_range = if template.is_ranged, do: attack_range * 0.5, else: 0.0
 
-        {:updated, %{creature_state | ai: new_ai}}
+        if template.is_ranged and current_distance < min_range do
+          # Too close for ranged creature - need to reposition
+          path = Movement.ranged_position_path(current_pos, target_pos, min_range, attack_range)
+
+          if length(path) > 1 do
+            path_length = Movement.path_length(path)
+            duration = CreatureTemplate.movement_duration(template, path_length)
+            new_ai = AI.start_chase(ai, path, duration)
+            world_id = Map.get(creature_state, :world_id)
+            speed = CreatureTemplate.movement_speed(template)
+            broadcast_creature_movement(entity.guid, path, speed, world_id)
+            end_pos = List.last(path)
+            new_entity = %{entity | position: end_pos}
+            Logger.debug("Ranged creature #{entity.name} backing away, too close at #{current_distance}")
+            {:updated, %{creature_state | ai: new_ai, entity: new_entity}}
+          else
+            {:no_change, creature_state}
+          end
+        else
+          # Attack!
+          new_ai = AI.record_attack(ai)
+          apply_creature_attack(entity, template, target_guid)
+          {:updated, %{creature_state | ai: new_ai}}
+        end
 
       {:chase, chase_target_pos} ->
         # Out of range - start chasing (or repositioning for ranged)

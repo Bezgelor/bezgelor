@@ -257,6 +257,25 @@ defmodule BezgelorCore.CreatureTemplate do
         damage_min: 0,
         damage_max: 0,
         attack_speed: 0
+      },
+      6 => %__MODULE__{
+        id: 6,
+        name: "Goblin Archer",
+        level: 4,
+        max_health: 100,
+        faction: :hostile,
+        display_info: 1006,
+        ai_type: :aggressive,
+        aggro_range: 20.0,
+        leash_range: 45.0,
+        respawn_time: 30_000,
+        xp_reward: 80,
+        loot_table_id: 3,
+        damage_min: 10,
+        damage_max: 18,
+        attack_speed: 2500,
+        is_ranged: true,
+        attack_range: 25.0
       }
     }
   end
