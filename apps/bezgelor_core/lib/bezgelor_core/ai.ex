@@ -132,6 +132,43 @@ defmodule BezgelorCore.AI do
   def in_combat?(_), do: false
 
   @doc """
+  Check for players in aggro range.
+
+  Only checks when creature is idle (not in combat, evading, or dead).
+  Returns the closest player if any are within aggro range.
+
+  ## Parameters
+
+  - `ai` - The AI state
+  - `nearby_players` - List of %{guid: integer, position: {x, y, z}} maps
+  - `aggro_range` - Aggro detection radius
+
+  ## Returns
+
+  - `{:aggro, player_guid}` if a player is detected
+  - `nil` if no players in range or AI is busy
+  """
+  @spec check_aggro(t(), [map()], float()) :: {:aggro, non_neg_integer()} | nil
+  def check_aggro(%__MODULE__{state: state}, _nearby_players, _aggro_range)
+      when state in [:combat, :evade, :dead] do
+    nil
+  end
+
+  def check_aggro(%__MODULE__{spawn_position: spawn_pos}, nearby_players, aggro_range) do
+    nearby_players
+    |> Enum.map(fn player ->
+      dist = distance(spawn_pos, player.position)
+      {dist, player.guid}
+    end)
+    |> Enum.filter(fn {dist, _guid} -> dist <= aggro_range end)
+    |> Enum.min_by(fn {dist, _guid} -> dist end, fn -> nil end)
+    |> case do
+      nil -> nil
+      {_dist, guid} -> {:aggro, guid}
+    end
+  end
+
+  @doc """
   Check if creature is dead.
   """
   @spec dead?(t()) :: boolean()
