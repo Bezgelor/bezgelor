@@ -31,6 +31,9 @@ defmodule BezgelorCore.CreatureTemplate do
   @melee_attack_range 5.0
   @ranged_attack_range 30.0
 
+  # Default movement speed in units per second
+  @default_movement_speed 4.0
+
   @type t :: %__MODULE__{
           id: non_neg_integer(),
           name: String.t(),
@@ -50,6 +53,7 @@ defmodule BezgelorCore.CreatureTemplate do
           attack_speed: non_neg_integer(),
           attack_range: float() | nil,
           is_ranged: boolean(),
+          movement_speed: float() | nil,
           reputation_rewards: [reputation_reward()]
         }
 
@@ -72,6 +76,7 @@ defmodule BezgelorCore.CreatureTemplate do
     attack_speed: 2000,
     attack_range: nil,
     is_ranged: false,
+    movement_speed: nil,
     reputation_rewards: []
   ]
 
@@ -114,6 +119,25 @@ defmodule BezgelorCore.CreatureTemplate do
   @spec hostile?(t()) :: boolean()
   def hostile?(%__MODULE__{faction: :hostile}), do: true
   def hostile?(_), do: false
+
+  @doc """
+  Calculate movement duration in milliseconds for a given distance.
+  """
+  @spec movement_duration(t(), float()) :: non_neg_integer()
+  def movement_duration(%__MODULE__{movement_speed: speed}, distance) when is_number(speed) and speed > 0 do
+    round(distance / speed * 1000)
+  end
+
+  def movement_duration(%__MODULE__{}, distance) do
+    round(distance / @default_movement_speed * 1000)
+  end
+
+  @doc """
+  Get movement speed in units per second.
+  """
+  @spec movement_speed(t()) :: float()
+  def movement_speed(%__MODULE__{movement_speed: speed}) when is_number(speed), do: speed
+  def movement_speed(_), do: @default_movement_speed
 
   @doc """
   Get attack range with appropriate default.
