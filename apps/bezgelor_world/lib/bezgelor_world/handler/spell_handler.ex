@@ -113,6 +113,10 @@ defmodule BezgelorWorld.Handler.SpellHandler do
   defp handle_instant_cast(spell, packet, player_guid, result, state) do
     actual_target = if packet.target_guid == 0, do: player_guid, else: packet.target_guid
 
+    # Broadcast telegraphs for this spell (if any)
+    # Telegraphs show visual indicators where spell effects will land
+    broadcast_spell_telegraphs(spell.id, player_guid, packet, state)
+
     # Send spell finish
     finish_packet = ServerSpellFinish.new(player_guid, spell.id)
 
@@ -449,5 +453,27 @@ defmodule BezgelorWorld.Handler.SpellHandler do
     else
       base_stats
     end
+  end
+
+  # Broadcast telegraphs for a spell (visual damage area indicators)
+  defp broadcast_spell_telegraphs(spell_id, caster_guid, packet, state) do
+    # Get caster position from session data or use target position as fallback
+    caster_position = state.session_data[:position] || packet.target_position || {0.0, 0.0, 0.0}
+
+    # Get caster rotation (default to 0 if not available)
+    caster_rotation = state.session_data[:rotation] || 0.0
+
+    # For now, just broadcast to the caster (future: nearby players in zone)
+    # This ensures the caster sees their own telegraphs
+    recipient_guids = [caster_guid]
+
+    # Call CombatBroadcaster to look up and broadcast any telegraphs for this spell
+    CombatBroadcaster.broadcast_spell_telegraphs(
+      spell_id,
+      caster_guid,
+      caster_position,
+      caster_rotation,
+      recipient_guids
+    )
   end
 end

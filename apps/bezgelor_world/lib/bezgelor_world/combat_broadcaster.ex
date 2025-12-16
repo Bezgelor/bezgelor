@@ -298,6 +298,119 @@ defmodule BezgelorWorld.CombatBroadcaster do
   end
 
   @doc """
+  Broadcast telegraphs for a spell cast.
+
+  Looks up telegraph data for the spell and broadcasts appropriate telegraph
+  packets to nearby players. This integrates with the telegraph data extracted
+  from TelegraphDamage.tbl and Spell4Telegraph.tbl.
+
+  ## Parameters
+
+  - `spell_id` - The spell being cast
+  - `caster_guid` - Entity casting the spell
+  - `position` - Caster position {x, y, z}
+  - `rotation` - Caster rotation in radians
+  - `recipient_guids` - Players who should see the telegraph
+
+  ## Returns
+
+  - `:ok` if telegraphs were broadcast (or none existed)
+  """
+  @spec broadcast_spell_telegraphs(
+          non_neg_integer(),
+          non_neg_integer(),
+          {float(), float(), float()},
+          float(),
+          [non_neg_integer()]
+        ) :: :ok
+  def broadcast_spell_telegraphs(spell_id, caster_guid, position, rotation, recipient_guids) do
+    telegraph_shapes = BezgelorData.Store.get_telegraph_shapes_for_spell(spell_id)
+
+    Enum.each(telegraph_shapes, fn telegraph_data ->
+      broadcast_telegraph_from_data(telegraph_data, caster_guid, spell_id, position, rotation, recipient_guids)
+    end)
+
+    :ok
+  end
+
+  # Convert telegraph_damage data to ServerTelegraph packet and broadcast
+  defp broadcast_telegraph_from_data(telegraph_data, caster_guid, spell_id, position, rotation, recipient_guids) do
+    shape = Map.get(telegraph_data, :damageShape, 0)
+    duration_ms = Map.get(telegraph_data, :telegraphTimeEndMs, 1000) - Map.get(telegraph_data, :telegraphTimeStartMs, 0)
+    duration = max(duration_ms, 500)  # Minimum 500ms display
+
+    # Determine color - enemy spells are red, player spells are blue
+    color = :blue  # Default to blue for player abilities
+
+    packet = case shape do
+      # Circle (0)
+      0 ->
+        radius = Map.get(telegraph_data, :param00, 5.0)
+        ServerTelegraph.circle(caster_guid, position, radius, duration, color)
+
+      # Ring/Donut (1)
+      1 ->
+        inner_radius = Map.get(telegraph_data, :param00, 2.0)
+        outer_radius = Map.get(telegraph_data, :param01, 5.0)
+        ServerTelegraph.donut(caster_guid, position, inner_radius, outer_radius, duration, color)
+
+      # Square (2) - Map to rectangle
+      2 ->
+        width = Map.get(telegraph_data, :param00, 5.0)
+        length = Map.get(telegraph_data, :param02, 5.0)
+        %ServerTelegraph{
+          caster_guid: caster_guid,
+          spell_id: spell_id,
+          shape: :rectangle,
+          position: position,
+          rotation: rotation,
+          duration: duration,
+          color: color,
+          params: %{width: width, length: length}
+        }
+
+      # Cone (4) or LongCone (8)
+      shape_id when shape_id in [4, 8] ->
+        _start_radius = Map.get(telegraph_data, :param00, 0.0)
+        end_radius = Map.get(telegraph_data, :param01, 10.0)
+        angle = Map.get(telegraph_data, :param02, 90.0)
+        # Use end_radius as length for cone (start_radius is offset from caster)
+        ServerTelegraph.cone(caster_guid, position, angle, end_radius, rotation, duration, color)
+
+      # Pie (5) - Map to donut with arc (simplified as circle)
+      5 ->
+        radius = Map.get(telegraph_data, :param01, 5.0)
+        ServerTelegraph.circle(caster_guid, position, radius, duration, color)
+
+      # Rectangle (7)
+      7 ->
+        width = Map.get(telegraph_data, :param00, 3.0)
+        length = Map.get(telegraph_data, :param02, 10.0)
+        %ServerTelegraph{
+          caster_guid: caster_guid,
+          spell_id: spell_id,
+          shape: :rectangle,
+          position: position,
+          rotation: rotation,
+          duration: duration,
+          color: color,
+          params: %{width: width, length: length}
+        }
+
+      # Unknown shape - default to circle
+      _ ->
+        radius = Map.get(telegraph_data, :param00, 5.0)
+        ServerTelegraph.circle(caster_guid, position, radius, duration, color)
+    end
+
+    if packet do
+      # Add spell_id to packet if not already set
+      packet = if packet.spell_id, do: packet, else: %{packet | spell_id: spell_id}
+      broadcast_telegraph(packet, recipient_guids)
+    end
+  end
+
+  @doc """
   Notify EventManager and quest system of a creature kill.
 
   Called when a creature dies in combat. The EventManager will check if
