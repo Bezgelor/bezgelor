@@ -217,7 +217,12 @@ defmodule BezgelorProtocol.Connection do
 
   @impl GenServer
   def handle_cast({:send_packet, opcode, payload}, state) do
-    state = do_send_packet(state, opcode, payload)
+    # World server uses encrypted packets, other servers use plain
+    state = if state.connection_type == :world do
+      do_send_encrypted_world_packet(state, opcode, payload)
+    else
+      do_send_packet(state, opcode, payload)
+    end
     {:noreply, state}
   end
 
