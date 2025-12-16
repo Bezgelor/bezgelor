@@ -783,7 +783,13 @@ defmodule BezgelorWorld.CreatureManager do
           end
         else
           # Attack!
-          new_ai = AI.record_attack(ai)
+          # Stop movement animation if was chasing
+          if AI.chasing?(ai) do
+            world_id = Map.get(creature_state, :world_id)
+            broadcast_creature_stop(entity.guid, world_id)
+          end
+
+          new_ai = AI.record_attack(ai) |> AI.complete_chase()
           apply_creature_attack(entity, template, target_guid)
           {:updated, %{creature_state | ai: new_ai}}
         end
@@ -1434,4 +1440,34 @@ defmodule BezgelorWorld.CreatureManager do
   end
 
   defp broadcast_creature_movement(_creature_guid, _path, _speed, _world_id), do: :ok
+
+  # Broadcast creature stop to players in the same zone
+  defp broadcast_creature_stop(creature_guid, world_id) do
+    alias BezgelorProtocol.Packets.World.ServerEntityCommand
+    alias BezgelorProtocol.PacketWriter
+    alias BezgelorWorld.Zone.Instance, as: ZoneInstance
+
+    # Clear move state (0x00 = stopped)
+    state_command = %{type: :set_state, state: 0x00}
+
+    # Reset move direction to defaults
+    move_defaults = %{type: :set_move_defaults, blend: false}
+
+    packet = %ServerEntityCommand{
+      guid: creature_guid,
+      time: System.monotonic_time(:millisecond) |> rem(0xFFFFFFFF),
+      time_reset: false,
+      server_controlled: true,
+      commands: [state_command, move_defaults]
+    }
+
+    # Serialize and broadcast
+    writer = PacketWriter.new()
+    {:ok, writer} = ServerEntityCommand.write(packet, writer)
+    packet_data = PacketWriter.to_binary(writer)
+
+    ZoneInstance.broadcast({world_id, 1}, {:server_entity_command, packet_data})
+
+    Logger.debug("Broadcast stop for creature #{creature_guid} in zone #{world_id}")
+  end
 end
