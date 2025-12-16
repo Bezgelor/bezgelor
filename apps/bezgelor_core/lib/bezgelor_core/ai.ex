@@ -382,6 +382,34 @@ defmodule BezgelorCore.AI do
   end
 
   @doc """
+  Determine combat action based on target distance.
+
+  Returns what the creature should do during its combat tick:
+  - `{:chase, target_position}` - Move toward target
+  - `{:attack, target_guid}` - Attack the target
+  - `:none` - Not in combat
+
+  ## Parameters
+
+  - `ai` - The AI state (must be in combat)
+  - `target_position` - Current position of the target
+  - `attack_range` - Range at which creature can attack
+  """
+  @spec combat_action(t(), {float(), float(), float()}, float()) ::
+          {:chase, {float(), float(), float()}} | {:attack, non_neg_integer()} | :none
+  def combat_action(%__MODULE__{state: :combat, target_guid: target_guid, spawn_position: current_pos}, target_pos, attack_range) do
+    dist = distance(current_pos, target_pos)
+
+    if dist <= attack_range do
+      {:attack, target_guid}
+    else
+      {:chase, target_pos}
+    end
+  end
+
+  def combat_action(%__MODULE__{}, _target_pos, _attack_range), do: :none
+
+  @doc """
   Check if creature can attack (attack speed cooldown).
   """
   @spec can_attack?(t(), non_neg_integer()) :: boolean()
