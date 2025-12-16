@@ -101,6 +101,12 @@ defmodule BezgelorWorld.CreatureManager do
     GenServer.cast(__MODULE__, {:creature_enter_combat, creature_guid, target_guid})
   end
 
+  @doc "Update creature's position (for testing leash behavior)."
+  @spec update_creature_position(non_neg_integer(), {float(), float(), float()}) :: :ok
+  def update_creature_position(creature_guid, position) do
+    GenServer.cast(__MODULE__, {:update_creature_position, creature_guid, position})
+  end
+
   @doc "Check if a creature is alive and targetable."
   @spec creature_targetable?(non_neg_integer()) :: boolean()
   def creature_targetable?(guid) do
@@ -402,6 +408,22 @@ defmodule BezgelorWorld.CreatureManager do
           # Trigger social aggro for nearby same-faction creatures
           state = trigger_social_aggro(creature_state, target_guid, state)
 
+          %{state | creatures: Map.put(state.creatures, creature_guid, new_creature_state)}
+      end
+
+    {:noreply, state}
+  end
+
+  @impl true
+  def handle_cast({:update_creature_position, creature_guid, position}, state) do
+    state =
+      case Map.get(state.creatures, creature_guid) do
+        nil ->
+          state
+
+        creature_state ->
+          new_entity = %{creature_state.entity | position: position}
+          new_creature_state = %{creature_state | entity: new_entity}
           %{state | creatures: Map.put(state.creatures, creature_guid, new_creature_state)}
       end
 
@@ -744,36 +766,35 @@ defmodule BezgelorWorld.CreatureManager do
 
     case AI.tick(ai, context) do
       :none ->
-        # Check for evade completion/movement
-        if ai.state == :evade do
-          current_pos = entity.position
-          spawn_pos = ai.spawn_position
-          dist_to_spawn = AI.distance(current_pos, spawn_pos)
+        {:no_change, creature_state}
 
-          if dist_to_spawn < 2.0 do
-            # Reached spawn, complete evade and restore health
+      {:move_to, target_pos} ->
+        # Moving to a position (used during evade)
+        current_pos = entity.position
+        dist_to_target = AI.distance(current_pos, target_pos)
+
+        if dist_to_target < 2.0 do
+          # Reached target - if evading, complete evade
+          if ai.state == :evade do
             new_ai = AI.complete_evade(ai)
 
             new_entity = %{
               entity
               | health: template.max_health,
-                position: spawn_pos
+                position: target_pos
             }
 
             Logger.debug("Creature #{entity.name} completed evade, resetting")
             {:updated, %{creature_state | ai: new_ai, entity: new_entity}}
           else
-            # Move toward spawn (5 units per tick)
-            new_pos = move_toward(current_pos, spawn_pos, 5.0)
-            new_entity = %{entity | position: new_pos}
-            {:updated, %{creature_state | entity: new_entity}}
+            {:no_change, creature_state}
           end
         else
-          {:no_change, creature_state}
+          # Move toward target (5 units per tick)
+          new_pos = move_toward(current_pos, target_pos, 5.0)
+          new_entity = %{entity | position: new_pos}
+          {:updated, %{creature_state | entity: new_entity}}
         end
-
-      {:move_to, _position} ->
-        {:no_change, creature_state}
 
       {:start_wander, new_ai} ->
         # Creature is starting to wander - broadcast movement to players in zone
