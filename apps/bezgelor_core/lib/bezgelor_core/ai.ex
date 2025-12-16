@@ -213,6 +213,22 @@ defmodule BezgelorCore.AI do
   def social_aggro(%__MODULE__{} = ai, _target_guid), do: ai
 
   @doc """
+  Check if creature should leash (return to spawn) based on distance.
+
+  Only triggers when in combat and distance from spawn exceeds leash_range.
+  """
+  @spec check_leash(t(), {float(), float(), float()}, float()) :: :evade | :ok
+  def check_leash(%__MODULE__{state: :combat, spawn_position: spawn_pos}, current_pos, leash_range) do
+    if distance(spawn_pos, current_pos) > leash_range do
+      :evade
+    else
+      :ok
+    end
+  end
+
+  def check_leash(%__MODULE__{}, _current_pos, _leash_range), do: :ok
+
+  @doc """
   Check if creature is dead.
   """
   @spec dead?(t()) :: boolean()
