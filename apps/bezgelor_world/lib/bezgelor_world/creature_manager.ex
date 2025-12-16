@@ -764,9 +764,19 @@ defmodule BezgelorWorld.CreatureManager do
         {:updated, %{creature_state | ai: new_ai}}
 
       {:chase, chase_target_pos} ->
-        # Out of range - start chasing
+        # Out of range - start chasing (or repositioning for ranged)
         current_pos = entity.position
-        path = Movement.chase_path(current_pos, chase_target_pos, attack_range)
+
+        # Ranged creatures maintain optimal distance, melee close to attack range
+        path =
+          if template.is_ranged do
+            # Ranged: maintain 50-100% of max range
+            min_range = attack_range * 0.5
+            Movement.ranged_position_path(current_pos, chase_target_pos, min_range, attack_range)
+          else
+            # Melee: close to attack range
+            Movement.chase_path(current_pos, chase_target_pos, attack_range)
+          end
 
         if length(path) > 1 do
           # Calculate movement duration
