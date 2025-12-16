@@ -744,23 +744,29 @@ defmodule BezgelorWorld.CreatureManager do
 
     case AI.tick(ai, context) do
       :none ->
-        # Check for evade completion
+        # Check for evade completion/movement
         if ai.state == :evade do
-          distance = AI.distance(entity.position, ai.spawn_position)
+          current_pos = entity.position
+          spawn_pos = ai.spawn_position
+          dist_to_spawn = AI.distance(current_pos, spawn_pos)
 
-          if distance < 1.0 do
+          if dist_to_spawn < 2.0 do
             # Reached spawn, complete evade and restore health
             new_ai = AI.complete_evade(ai)
 
             new_entity = %{
               entity
               | health: template.max_health,
-                position: ai.spawn_position
+                position: spawn_pos
             }
 
+            Logger.debug("Creature #{entity.name} completed evade, resetting")
             {:updated, %{creature_state | ai: new_ai, entity: new_entity}}
           else
-            {:no_change, creature_state}
+            # Move toward spawn (5 units per tick)
+            new_pos = move_toward(current_pos, spawn_pos, 5.0)
+            new_entity = %{entity | position: new_pos}
+            {:updated, %{creature_state | entity: new_entity}}
           end
         else
           {:no_change, creature_state}
@@ -802,6 +808,22 @@ defmodule BezgelorWorld.CreatureManager do
       _ ->
         # Handle any unexpected results
         {:no_change, creature_state}
+    end
+  end
+
+  # Helper to move position toward target by a fixed distance
+  defp move_toward({x1, y1, z1}, {x2, y2, z2}, step_distance) do
+    dx = x2 - x1
+    dy = y2 - y1
+    dz = z2 - z1
+    length = :math.sqrt(dx * dx + dy * dy + dz * dz)
+
+    if length <= step_distance do
+      # Already close enough, snap to target
+      {x2, y2, z2}
+    else
+      ratio = step_distance / length
+      {x1 + dx * ratio, y1 + dy * ratio, z1 + dz * ratio}
     end
   end
 
