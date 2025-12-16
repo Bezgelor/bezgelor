@@ -5,13 +5,16 @@ defmodule BezgelorWorld.CreatureAggroTest do
 
   setup do
     # Start CreatureManager if not running
-    case GenServer.whereis(CreatureManager) do
-      nil -> start_supervised!(CreatureManager)
-      _pid -> :ok
+    pid = case GenServer.whereis(CreatureManager) do
+      nil ->
+        {:ok, pid} = start_supervised!(CreatureManager)
+        pid
+      existing_pid ->
+        existing_pid
     end
 
-    # Clear any existing creatures
-    CreatureManager.clear_all_creatures()
+    # Clear any existing creatures with a longer timeout since spline index build can be slow
+    GenServer.call(pid, :clear_all_creatures, 10_000)
     :ok
   end
 

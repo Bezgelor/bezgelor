@@ -608,20 +608,23 @@ defmodule BezgelorWorld.CreatureManager do
     end
   end
 
-  # Helper to get nearby players and check aggro
+  # Helper to get nearby players and check aggro (with faction filtering)
   defp check_aggro_nearby_players(creature_state) do
     world_id = Map.get(creature_state, :world_id)
     creature_pos = creature_state.entity.position
     aggro_range = creature_state.template.aggro_range || 15.0
 
-    # Get nearby players from zone instance
+    # Get creature faction from template (already an atom like :hostile, :neutral, :friendly)
+    creature_faction = creature_state.template.faction || :hostile
+
+    # Get nearby players from zone instance (including their faction)
     nearby_players = get_nearby_players(world_id, creature_pos, aggro_range)
 
-    # Use AI.check_aggro to find closest player in range
-    AI.check_aggro(creature_state.ai, nearby_players, aggro_range)
+    # Use AI.check_aggro_with_faction to find closest hostile player in range
+    AI.check_aggro_with_faction(creature_state.ai, nearby_players, aggro_range, creature_faction)
   end
 
-  # Get nearby player entities from zone instance
+  # Get nearby player entities from zone instance (including faction)
   defp get_nearby_players(world_id, position, range) do
     zone_key = {world_id, 1}  # Assuming instance 1
 
@@ -629,7 +632,13 @@ defmodule BezgelorWorld.CreatureManager do
       {:ok, entities} ->
         entities
         |> Enum.filter(fn e -> e.type == :player end)
-        |> Enum.map(fn e -> %{guid: e.guid, position: e.position} end)
+        |> Enum.map(fn e ->
+          %{
+            guid: e.guid,
+            position: e.position,
+            faction: Map.get(e, :faction, :exile)  # Default to exile for players
+          }
+        end)
 
       _ ->
         []
