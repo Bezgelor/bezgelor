@@ -27,6 +27,10 @@ defmodule BezgelorCore.CreatureTemplate do
   # Default social aggro range in meters
   @social_aggro_range 10.0
 
+  # Default attack ranges
+  @melee_attack_range 5.0
+  @ranged_attack_range 30.0
+
   @type t :: %__MODULE__{
           id: non_neg_integer(),
           name: String.t(),
@@ -44,6 +48,8 @@ defmodule BezgelorCore.CreatureTemplate do
           damage_min: non_neg_integer(),
           damage_max: non_neg_integer(),
           attack_speed: non_neg_integer(),
+          attack_range: float() | nil,
+          is_ranged: boolean(),
           reputation_rewards: [reputation_reward()]
         }
 
@@ -64,6 +70,8 @@ defmodule BezgelorCore.CreatureTemplate do
     damage_min: 5,
     damage_max: 10,
     attack_speed: 2000,
+    attack_range: nil,
+    is_ranged: false,
     reputation_rewards: []
   ]
 
@@ -106,6 +114,16 @@ defmodule BezgelorCore.CreatureTemplate do
   @spec hostile?(t()) :: boolean()
   def hostile?(%__MODULE__{faction: :hostile}), do: true
   def hostile?(_), do: false
+
+  @doc """
+  Get attack range with appropriate default.
+
+  Melee creatures default to 5.0, ranged creatures default to 30.0.
+  """
+  @spec attack_range(t()) :: float()
+  def attack_range(%__MODULE__{attack_range: range}) when is_number(range), do: range
+  def attack_range(%__MODULE__{is_ranged: true}), do: @ranged_attack_range
+  def attack_range(_), do: @melee_attack_range
 
   @doc """
   Get social aggro range, with default fallback.
