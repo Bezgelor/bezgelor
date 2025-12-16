@@ -15,6 +15,7 @@ defmodule BezgelorProtocol.Handler.CharacterSelectHandler do
   """
 
   @behaviour BezgelorProtocol.Handler
+  @compile {:no_warn_undefined, [BezgelorWorld.Zone.Instance]}
 
   alias BezgelorProtocol.Packets.World.{
     ClientCharacterSelect,
@@ -129,11 +130,23 @@ defmodule BezgelorProtocol.Handler.CharacterSelectHandler do
         state = put_in(state.session_data[:character], character)
         state = put_in(state.session_data[:spawn_location], spawn)
         state = put_in(state.session_data[:player_guid], player_guid)
+        state = put_in(state.session_data[:zone_id], spawn.world_id)
+        state = put_in(state.session_data[:instance_id], 1)
 
         # Set character metadata for log tracing
         Logger.metadata(char: character.name)
 
         Logger.info("Account #{account_id} entering world with character '#{character.name}' (ID: #{character.id})")
+
+        # Register player entity with zone instance for visibility tracking
+        # This enables creature AI processing for zones with players
+        player_entity = %BezgelorCore.Entity{
+          guid: player_guid,
+          type: :player,
+          name: character.name,
+          position: spawn.position
+        }
+        BezgelorWorld.Zone.Instance.add_entity({spawn.world_id, 1}, player_entity)
 
         # Send all initialization packets (order matters!)
         # Order based on NexusForever Player.OnAddToMap() and Player.AddVisible():
