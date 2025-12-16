@@ -48,7 +48,13 @@ defmodule BezgelorCore.AI do
           patrol_waypoints: [map()],
           patrol_current_index: non_neg_integer(),
           patrol_speed: float(),
-          patrol_mode: :cyclic | :back_and_forth,
+          patrol_mode:
+            :cyclic
+            | :cyclic_reverse
+            | :one_shot
+            | :one_shot_reverse
+            | :back_and_forth
+            | :back_and_forth_reverse,
           patrol_direction: :forward | :backward,
           patrol_pause_until: integer() | nil
         }
@@ -62,10 +68,10 @@ defmodule BezgelorCore.AI do
             combat_participants: MapSet.new(),
             # Wandering defaults
             wander_enabled: true,
-            wander_range: 10.0,
-            wander_speed: 2.0,
+            wander_range: 15.0,
+            wander_speed: 2.5,
             last_wander_time: nil,
-            wander_cooldown: 5000,
+            wander_cooldown: 3000,
             # Movement (shared)
             movement_path: [],
             movement_start_time: nil,
@@ -490,6 +496,12 @@ defmodule BezgelorCore.AI do
       patrol_segment_complete?(ai, now) ->
         handle_patrol_waypoint_arrival(ai, now)
 
+      # No active movement and not paused - start next segment
+      # This handles the case after patrol_segment_complete when no pause was set
+      ai.movement_start_time == nil ->
+        current_position = Map.get(context, :position, ai.spawn_position)
+        start_next_patrol_segment(ai, current_position, now)
+
       # Still moving
       true ->
         :none
@@ -512,9 +524,10 @@ defmodule BezgelorCore.AI do
     end
   end
 
-  # Random chance to start wandering (20% per tick when cooldown elapsed)
+  # Random chance to start wandering (50% per tick when cooldown elapsed)
+  # Higher chance makes creatures more active for testing
   defp should_wander?(_ai, _now) do
-    :rand.uniform() < 0.20
+    :rand.uniform() < 0.50
   end
 
   # Patrol helper functions
@@ -534,7 +547,7 @@ defmodule BezgelorCore.AI do
   end
 
   defp start_next_patrol_segment(%__MODULE__{} = ai, current_position, now) do
-    next_index = get_next_patrol_index(ai)
+    {next_index, new_direction} = get_next_patrol_state(ai)
     waypoint = Enum.at(ai.patrol_waypoints, next_index)
 
     if waypoint do
@@ -552,13 +565,17 @@ defmodule BezgelorCore.AI do
             movement_path: path,
             movement_start_time: now,
             movement_duration: duration,
-            patrol_current_index: next_index
+            patrol_current_index: next_index,
+            patrol_direction: new_direction
         }
 
         {:start_patrol, new_ai}
       else
         # Already at waypoint, handle arrival
-        handle_patrol_waypoint_arrival(%{ai | patrol_current_index: next_index}, now)
+        handle_patrol_waypoint_arrival(
+          %{ai | patrol_current_index: next_index, patrol_direction: new_direction},
+          now
+        )
       end
     else
       :none
@@ -593,7 +610,8 @@ defmodule BezgelorCore.AI do
     {:patrol_segment_complete, new_ai}
   end
 
-  defp get_next_patrol_index(%__MODULE__{
+  # Returns {next_index, new_direction}
+  defp get_next_patrol_state(%__MODULE__{
          patrol_waypoints: waypoints,
          patrol_current_index: current,
          patrol_mode: mode,
@@ -602,22 +620,78 @@ defmodule BezgelorCore.AI do
     max_index = length(waypoints) - 1
 
     case {mode, direction} do
-      {:cyclic, _} ->
-        rem(current + 1, length(waypoints))
+      # Cyclic modes - loop forever in one direction
+      {:cyclic, :forward} ->
+        {rem(current + 1, length(waypoints)), :forward}
 
+      {:cyclic, :backward} ->
+        index = if current <= 0, do: max_index, else: current - 1
+        {index, :backward}
+
+      {:cyclic_reverse, :forward} ->
+        {rem(current + 1, length(waypoints)), :forward}
+
+      {:cyclic_reverse, :backward} ->
+        index = if current <= 0, do: max_index, else: current - 1
+        {index, :backward}
+
+      # One-shot modes - play through once then stop
+      {:one_shot, :forward} when current >= max_index ->
+        # Reached end, stay at end (patrol complete)
+        {max_index, :forward}
+
+      {:one_shot, :forward} ->
+        {current + 1, :forward}
+
+      {:one_shot, :backward} when current <= 0 ->
+        # Reached start, stay at start
+        {0, :backward}
+
+      {:one_shot, :backward} ->
+        {current - 1, :backward}
+
+      {:one_shot_reverse, :forward} when current >= max_index ->
+        {max_index, :forward}
+
+      {:one_shot_reverse, :forward} ->
+        {current + 1, :forward}
+
+      {:one_shot_reverse, :backward} when current <= 0 ->
+        {0, :backward}
+
+      {:one_shot_reverse, :backward} ->
+        {current - 1, :backward}
+
+      # Back-and-forth modes - bounce between ends, changing direction
       {:back_and_forth, :forward} when current >= max_index ->
-        # At end, reverse
-        max(0, current - 1)
+        # At end, reverse direction
+        {max(0, current - 1), :backward}
 
       {:back_and_forth, :forward} ->
-        current + 1
+        {current + 1, :forward}
 
       {:back_and_forth, :backward} when current <= 0 ->
         # At start, go forward
-        min(max_index, current + 1)
+        {min(max_index, current + 1), :forward}
 
       {:back_and_forth, :backward} ->
-        current - 1
+        {current - 1, :backward}
+
+      {:back_and_forth_reverse, :forward} when current >= max_index ->
+        {max(0, current - 1), :backward}
+
+      {:back_and_forth_reverse, :forward} ->
+        {current + 1, :forward}
+
+      {:back_and_forth_reverse, :backward} when current <= 0 ->
+        {min(max_index, current + 1), :forward}
+
+      {:back_and_forth_reverse, :backward} ->
+        {current - 1, :backward}
+
+      # Default fallback - treat as cyclic forward
+      _ ->
+        {rem(current + 1, length(waypoints)), direction}
     end
   end
 
