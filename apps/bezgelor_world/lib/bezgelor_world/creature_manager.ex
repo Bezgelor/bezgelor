@@ -570,12 +570,13 @@ defmodule BezgelorWorld.CreatureManager do
   end
 
   # Determine if a creature needs AI processing this tick
-  defp needs_ai_processing?(%{ai: ai}, now) do
+  defp needs_ai_processing?(%{ai: ai, template: template}, now) do
     # Process if:
     # - In combat (needs to attack/check threat)
     # - Evading (needs to return to spawn)
     # - Has targets in threat table (should be in combat)
     # - Idle with patrol enabled (always needs processing to start patrol)
+    # - Idle aggressive creature (needs aggro checking)
     # - Idle and can wander (for ambient movement)
     # - Currently wandering (need to check completion)
     # - Currently patrolling (need to check segment completion)
@@ -585,10 +586,57 @@ defmodule BezgelorWorld.CreatureManager do
       ai.state == :patrol or
       map_size(ai.threat_table) > 0 or
       (ai.state == :idle and ai.patrol_enabled) or
+      (ai.state == :idle and template.ai_type == :aggressive and (template.aggro_range || 0.0) > 0) or
       (ai.state == :idle and AI.can_wander?(ai, now))
   end
 
   defp process_creature_ai(%{ai: ai, template: template, entity: entity} = creature_state, now) do
+    # For idle aggressive creatures, check for nearby players to aggro
+    if ai.state == :idle and template.ai_type == :aggressive and (template.aggro_range || 0.0) > 0 do
+      case check_aggro_nearby_players(creature_state) do
+        {:aggro, player_guid} ->
+          new_ai = AI.enter_combat(ai, player_guid)
+          Logger.debug("Creature #{entity.name} auto-aggro'd player #{player_guid}")
+          {:updated, %{creature_state | ai: new_ai}}
+
+        nil ->
+          # No aggro, continue with normal idle behavior
+          process_creature_ai_tick(creature_state, ai, template, entity, now)
+      end
+    else
+      process_creature_ai_tick(creature_state, ai, template, entity, now)
+    end
+  end
+
+  # Helper to get nearby players and check aggro
+  defp check_aggro_nearby_players(creature_state) do
+    world_id = Map.get(creature_state, :world_id)
+    creature_pos = creature_state.entity.position
+    aggro_range = creature_state.template.aggro_range || 15.0
+
+    # Get nearby players from zone instance
+    nearby_players = get_nearby_players(world_id, creature_pos, aggro_range)
+
+    # Use AI.check_aggro to find closest player in range
+    AI.check_aggro(creature_state.ai, nearby_players, aggro_range)
+  end
+
+  # Get nearby player entities from zone instance
+  defp get_nearby_players(world_id, position, range) do
+    zone_key = {world_id, 1}  # Assuming instance 1
+
+    case ZoneInstance.entities_in_range(zone_key, position, range) do
+      {:ok, entities} ->
+        entities
+        |> Enum.filter(fn e -> e.type == :player end)
+        |> Enum.map(fn e -> %{guid: e.guid, position: e.position} end)
+
+      _ ->
+        []
+    end
+  end
+
+  defp process_creature_ai_tick(creature_state, ai, template, entity, now) do
     # Check for combat timeout - exit combat if no activity for too long
     ai =
       if ai.state == :combat and ai.combat_start_time do
