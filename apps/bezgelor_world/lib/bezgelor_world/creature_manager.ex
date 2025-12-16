@@ -30,7 +30,7 @@ defmodule BezgelorWorld.CreatureManager do
 
   require Logger
 
-  alias BezgelorCore.{AI, CreatureTemplate, Entity}
+  alias BezgelorCore.{AI, CreatureTemplate, Entity, Movement}
   alias BezgelorWorld.{CombatBroadcaster, CreatureDeath, TickScheduler, WorldManager}
   alias BezgelorData.Store
   alias BezgelorWorld.Zone.Instance, as: ZoneInstance
@@ -41,7 +41,9 @@ defmodule BezgelorWorld.CreatureManager do
           template: CreatureTemplate.t(),
           ai: AI.t(),
           spawn_position: {float(), float(), float()},
-          respawn_timer: reference() | nil
+          respawn_timer: reference() | nil,
+          # Target position for combat (testing/simulation)
+          target_position: {float(), float(), float()} | nil
         }
 
   @type state :: %{
@@ -52,9 +54,6 @@ defmodule BezgelorWorld.CreatureManager do
   # NOTE: Removed @max_creatures_per_tick - the needs_ai_processing? filter
   # already limits to creatures that actually need updates. Batching with
   # Enum.take() was causing most creatures to never get processed.
-
-  # Combat timeout - creatures exit combat after this many ms without activity
-  @combat_timeout_ms 30_000
 
   ## Client API
 
@@ -105,6 +104,12 @@ defmodule BezgelorWorld.CreatureManager do
   @spec update_creature_position(non_neg_integer(), {float(), float(), float()}) :: :ok
   def update_creature_position(creature_guid, position) do
     GenServer.cast(__MODULE__, {:update_creature_position, creature_guid, position})
+  end
+
+  @doc "Set target position for a creature (for testing chase behavior)."
+  @spec set_target_position(non_neg_integer(), {float(), float(), float()}) :: :ok
+  def set_target_position(creature_guid, position) do
+    GenServer.cast(__MODULE__, {:set_target_position, creature_guid, position})
   end
 
   @doc "Check if a creature is alive and targetable."
@@ -240,7 +245,8 @@ defmodule BezgelorWorld.CreatureManager do
           template: template,
           ai: ai,
           spawn_position: position,
-          respawn_timer: nil
+          respawn_timer: nil,
+          target_position: nil
         }
 
         creatures = Map.put(state.creatures, guid, creature_state)
@@ -424,6 +430,21 @@ defmodule BezgelorWorld.CreatureManager do
         creature_state ->
           new_entity = %{creature_state.entity | position: position}
           new_creature_state = %{creature_state | entity: new_entity}
+          %{state | creatures: Map.put(state.creatures, creature_guid, new_creature_state)}
+      end
+
+    {:noreply, state}
+  end
+
+  @impl true
+  def handle_cast({:set_target_position, creature_guid, position}, state) do
+    state =
+      case Map.get(state.creatures, creature_guid) do
+        nil ->
+          state
+
+        creature_state ->
+          new_creature_state = %{creature_state | target_position: position}
           %{state | creatures: Map.put(state.creatures, creature_guid, new_creature_state)}
       end
 
@@ -717,32 +738,24 @@ defmodule BezgelorWorld.CreatureManager do
     end
   end
 
-  defp process_combat_ai_tick(creature_state, ai, template, entity, now) do
-    # Check for combat timeout - exit combat if no activity for too long
-    ai =
-      if ai.combat_start_time do
-        combat_duration = now - ai.combat_start_time
+  defp process_combat_ai_tick(creature_state, ai, template, entity, _now) do
+    # Get target position (from stored test position or try zone lookup)
+    target_pos = get_target_position(creature_state)
 
-        if combat_duration > @combat_timeout_ms and map_size(ai.threat_table) == 0 do
-          AI.exit_combat(ai)
-        else
-          ai
-        end
-      else
-        ai
-      end
+    # Get attack range from template
+    attack_range = CreatureTemplate.attack_range(template)
 
-    context = %{
-      attack_speed: template.attack_speed,
-      position: entity.position
-    }
-
-    case AI.tick(ai, context) do
+    # Determine combat action based on distance to target
+    case AI.combat_action(ai, target_pos, attack_range) do
       :none ->
         {:no_change, creature_state}
 
+      :wait ->
+        # Chase in progress, wait for movement to complete
+        {:no_change, creature_state}
+
       {:attack, target_guid} ->
-        # Record attack time
+        # In range - attack!
         new_ai = AI.record_attack(ai)
 
         # Apply damage to target (if player)
@@ -750,11 +763,63 @@ defmodule BezgelorWorld.CreatureManager do
 
         {:updated, %{creature_state | ai: new_ai}}
 
-      {:move_to, _position} ->
-        {:no_change, creature_state}
+      {:chase, chase_target_pos} ->
+        # Out of range - start chasing
+        current_pos = entity.position
+        path = Movement.chase_path(current_pos, chase_target_pos, attack_range)
 
-      _ ->
-        {:no_change, creature_state}
+        if length(path) > 1 do
+          # Calculate movement duration
+          path_length = Movement.path_length(path)
+          duration = CreatureTemplate.movement_duration(template, path_length)
+
+          # Start chase in AI
+          new_ai = AI.start_chase(ai, path, duration)
+
+          # Broadcast movement to players in zone
+          world_id = Map.get(creature_state, :world_id)
+          speed = CreatureTemplate.movement_speed(template)
+          broadcast_creature_movement(entity.guid, path, speed, world_id)
+
+          # Update entity position to end of path
+          end_pos = List.last(path)
+          new_entity = %{entity | position: end_pos}
+
+          Logger.debug("Creature #{entity.name} chasing target, path length: #{length(path)}")
+          {:updated, %{creature_state | ai: new_ai, entity: new_entity}}
+        else
+          # Already at target, no chase needed
+          {:no_change, creature_state}
+        end
+    end
+  end
+
+  # Get target position for combat - uses stored test position or zone lookup
+  defp get_target_position(creature_state) do
+    # First check for manually set target position (testing)
+    case Map.get(creature_state, :target_position) do
+      nil ->
+        # Try to look up target in zone
+        target_guid = creature_state.ai.target_guid
+        world_id = Map.get(creature_state, :world_id, 1)
+
+        case get_entity_position(world_id, target_guid) do
+          {:ok, pos} -> pos
+          :error -> creature_state.entity.position  # Fallback to own position
+        end
+
+      pos ->
+        pos
+    end
+  end
+
+  # Look up entity position from zone instance
+  defp get_entity_position(world_id, entity_guid) do
+    zone_key = {world_id, 1}
+
+    case ZoneInstance.get_entity(zone_key, entity_guid) do
+      {:ok, entity} -> {:ok, entity.position}
+      _ -> :error
     end
   end
 
