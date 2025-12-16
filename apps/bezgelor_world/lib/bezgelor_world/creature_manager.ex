@@ -157,6 +157,25 @@ defmodule BezgelorWorld.CreatureManager do
     GenServer.call(__MODULE__, :get_spawn_definitions)
   end
 
+  @doc """
+  Check aggro for a specific creature against nearby players.
+  If a player is within aggro range, the creature will enter combat.
+  """
+  @spec check_aggro_for_creature(non_neg_integer(), [map()]) :: :ok
+  def check_aggro_for_creature(creature_guid, nearby_players) do
+    GenServer.cast(__MODULE__, {:check_aggro, creature_guid, nearby_players})
+  end
+
+  @doc """
+  Get the current state of a creature by GUID.
+  Returns {:ok, creature_state} if found, :error if not found.
+  Useful for testing and debugging.
+  """
+  @spec get_creature_state(non_neg_integer()) :: {:ok, creature_state()} | :error
+  def get_creature_state(creature_guid) do
+    GenServer.call(__MODULE__, {:get_creature_state, creature_guid})
+  end
+
   ## Server Callbacks
 
   @impl true
@@ -325,6 +344,32 @@ defmodule BezgelorWorld.CreatureManager do
   end
 
   @impl true
+  def handle_call({:get_creature_state, creature_guid}, _from, state) do
+    case Map.get(state.creatures, creature_guid) do
+      nil -> {:reply, :error, state}
+      creature_state -> {:reply, {:ok, creature_state}, state}
+    end
+  end
+
+  @impl true
+  def handle_cast({:check_aggro, creature_guid, nearby_players}, state) do
+    case Map.get(state.creatures, creature_guid) do
+      nil ->
+        {:noreply, state}
+
+      creature_state ->
+        case check_and_enter_combat(creature_state, nearby_players) do
+          {:entered_combat, new_creature_state} ->
+            creatures = Map.put(state.creatures, creature_guid, new_creature_state)
+            {:noreply, %{state | creatures: creatures}}
+
+          :no_aggro ->
+            {:noreply, state}
+        end
+    end
+  end
+
+  @impl true
   def handle_cast({:load_zone_spawns_async, world_id}, state) do
     case Store.get_creature_spawns(world_id) do
       {:ok, zone_data} ->
@@ -398,6 +443,27 @@ defmodule BezgelorWorld.CreatureManager do
   end
 
   ## Private Functions
+
+  # Check aggro and enter combat if player detected
+  defp check_and_enter_combat(creature_state, nearby_players) do
+    template = creature_state.template
+    aggro_range = template.aggro_range || 0.0
+
+    # Only aggressive creatures auto-aggro
+    if template.ai_type == :aggressive and aggro_range > 0 do
+      case AI.check_aggro(creature_state.ai, nearby_players, aggro_range) do
+        {:aggro, player_guid} ->
+          new_ai = AI.enter_combat(creature_state.ai, player_guid)
+          Logger.info("Creature #{creature_state.entity.name} aggro'd on player #{player_guid}")
+          {:entered_combat, %{creature_state | ai: new_ai}}
+
+        nil ->
+          :no_aggro
+      end
+    else
+      :no_aggro
+    end
+  end
 
   defp apply_damage_to_creature(creature_state, attacker_guid, damage, state) do
     entity = Entity.apply_damage(creature_state.entity, damage)
