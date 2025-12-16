@@ -56,6 +56,19 @@ defmodule BezgelorCore.AICombatMovementTest do
     end
   end
 
+  describe "combat_action with active chase" do
+    test "returns :wait when chase is in progress" do
+      ai = AI.new({0.0, 0.0, 0.0})
+           |> AI.enter_combat(12345)
+           |> AI.start_chase([{0.0, 0.0, 0.0}, {10.0, 0.0, 0.0}], 5000)
+
+      target_pos = {15.0, 0.0, 0.0}
+      result = AI.combat_action(ai, target_pos, 5.0)
+
+      assert result == :wait
+    end
+  end
+
   describe "combat_action/3" do
     test "returns :chase when target is out of attack range" do
       ai = AI.new({0.0, 0.0, 0.0}) |> AI.enter_combat(12345)

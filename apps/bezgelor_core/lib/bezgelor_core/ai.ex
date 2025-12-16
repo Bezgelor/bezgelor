@@ -404,14 +404,20 @@ defmodule BezgelorCore.AI do
   - `attack_range` - Range at which creature can attack
   """
   @spec combat_action(t(), {float(), float(), float()}, float()) ::
-          {:chase, {float(), float(), float()}} | {:attack, non_neg_integer()} | :none
-  def combat_action(%__MODULE__{state: :combat, target_guid: target_guid, spawn_position: current_pos}, target_pos, attack_range) do
-    dist = distance(current_pos, target_pos)
-
-    if dist <= attack_range do
-      {:attack, target_guid}
+          {:chase, {float(), float(), float()}} | {:attack, non_neg_integer()} | :wait | :none
+  def combat_action(%__MODULE__{state: :combat} = ai, target_pos, attack_range) do
+    # If already chasing, wait for movement to complete
+    if chasing?(ai) do
+      :wait
     else
-      {:chase, target_pos}
+      current_pos = get_chase_position(ai) || ai.spawn_position
+      dist = distance(current_pos, target_pos)
+
+      if dist <= attack_range do
+        {:attack, ai.target_guid}
+      else
+        {:chase, target_pos}
+      end
     end
   end
 
