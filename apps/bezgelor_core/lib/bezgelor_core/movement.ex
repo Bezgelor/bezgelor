@@ -257,6 +257,61 @@ defmodule BezgelorCore.Movement do
   end
 
   @doc """
+  Generate a chase path toward a target, stopping at attack range.
+
+  ## Parameters
+
+  - `current_pos` - Current position of the chaser
+  - `target_pos` - Position of the target
+  - `attack_range` - Distance at which to stop (attack range)
+  - `opts` - Options:
+    - `:step_size` - Distance between waypoints (default 2.0)
+
+  ## Returns
+
+  List of waypoints from current position to attack range distance from target.
+  Returns empty list if already in range.
+  """
+  @spec chase_path(position(), position(), float(), keyword()) :: path()
+  def chase_path(current_pos, target_pos, attack_range, opts \\ []) do
+    step_size = Keyword.get(opts, :step_size, @step_size)
+
+    {cx, cy, cz} = current_pos
+    {tx, ty, tz} = target_pos
+
+    dx = tx - cx
+    dy = ty - cy
+    dz = tz - cz
+    total_distance = :math.sqrt(dx * dx + dy * dy + dz * dz)
+
+    # Already in range
+    if total_distance <= attack_range do
+      []
+    else
+      # Calculate stop point (attack_range distance from target)
+      stop_distance = total_distance - attack_range
+
+      # Normalize direction
+      nx = dx / total_distance
+      ny = dy / total_distance
+      nz = dz / total_distance
+
+      # Generate waypoints
+      num_steps = ceil(stop_distance / step_size)
+
+      0..num_steps
+      |> Enum.map(fn step ->
+        progress = min(step * step_size / stop_distance, 1.0)
+        {
+          cx + nx * stop_distance * progress,
+          cy + ny * stop_distance * progress,
+          cz + nz * stop_distance * progress
+        }
+      end)
+    end
+  end
+
+  @doc """
   Check if a position is within leash range of spawn.
   """
   @spec within_leash?(position(), position(), float()) :: boolean()
