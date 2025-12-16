@@ -34,12 +34,18 @@ defmodule BezgelorData.AchievementIndex do
     # Clear existing entries
     :ets.delete_all_objects(@table)
 
+    # Pre-build set of achievement IDs that have checklists (avoids N*M scan)
+    checklist_achievement_ids =
+      Store.list(:achievement_checklists)
+      |> Enum.map(fn c -> c.achievementId end)
+      |> MapSet.new()
+
     # Index all achievements
     achievements = Store.list(:achievements)
 
     indexed_count =
       achievements
-      |> Enum.map(&index_achievement/1)
+      |> Enum.map(&index_achievement(&1, checklist_achievement_ids))
       |> Enum.count(& &1)
 
     Logger.debug("Achievement index built: #{indexed_count} achievements indexed")
@@ -108,12 +114,12 @@ defmodule BezgelorData.AchievementIndex do
 
   # Index a single achievement into the ETS table
   # Returns true if indexed, false if skipped (unknown type)
-  defp index_achievement(achievement) do
+  defp index_achievement(achievement, checklist_set) do
     type_id = Map.get(achievement, :achievementTypeId)
     event_type = AchievementTypes.event_type(type_id)
 
     if event_type do
-      def_map = build_def_map(achievement, event_type, type_id)
+      def_map = build_def_map(achievement, event_type, type_id, checklist_set)
 
       if AchievementTypes.uses_object_id?(type_id) and get_object_id(achievement) > 0 do
         # Index by specific object
@@ -136,7 +142,7 @@ defmodule BezgelorData.AchievementIndex do
     end
   end
 
-  defp build_def_map(achievement, event_type, type_id) do
+  defp build_def_map(achievement, event_type, type_id, checklist_set) do
     achievement_id = Map.get(achievement, :id) || Map.get(achievement, :ID)
 
     %{
@@ -148,7 +154,7 @@ defmodule BezgelorData.AchievementIndex do
       zone_id: get_zone_id(achievement),
       title_id: Map.get(achievement, :characterTitleId, 0),
       points: AchievementTypes.points_for_enum(Map.get(achievement, :achievementPointEnum, 0)),
-      has_checklist: has_checklist?(achievement_id)
+      has_checklist: MapSet.member?(checklist_set, achievement_id)
     }
   end
 
@@ -169,9 +175,5 @@ defmodule BezgelorData.AchievementIndex do
   # Helper to get zone ID with fallback
   defp get_zone_id(achievement) do
     Map.get(achievement, :worldZoneId, 0)
-  end
-
-  defp has_checklist?(achievement_id) do
-    Store.get_achievement_checklists(achievement_id) != []
   end
 end
