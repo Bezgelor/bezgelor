@@ -201,6 +201,18 @@ defmodule BezgelorCore.AI do
   end
 
   @doc """
+  Trigger social aggro - nearby creature joins combat against a target.
+
+  Only affects idle creatures. Combat/evade/dead creatures ignore this.
+  """
+  @spec social_aggro(t(), non_neg_integer()) :: t()
+  def social_aggro(%__MODULE__{state: :idle} = ai, target_guid) do
+    enter_combat(ai, target_guid)
+  end
+
+  def social_aggro(%__MODULE__{} = ai, _target_guid), do: ai
+
+  @doc """
   Check if creature is dead.
   """
   @spec dead?(t()) :: boolean()

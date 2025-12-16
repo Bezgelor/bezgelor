@@ -147,4 +147,39 @@ defmodule BezgelorCore.AIAggroTest do
       assert result == nil
     end
   end
+
+  describe "social_aggro/2" do
+    test "idle creature can receive social aggro" do
+      ai = AI.new({0.0, 0.0, 0.0})
+
+      new_ai = AI.social_aggro(ai, 12345)
+
+      assert new_ai.state == :combat
+      assert new_ai.target_guid == 12345
+    end
+
+    test "creature already in combat ignores social aggro" do
+      ai = AI.new({0.0, 0.0, 0.0}) |> AI.enter_combat(11111)
+
+      new_ai = AI.social_aggro(ai, 22222)
+
+      assert new_ai.target_guid == 11111  # Keeps original target
+    end
+
+    test "evading creature ignores social aggro" do
+      ai = AI.new({0.0, 0.0, 0.0}) |> AI.start_evade()
+
+      new_ai = AI.social_aggro(ai, 12345)
+
+      assert new_ai.state == :evade
+    end
+
+    test "dead creature ignores social aggro" do
+      ai = AI.new({0.0, 0.0, 0.0}) |> AI.set_dead()
+
+      new_ai = AI.social_aggro(ai, 12345)
+
+      assert new_ai.state == :dead
+    end
+  end
 end
