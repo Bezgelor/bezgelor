@@ -2,6 +2,8 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
+**Status:** ✅ ALL PHASES COMPLETE (2025-12-16)
+
 **Goal:** Close the 5 critical gaps in the combat loop to move from "functional demo" to "playable game" with real stats, coordinated periodic ticks, XP persistence, corpse-based loot pickup, and telegraph visualization.
 
 **Architecture:** Combat calculations already exist in `bezgelor_core/spell_effect.ex` but use hardcoded stats. Periodic ticking exists in `BuffManager.Shard` but uses per-buff timers (not coordinated). We need to: (1) wire real character stats through the combat path, (2) implement coordinated zone-wide tick scheduling for authentic WildStar behavior, (3) persist XP to database on kills, (4) implement corpse entities for loot pickup interaction, and (5) add telegraph geometry data to spell packets.
