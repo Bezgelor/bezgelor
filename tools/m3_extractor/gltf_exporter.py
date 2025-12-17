@@ -14,6 +14,10 @@ from pygltflib import (
     Scene,
     Asset,
     Skin,
+    Animation,
+    AnimationChannel,
+    AnimationChannelTarget,
+    AnimationSampler,
 )
 
 from m3_parser import M3Parser
@@ -133,6 +137,69 @@ class GLTFExporter:
             0.0, 0.0, 1.0, 0.0,
             0.0, 0.0, 0.0, 1.0,
         ]
+
+    def _get_animations(self, file: BinaryIO, chunks: List[M3Chunk]) -> List[dict]:
+        """Extract animation data from ANIM and KEYF chunks."""
+        anim_chunk = self._find_chunk(chunks, "ANIM")
+        if not anim_chunk:
+            return []
+
+        keyf_chunk = self._find_chunk(chunks, "KEYF")
+
+        # Read animation headers
+        file.seek(anim_chunk.offset)
+        anim_data = file.read(anim_chunk.size)
+
+        # Read keyframe data if available
+        keyframe_data = b""
+        if keyf_chunk:
+            file.seek(keyf_chunk.offset)
+            keyframe_data = file.read(keyf_chunk.size)
+
+        animations = []
+        anim_header_size = 16  # id(4) + duration(4) + kf_count(4) + kf_offset(4)
+        keyframe_size = 36  # time(4) + bone_id(4) + position(12) + rotation(16)
+
+        anim_count = anim_chunk.property_a if anim_chunk.property_a > 0 else (
+            anim_chunk.size // anim_header_size
+        )
+
+        for i in range(anim_count):
+            offset = i * anim_header_size
+            if offset + anim_header_size > len(anim_data):
+                break
+
+            anim_id = struct.unpack("<I", anim_data[offset:offset + 4])[0]
+            duration = struct.unpack("<f", anim_data[offset + 4:offset + 8])[0]
+            kf_count = struct.unpack("<I", anim_data[offset + 8:offset + 12])[0]
+            kf_offset = struct.unpack("<I", anim_data[offset + 12:offset + 16])[0]
+
+            # Parse keyframes
+            keyframes = []
+            for j in range(kf_count):
+                kf_off = kf_offset + j * keyframe_size
+                if kf_off + keyframe_size > len(keyframe_data):
+                    break
+
+                time = struct.unpack("<f", keyframe_data[kf_off:kf_off + 4])[0]
+                bone_id = struct.unpack("<I", keyframe_data[kf_off + 4:kf_off + 8])[0]
+                position = struct.unpack("<3f", keyframe_data[kf_off + 8:kf_off + 20])
+                rotation = struct.unpack("<4f", keyframe_data[kf_off + 20:kf_off + 36])
+
+                keyframes.append({
+                    "time": time,
+                    "bone_id": bone_id,
+                    "position": list(position),
+                    "rotation": list(rotation),
+                })
+
+            animations.append({
+                "id": anim_id,
+                "duration": duration,
+                "keyframes": keyframes,
+            })
+
+        return animations
 
     def export(self, output_path: str, include_skeleton: bool = False, include_animations: bool = False):
         """Export M3 data to glTF/GLB file.
@@ -322,6 +389,179 @@ class GLTFExporter:
                 # Scene contains mesh node and root joint nodes
                 scene_nodes = [mesh_node_index] + [i + joint_start_index for i in root_indices]
                 gltf.scenes = [Scene(nodes=scene_nodes)]
+
+                # Handle animations if requested
+                if include_animations:
+                    m3_animations = self._get_animations(file, chunks)
+                    if m3_animations:
+                        # Build bone_id to node index mapping
+                        bone_id_to_node = {}
+                        for idx, bone in enumerate(bones):
+                            bone_id_to_node[bone["id"]] = idx + joint_start_index
+
+                        for anim in m3_animations:
+                            if not anim["keyframes"]:
+                                continue
+
+                            # Group keyframes by bone_id
+                            bone_keyframes = {}
+                            for kf in anim["keyframes"]:
+                                bone_id = kf["bone_id"]
+                                if bone_id not in bone_keyframes:
+                                    bone_keyframes[bone_id] = []
+                                bone_keyframes[bone_id].append(kf)
+
+                            samplers = []
+                            channels = []
+
+                            for bone_id, kfs in bone_keyframes.items():
+                                if bone_id not in bone_id_to_node:
+                                    continue
+
+                                node_idx = bone_id_to_node[bone_id]
+
+                                # Sort keyframes by time
+                                kfs.sort(key=lambda k: k["time"])
+
+                                # Pack time input data
+                                time_data = b""
+                                for kf in kfs:
+                                    time_data += struct.pack("<f", kf["time"])
+
+                                # Pack translation output data
+                                translation_data = b""
+                                for kf in kfs:
+                                    translation_data += struct.pack("<3f", *kf["position"])
+
+                                # Pack rotation output data
+                                rotation_data = b""
+                                for kf in kfs:
+                                    rotation_data += struct.pack("<4f", *kf["rotation"])
+
+                                # Add time input buffer view and accessor
+                                time_offset = len(buffer_data)
+                                buffer_data = buffer_data + time_data
+
+                                time_bv_idx = len(gltf.bufferViews)
+                                gltf.bufferViews.append(
+                                    BufferView(
+                                        buffer=0,
+                                        byteOffset=time_offset,
+                                        byteLength=len(time_data),
+                                    )
+                                )
+
+                                time_acc_idx = len(gltf.accessors)
+                                min_time = min(kf["time"] for kf in kfs)
+                                max_time = max(kf["time"] for kf in kfs)
+                                gltf.accessors.append(
+                                    Accessor(
+                                        bufferView=time_bv_idx,
+                                        componentType=5126,  # FLOAT
+                                        count=len(kfs),
+                                        type="SCALAR",
+                                        min=[min_time],
+                                        max=[max_time],
+                                    )
+                                )
+
+                                # Add translation output buffer view and accessor
+                                trans_offset = len(buffer_data)
+                                buffer_data = buffer_data + translation_data
+
+                                trans_bv_idx = len(gltf.bufferViews)
+                                gltf.bufferViews.append(
+                                    BufferView(
+                                        buffer=0,
+                                        byteOffset=trans_offset,
+                                        byteLength=len(translation_data),
+                                    )
+                                )
+
+                                trans_acc_idx = len(gltf.accessors)
+                                gltf.accessors.append(
+                                    Accessor(
+                                        bufferView=trans_bv_idx,
+                                        componentType=5126,  # FLOAT
+                                        count=len(kfs),
+                                        type="VEC3",
+                                    )
+                                )
+
+                                # Add rotation output buffer view and accessor
+                                rot_offset = len(buffer_data)
+                                buffer_data = buffer_data + rotation_data
+
+                                rot_bv_idx = len(gltf.bufferViews)
+                                gltf.bufferViews.append(
+                                    BufferView(
+                                        buffer=0,
+                                        byteOffset=rot_offset,
+                                        byteLength=len(rotation_data),
+                                    )
+                                )
+
+                                rot_acc_idx = len(gltf.accessors)
+                                gltf.accessors.append(
+                                    Accessor(
+                                        bufferView=rot_bv_idx,
+                                        componentType=5126,  # FLOAT
+                                        count=len(kfs),
+                                        type="VEC4",
+                                    )
+                                )
+
+                                # Create samplers for translation and rotation
+                                trans_sampler_idx = len(samplers)
+                                samplers.append(
+                                    AnimationSampler(
+                                        input=time_acc_idx,
+                                        output=trans_acc_idx,
+                                        interpolation="LINEAR",
+                                    )
+                                )
+
+                                rot_sampler_idx = len(samplers)
+                                samplers.append(
+                                    AnimationSampler(
+                                        input=time_acc_idx,
+                                        output=rot_acc_idx,
+                                        interpolation="LINEAR",
+                                    )
+                                )
+
+                                # Create channels
+                                channels.append(
+                                    AnimationChannel(
+                                        sampler=trans_sampler_idx,
+                                        target=AnimationChannelTarget(
+                                            node=node_idx,
+                                            path="translation",
+                                        ),
+                                    )
+                                )
+
+                                channels.append(
+                                    AnimationChannel(
+                                        sampler=rot_sampler_idx,
+                                        target=AnimationChannelTarget(
+                                            node=node_idx,
+                                            path="rotation",
+                                        ),
+                                    )
+                                )
+
+                            if channels:
+                                gltf.animations.append(
+                                    Animation(
+                                        name=f"animation_{anim['id']}",
+                                        samplers=samplers,
+                                        channels=channels,
+                                    )
+                                )
+
+                        # Update buffer size
+                        gltf.buffers = [Buffer(byteLength=len(buffer_data))]
             else:
                 # No skeleton - simple mesh node
                 gltf.nodes = [Node(mesh=0, name="mesh_0")]
