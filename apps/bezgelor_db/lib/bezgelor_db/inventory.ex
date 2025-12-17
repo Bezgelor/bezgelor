@@ -173,6 +173,21 @@ defmodule BezgelorDb.Inventory do
     end
   end
 
+  @doc """
+  Admin function to remove a specific inventory item by its database ID.
+
+  Requires both the character ID and the inventory item ID to ensure
+  the item belongs to the correct character.
+  """
+  @spec admin_remove_item(integer(), integer()) ::
+          {:ok, InventoryItem.t()} | {:error, :not_found}
+  def admin_remove_item(character_id, inventory_item_id) do
+    case Repo.get_by(InventoryItem, id: inventory_item_id, character_id: character_id) do
+      nil -> {:error, :not_found}
+      item -> Repo.delete(item)
+    end
+  end
+
   @doc "Move item to a new location."
   @spec move_item(InventoryItem.t(), atom(), integer(), integer()) ::
           {:ok, InventoryItem.t()} | {:error, :slot_occupied | term()}
