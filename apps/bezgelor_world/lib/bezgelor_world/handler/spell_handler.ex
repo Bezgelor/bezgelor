@@ -27,12 +27,13 @@ defmodule BezgelorWorld.Handler.SpellHandler do
     ServerSpellFinish,
     ServerSpellEffect,
     ServerCastResult,
-    ServerCooldown
+    ServerCooldown,
+    ServerResurrectOffer
   }
 
   alias BezgelorProtocol.{PacketReader, PacketWriter}
   alias BezgelorCore.{Spell, BuffDebuff}
-  alias BezgelorWorld.{BuffManager, CombatBroadcaster, CreatureManager, SpellManager}
+  alias BezgelorWorld.{BuffManager, CombatBroadcaster, CreatureManager, DeathManager, SpellManager}
 
   import Bitwise
 
@@ -213,6 +214,10 @@ defmodule BezgelorWorld.Handler.SpellHandler do
         # DoT is a harmful periodic effect
         apply_periodic_buff(caster_guid, target_guid, spell, effect, true)
 
+      :resurrect ->
+        # Resurrection effect - offer resurrection to dead target
+        apply_resurrect_effect(caster_guid, target_guid, spell, effect)
+
       _ ->
         :ok
     end
@@ -273,6 +278,53 @@ defmodule BezgelorWorld.Handler.SpellHandler do
       {:error, reason} ->
         Logger.warning("Failed to apply periodic effect #{spell.id}: #{inspect(reason)}")
         :error
+    end
+  end
+
+  defp apply_resurrect_effect(caster_guid, target_guid, spell, effect) do
+    # Get health percent from effect amount (e.g., 35 for 35%)
+    health_percent = effect.amount || 35.0
+
+    case DeathManager.offer_resurrection(target_guid, caster_guid, spell.id, health_percent) do
+      :ok ->
+        # Get caster name for the offer packet (would normally come from session)
+        caster_name = "Player"  # TODO: Look up from WorldManager session
+
+        # Send resurrection offer to target
+        offer_packet = ServerResurrectOffer.new(
+          caster_guid,
+          caster_name,
+          spell.id,
+          health_percent,
+          60_000  # 60 second timeout
+        )
+
+        # Send to target player
+        send_resurrect_offer_to_target(target_guid, offer_packet)
+
+        Logger.info("Player #{caster_guid} offered resurrection to #{target_guid}")
+        :ok
+
+      {:error, :not_dead} ->
+        Logger.debug("Resurrection failed: target #{target_guid} is not dead")
+        :error
+    end
+  end
+
+  defp send_resurrect_offer_to_target(target_guid, packet) do
+    # Look up target's connection and send the packet
+    alias BezgelorWorld.WorldManager
+
+    case WorldManager.get_session_by_entity_guid(target_guid) do
+      nil ->
+        Logger.warning("Cannot send resurrect offer: no session for #{target_guid}")
+
+      session ->
+        writer = PacketWriter.new()
+        {:ok, writer} = ServerResurrectOffer.write(packet, writer)
+        payload = PacketWriter.to_binary(writer)
+
+        send(session.connection_pid, {:send_packet, :server_resurrect_offer, payload})
     end
   end
 
