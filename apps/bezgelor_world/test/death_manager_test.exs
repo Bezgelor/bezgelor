@@ -6,8 +6,15 @@ defmodule BezgelorWorld.DeathManagerTest do
   setup do
     # Start a fresh DeathManager for each test
     case GenServer.whereis(DeathManager) do
-      nil -> :ok
-      pid -> GenServer.stop(pid, :normal, 1000)
+      nil ->
+        :ok
+
+      pid ->
+        try do
+          GenServer.stop(pid, :normal, 1000)
+        catch
+          :exit, _ -> :ok
+        end
     end
 
     {:ok, pid} = DeathManager.start_link([])
@@ -184,6 +191,30 @@ defmodule BezgelorWorld.DeathManagerTest do
       {:ok, info} = DeathManager.get_death_info(player_guid)
       assert info.res_offer != nil
       assert info.res_offer.timeout_at > System.monotonic_time(:millisecond)
+    end
+  end
+
+  describe "find_nearest_bindpoint/2" do
+    test "returns default bindpoint when zone has no bindpoints" do
+      # Zone 99999 shouldn't have any bindpoints
+      result = DeathManager.find_nearest_bindpoint(99999, {0.0, 0.0, 0.0})
+
+      assert is_map(result)
+      assert is_integer(result.zone_id)
+      assert is_tuple(result.position)
+    end
+
+    test "returns a bindpoint with correct structure" do
+      # Use a zone that should have bindpoints (426 = Thayd)
+      result = DeathManager.find_nearest_bindpoint(426, {3949.0, -855.0, -1929.0})
+
+      assert is_map(result)
+      assert Map.has_key?(result, :zone_id)
+      assert Map.has_key?(result, :position)
+      {x, y, z} = result.position
+      assert is_float(x)
+      assert is_float(y)
+      assert is_float(z)
     end
   end
 end

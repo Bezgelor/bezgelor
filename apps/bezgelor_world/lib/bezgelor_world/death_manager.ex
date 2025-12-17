@@ -262,8 +262,36 @@ defmodule BezgelorWorld.DeathManager do
   # ============================================================================
 
   defp get_bindpoint_for_player(_player_guid) do
-    # TODO: Look up from character data in database
+    # TODO: Look up saved bindpoint from character data in database
     # For now return default bindpoint
+    # Future: BezgelorDb.Characters.get_bindpoint(character_id)
     @default_bindpoint
+  end
+
+  @doc """
+  Find the nearest bindpoint to a death position in a zone.
+
+  Used when player dies to find the closest graveyard for respawn.
+  Falls back to default bindpoint if no bindpoints found in zone.
+  """
+  @spec find_nearest_bindpoint(non_neg_integer(), {float(), float(), float()}) :: map()
+  def find_nearest_bindpoint(zone_id, position) do
+    alias BezgelorData.Store
+
+    case Store.find_nearest_bindpoint(zone_id, position) do
+      nil ->
+        Logger.debug("No bindpoint found in zone #{zone_id}, using default")
+        @default_bindpoint
+
+      bindpoint ->
+        # Convert from data format to expected format
+        [x, y, z] = bindpoint.position
+
+        %{
+          zone_id: zone_id,
+          position: {x, y, z},
+          bindpoint_id: bindpoint.bindpoint_id
+        }
+    end
   end
 end
