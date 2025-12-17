@@ -457,8 +457,15 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
 
     ~H"""
     <div class="avatar placeholder">
-      <div class={"#{@size_class} rounded-full bg-base-300 text-base-content"}>
+      <div class={"#{@size_class} rounded-full bg-base-300 text-base-content relative overflow-hidden"}>
         <span class="text-xl">{String.first(@character.name)}</span>
+        <!-- Work in Progress Banner -->
+        <div
+          class="absolute text-black text-center font-bold"
+          style="background-color: #f7941d; width: 100px; top: 14px; left: -28px; transform: rotate(-45deg); font-size: 8px; line-height: 1.4;"
+        >
+          WiP
+        </div>
       </div>
     </div>
     """

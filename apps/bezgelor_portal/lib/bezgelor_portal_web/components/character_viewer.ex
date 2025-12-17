@@ -57,8 +57,8 @@ defmodule BezgelorPortalWeb.Components.CharacterViewer do
       <!-- Work in Progress Banner -->
       <div class="absolute inset-0 pointer-events-none overflow-hidden">
         <div
-          class="absolute bg-red-600 text-white text-xs font-bold text-center py-1 shadow-lg"
-          style="width: 200px; top: 30px; left: -45px; transform: rotate(-45deg);"
+          class="absolute text-black text-xs font-bold text-center py-1 shadow-lg"
+          style="background-color: #f7941d; width: 200px; top: 38px; left: -52px; transform: rotate(-45deg);"
         >
           Work in Progress
         </div>
