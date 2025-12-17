@@ -59,13 +59,28 @@ const CharacterViewerHook = {
 
     deferInit(() => {
       // Check if we were destroyed during the defer
-      if (this.destroyed) return
+      if (this.destroyed) {
+        console.log("[CharacterViewer] Destroyed before init")
+        return
+      }
+
+      console.log("[CharacterViewer] Creating viewer for", race, gender)
 
       // Create the viewer (this creates WebGL context)
       this.viewer = new CharacterViewer(this.el, {
         width: this.el.clientWidth || 400,
         height: this.el.clientHeight || 500,
       })
+
+      console.log("[CharacterViewer] Viewer created, container size:", this.el.clientWidth, "x", this.el.clientHeight)
+
+      // Check if WebGL initialization failed
+      if (this.viewer.initFailed) {
+        console.warn("[CharacterViewer] WebGL initialization failed, showing fallback")
+        this._showFallback("WebGL not available")
+        this.viewer = null
+        return
+      }
 
       // Check again after viewer creation
       if (this.destroyed) {
@@ -76,10 +91,12 @@ const CharacterViewerHook = {
 
       // Load the character model
       const modelUrl = `/models/characters/${race}_${gender}.glb`
+      console.log("[CharacterViewer] Loading model:", modelUrl)
       this.currentModelUrl = modelUrl
       this.currentRace = race
       this.currentGender = gender
       this.viewer.loadModel(modelUrl).then((success) => {
+        console.log("[CharacterViewer] Model load result:", success)
         if (this.destroyed) return
         if (success) {
           // Hide the loading spinner
@@ -90,8 +107,12 @@ const CharacterViewerHook = {
           this.viewer.loadTexture(race, gender)
         } else {
           // Show fallback message if model fails to load
+          console.log("[CharacterViewer] Showing fallback")
           this._showFallback()
         }
+      }).catch(err => {
+        console.error("[CharacterViewer] Model load error:", err)
+        this._showFallback()
       })
 
       // Handle resize
@@ -185,15 +206,33 @@ const CharacterViewerHook = {
     this.el.appendChild(controls)
   },
 
-  _showFallback() {
+  _showFallback(reason) {
     // Clear the container and show a fallback message
+    const isWebGLIssue = reason === "WebGL not available"
+    const message = isWebGLIssue
+      ? "3D preview requires WebGL"
+      : "Character preview not available"
+    const hint = isWebGLIssue
+      ? "Try enabling hardware acceleration in your browser settings"
+      : ""
+
     this.el.innerHTML = `
       <div class="flex items-center justify-center h-full text-base-content/50">
         <div class="text-center py-12">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <p>Character preview not available</p>
+          <p>${message}</p>
+          ${hint ? `<p class="text-xs mt-1 opacity-70">${hint}</p>` : ""}
+        </div>
+      </div>
+      <!-- Work in Progress Banner -->
+      <div class="absolute inset-0 pointer-events-none overflow-hidden">
+        <div
+          class="absolute text-black text-xs font-bold text-center py-1 shadow-lg"
+          style="background-color: #f7941d; width: 200px; top: 38px; left: -52px; transform: rotate(-45deg);"
+        >
+          Work in Progress
         </div>
       </div>
     `

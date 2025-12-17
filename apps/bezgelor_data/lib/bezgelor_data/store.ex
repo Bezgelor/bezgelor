@@ -2167,7 +2167,11 @@ defmodule BezgelorData.Store do
   end
 
   defp get_item_name(item) do
-    text_id = get_item_field(item, :name_text_id) || 0
+    # Check both naming conventions: our internal name and the raw JSON field name
+    text_id =
+      get_item_field(item, :name_text_id) ||
+        Map.get(item, :localizedTextIdName) ||
+        0
 
     if text_id > 0 do
       get_text(text_id)
