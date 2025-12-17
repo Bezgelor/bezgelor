@@ -604,4 +604,104 @@ defmodule BezgelorDb.Inventory do
     currency = get_or_create_currency(character_id)
     Map.get(currency, currency_type, 0)
   end
+
+  # ============================================================================
+  # Durability Management
+  # ============================================================================
+
+  @doc """
+  Apply death durability loss to all equipped items.
+
+  Reduces durability of equipped gear based on character level.
+  Uses BezgelorCore.Death.durability_loss/1 to calculate percentage.
+
+  Returns the number of items affected.
+  """
+  @spec apply_death_durability_loss(integer(), integer()) :: {:ok, non_neg_integer()}
+  def apply_death_durability_loss(character_id, level) do
+    loss_percent = BezgelorCore.Death.durability_loss(level)
+
+    if loss_percent > 0 do
+      # Get all equipped items
+      equipped_items = get_items(character_id, :equipped)
+
+      # Update each item's durability
+      affected_count =
+        Enum.reduce(equipped_items, 0, fn item, count ->
+          if item.max_durability > 0 do
+            durability_loss = round(item.max_durability * loss_percent / 100.0)
+            new_durability = max(0, item.durability - durability_loss)
+
+            {:ok, _} =
+              item
+              |> InventoryItem.changeset(%{durability: new_durability})
+              |> Repo.update()
+
+            count + 1
+          else
+            count
+          end
+        end)
+
+      {:ok, affected_count}
+    else
+      {:ok, 0}
+    end
+  end
+
+  @doc """
+  Update durability for a specific item.
+  """
+  @spec update_durability(integer(), integer()) ::
+          {:ok, InventoryItem.t()} | {:error, term()}
+  def update_durability(item_id, new_durability) when new_durability >= 0 do
+    case Repo.get(InventoryItem, item_id) do
+      nil ->
+        {:error, :not_found}
+
+      item ->
+        clamped = min(new_durability, item.max_durability)
+
+        item
+        |> InventoryItem.changeset(%{durability: clamped})
+        |> Repo.update()
+    end
+  end
+
+  @doc """
+  Repair item to full durability.
+  """
+  @spec repair_item(integer()) :: {:ok, InventoryItem.t()} | {:error, term()}
+  def repair_item(item_id) do
+    case Repo.get(InventoryItem, item_id) do
+      nil ->
+        {:error, :not_found}
+
+      item ->
+        item
+        |> InventoryItem.changeset(%{durability: item.max_durability})
+        |> Repo.update()
+    end
+  end
+
+  @doc """
+  Repair all equipped items for a character.
+
+  Returns the total repair cost (0 for now, future: calculate based on item level).
+  """
+  @spec repair_all_equipped(integer()) :: {:ok, integer()}
+  def repair_all_equipped(character_id) do
+    equipped_items = get_items(character_id, :equipped)
+
+    Enum.each(equipped_items, fn item ->
+      if item.durability < item.max_durability do
+        {:ok, _} =
+          item
+          |> InventoryItem.changeset(%{durability: item.max_durability})
+          |> Repo.update()
+      end
+    end)
+
+    {:ok, 0}  # TODO: Calculate repair cost
+  end
 end

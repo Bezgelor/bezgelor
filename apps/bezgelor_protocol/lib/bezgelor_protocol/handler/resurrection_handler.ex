@@ -94,6 +94,9 @@ defmodule BezgelorProtocol.Handler.ResurrectionHandler do
         zone_id = result.zone_id
         health_percent = result.health_percent
 
+        # Apply death penalty (durability loss) when respawning at bindpoint
+        apply_death_penalty(state)
+
         res_packet = ServerResurrect.new(:bindpoint, zone_id, {x, y, z}, health_percent)
         {opcode, payload} = serialize_packet(res_packet)
 
@@ -103,6 +106,27 @@ defmodule BezgelorProtocol.Handler.ResurrectionHandler do
       {:error, :not_dead} ->
         Logger.warning("Player #{entity_guid} tried to respawn at bindpoint but is not dead")
         {:error, :not_dead}
+    end
+  end
+
+  # Apply death penalties such as durability loss
+  defp apply_death_penalty(state) do
+    character = state.session_data[:character]
+
+    if character do
+      level = character.level || 1
+      character_id = character.id
+
+      case BezgelorDb.Inventory.apply_death_durability_loss(character_id, level) do
+        {:ok, count} when count > 0 ->
+          Logger.debug("Applied durability loss to #{count} items for character #{character_id}")
+
+        {:ok, 0} ->
+          Logger.debug("No durability loss applied (level #{level})")
+
+        {:error, reason} ->
+          Logger.warning("Failed to apply durability loss: #{inspect(reason)}")
+      end
     end
   end
 
