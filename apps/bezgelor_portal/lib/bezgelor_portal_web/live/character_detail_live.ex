@@ -471,36 +471,12 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
     """
   end
 
-  # Faction badge - derives faction from race for accuracy
-  defp faction_badge(assigns) do
-    # Use race to determine correct faction (CharacterCreation data has inverted mappings)
-    faction_id = GameData.faction_id_for_race(assigns.race_id)
-    faction = GameData.get_faction(faction_id)
-    assigns = assign(assigns, :faction, faction)
-
-    ~H"""
-    <span class="badge badge-sm" style={"background-color: #{@faction.color}; color: white"}>
-      {@faction.name}
-    </span>
-    """
-  end
-
   # Info row for key-value display
   defp info_row(assigns) do
     ~H"""
     <div>
       <div class="text-sm text-base-content/50">{@label}</div>
       <div class="font-medium">{@value}</div>
-    </div>
-    """
-  end
-
-  # Item slot component
-  defp item_slot(assigns) do
-    ~H"""
-    <div class="bg-base-200 rounded p-2 text-center">
-      <div class="text-sm font-medium truncate">{@item.name}</div>
-      <div class="text-xs text-base-content/50">Slot {@item.slot}</div>
     </div>
     """
   end
@@ -678,19 +654,6 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
     assign(socket, equipped_items: equipped, inventory_items: bag_items, bank_items: bank_items)
   end
 
-  # Add item names from the data store
-  defp add_item_names(items) do
-    Enum.map(items, fn item ->
-      name =
-        case Store.get_item_with_name(item.item_id) do
-          {:ok, data} -> data.name
-          :error -> "Item ##{item.item_id}"
-        end
-
-      Map.put(item, :name, name)
-    end)
-  end
-
   defp load_tab_data(socket, :guild) do
     character_id = socket.assigns.character.id
     membership = Guilds.get_membership(character_id)
@@ -707,6 +670,19 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
     character_id = socket.assigns.character.id
     tradeskills = Tradeskills.get_professions(character_id)
     assign(socket, tradeskills: tradeskills)
+  end
+
+  # Add item names from the data store
+  defp add_item_names(items) do
+    Enum.map(items, fn item ->
+      name =
+        case Store.get_item_with_name(item.item_id) do
+          {:ok, data} -> data.name
+          :error -> "Item ##{item.item_id}"
+        end
+
+      Map.put(item, :name, name)
+    end)
   end
 
   # Event handlers
