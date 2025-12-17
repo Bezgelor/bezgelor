@@ -128,6 +128,8 @@ defmodule BezgelorData.Store do
     :character_customizations,
     # Item display source entries (for level-scaled item visuals)
     :item_display_sources,
+    # Item display data (model paths, textures)
+    :item_displays,
     # Patrol paths for creature movement
     :patrol_paths,
     # Spline data (from client Spline2.tbl and Spline2Node.tbl)
@@ -1948,6 +1950,98 @@ defmodule BezgelorData.Store do
   end
 
   @doc """
+  Get the 3D model path for an item by item ID.
+
+  Resolves the display ID (handling level-scaled items) and looks up the
+  model path from the ItemDisplay table.
+
+  ## Parameters
+
+  - `item_id` - The item ID
+  - `power_level` - Optional power level for level-based lookups (defaults to item's power_level)
+
+  ## Returns
+
+  A map with model information, or nil if not found:
+  - `:model_path` - Path to the .m3 model file (uses objectModelL or skinnedModelL)
+  - `:display_id` - The resolved display ID
+  - `:description` - Model description from ItemDisplay
+
+  ## Example
+
+      Store.get_item_model_path(1)
+      #=> %{model_path: "Art\\Item\\Armor\\Light\\...", display_id: 3954, description: "AMR_D_Light_012_Chest"}
+
+      Store.get_item_model_path(999999) #=> nil
+  """
+  @spec get_item_model_path(non_neg_integer(), non_neg_integer() | nil) :: map() | nil
+  def get_item_model_path(item_id, power_level \\ nil) do
+    display_id = get_item_display_id(item_id, power_level)
+
+    if display_id > 0 do
+      get_display_model_path(display_id)
+    else
+      nil
+    end
+  end
+
+  @doc """
+  Get the 3D model path for a display ID directly.
+
+  Looks up the model path from the ItemDisplay table by display ID.
+
+  ## Parameters
+
+  - `display_id` - The ItemDisplay ID
+
+  ## Returns
+
+  A map with model information, or nil if not found:
+  - `:model_path` - Path to the .m3 model file
+  - `:display_id` - The display ID
+  - `:description` - Model description
+
+  ## Example
+
+      Store.get_display_model_path(3954)
+      #=> %{model_path: "Art\\Item\\Armor\\Light\\...", display_id: 3954, description: "..."}
+  """
+  @spec get_display_model_path(non_neg_integer()) :: map() | nil
+  def get_display_model_path(display_id) when is_integer(display_id) and display_id > 0 do
+    case :ets.lookup(table_name(:item_displays), display_id) do
+      [{^display_id, display}] ->
+        # Prefer objectModelL (world model), fall back to skinnedModelL (equipped model)
+        model_path =
+          get_display_field(display, :objectModelL) ||
+            get_display_field(display, :skinnedModelL) ||
+            get_display_field(display, :objectModel) ||
+            get_display_field(display, :skinnedModel) ||
+            ""
+
+        if model_path != "" do
+          %{
+            model_path: model_path,
+            display_id: display_id,
+            description: get_display_field(display, :description) || ""
+          }
+        else
+          nil
+        end
+
+      [] ->
+        nil
+    end
+  end
+
+  def get_display_model_path(_), do: nil
+
+  # Helper to get display field with both atom and string key support
+  defp get_display_field(display, field) when is_atom(field) do
+    value = Map.get(display, field) || Map.get(display, Atom.to_string(field))
+    if value == "", do: nil, else: value
+  end
+
+  @doc """
   Get localized text by ID.
 
   ## Returns
@@ -2046,6 +2140,24 @@ defmodule BezgelorData.Store do
     end)
     |> Stream.map(fn {item, name} -> Map.put(item, :name, name) end)
     |> Enum.take(limit)
+  end
+
+  @doc """
+  Get an item by ID with its localized name.
+
+  Returns {:ok, item_with_name} or :error if item not found.
+
+  ## Example
+
+      {:ok, item} = Store.get_item_with_name(12345)
+      item.name #=> "Iron Sword"
+  """
+  @spec get_item_with_name(non_neg_integer()) :: {:ok, map()} | :error
+  def get_item_with_name(item_id) do
+    case get(:items, item_id) do
+      {:ok, item} -> {:ok, add_item_name(item)}
+      :error -> :error
+    end
   end
 
   defp add_item_name(item) do
@@ -2300,6 +2412,8 @@ defmodule BezgelorData.Store do
       fn -> load_character_customizations() end,
       # Item display source entries
       fn -> load_item_display_sources() end,
+      # Item display data (model paths)
+      fn -> load_item_displays() end,
       # Patrol paths
       fn -> load_patrol_paths() end,
       # Spline data
@@ -2912,6 +3026,38 @@ defmodule BezgelorData.Store do
       |> Enum.map(fn {source_id, entries} -> {source_id, entries} end)
 
     :ets.insert(index_name, tuples)
+  end
+
+  # Load ItemDisplay data for model paths and textures
+  # File structure: { "itemdisplay": [ {ID, description, objectModel, skinnedModel, ...}, ...] }
+  defp load_item_displays do
+    table_name = table_name(:item_displays)
+
+    # Clear existing data
+    :ets.delete_all_objects(table_name)
+
+    json_path = Path.join(data_directory(), "ItemDisplay.json")
+
+    case load_json_raw(json_path) do
+      {:ok, data} ->
+        items = Map.get(data, :itemdisplay, [])
+
+        # Bulk insert with ID normalization
+        tuples =
+          items
+          |> Enum.filter(fn item -> Map.has_key?(item, :ID) end)
+          |> Enum.map(fn item ->
+            id = Map.get(item, :ID)
+            normalized = Map.put(item, :id, id)
+            {id, normalized}
+          end)
+
+        :ets.insert(table_name, tuples)
+        Logger.debug("Loaded #{length(tuples)} item displays")
+
+      {:error, _reason} ->
+        Logger.debug("ItemDisplay.json not found (optional - 3D models unavailable)")
+    end
   end
 
   defp validate_loot_data do
