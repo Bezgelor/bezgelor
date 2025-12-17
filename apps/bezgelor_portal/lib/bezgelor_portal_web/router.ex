@@ -102,6 +102,9 @@ defmodule BezgelorPortalWeb.Router do
       # Economy Management
       live "/economy", EconomyLive, :index
 
+      # Item Database
+      live "/items", ItemsLive, :index
+
       # Role Management
       live "/roles", RolesLive, :index
       live "/roles/:id/edit", RoleEditLive, :edit
