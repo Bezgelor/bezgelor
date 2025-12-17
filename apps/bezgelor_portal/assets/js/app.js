@@ -60,8 +60,18 @@ const CharacterViewerHook = {
 
     // Load the character model
     const modelUrl = `/models/characters/${race}_${gender}.glb`
+    this.currentModelUrl = modelUrl
+    this.currentRace = race
+    this.currentGender = gender
     this.viewer.loadModel(modelUrl).then((success) => {
-      if (!success) {
+      if (success) {
+        // Hide the loading spinner
+        this._hideSpinner()
+        // Show animation controls if animations available
+        this._showAnimationControls()
+        // Load texture for this race/gender
+        this.viewer.loadTexture(race, gender)
+      } else {
         // Show fallback message if model fails to load
         this._showFallback()
       }
@@ -87,8 +97,13 @@ const CharacterViewerHook = {
 
     if (this.viewer && this.currentModelUrl !== modelUrl) {
       this.currentModelUrl = modelUrl
+      this.currentRace = race
+      this.currentGender = gender
       this.viewer.loadModel(modelUrl).then((success) => {
-        if (!success) {
+        if (success) {
+          this._hideSpinner()
+          this.viewer.loadTexture(race, gender)
+        } else {
           this._showFallback()
         }
       })
@@ -105,6 +120,48 @@ const CharacterViewerHook = {
       this.viewer.dispose()
       this.viewer = null
     }
+  },
+
+  _hideSpinner() {
+    // Remove the loading spinner element
+    const spinner = this.el.querySelector('.loading')
+    if (spinner && spinner.parentElement) {
+      spinner.parentElement.remove()
+    }
+  },
+
+  _showAnimationControls() {
+    const animations = this.viewer.getAnimations()
+
+    // Only show controls if there are animations
+    if (animations.length === 0) {
+      return
+    }
+
+    // Remove existing controls
+    const existing = this.el.querySelector('.animation-controls')
+    if (existing) existing.remove()
+
+    // Create animation control panel
+    const controls = document.createElement('div')
+    controls.className = 'animation-controls absolute bottom-2 left-2 right-2 flex gap-1 flex-wrap justify-center'
+
+    animations.forEach(({ index, name }) => {
+      const btn = document.createElement('button')
+      btn.className = 'btn btn-xs btn-ghost bg-base-100/80'
+      btn.textContent = name
+      btn.addEventListener('click', () => {
+        this.viewer.playAnimation(index)
+        // Update active state
+        controls.querySelectorAll('button').forEach(b => b.classList.remove('btn-active'))
+        btn.classList.add('btn-active')
+      })
+      // Mark first as active
+      if (index === 0) btn.classList.add('btn-active')
+      controls.appendChild(btn)
+    })
+
+    this.el.appendChild(controls)
   },
 
   _showFallback() {

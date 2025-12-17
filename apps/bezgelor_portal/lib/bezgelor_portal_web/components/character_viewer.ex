@@ -54,6 +54,15 @@ defmodule BezgelorPortalWeb.Components.CharacterViewer do
       <div :if={@show_loading} class="absolute inset-0 flex items-center justify-center text-base-content/30">
         <span class="loading loading-spinner loading-lg"></span>
       </div>
+      <!-- Work in Progress Banner -->
+      <div class="absolute inset-0 pointer-events-none overflow-hidden">
+        <div
+          class="absolute bg-red-600 text-white text-xs font-bold text-center py-1 shadow-lg"
+          style="width: 200px; top: 30px; left: -45px; transform: rotate(-45deg);"
+        >
+          Work in Progress
+        </div>
+      </div>
     </div>
     """
   end
@@ -88,15 +97,15 @@ defmodule BezgelorPortalWeb.Components.CharacterViewer do
     """
   end
 
-  # Race ID to key mapping based on WildStar race IDs
+  # Race ID to key mapping based on WildStar race IDs (from NexusForever.Game.Static.Entity.Race)
   defp race_key(1), do: "human"
-  defp race_key(2), do: "granok"
-  defp race_key(3), do: "aurin"
-  defp race_key(4), do: "draken"
-  defp race_key(5), do: "mechari"
-  defp race_key(6), do: "chua"
-  defp race_key(7), do: "mordesh"
-  defp race_key(8), do: "cassian"
+  defp race_key(2), do: "cassian"
+  defp race_key(3), do: "granok"
+  defp race_key(4), do: "aurin"
+  defp race_key(5), do: "draken"
+  defp race_key(12), do: "mechari"
+  defp race_key(13), do: "chua"
+  defp race_key(16), do: "mordesh"
   defp race_key(_), do: "human"
 
   # Gender/sex ID to key mapping

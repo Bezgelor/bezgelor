@@ -116,32 +116,37 @@ export class CharacterViewer {
       const center = box.getCenter(new THREE.Vector3());
       const size = box.getSize(new THREE.Vector3());
 
-      // Center the model
-      this.model.position.x = -center.x;
-      this.model.position.y = -box.min.y;
-      this.model.position.z = -center.z;
+      console.log("Model bounds:", { min: box.min, max: box.max, center, size });
 
-      // Scale to fit in view (target height around 2 units)
+      // Calculate scale to fit in view (target height around 2 units)
       const maxDim = Math.max(size.x, size.y, size.z);
-      if (maxDim > 2) {
-        const scale = 2 / maxDim;
-        this.model.scale.setScalar(scale);
-      }
+      const scale = maxDim > 0 ? 2 / maxDim : 1;
+
+      console.log("Applying scale:", scale);
+
+      // Center the model (scale the offsets since scale is applied first in the matrix)
+      this.model.position.x = -center.x * scale;
+      this.model.position.y = -box.min.y * scale;
+      this.model.position.z = -center.z * scale;
+      this.model.scale.setScalar(scale);
 
       this.scene.add(this.model);
 
       // Setup animations if present
-      if (gltf.animations && gltf.animations.length > 0) {
-        this.mixer = new THREE.AnimationMixer(this.model);
+      this.animations = gltf.animations || [];
+      this.currentAnimation = null;
 
-        // Play the first animation (usually idle)
-        const idleAnimation = gltf.animations[0];
-        const action = this.mixer.clipAction(idleAnimation);
-        action.play();
+      if (this.animations.length > 0) {
+        this.mixer = new THREE.AnimationMixer(this.model);
+        // Play the first animation by default
+        this.playAnimation(0);
       }
 
-      // Update camera target to model center
-      this.controls.target.set(0, size.y / 2, 0);
+      console.log("Available animations:", this.animations.map((a, i) => `${i}: ${a.name || "unnamed"}`));
+
+      // Update camera target to scaled model center (model is now ~2 units tall)
+      const scaledHeight = size.y * scale;
+      this.controls.target.set(0, scaledHeight / 2, 0);
       this.controls.update();
 
       return true;
@@ -152,24 +157,38 @@ export class CharacterViewer {
   }
 
   /**
+   * Get list of available animations.
+   *
+   * @returns {Array<{index: number, name: string}>} Animation list
+   */
+  getAnimations() {
+    return (this.animations || []).map((clip, index) => ({
+      index,
+      name: clip.name || `Animation ${index + 1}`,
+    }));
+  }
+
+  /**
    * Play a specific animation by name or index.
    *
    * @param {string|number} animation - Animation name or index
    */
   playAnimation(animation) {
-    if (!this.mixer || !this.model) return;
+    if (!this.mixer) return;
 
     // Stop current animations
     this.mixer.stopAllAction();
 
     // Find and play the requested animation
-    const clips = this.model.animations || [];
+    const clips = this.animations || [];
     let clip = null;
 
     if (typeof animation === "number" && clips[animation]) {
       clip = clips[animation];
+      this.currentAnimation = animation;
     } else if (typeof animation === "string") {
       clip = clips.find((c) => c.name === animation);
+      this.currentAnimation = clips.indexOf(clip);
     }
 
     if (clip) {
@@ -267,6 +286,58 @@ export class CharacterViewer {
 
     if (obj.children) {
       obj.children.forEach((child) => this._disposeObject(child));
+    }
+  }
+
+  /**
+   * Load and apply skin texture for character.
+   *
+   * @param {string} race - Race name (e.g., "human", "draken")
+   * @param {string} gender - Gender ("male" or "female")
+   */
+  async loadTexture(race, gender) {
+    if (!this.model) return;
+
+    // Map race/gender to texture path patterns
+    const textureMap = {
+      'human_male': '/textures/characters/Human/Male/CHR_Human_M_Skin_LightBlack_01_Color.Skin_Body.png',
+      'human_female': '/textures/characters/Human/Female/CHR_Human_F_Face_B_01_Color.Skin_Body.png',
+      'cassian_male': '/textures/characters/Human/Male/CHR_Human_M_Skin_LightBlack_01_Color.Skin_Body.png',
+      'cassian_female': '/textures/characters/Human/Female/CHR_Human_F_Face_B_01_Color.Skin_Body.png',
+      'draken_male': '/textures/characters/Draken/Male/CHR_DrakenMale_Skin_01_Color.Skin_Body.png',
+      'draken_female': '/textures/characters/Draken/Female/CHR_Draken_F_Color.Skin_Body.png',
+      'granok_male': '/textures/characters/Granok/Male/CHR_Granok_M_Skin_01_Color.Skin_Body.png',
+      'granok_female': '/textures/characters/Granok/Female/CHR_Granok_F_Skin_01_Color.Skin_Body.png',
+      'mechari_female': '/textures/characters/Mechari/Female/CHR_Mechari_F_Skin_01_Color.Skin_Body.png',
+      'chua_male': '/textures/characters/Chua/Male/CHR_Chua_M_Skin_A_01_Color.Skin_Body.png',
+    };
+
+    const key = `${race}_${gender}`;
+    const texturePath = textureMap[key];
+
+    if (!texturePath) {
+      console.log(`No texture mapping for ${key}`);
+      return;
+    }
+
+    const textureLoader = new THREE.TextureLoader();
+
+    try {
+      const texture = await textureLoader.loadAsync(texturePath);
+      texture.colorSpace = THREE.SRGBColorSpace;
+      texture.flipY = false;
+
+      // Apply texture to all meshes
+      this.model.traverse((child) => {
+        if (child.isMesh && child.material) {
+          child.material.map = texture;
+          child.material.needsUpdate = true;
+        }
+      });
+
+      console.log(`Loaded texture: ${texturePath}`);
+    } catch (error) {
+      console.log(`Texture not found: ${texturePath}`);
     }
   }
 }
