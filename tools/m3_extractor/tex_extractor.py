@@ -4,6 +4,12 @@ WildStar TEX Format:
 - 32-byte header with magic "XFG\0"
 - Supports DXT1, DXT3, DXT5 compressed and uncompressed formats
 - Mipmaps stored smallest-to-largest (opposite of DDS)
+
+Type-3 Textures (most WildStar textures):
+- Type-3 with DXT format + count=0: 80 bytes padding, then standard DXT data
+- Type-3 with format=0 + count>0: Custom compressed format (not yet supported)
+  - Has secondary header with: count, padding, 4 RGB colors, mip offsets
+  - Data uses unknown compression (possibly BC7 with additional streaming compression)
 """
 import struct
 from dataclasses import dataclass
@@ -76,6 +82,9 @@ class TexHeader:
 class TexExtractor:
     """Extracts WildStar .tex texture files to standard formats."""
 
+    # Size of type-3 secondary header for simple DXT textures (count=0)
+    TYPE3_SIMPLE_HEADER_SIZE = 80
+
     def __init__(self, filepath: str):
         """Initialize extractor with path to .tex file.
 
@@ -85,6 +94,7 @@ class TexExtractor:
         self.filepath = Path(filepath)
         self.header: Optional[TexHeader] = None
         self._data: Optional[bytes] = None
+        self._type3_count: int = 0  # For type-3: 0 = simple DXT, >0 = custom compression
 
     def load(self) -> bool:
         """Load and parse the TEX file.
@@ -96,10 +106,30 @@ class TexExtractor:
             with open(self.filepath, "rb") as f:
                 self.header = TexHeader.read(f)
                 self._data = f.read()
+
+            # Parse type-3 secondary header
+            if self.header.tex_type == 3 and len(self._data) >= 4:
+                self._type3_count = struct.unpack('<I', self._data[0:4])[0]
+
             return True
         except Exception as e:
             print(f"Failed to load TEX: {e}")
             return False
+
+    def _get_texture_data_offset(self) -> int:
+        """Get offset to actual texture data within _data.
+
+        For type-3 textures with count=0, skips 80-byte secondary header.
+        """
+        if self.header.tex_type == 3 and self._type3_count == 0:
+            return self.TYPE3_SIMPLE_HEADER_SIZE
+        return 0
+
+    def _is_simple_type3(self) -> bool:
+        """Check if this is a simple type-3 texture (DXT with count=0)."""
+        return (self.header.tex_type == 3 and
+                self._type3_count == 0 and
+                self.header.format in (TexFormat.DXT1, TexFormat.DXT3, TexFormat.DXT5))
 
     def get_info(self) -> dict:
         """Get texture information.
@@ -110,7 +140,7 @@ class TexExtractor:
         if not self.header:
             self.load()
 
-        return {
+        info = {
             "filepath": str(self.filepath),
             "width": self.header.width,
             "height": self.header.height,
@@ -120,6 +150,13 @@ class TexExtractor:
             "depth": self.header.depth,
             "sides": self.header.sides,
         }
+
+        # Add type-3 specific info
+        if self.header.tex_type == 3:
+            info["type3_count"] = self._type3_count
+            info["type3_simple"] = self._is_simple_type3()
+
+        return info
 
     def _format_name(self, fmt) -> str:
         """Get human-readable format name."""
@@ -160,6 +197,7 @@ class TexExtractor:
         """Calculate offsets and sizes for each mipmap level.
 
         WildStar stores mipmaps smallest-to-largest (opposite of DDS).
+        For type-3 simple textures, offsets account for 80-byte secondary header.
 
         Returns:
             List of (offset, size, width, height) tuples, from largest to smallest
@@ -168,7 +206,14 @@ class TexExtractor:
             self.load()
 
         mips = []
-        offset = 0
+        # Start offset accounts for type-3 secondary header if present
+        base_offset = self._get_texture_data_offset()
+        offset = base_offset
+
+        # For simple type-3, we only have 1 mip (largest)
+        if self._is_simple_type3():
+            size = self._calc_mip_size(self.header.width, self.header.height, self.header.format)
+            return [(base_offset, size, self.header.width, self.header.height)]
 
         # Calculate all mip dimensions (smallest to largest, as stored)
         mip_dims = []
@@ -341,11 +386,12 @@ class TexExtractor:
         if not self.header or not self._data:
             self.load()
 
-        # Check for unsupported type 3 textures
-        if self.header.tex_type == 3:
-            print(f"Type 3 textures use custom BC7-like compression not yet supported.")
+        # Check for unsupported type 3 textures with custom compression
+        if self.header.tex_type == 3 and not self._is_simple_type3():
+            print(f"Type 3 textures with custom compression not yet supported.")
             print(f"  Dimensions: {self.header.width}x{self.header.height}")
-            print(f"  Mipmaps: {self.header.mip_count}")
+            print(f"  Format: {self._format_name(self.header.format)}")
+            print(f"  Count: {self._type3_count}")
             print(f"  Use --format dds to export raw data for external conversion.")
             return False
 
