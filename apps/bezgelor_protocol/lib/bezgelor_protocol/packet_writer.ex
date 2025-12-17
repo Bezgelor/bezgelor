@@ -4,14 +4,36 @@ defmodule BezgelorProtocol.PacketWriter do
 
   ## Overview
 
-  WildStar packets use bit-packed serialization. This writer supports both
-  byte-aligned and bit-level writes, building up binary data.
+  WildStar packets use **continuous bit-packed serialization**. All data is written
+  into a single bit stream without byte alignment between fields. This matches
+  NexusForever's GamePacketWriter behavior.
+
+  ## IMPORTANT: Bit-Packed vs Byte-Aligned Functions
+
+  This module provides two types of write functions:
+
+  ### Bit-Packed Functions (USE THESE IN PACKETS)
+
+  These write directly into the continuous bit stream:
+
+  - `write_u8/2`, `write_u16/2`, `write_u32/2`, `write_u64/2` - unsigned integers
+  - `write_i32/2` - signed 32-bit integer
+  - `write_f32/2` - 32-bit float
+  - `write_bits/3` - arbitrary bit count
+
+  ### Byte-Aligned Functions (RARELY NEEDED)
+
+  These flush any pending bits first, breaking the bit stream. Only use these
+  at packet boundaries or for non-WildStar protocols:
+
+  - `write_byte_flush/2`, `write_uint16_flush/2`, `write_uint32_flush/2`, etc.
 
   ## Example
 
       writer = PacketWriter.new()
-      |> PacketWriter.write_uint32(12345)
-      |> PacketWriter.write_bits(3, 5)  # 3 in 5 bits
+      |> PacketWriter.write_u32(12345)      # 32 bits into stream
+      |> PacketWriter.write_bits(3, 5)      # 5 bits into stream
+      |> PacketWriter.write_u8(255)         # 8 bits into stream
       |> PacketWriter.flush_bits()
 
       binary = PacketWriter.to_binary(writer)
@@ -43,60 +65,77 @@ defmodule BezgelorProtocol.PacketWriter do
     IO.iodata_to_binary(buffer)
   end
 
-  @doc "Write a single byte."
-  @spec write_byte(t(), non_neg_integer()) :: t()
-  def write_byte(%__MODULE__{} = writer, byte) when byte >= 0 and byte <= 255 do
-    writer
-    |> flush_bits()
-    |> append_bytes(<<byte>>)
+  # ============================================================================
+  # BIT-PACKED FUNCTIONS - Use these in packet serialization
+  # ============================================================================
+
+  @doc """
+  Write an unsigned 8-bit integer into the bit stream.
+
+  This is the preferred way to write bytes in WildStar packets.
+  """
+  @spec write_u8(t(), non_neg_integer()) :: t()
+  def write_u8(%__MODULE__{} = writer, value) when value >= 0 do
+    write_bits(writer, value, 8)
   end
 
-  @doc "Write a little-endian uint16."
-  @spec write_uint16(t(), non_neg_integer()) :: t()
-  def write_uint16(%__MODULE__{} = writer, value) do
-    writer
-    |> flush_bits()
-    |> append_bytes(<<value::little-16>>)
+  @doc """
+  Write an unsigned 16-bit integer into the bit stream.
+  """
+  @spec write_u16(t(), non_neg_integer()) :: t()
+  def write_u16(%__MODULE__{} = writer, value) when value >= 0 do
+    write_bits(writer, value, 16)
   end
 
-  @doc "Write a little-endian uint32."
-  @spec write_uint32(t(), non_neg_integer()) :: t()
-  def write_uint32(%__MODULE__{} = writer, value) do
-    writer
-    |> flush_bits()
-    |> append_bytes(<<value::little-32>>)
+  @doc """
+  Write an unsigned 32-bit integer into the bit stream.
+
+  This is the preferred way to write uint32 values in WildStar packets.
+  """
+  @spec write_u32(t(), non_neg_integer()) :: t()
+  def write_u32(%__MODULE__{} = writer, value) when value >= 0 do
+    write_bits(writer, value, 32)
   end
 
-  @doc "Write a little-endian signed int32."
-  @spec write_int32(t(), integer()) :: t()
-  def write_int32(%__MODULE__{} = writer, value) do
-    writer
-    |> flush_bits()
-    |> append_bytes(<<value::little-signed-32>>)
+  @doc """
+  Write an unsigned 64-bit integer into the bit stream.
+
+  This is the preferred way to write uint64 values in WildStar packets.
+  """
+  @spec write_u64(t(), non_neg_integer()) :: t()
+  def write_u64(%__MODULE__{} = writer, value) when value >= 0 do
+    write_bits(writer, value, 64)
   end
 
-  @doc "Write a little-endian uint64."
-  @spec write_uint64(t(), non_neg_integer()) :: t()
-  def write_uint64(%__MODULE__{} = writer, value) do
-    writer
-    |> flush_bits()
-    |> append_bytes(<<value::little-64>>)
+  @doc """
+  Write a signed 32-bit integer into the bit stream.
+
+  Negative values are written using two's complement representation.
+  """
+  @spec write_i32(t(), integer()) :: t()
+  def write_i32(%__MODULE__{} = writer, value) do
+    # Convert to unsigned using two's complement for negative values
+    unsigned = :erlang.band(value, 0xFFFFFFFF)
+    write_bits(writer, unsigned, 32)
   end
 
-  @doc "Write a little-endian float32."
-  @spec write_float32(t(), float()) :: t()
-  def write_float32(%__MODULE__{} = writer, value) do
-    writer
-    |> flush_bits()
-    |> append_bytes(<<value::little-float-32>>)
+  @doc """
+  Write a 32-bit float into the bit stream.
+
+  The float is converted to its IEEE 754 binary representation and
+  written as 32 bits. This is the preferred way to write floats in
+  WildStar packets.
+  """
+  @spec write_f32(t(), float()) :: t()
+  def write_f32(%__MODULE__{} = writer, value) do
+    <<int_value::little-unsigned-32>> = <<value::little-float-32>>
+    write_bits(writer, int_value, 32)
   end
 
-  @doc "Write raw bytes (byte-aligned)."
-  @spec write_bytes(t(), binary()) :: t()
-  def write_bytes(%__MODULE__{} = writer, bytes) when is_binary(bytes) do
-    writer
-    |> flush_bits()
-    |> append_bytes(bytes)
+  @doc "Write specified number of bits into the bit stream."
+  @spec write_bits(t(), non_neg_integer(), pos_integer()) :: t()
+  def write_bits(%__MODULE__{} = writer, value, count) when count > 0 do
+    write_bits_acc(writer, value, count)
   end
 
   @doc """
@@ -112,39 +151,6 @@ defmodule BezgelorProtocol.PacketWriter do
     |> Enum.reduce(writer, fn byte, w ->
       write_bits(w, byte, 8)
     end)
-  end
-
-  @doc """
-  Write a float32 into the continuous bit stream (not byte-aligned).
-
-  The float is converted to its IEEE 754 binary representation and
-  written as 32 bits into the bit stream.
-  """
-  @spec write_float32_bits(t(), float()) :: t()
-  def write_float32_bits(%__MODULE__{} = writer, value) do
-    # Convert float to its 32-bit integer representation
-    <<int_value::little-unsigned-32>> = <<value::little-float-32>>
-    write_bits(writer, int_value, 32)
-  end
-
-  @doc """
-  Write a uint64 into the continuous bit stream (not byte-aligned).
-
-  Use this when writing in the middle of a bit-packed packet structure.
-  """
-  @spec write_uint64_bits(t(), non_neg_integer()) :: t()
-  def write_uint64_bits(%__MODULE__{} = writer, value) do
-    write_bits(writer, value, 64)
-  end
-
-  @doc """
-  Write a uint32 into the continuous bit stream (not byte-aligned).
-
-  Use this when writing in the middle of a bit-packed packet structure.
-  """
-  @spec write_uint32_bits(t(), non_neg_integer()) :: t()
-  def write_uint32_bits(%__MODULE__{} = writer, value) do
-    write_bits(writer, value, 32)
   end
 
   @doc """
@@ -180,9 +186,192 @@ defmodule BezgelorProtocol.PacketWriter do
   @spec write_vector3(t(), {float(), float(), float()}) :: t()
   def write_vector3(%__MODULE__{} = writer, {x, y, z}) do
     writer
-    |> write_float32_bits(x)
-    |> write_float32_bits(y)
-    |> write_float32_bits(z)
+    |> write_f32(x)
+    |> write_f32(y)
+    |> write_f32(z)
+  end
+
+  @doc """
+  Write a UTF-16LE string with bit-packed length prefix.
+
+  This matches NexusForever's GamePacketWriter.WriteStringWide():
+  - 1 bit: extended flag (1 if length > 127)
+  - 7 or 15 bits: length in characters
+  - UTF-16LE encoded string data (written as bits, not byte-aligned)
+  """
+  @spec write_wide_string(t(), String.t()) :: t()
+  def write_wide_string(%__MODULE__{} = writer, string) when is_binary(string) do
+    utf16 = :unicode.characters_to_binary(string, :utf8, {:utf16, :little})
+    # Length in characters (UTF-16 bytes / 2)
+    length = div(byte_size(utf16), 2)
+    extended = length > 0x7F
+
+    writer
+    |> write_bits(if(extended, do: 1, else: 0), 1)
+    |> write_bits(length, if(extended, do: 15, else: 7))
+    |> write_bytes_bits(utf16)
+  end
+
+  # ============================================================================
+  # BYTE-ALIGNED FUNCTIONS - These flush the bit stream first!
+  # Only use at packet boundaries or for non-WildStar protocols.
+  # ============================================================================
+
+  @doc """
+  Write a single byte (FLUSHES bit stream first).
+
+  WARNING: This breaks the continuous bit stream. Only use at packet
+  boundaries or for protocols that require byte alignment.
+  """
+  @spec write_byte_flush(t(), non_neg_integer()) :: t()
+  def write_byte_flush(%__MODULE__{} = writer, byte) when byte >= 0 and byte <= 255 do
+    writer
+    |> flush_bits()
+    |> append_bytes(<<byte>>)
+  end
+
+  @doc """
+  Write a little-endian uint16 (FLUSHES bit stream first).
+
+  WARNING: This breaks the continuous bit stream. Only use at packet
+  boundaries or for protocols that require byte alignment.
+  """
+  @spec write_uint16_flush(t(), non_neg_integer()) :: t()
+  def write_uint16_flush(%__MODULE__{} = writer, value) do
+    writer
+    |> flush_bits()
+    |> append_bytes(<<value::little-16>>)
+  end
+
+  @doc """
+  Write a little-endian uint32 (FLUSHES bit stream first).
+
+  WARNING: This breaks the continuous bit stream. Only use at packet
+  boundaries or for protocols that require byte alignment.
+  """
+  @spec write_uint32_flush(t(), non_neg_integer()) :: t()
+  def write_uint32_flush(%__MODULE__{} = writer, value) do
+    writer
+    |> flush_bits()
+    |> append_bytes(<<value::little-32>>)
+  end
+
+  @doc """
+  Write a little-endian signed int32 (FLUSHES bit stream first).
+
+  WARNING: This breaks the continuous bit stream. Only use at packet
+  boundaries or for protocols that require byte alignment.
+  """
+  @spec write_int32_flush(t(), integer()) :: t()
+  def write_int32_flush(%__MODULE__{} = writer, value) do
+    writer
+    |> flush_bits()
+    |> append_bytes(<<value::little-signed-32>>)
+  end
+
+  @doc """
+  Write a little-endian uint64 (FLUSHES bit stream first).
+
+  WARNING: This breaks the continuous bit stream. Only use at packet
+  boundaries or for protocols that require byte alignment.
+  """
+  @spec write_uint64_flush(t(), non_neg_integer()) :: t()
+  def write_uint64_flush(%__MODULE__{} = writer, value) do
+    writer
+    |> flush_bits()
+    |> append_bytes(<<value::little-64>>)
+  end
+
+  @doc """
+  Write a little-endian float32 (FLUSHES bit stream first).
+
+  WARNING: This breaks the continuous bit stream. Only use at packet
+  boundaries or for protocols that require byte alignment.
+  """
+  @spec write_float32_flush(t(), float()) :: t()
+  def write_float32_flush(%__MODULE__{} = writer, value) do
+    writer
+    |> flush_bits()
+    |> append_bytes(<<value::little-float-32>>)
+  end
+
+  @doc """
+  Write raw bytes (FLUSHES bit stream first).
+
+  WARNING: This breaks the continuous bit stream. Only use at packet
+  boundaries or for protocols that require byte alignment.
+  """
+  @spec write_bytes_flush(t(), binary()) :: t()
+  def write_bytes_flush(%__MODULE__{} = writer, bytes) when is_binary(bytes) do
+    writer
+    |> flush_bits()
+    |> append_bytes(bytes)
+  end
+
+  @doc "Write a UTF-16LE string with uint32 length prefix (legacy format, byte-aligned)."
+  @spec write_wide_string_legacy(t(), String.t()) :: t()
+  def write_wide_string_legacy(%__MODULE__{} = writer, string) when is_binary(string) do
+    utf16 = :unicode.characters_to_binary(string, :utf8, {:utf16, :little})
+    length = String.length(string)
+
+    writer
+    |> write_uint32_flush(length)
+    |> write_bytes_flush(utf16)
+  end
+
+  # ============================================================================
+  # DEPRECATED ALIASES - These will be removed in a future version
+  # ============================================================================
+
+  @doc false
+  @deprecated "Use write_byte_flush/2 or write_u8/2 instead"
+  def write_byte(writer, value), do: write_byte_flush(writer, value)
+
+  @doc false
+  @deprecated "Use write_uint16_flush/2 or write_u16/2 instead"
+  def write_uint16(writer, value), do: write_uint16_flush(writer, value)
+
+  @doc false
+  @deprecated "Use write_uint32_flush/2 or write_u32/2 instead"
+  def write_uint32(writer, value), do: write_uint32_flush(writer, value)
+
+  @doc false
+  @deprecated "Use write_int32_flush/2 or write_i32/2 instead"
+  def write_int32(writer, value), do: write_int32_flush(writer, value)
+
+  @doc false
+  @deprecated "Use write_uint64_flush/2 or write_u64/2 instead"
+  def write_uint64(writer, value), do: write_uint64_flush(writer, value)
+
+  @doc false
+  @deprecated "Use write_float32_flush/2 or write_f32/2 instead"
+  def write_float32(writer, value), do: write_float32_flush(writer, value)
+
+  @doc false
+  @deprecated "Use write_bytes_flush/2 or write_bytes_bits/2 instead"
+  def write_bytes(writer, bytes), do: write_bytes_flush(writer, bytes)
+
+  # Keep these as aliases for backwards compatibility (they were already bit-packed)
+  @doc false
+  def write_float32_bits(writer, value), do: write_f32(writer, value)
+  @doc false
+  def write_uint64_bits(writer, value), do: write_u64(writer, value)
+  @doc false
+  def write_uint32_bits(writer, value), do: write_u32(writer, value)
+
+  # ============================================================================
+  # INTERNAL FUNCTIONS
+  # ============================================================================
+
+  @doc "Flush any remaining bits to the buffer."
+  @spec flush_bits(t()) :: t()
+  def flush_bits(%__MODULE__{bit_pos: 0} = writer), do: writer
+
+  def flush_bits(%__MODULE__{bit_pos: bit_pos, bit_value: bit_value} = writer) when bit_pos > 0 do
+    writer
+    |> append_bytes(<<bit_value>>)
+    |> Map.put(:bit_pos, 0)
+    |> Map.put(:bit_value, 0)
   end
 
   # Pack a 32-bit float into 16-bit half-precision format
@@ -214,57 +403,6 @@ defmodule BezgelorProtocol.PacketWriter do
         bor(v3, bsr(v2 - 0x37FFF000, 13))
     end
   end
-
-  @doc """
-  Write a UTF-16LE string with bit-packed length prefix.
-
-  This matches NexusForever's GamePacketWriter.WriteStringWide():
-  - 1 bit: extended flag (1 if length > 127)
-  - 7 or 15 bits: length in characters
-  - UTF-16LE encoded string data (written as bits, not byte-aligned)
-  """
-  @spec write_wide_string(t(), String.t()) :: t()
-  def write_wide_string(%__MODULE__{} = writer, string) when is_binary(string) do
-    utf16 = :unicode.characters_to_binary(string, :utf8, {:utf16, :little})
-    # Length in characters (UTF-16 bytes / 2)
-    length = div(byte_size(utf16), 2)
-    extended = length > 0x7F
-
-    writer
-    |> write_bits(if(extended, do: 1, else: 0), 1)
-    |> write_bits(length, if(extended, do: 15, else: 7))
-    |> write_bytes_bits(utf16)
-  end
-
-  @doc "Write a UTF-16LE string with uint32 length prefix (legacy format)."
-  @spec write_wide_string_legacy(t(), String.t()) :: t()
-  def write_wide_string_legacy(%__MODULE__{} = writer, string) when is_binary(string) do
-    utf16 = :unicode.characters_to_binary(string, :utf8, {:utf16, :little})
-    length = String.length(string)
-
-    writer
-    |> write_uint32(length)
-    |> write_bytes(utf16)
-  end
-
-  @doc "Write specified number of bits."
-  @spec write_bits(t(), non_neg_integer(), pos_integer()) :: t()
-  def write_bits(%__MODULE__{} = writer, value, count) when count > 0 do
-    write_bits_acc(writer, value, count)
-  end
-
-  @doc "Flush any remaining bits to the buffer."
-  @spec flush_bits(t()) :: t()
-  def flush_bits(%__MODULE__{bit_pos: 0} = writer), do: writer
-
-  def flush_bits(%__MODULE__{bit_pos: bit_pos, bit_value: bit_value} = writer) when bit_pos > 0 do
-    writer
-    |> append_bytes(<<bit_value>>)
-    |> Map.put(:bit_pos, 0)
-    |> Map.put(:bit_value, 0)
-  end
-
-  # Private functions
 
   defp append_bytes(%__MODULE__{buffer: buffer} = writer, bytes) do
     %{writer | buffer: [buffer, bytes]}

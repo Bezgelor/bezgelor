@@ -61,14 +61,14 @@ defmodule BezgelorProtocol.Packets.World.ServerNewRealm do
   @spec write(t(), PacketWriter.t()) :: {:ok, PacketWriter.t()}
   def write(%__MODULE__{} = packet, writer) do
     # Unused (uint32)
-    writer = PacketWriter.write_uint32_bits(writer, packet.unused)
+    writer = PacketWriter.write_u32(writer, packet.unused)
 
     # Session key (16 bytes) - use write_bytes_bits to maintain bit stream
     session_key = ensure_16_bytes(packet.session_key)
     writer = PacketWriter.write_bytes_bits(writer, session_key)
 
     # Gateway: Address (uint32) + Port (uint16)
-    writer = PacketWriter.write_uint32_bits(writer, packet.address)
+    writer = PacketWriter.write_u32(writer, packet.address)
     writer = PacketWriter.write_bits(writer, packet.port, 16)
 
     # Unused2 (bool = 1 bit)

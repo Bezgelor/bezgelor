@@ -21,10 +21,10 @@ defmodule BezgelorProtocol.Packets.World.ServerQuestUpdate do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint32(packet.quest_id)
-      |> PacketWriter.write_byte(state_to_int(packet.state))
-      |> PacketWriter.write_byte(packet.objective_index)
-      |> PacketWriter.write_uint16(packet.current)
+      |> PacketWriter.write_u32(packet.quest_id)
+      |> PacketWriter.write_u8(state_to_int(packet.state))
+      |> PacketWriter.write_u8(packet.objective_index)
+      |> PacketWriter.write_u16(packet.current)
 
     {:ok, writer}
   end

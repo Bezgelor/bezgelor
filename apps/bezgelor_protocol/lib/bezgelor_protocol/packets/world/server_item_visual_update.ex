@@ -60,8 +60,8 @@ defmodule BezgelorProtocol.Packets.World.ServerItemVisualUpdate do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint32(packet.player_guid)
-      |> PacketWriter.write_byte(length(packet.visuals))
+      |> PacketWriter.write_u32(packet.player_guid)
+      |> PacketWriter.write_u8(length(packet.visuals))
 
     # Write each visual (bit-packed fields)
     writer =
@@ -71,7 +71,7 @@ defmodule BezgelorProtocol.Packets.World.ServerItemVisualUpdate do
         |> PacketWriter.write_bits(visual.display_id, 15)
         |> PacketWriter.write_bits(visual.colour_set, 14)
         |> PacketWriter.flush_bits()
-        |> PacketWriter.write_int32(visual.dye_data)
+        |> PacketWriter.write_i32(visual.dye_data)
       end)
 
     {:ok, writer}

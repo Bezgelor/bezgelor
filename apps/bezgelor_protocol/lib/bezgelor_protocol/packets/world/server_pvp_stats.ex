@@ -90,21 +90,21 @@ defmodule BezgelorProtocol.Packets.World.ServerPvpStats do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint32(packet.lifetime_kills)
-      |> PacketWriter.write_uint32(packet.lifetime_deaths)
-      |> PacketWriter.write_uint32(packet.honorable_kills)
-      |> PacketWriter.write_uint32(packet.duels_won)
-      |> PacketWriter.write_uint32(packet.duels_lost)
-      |> PacketWriter.write_uint32(packet.battlegrounds_won)
-      |> PacketWriter.write_uint32(packet.battlegrounds_lost)
-      |> PacketWriter.write_uint32(packet.arenas_won)
-      |> PacketWriter.write_uint32(packet.arenas_lost)
-      |> PacketWriter.write_uint32(packet.honor_total)
-      |> PacketWriter.write_uint32(packet.honor_this_week)
-      |> PacketWriter.write_uint32(packet.conquest_total)
-      |> PacketWriter.write_uint32(packet.conquest_this_week)
-      |> PacketWriter.write_uint32(packet.conquest_cap)
-      |> PacketWriter.write_byte(length(packet.ratings))
+      |> PacketWriter.write_u32(packet.lifetime_kills)
+      |> PacketWriter.write_u32(packet.lifetime_deaths)
+      |> PacketWriter.write_u32(packet.honorable_kills)
+      |> PacketWriter.write_u32(packet.duels_won)
+      |> PacketWriter.write_u32(packet.duels_lost)
+      |> PacketWriter.write_u32(packet.battlegrounds_won)
+      |> PacketWriter.write_u32(packet.battlegrounds_lost)
+      |> PacketWriter.write_u32(packet.arenas_won)
+      |> PacketWriter.write_u32(packet.arenas_lost)
+      |> PacketWriter.write_u32(packet.honor_total)
+      |> PacketWriter.write_u32(packet.honor_this_week)
+      |> PacketWriter.write_u32(packet.conquest_total)
+      |> PacketWriter.write_u32(packet.conquest_this_week)
+      |> PacketWriter.write_u32(packet.conquest_cap)
+      |> PacketWriter.write_u8(length(packet.ratings))
 
     # Write ratings
     writer =
@@ -112,11 +112,11 @@ defmodule BezgelorProtocol.Packets.World.ServerPvpStats do
         bracket_byte = bracket_to_byte(r.bracket)
 
         w
-        |> PacketWriter.write_byte(bracket_byte)
-        |> PacketWriter.write_uint16(r.rating)
-        |> PacketWriter.write_uint16(r.season_high)
-        |> PacketWriter.write_uint16(r.games_played)
-        |> PacketWriter.write_uint16(r.games_won)
+        |> PacketWriter.write_u8(bracket_byte)
+        |> PacketWriter.write_u16(r.rating)
+        |> PacketWriter.write_u16(r.season_high)
+        |> PacketWriter.write_u16(r.games_played)
+        |> PacketWriter.write_u16(r.games_won)
       end)
 
     {:ok, writer}

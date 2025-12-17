@@ -64,31 +64,31 @@ defmodule BezgelorProtocol.Packets.World.ServerBattlegroundScore do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint32(packet.team1_score)
-      |> PacketWriter.write_uint32(packet.team2_score)
-      |> PacketWriter.write_byte(length(packet.objectives))
+      |> PacketWriter.write_u32(packet.team1_score)
+      |> PacketWriter.write_u32(packet.team2_score)
+      |> PacketWriter.write_u8(length(packet.objectives))
 
     # Write objectives
     writer =
       Enum.reduce(packet.objectives, writer, fn obj, w ->
         w
-        |> PacketWriter.write_byte(obj.id)
-        |> PacketWriter.write_byte(obj.owner_team)
-        |> PacketWriter.write_byte(obj.progress)
+        |> PacketWriter.write_u8(obj.id)
+        |> PacketWriter.write_u8(obj.owner_team)
+        |> PacketWriter.write_u8(obj.progress)
       end)
 
-    writer = PacketWriter.write_byte(writer, length(packet.player_stats))
+    writer = PacketWriter.write_u8(writer, length(packet.player_stats))
 
     # Write player stats
     writer =
       Enum.reduce(packet.player_stats, writer, fn ps, w ->
         w
-        |> PacketWriter.write_uint64(ps.player_guid)
-        |> PacketWriter.write_uint16(ps.kills)
-        |> PacketWriter.write_uint16(ps.deaths)
-        |> PacketWriter.write_uint32(ps.damage)
-        |> PacketWriter.write_uint32(ps.healing)
-        |> PacketWriter.write_uint16(ps.objectives)
+        |> PacketWriter.write_u64(ps.player_guid)
+        |> PacketWriter.write_u16(ps.kills)
+        |> PacketWriter.write_u16(ps.deaths)
+        |> PacketWriter.write_u32(ps.damage)
+        |> PacketWriter.write_u32(ps.healing)
+        |> PacketWriter.write_u16(ps.objectives)
       end)
 
     {:ok, writer}

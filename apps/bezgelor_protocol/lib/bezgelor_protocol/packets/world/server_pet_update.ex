@@ -33,10 +33,10 @@ defmodule BezgelorProtocol.Packets.World.ServerPetUpdate do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint64(packet.entity_guid)
-      |> PacketWriter.write_uint32(packet.pet_id || 0)
-      |> PacketWriter.write_byte(packet.level || 1)
-      |> PacketWriter.write_uint32(packet.xp || 0)
+      |> PacketWriter.write_u64(packet.entity_guid)
+      |> PacketWriter.write_u32(packet.pet_id || 0)
+      |> PacketWriter.write_u8(packet.level || 1)
+      |> PacketWriter.write_u32(packet.xp || 0)
       |> PacketWriter.write_wide_string(packet.nickname || "")
 
     {:ok, writer}

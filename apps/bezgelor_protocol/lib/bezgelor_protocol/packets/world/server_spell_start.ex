@@ -38,10 +38,10 @@ defmodule BezgelorProtocol.Packets.World.ServerSpellStart do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint64(packet.caster_guid)
-      |> PacketWriter.write_uint32(packet.spell_id)
-      |> PacketWriter.write_uint32(packet.cast_time)
-      |> PacketWriter.write_uint64(packet.target_guid || 0)
+      |> PacketWriter.write_u64(packet.caster_guid)
+      |> PacketWriter.write_u32(packet.spell_id)
+      |> PacketWriter.write_u32(packet.cast_time)
+      |> PacketWriter.write_u64(packet.target_guid || 0)
 
     {:ok, writer}
   end

@@ -35,8 +35,8 @@ defmodule BezgelorProtocol.Packets.World.ServerCinematicText do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint32(packet.delay)
-      |> PacketWriter.write_uint32(packet.text_id)
+      |> PacketWriter.write_u32(packet.delay)
+      |> PacketWriter.write_u32(packet.text_id)
 
     {:ok, writer}
   end

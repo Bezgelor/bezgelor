@@ -19,8 +19,8 @@ defmodule BezgelorProtocol.Packets.World.ServerPathXp do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint32(packet.xp_gained)
-      |> PacketWriter.write_uint32(packet.total_xp)
+      |> PacketWriter.write_u32(packet.xp_gained)
+      |> PacketWriter.write_u32(packet.total_xp)
 
     {:ok, writer}
   end

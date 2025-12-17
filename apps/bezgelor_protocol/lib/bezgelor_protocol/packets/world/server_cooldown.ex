@@ -34,8 +34,8 @@ defmodule BezgelorProtocol.Packets.World.ServerCooldown do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint32(packet.spell_id)
-      |> PacketWriter.write_uint32(packet.remaining)
+      |> PacketWriter.write_u32(packet.spell_id)
+      |> PacketWriter.write_u32(packet.remaining)
 
     {:ok, writer}
   end

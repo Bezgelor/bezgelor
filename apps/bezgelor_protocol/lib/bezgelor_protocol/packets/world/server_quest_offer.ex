@@ -30,17 +30,17 @@ defmodule BezgelorProtocol.Packets.World.ServerQuestOffer do
   def write(%__MODULE__{npc_guid: npc_guid, quests: quests}, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint64(npc_guid)
-      |> PacketWriter.write_byte(length(quests))
+      |> PacketWriter.write_u64(npc_guid)
+      |> PacketWriter.write_u8(length(quests))
 
     writer =
       Enum.reduce(quests, writer, fn quest, w ->
         w
-        |> PacketWriter.write_uint32(quest.id)
-        |> PacketWriter.write_uint32(quest.title_text_id || 0)
-        |> PacketWriter.write_byte(quest.level || 1)
-        |> PacketWriter.write_byte(quest.type || 0)
-        |> PacketWriter.write_byte(quest.flags || 0)
+        |> PacketWriter.write_u32(quest.id)
+        |> PacketWriter.write_u32(quest.title_text_id || 0)
+        |> PacketWriter.write_u8(quest.level || 1)
+        |> PacketWriter.write_u8(quest.type || 0)
+        |> PacketWriter.write_u8(quest.flags || 0)
       end)
 
     {:ok, writer}

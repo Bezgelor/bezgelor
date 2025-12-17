@@ -21,10 +21,10 @@ defmodule BezgelorProtocol.Packets.World.ServerEventUpdate do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint32(packet.instance_id)
-      |> PacketWriter.write_byte(packet.objective_index)
-      |> PacketWriter.write_uint32(packet.current)
-      |> PacketWriter.write_uint32(packet.target)
+      |> PacketWriter.write_u32(packet.instance_id)
+      |> PacketWriter.write_u8(packet.objective_index)
+      |> PacketWriter.write_u32(packet.current)
+      |> PacketWriter.write_u32(packet.target)
 
     {:ok, writer}
   end

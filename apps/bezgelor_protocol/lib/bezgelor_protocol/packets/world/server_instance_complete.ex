@@ -43,15 +43,15 @@ defmodule BezgelorProtocol.Packets.World.ServerInstanceComplete do
 
     writer =
       writer
-      |> PacketWriter.write_uint32(packet.instance_id)
-      |> PacketWriter.write_byte(difficulty_to_int(packet.difficulty))
-      |> PacketWriter.write_uint32(packet.duration_sec)
-      |> PacketWriter.write_uint16(packet.deaths)
-      |> PacketWriter.write_uint64(packet.damage_done)
-      |> PacketWriter.write_uint64(packet.healing_done)
-      |> PacketWriter.write_uint16(packet.rating_earned)
-      |> PacketWriter.write_byte(if(packet.timed, do: 1, else: 0))
-      |> PacketWriter.write_byte(upgrade_byte)
+      |> PacketWriter.write_u32(packet.instance_id)
+      |> PacketWriter.write_u8(difficulty_to_int(packet.difficulty))
+      |> PacketWriter.write_u32(packet.duration_sec)
+      |> PacketWriter.write_u16(packet.deaths)
+      |> PacketWriter.write_u64(packet.damage_done)
+      |> PacketWriter.write_u64(packet.healing_done)
+      |> PacketWriter.write_u16(packet.rating_earned)
+      |> PacketWriter.write_u8(if(packet.timed, do: 1, else: 0))
+      |> PacketWriter.write_u8(upgrade_byte)
 
     {:ok, writer}
   end

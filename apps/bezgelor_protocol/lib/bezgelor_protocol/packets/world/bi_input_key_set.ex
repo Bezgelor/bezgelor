@@ -61,9 +61,9 @@ defmodule BezgelorProtocol.Packets.World.BiInputKeySet do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint32(length(packet.bindings))
+      |> PacketWriter.write_u32(length(packet.bindings))
       |> write_bindings(packet.bindings)
-      |> PacketWriter.write_uint64(packet.character_id)
+      |> PacketWriter.write_u64(packet.character_id)
 
     {:ok, writer}
   end
@@ -73,18 +73,18 @@ defmodule BezgelorProtocol.Packets.World.BiInputKeySet do
   defp write_bindings(writer, [binding | rest]) do
     writer
     |> PacketWriter.write_bits(binding.input_action_id, 14)
-    |> PacketWriter.write_uint32(binding.device_enum_00)
-    |> PacketWriter.write_uint32(binding.device_enum_01)
-    |> PacketWriter.write_uint32(binding.device_enum_02)
-    |> PacketWriter.write_uint32(binding.code_00)
-    |> PacketWriter.write_uint32(binding.code_01)
-    |> PacketWriter.write_uint32(binding.code_02)
-    |> PacketWriter.write_uint32(binding.meta_keys_00)
-    |> PacketWriter.write_uint32(binding.meta_keys_01)
-    |> PacketWriter.write_uint32(binding.meta_keys_02)
-    |> PacketWriter.write_uint32(binding.event_type_00)
-    |> PacketWriter.write_uint32(binding.event_type_01)
-    |> PacketWriter.write_uint32(binding.event_type_02)
+    |> PacketWriter.write_u32(binding.device_enum_00)
+    |> PacketWriter.write_u32(binding.device_enum_01)
+    |> PacketWriter.write_u32(binding.device_enum_02)
+    |> PacketWriter.write_u32(binding.code_00)
+    |> PacketWriter.write_u32(binding.code_01)
+    |> PacketWriter.write_u32(binding.code_02)
+    |> PacketWriter.write_u32(binding.meta_keys_00)
+    |> PacketWriter.write_u32(binding.meta_keys_01)
+    |> PacketWriter.write_u32(binding.meta_keys_02)
+    |> PacketWriter.write_u32(binding.event_type_00)
+    |> PacketWriter.write_u32(binding.event_type_01)
+    |> PacketWriter.write_u32(binding.event_type_02)
     |> write_bindings(rest)
   end
 end

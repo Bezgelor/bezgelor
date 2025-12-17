@@ -76,11 +76,11 @@ defmodule BezgelorProtocol.Packets.World.ServerCurrencyUpdate do
       # Currency type (5 bits)
       |> PacketWriter.write_bits(type_int, 5)
       # Amount (uint64)
-      |> PacketWriter.write_uint64(packet.amount)
+      |> PacketWriter.write_u64(packet.amount)
       # Unknown0 (always 0)
-      |> PacketWriter.write_uint64(0)
+      |> PacketWriter.write_u64(0)
       # Unknown1 (always 0)
-      |> PacketWriter.write_uint64(0)
+      |> PacketWriter.write_u64(0)
 
     {:ok, writer}
   end

@@ -21,10 +21,10 @@ defmodule BezgelorProtocol.Packets.World.ServerLootRollUpdate do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint64(packet.loot_id)
-      |> PacketWriter.write_uint64(packet.character_id)
-      |> PacketWriter.write_byte(roll_type_to_int(packet.roll_type))
-      |> PacketWriter.write_byte(packet.roll_value)
+      |> PacketWriter.write_u64(packet.loot_id)
+      |> PacketWriter.write_u64(packet.character_id)
+      |> PacketWriter.write_u8(roll_type_to_int(packet.roll_type))
+      |> PacketWriter.write_u8(packet.roll_value)
 
     {:ok, writer}
   end

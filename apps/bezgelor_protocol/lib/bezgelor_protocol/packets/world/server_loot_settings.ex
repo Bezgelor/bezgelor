@@ -20,9 +20,9 @@ defmodule BezgelorProtocol.Packets.World.ServerLootSettings do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_byte(loot_method_to_int(packet.loot_method))
-      |> PacketWriter.write_byte(packet.threshold)
-      |> PacketWriter.write_uint64(packet.master_looter_id || 0)
+      |> PacketWriter.write_u8(loot_method_to_int(packet.loot_method))
+      |> PacketWriter.write_u8(packet.threshold)
+      |> PacketWriter.write_u64(packet.master_looter_id || 0)
 
     {:ok, writer}
   end

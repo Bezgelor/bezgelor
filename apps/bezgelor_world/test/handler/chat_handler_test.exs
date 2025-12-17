@@ -35,9 +35,10 @@ defmodule BezgelorWorld.Handler.ChatHandlerTest do
 
     writer =
       PacketWriter.new()
-      |> PacketWriter.write_uint32(channel_int)
+      |> PacketWriter.write_u32(channel_int)
       |> PacketWriter.write_wide_string(target)
       |> PacketWriter.write_wide_string(message)
+      |> PacketWriter.flush_bits()
 
     PacketWriter.to_binary(writer)
   end

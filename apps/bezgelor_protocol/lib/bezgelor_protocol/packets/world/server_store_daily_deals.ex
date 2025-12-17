@@ -18,18 +18,18 @@ defmodule BezgelorProtocol.Packets.World.ServerStoreDailyDeals do
 
   @impl true
   def write(%__MODULE__{} = packet, writer) do
-    writer = PacketWriter.write_byte(writer, length(packet.deals))
+    writer = PacketWriter.write_u8(writer, length(packet.deals))
 
     writer =
       Enum.reduce(packet.deals, writer, fn deal, w ->
         w
-        |> PacketWriter.write_uint32(deal.id)
-        |> PacketWriter.write_uint32(deal.store_item.id)
+        |> PacketWriter.write_u32(deal.id)
+        |> PacketWriter.write_u32(deal.store_item.id)
         |> PacketWriter.write_wide_string(deal.store_item.name)
-        |> PacketWriter.write_uint32(deal.store_item.premium_price || 0)
-        |> PacketWriter.write_byte(deal.discount_percent)
-        |> PacketWriter.write_uint16(deal.quantity_limit || 0)
-        |> PacketWriter.write_uint16(deal.quantity_sold)
+        |> PacketWriter.write_u32(deal.store_item.premium_price || 0)
+        |> PacketWriter.write_u8(deal.discount_percent)
+        |> PacketWriter.write_u16(deal.quantity_limit || 0)
+        |> PacketWriter.write_u16(deal.quantity_sold)
       end)
 
     {:ok, writer}

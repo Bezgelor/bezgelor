@@ -27,16 +27,16 @@ defmodule BezgelorProtocol.Packets.World.ServerQuestList do
 
   @impl true
   def write(%__MODULE__{quests: quests}, writer) do
-    writer = PacketWriter.write_uint16(writer, length(quests))
+    writer = PacketWriter.write_u16(writer, length(quests))
 
     writer =
       Enum.reduce(quests, writer, fn quest, w ->
         objectives = get_in(quest.progress, ["objectives"]) || []
 
         w
-        |> PacketWriter.write_uint32(quest.quest_id)
-        |> PacketWriter.write_byte(state_to_int(quest.state))
-        |> PacketWriter.write_byte(length(objectives))
+        |> PacketWriter.write_u32(quest.quest_id)
+        |> PacketWriter.write_u8(state_to_int(quest.state))
+        |> PacketWriter.write_u8(length(objectives))
         |> write_objectives(objectives)
       end)
 
@@ -46,8 +46,8 @@ defmodule BezgelorProtocol.Packets.World.ServerQuestList do
   defp write_objectives(writer, objectives) do
     Enum.reduce(objectives, writer, fn obj, w ->
       w
-      |> PacketWriter.write_uint16(obj["current"] || 0)
-      |> PacketWriter.write_uint16(obj["target"] || 1)
+      |> PacketWriter.write_u16(obj["current"] || 0)
+      |> PacketWriter.write_u16(obj["target"] || 1)
     end)
   end
 

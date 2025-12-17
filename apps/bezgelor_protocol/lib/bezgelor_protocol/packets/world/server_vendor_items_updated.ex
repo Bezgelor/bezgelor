@@ -134,21 +134,21 @@ defmodule BezgelorProtocol.Packets.World.ServerVendorItemsUpdated do
 
   @impl true
   def write(%__MODULE__{} = packet, writer) do
-    writer = PacketWriter.write_uint32(writer, packet.guid)
+    writer = PacketWriter.write_u32(writer, packet.guid)
 
     # Write categories
-    writer = PacketWriter.write_uint32(writer, length(packet.categories))
+    writer = PacketWriter.write_u32(writer, length(packet.categories))
     writer = Enum.reduce(packet.categories, writer, &write_category/2)
 
     # Write items
-    writer = PacketWriter.write_uint32(writer, length(packet.items))
+    writer = PacketWriter.write_u32(writer, length(packet.items))
     writer = Enum.reduce(packet.items, writer, &write_vendor_item/2)
 
     # Write price multipliers and flags
     writer =
       writer
-      |> PacketWriter.write_float32(packet.sell_price_multiplier)
-      |> PacketWriter.write_float32(packet.buy_price_multiplier)
+      |> PacketWriter.write_f32(packet.sell_price_multiplier)
+      |> PacketWriter.write_f32(packet.buy_price_multiplier)
       |> PacketWriter.write_bits(0, 1)  # unknown2
       |> PacketWriter.write_bits(0, 1)  # unknown3
       |> PacketWriter.write_bits(0, 1)  # unknown4
@@ -159,25 +159,25 @@ defmodule BezgelorProtocol.Packets.World.ServerVendorItemsUpdated do
 
   defp write_category(category, writer) do
     writer
-    |> PacketWriter.write_uint32(category.index)
-    |> PacketWriter.write_uint32(category.localized_text_id)
+    |> PacketWriter.write_u32(category.index)
+    |> PacketWriter.write_u32(category.localized_text_id)
   end
 
   defp write_vendor_item(item, writer) do
     writer
-    |> PacketWriter.write_uint32(item.index)
+    |> PacketWriter.write_u32(item.index)
     |> PacketWriter.write_bits(0, 4)              # unknown1
     |> PacketWriter.flush_bits()
-    |> PacketWriter.write_uint32(item.item_id)
-    |> PacketWriter.write_uint32(0)               # unknown3
-    |> PacketWriter.write_uint32(0)               # unknown4
+    |> PacketWriter.write_u32(item.item_id)
+    |> PacketWriter.write_u32(0)               # unknown3
+    |> PacketWriter.write_u32(0)               # unknown4
     |> PacketWriter.write_bits(0, 17)             # unknown5
     |> PacketWriter.flush_bits()
-    |> PacketWriter.write_uint32(0)               # unknown6
-    |> PacketWriter.write_uint32(item.category_index)
-    |> PacketWriter.write_uint32(0)               # unknown8
-    |> PacketWriter.write_uint64(0)               # unknown9
-    |> PacketWriter.write_uint32(0)               # unknownA
+    |> PacketWriter.write_u32(0)               # unknown6
+    |> PacketWriter.write_u32(item.category_index)
+    |> PacketWriter.write_u32(0)               # unknown8
+    |> PacketWriter.write_u64(0)               # unknown9
+    |> PacketWriter.write_u32(0)               # unknownA
     |> write_extra_cost(item.extra_cost1)
     |> write_extra_cost(item.extra_cost2)
   end
@@ -188,8 +188,8 @@ defmodule BezgelorProtocol.Packets.World.ServerVendorItemsUpdated do
     writer
     |> PacketWriter.write_bits(cost_type_value, 3)
     |> PacketWriter.flush_bits()
-    |> PacketWriter.write_uint32(cost.quantity)
-    |> PacketWriter.write_uint32(cost.item_or_currency_id)
+    |> PacketWriter.write_u32(cost.quantity)
+    |> PacketWriter.write_u32(cost.item_or_currency_id)
   end
 
   defp cost_type_to_int(:none), do: @cost_type_none

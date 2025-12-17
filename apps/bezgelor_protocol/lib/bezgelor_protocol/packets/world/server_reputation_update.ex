@@ -21,10 +21,10 @@ defmodule BezgelorProtocol.Packets.World.ServerReputationUpdate do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint32(packet.faction_id)
-      |> PacketWriter.write_int32(packet.standing)
-      |> PacketWriter.write_int32(packet.delta)
-      |> PacketWriter.write_byte(level_to_int(packet.level))
+      |> PacketWriter.write_u32(packet.faction_id)
+      |> PacketWriter.write_i32(packet.standing)
+      |> PacketWriter.write_i32(packet.delta)
+      |> PacketWriter.write_u8(level_to_int(packet.level))
 
     {:ok, writer}
   end

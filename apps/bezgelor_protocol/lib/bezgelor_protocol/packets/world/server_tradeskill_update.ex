@@ -32,12 +32,12 @@ defmodule BezgelorProtocol.Packets.World.ServerTradeskillUpdate do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint32(packet.profession_id)
-      |> PacketWriter.write_byte(profession_type_to_int(packet.profession_type))
-      |> PacketWriter.write_uint16(packet.skill_level)
-      |> PacketWriter.write_uint32(packet.skill_xp)
-      |> PacketWriter.write_byte(if(packet.is_active, do: 1, else: 0))
-      |> PacketWriter.write_byte(packet.levels_gained)
+      |> PacketWriter.write_u32(packet.profession_id)
+      |> PacketWriter.write_u8(profession_type_to_int(packet.profession_type))
+      |> PacketWriter.write_u16(packet.skill_level)
+      |> PacketWriter.write_u32(packet.skill_xp)
+      |> PacketWriter.write_u8(if(packet.is_active, do: 1, else: 0))
+      |> PacketWriter.write_u8(packet.levels_gained)
 
     {:ok, writer}
   end

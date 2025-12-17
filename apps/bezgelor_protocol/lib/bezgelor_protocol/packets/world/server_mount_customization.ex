@@ -36,11 +36,11 @@ defmodule BezgelorProtocol.Packets.World.ServerMountCustomization do
 
     writer =
       writer
-      |> PacketWriter.write_uint64(packet.entity_guid)
-      |> PacketWriter.write_uint32(packet.mount_id)
-      |> PacketWriter.write_byte(length(dyes))
+      |> PacketWriter.write_u64(packet.entity_guid)
+      |> PacketWriter.write_u32(packet.mount_id)
+      |> PacketWriter.write_u8(length(dyes))
       |> write_dyes(dyes)
-      |> PacketWriter.write_byte(length(flairs))
+      |> PacketWriter.write_u8(length(flairs))
       |> write_flairs(flairs)
 
     {:ok, writer}
@@ -50,7 +50,7 @@ defmodule BezgelorProtocol.Packets.World.ServerMountCustomization do
 
   defp write_dyes(writer, [dye | rest]) do
     writer
-    |> PacketWriter.write_uint32(dye)
+    |> PacketWriter.write_u32(dye)
     |> write_dyes(rest)
   end
 

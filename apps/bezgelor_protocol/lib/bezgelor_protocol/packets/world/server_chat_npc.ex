@@ -53,7 +53,7 @@ defmodule BezgelorProtocol.Packets.World.ServerChatNpc do
     writer =
       writer
       |> PacketWriter.write_bits(packet.channel_type, 14)
-      |> PacketWriter.write_uint64(packet.chat_id)
+      |> PacketWriter.write_u64(packet.chat_id)
       |> PacketWriter.write_bits(packet.unit_name_text_id, 21)
       |> PacketWriter.write_bits(packet.message_text_id, 21)
       |> PacketWriter.flush_bits()

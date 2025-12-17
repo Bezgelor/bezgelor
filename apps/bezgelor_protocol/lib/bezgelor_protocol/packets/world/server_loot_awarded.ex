@@ -26,13 +26,13 @@ defmodule BezgelorProtocol.Packets.World.ServerLootAwarded do
 
     writer =
       writer
-      |> PacketWriter.write_uint64(packet.loot_id)
-      |> PacketWriter.write_uint32(packet.item_id)
-      |> PacketWriter.write_uint64(packet.winner_id)
-      |> PacketWriter.write_byte(byte_size(name_bytes))
+      |> PacketWriter.write_u64(packet.loot_id)
+      |> PacketWriter.write_u32(packet.item_id)
+      |> PacketWriter.write_u64(packet.winner_id)
+      |> PacketWriter.write_u8(byte_size(name_bytes))
       |> PacketWriter.write_wide_string(name_bytes)
-      |> PacketWriter.write_byte(award_reason_to_int(packet.award_reason))
-      |> PacketWriter.write_byte(packet.winning_roll)
+      |> PacketWriter.write_u8(award_reason_to_int(packet.award_reason))
+      |> PacketWriter.write_u8(packet.winning_roll)
 
     {:ok, writer}
   end

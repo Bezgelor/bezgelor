@@ -34,12 +34,12 @@ defmodule BezgelorProtocol.Packets.World.ServerGenericUnlockAccountList do
     unlock_ids = packet.unlock_ids || []
 
     # Write count
-    writer = PacketWriter.write_uint32(writer, length(unlock_ids))
+    writer = PacketWriter.write_u32(writer, length(unlock_ids))
 
     # Write each unlock ID
     writer =
       Enum.reduce(unlock_ids, writer, fn id, w ->
-        PacketWriter.write_uint32(w, id)
+        PacketWriter.write_u32(w, id)
       end)
 
     {:ok, writer}

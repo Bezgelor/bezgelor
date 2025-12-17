@@ -19,8 +19,8 @@ defmodule BezgelorProtocol.Packets.World.ServerAchievementUpdate do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint32(packet.achievement_id)
-      |> PacketWriter.write_uint32(packet.progress)
+      |> PacketWriter.write_u32(packet.achievement_id)
+      |> PacketWriter.write_u32(packet.progress)
 
     {:ok, writer}
   end

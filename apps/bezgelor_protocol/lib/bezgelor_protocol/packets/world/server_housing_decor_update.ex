@@ -65,18 +65,18 @@ defmodule BezgelorProtocol.Packets.World.ServerHousingDecorUpdate do
 
     writer =
       writer
-      |> PacketWriter.write_uint32(packet.plot_id)
-      |> PacketWriter.write_byte(action_byte)
-      |> PacketWriter.write_uint32(packet.decor_db_id)
-      |> PacketWriter.write_uint32(packet.decor_id || 0)
-      |> PacketWriter.write_float32(packet.pos_x || 0.0)
-      |> PacketWriter.write_float32(packet.pos_y || 0.0)
-      |> PacketWriter.write_float32(packet.pos_z || 0.0)
-      |> PacketWriter.write_float32(packet.rot_pitch || 0.0)
-      |> PacketWriter.write_float32(packet.rot_yaw || 0.0)
-      |> PacketWriter.write_float32(packet.rot_roll || 0.0)
-      |> PacketWriter.write_float32(packet.scale || 1.0)
-      |> PacketWriter.write_byte(exterior_byte)
+      |> PacketWriter.write_u32(packet.plot_id)
+      |> PacketWriter.write_u8(action_byte)
+      |> PacketWriter.write_u32(packet.decor_db_id)
+      |> PacketWriter.write_u32(packet.decor_id || 0)
+      |> PacketWriter.write_f32(packet.pos_x || 0.0)
+      |> PacketWriter.write_f32(packet.pos_y || 0.0)
+      |> PacketWriter.write_f32(packet.pos_z || 0.0)
+      |> PacketWriter.write_f32(packet.rot_pitch || 0.0)
+      |> PacketWriter.write_f32(packet.rot_yaw || 0.0)
+      |> PacketWriter.write_f32(packet.rot_roll || 0.0)
+      |> PacketWriter.write_f32(packet.scale || 1.0)
+      |> PacketWriter.write_u8(exterior_byte)
 
     {:ok, writer}
   end

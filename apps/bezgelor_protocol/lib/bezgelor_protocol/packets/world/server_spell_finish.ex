@@ -34,8 +34,8 @@ defmodule BezgelorProtocol.Packets.World.ServerSpellFinish do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint64(packet.caster_guid)
-      |> PacketWriter.write_uint32(packet.spell_id)
+      |> PacketWriter.write_u64(packet.caster_guid)
+      |> PacketWriter.write_u32(packet.spell_id)
 
     {:ok, writer}
   end

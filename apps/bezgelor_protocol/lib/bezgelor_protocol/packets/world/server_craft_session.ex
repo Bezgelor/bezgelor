@@ -37,17 +37,17 @@ defmodule BezgelorProtocol.Packets.World.ServerCraftSession do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint32(packet.schematic_id)
-      |> PacketWriter.write_float32(packet.cursor_x)
-      |> PacketWriter.write_float32(packet.cursor_y)
-      |> PacketWriter.write_byte(packet.overcharge_level)
-      |> PacketWriter.write_byte(length(packet.additives))
+      |> PacketWriter.write_u32(packet.schematic_id)
+      |> PacketWriter.write_f32(packet.cursor_x)
+      |> PacketWriter.write_f32(packet.cursor_y)
+      |> PacketWriter.write_u8(packet.overcharge_level)
+      |> PacketWriter.write_u8(length(packet.additives))
 
     writer =
       Enum.reduce(packet.additives, writer, fn add, w ->
         w
-        |> PacketWriter.write_uint32(add.item_id)
-        |> PacketWriter.write_uint16(add.quantity)
+        |> PacketWriter.write_u32(add.item_id)
+        |> PacketWriter.write_u16(add.quantity)
       end)
 
     {:ok, writer}

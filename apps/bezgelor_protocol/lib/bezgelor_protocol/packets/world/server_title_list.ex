@@ -24,8 +24,8 @@ defmodule BezgelorProtocol.Packets.World.ServerTitleList do
   def write(%__MODULE__{active_title_id: active_id, titles: titles}, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint32(active_id || 0)
-      |> PacketWriter.write_uint32(length(titles))
+      |> PacketWriter.write_u32(active_id || 0)
+      |> PacketWriter.write_u32(length(titles))
 
     writer =
       Enum.reduce(titles, writer, fn title, w ->
@@ -36,8 +36,8 @@ defmodule BezgelorProtocol.Packets.World.ServerTitleList do
           end
 
         w
-        |> PacketWriter.write_uint32(title.title_id)
-        |> PacketWriter.write_uint64(unlocked_ts)
+        |> PacketWriter.write_u32(title.title_id)
+        |> PacketWriter.write_u64(unlocked_ts)
       end)
 
     {:ok, writer}

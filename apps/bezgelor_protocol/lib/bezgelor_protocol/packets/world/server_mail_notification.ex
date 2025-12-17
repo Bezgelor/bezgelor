@@ -16,7 +16,7 @@ defmodule BezgelorProtocol.Packets.World.ServerMailNotification do
 
   @impl true
   def write(%__MODULE__{} = packet, writer) do
-    writer = PacketWriter.write_uint16(writer, packet.unread_count)
+    writer = PacketWriter.write_u16(writer, packet.unread_count)
     {:ok, writer}
   end
 end

@@ -34,12 +34,12 @@ defmodule BezgelorProtocol.Packets.World.ServerCraftResult do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_byte(result_to_int(packet.result))
-      |> PacketWriter.write_uint32(packet.item_id || 0)
-      |> PacketWriter.write_uint16(packet.quantity || 0)
-      |> PacketWriter.write_uint32(packet.variant_id || 0)
-      |> PacketWriter.write_uint32(packet.xp_gained || 0)
-      |> PacketWriter.write_byte(quality_to_int(packet.quality))
+      |> PacketWriter.write_u8(result_to_int(packet.result))
+      |> PacketWriter.write_u32(packet.item_id || 0)
+      |> PacketWriter.write_u16(packet.quantity || 0)
+      |> PacketWriter.write_u32(packet.variant_id || 0)
+      |> PacketWriter.write_u32(packet.xp_gained || 0)
+      |> PacketWriter.write_u8(quality_to_int(packet.quality))
 
     {:ok, writer}
   end

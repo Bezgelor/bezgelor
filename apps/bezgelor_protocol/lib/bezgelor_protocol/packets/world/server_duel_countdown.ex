@@ -44,13 +44,13 @@ defmodule BezgelorProtocol.Packets.World.ServerDuelCountdown do
 
     writer =
       writer
-      |> PacketWriter.write_uint64(packet.opponent_guid)
+      |> PacketWriter.write_u64(packet.opponent_guid)
       |> PacketWriter.write_wide_string(packet.opponent_name)
-      |> PacketWriter.write_byte(packet.countdown_seconds)
-      |> PacketWriter.write_float32(cx)
-      |> PacketWriter.write_float32(cy)
-      |> PacketWriter.write_float32(cz)
-      |> PacketWriter.write_float32(packet.radius)
+      |> PacketWriter.write_u8(packet.countdown_seconds)
+      |> PacketWriter.write_f32(cx)
+      |> PacketWriter.write_f32(cy)
+      |> PacketWriter.write_f32(cz)
+      |> PacketWriter.write_f32(packet.radius)
 
     {:ok, writer}
   end

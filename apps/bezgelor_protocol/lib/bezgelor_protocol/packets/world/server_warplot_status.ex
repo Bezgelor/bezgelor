@@ -79,16 +79,16 @@ defmodule BezgelorProtocol.Packets.World.ServerWarplotStatus do
 
     writer =
       writer
-      |> PacketWriter.write_byte(status_byte)
-      |> PacketWriter.write_uint32(packet.warplot_id)
+      |> PacketWriter.write_u8(status_byte)
+      |> PacketWriter.write_u32(packet.warplot_id)
       |> PacketWriter.write_wide_string(packet.warplot_name)
-      |> PacketWriter.write_uint16(packet.rating)
-      |> PacketWriter.write_uint16(packet.energy)
-      |> PacketWriter.write_uint32(packet.war_coins)
-      |> PacketWriter.write_uint32(packet.queue_time)
-      |> PacketWriter.write_uint32(packet.match_time)
-      |> PacketWriter.write_uint32(packet.team1_score)
-      |> PacketWriter.write_uint32(packet.team2_score)
+      |> PacketWriter.write_u16(packet.rating)
+      |> PacketWriter.write_u16(packet.energy)
+      |> PacketWriter.write_u32(packet.war_coins)
+      |> PacketWriter.write_u32(packet.queue_time)
+      |> PacketWriter.write_u32(packet.match_time)
+      |> PacketWriter.write_u32(packet.team1_score)
+      |> PacketWriter.write_u32(packet.team2_score)
 
     {:ok, writer}
   end

@@ -26,8 +26,8 @@ defmodule BezgelorProtocol.Packets.World.ServerAchievementList do
   def write(%__MODULE__{total_points: total_points, achievements: achievements}, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint32(total_points)
-      |> PacketWriter.write_uint16(length(achievements))
+      |> PacketWriter.write_u32(total_points)
+      |> PacketWriter.write_u16(length(achievements))
 
     writer =
       Enum.reduce(achievements, writer, fn ach, w ->
@@ -38,10 +38,10 @@ defmodule BezgelorProtocol.Packets.World.ServerAchievementList do
           end
 
         w
-        |> PacketWriter.write_uint32(ach.achievement_id)
-        |> PacketWriter.write_uint32(ach.progress)
-        |> PacketWriter.write_byte(if(ach.completed, do: 1, else: 0))
-        |> PacketWriter.write_uint64(completed_ts)
+        |> PacketWriter.write_u32(ach.achievement_id)
+        |> PacketWriter.write_u32(ach.progress)
+        |> PacketWriter.write_u8(if(ach.completed, do: 1, else: 0))
+        |> PacketWriter.write_u64(completed_ts)
       end)
 
     {:ok, writer}

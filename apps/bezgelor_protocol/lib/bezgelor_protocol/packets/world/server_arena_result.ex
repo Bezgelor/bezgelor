@@ -78,15 +78,15 @@ defmodule BezgelorProtocol.Packets.World.ServerArenaResult do
 
     writer =
       writer
-      |> PacketWriter.write_byte(won_byte)
-      |> PacketWriter.write_uint16(packet.team_rating_old)
-      |> PacketWriter.write_uint16(packet.team_rating_new)
-      |> PacketWriter.write_uint16(packet.personal_rating_old)
-      |> PacketWriter.write_uint16(packet.personal_rating_new)
+      |> PacketWriter.write_u8(won_byte)
+      |> PacketWriter.write_u16(packet.team_rating_old)
+      |> PacketWriter.write_u16(packet.team_rating_new)
+      |> PacketWriter.write_u16(packet.personal_rating_old)
+      |> PacketWriter.write_u16(packet.personal_rating_new)
       |> PacketWriter.write_wide_string(packet.enemy_team_name)
-      |> PacketWriter.write_uint16(packet.enemy_rating)
-      |> PacketWriter.write_uint16(packet.match_duration)
-      |> PacketWriter.write_byte(length(packet.player_stats))
+      |> PacketWriter.write_u16(packet.enemy_rating)
+      |> PacketWriter.write_u16(packet.match_duration)
+      |> PacketWriter.write_u8(length(packet.player_stats))
 
     # Write player stats
     writer =
@@ -94,13 +94,13 @@ defmodule BezgelorProtocol.Packets.World.ServerArenaResult do
         team_byte = if ps.team == :own, do: 0, else: 1
 
         w
-        |> PacketWriter.write_uint64(ps.player_guid)
+        |> PacketWriter.write_u64(ps.player_guid)
         |> PacketWriter.write_wide_string(ps.player_name)
-        |> PacketWriter.write_byte(team_byte)
-        |> PacketWriter.write_byte(ps.kills)
-        |> PacketWriter.write_byte(ps.deaths)
-        |> PacketWriter.write_uint32(ps.damage)
-        |> PacketWriter.write_uint32(ps.healing)
+        |> PacketWriter.write_u8(team_byte)
+        |> PacketWriter.write_u8(ps.kills)
+        |> PacketWriter.write_u8(ps.deaths)
+        |> PacketWriter.write_u32(ps.damage)
+        |> PacketWriter.write_u32(ps.healing)
       end)
 
     {:ok, writer}

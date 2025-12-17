@@ -42,20 +42,20 @@ defmodule BezgelorProtocol.Packets.World.ServerWorkOrderList do
 
   @impl true
   def write(%__MODULE__{work_orders: orders}, writer) do
-    writer = PacketWriter.write_byte(writer, length(orders))
+    writer = PacketWriter.write_u8(writer, length(orders))
 
     writer =
       Enum.reduce(orders, writer, fn order, w ->
         w
-        |> PacketWriter.write_uint32(order.work_order_id)
-        |> PacketWriter.write_uint32(order.profession_id)
-        |> PacketWriter.write_uint32(order.schematic_id)
-        |> PacketWriter.write_uint16(order.quantity_required)
-        |> PacketWriter.write_uint16(order.quantity_completed)
-        |> PacketWriter.write_byte(status_to_int(order.status))
-        |> PacketWriter.write_uint32(order.expires_in_seconds || 0)
-        |> PacketWriter.write_uint32(order.reward_xp || 0)
-        |> PacketWriter.write_uint32(order.reward_gold || 0)
+        |> PacketWriter.write_u32(order.work_order_id)
+        |> PacketWriter.write_u32(order.profession_id)
+        |> PacketWriter.write_u32(order.schematic_id)
+        |> PacketWriter.write_u16(order.quantity_required)
+        |> PacketWriter.write_u16(order.quantity_completed)
+        |> PacketWriter.write_u8(status_to_int(order.status))
+        |> PacketWriter.write_u32(order.expires_in_seconds || 0)
+        |> PacketWriter.write_u32(order.reward_xp || 0)
+        |> PacketWriter.write_u32(order.reward_gold || 0)
       end)
 
     {:ok, writer}

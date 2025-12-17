@@ -38,18 +38,18 @@ defmodule BezgelorProtocol.Packets.World.ServerGatherResult do
 
     writer =
       writer
-      |> PacketWriter.write_byte(result_to_int(packet.result))
-      |> PacketWriter.write_uint64(packet.node_guid)
-      |> PacketWriter.write_byte(length(items))
+      |> PacketWriter.write_u8(result_to_int(packet.result))
+      |> PacketWriter.write_u64(packet.node_guid)
+      |> PacketWriter.write_u8(length(items))
 
     writer =
       Enum.reduce(items, writer, fn item, w ->
         w
-        |> PacketWriter.write_uint32(item.item_id)
-        |> PacketWriter.write_uint16(item.quantity)
+        |> PacketWriter.write_u32(item.item_id)
+        |> PacketWriter.write_u16(item.quantity)
       end)
 
-    writer = PacketWriter.write_uint32(writer, packet.xp_gained || 0)
+    writer = PacketWriter.write_u32(writer, packet.xp_gained || 0)
 
     {:ok, writer}
   end

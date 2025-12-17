@@ -36,9 +36,9 @@ defmodule BezgelorProtocol.Packets.World.ServerDuelRequest do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint64(packet.challenger_guid)
+      |> PacketWriter.write_u64(packet.challenger_guid)
       |> PacketWriter.write_wide_string(packet.challenger_name)
-      |> PacketWriter.write_uint16(packet.timeout_seconds)
+      |> PacketWriter.write_u16(packet.timeout_seconds)
 
     {:ok, writer}
   end

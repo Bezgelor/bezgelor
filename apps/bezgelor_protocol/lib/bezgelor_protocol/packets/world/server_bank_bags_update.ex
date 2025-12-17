@@ -92,31 +92,31 @@ defmodule BezgelorProtocol.Packets.World.ServerBankBagsUpdate do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_byte(packet.unlocked_slots)
-      |> PacketWriter.write_uint16(packet.bank_capacity)
-      |> PacketWriter.write_byte(length(packet.bags))
+      |> PacketWriter.write_u8(packet.unlocked_slots)
+      |> PacketWriter.write_u16(packet.bank_capacity)
+      |> PacketWriter.write_u8(length(packet.bags))
 
     # Write bank bags
     writer =
       Enum.reduce(packet.bags, writer, fn bag, w ->
         w
-        |> PacketWriter.write_byte(bag.bank_slot)
-        |> PacketWriter.write_uint32(bag.item_id || 0)
-        |> PacketWriter.write_byte(bag.size)
+        |> PacketWriter.write_u8(bag.bank_slot)
+        |> PacketWriter.write_u32(bag.item_id || 0)
+        |> PacketWriter.write_u8(bag.size)
       end)
 
     # Write bank items
-    writer = PacketWriter.write_uint16(writer, length(packet.items))
+    writer = PacketWriter.write_u16(writer, length(packet.items))
 
     writer =
       Enum.reduce(packet.items, writer, fn item, w ->
         w
-        |> PacketWriter.write_byte(item.bank_slot)
-        |> PacketWriter.write_uint16(item.slot)
-        |> PacketWriter.write_uint32(item.item_id)
-        |> PacketWriter.write_uint16(item.quantity)
-        |> PacketWriter.write_byte(item.durability || 100)
-        |> PacketWriter.write_byte(if(item.bound, do: 1, else: 0))
+        |> PacketWriter.write_u8(item.bank_slot)
+        |> PacketWriter.write_u16(item.slot)
+        |> PacketWriter.write_u32(item.item_id)
+        |> PacketWriter.write_u16(item.quantity)
+        |> PacketWriter.write_u8(item.durability || 100)
+        |> PacketWriter.write_u8(if(item.bound, do: 1, else: 0))
       end)
 
     {:ok, writer}

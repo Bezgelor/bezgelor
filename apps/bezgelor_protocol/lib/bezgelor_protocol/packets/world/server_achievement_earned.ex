@@ -26,9 +26,9 @@ defmodule BezgelorProtocol.Packets.World.ServerAchievementEarned do
 
     writer =
       writer
-      |> PacketWriter.write_uint32(packet.achievement_id)
-      |> PacketWriter.write_uint32(packet.points)
-      |> PacketWriter.write_uint64(completed_ts)
+      |> PacketWriter.write_u32(packet.achievement_id)
+      |> PacketWriter.write_u32(packet.points)
+      |> PacketWriter.write_u64(completed_ts)
 
     {:ok, writer}
   end

@@ -29,18 +29,18 @@ defmodule BezgelorProtocol.Packets.World.ServerWorldBossKilled do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint32(packet.boss_id)
-      |> PacketWriter.write_uint32(packet.kill_time_ms)
-      |> PacketWriter.write_uint16(packet.participant_count)
-      |> PacketWriter.write_byte(length(packet.top_contributors))
+      |> PacketWriter.write_u32(packet.boss_id)
+      |> PacketWriter.write_u32(packet.kill_time_ms)
+      |> PacketWriter.write_u16(packet.participant_count)
+      |> PacketWriter.write_u8(length(packet.top_contributors))
 
     writer =
       Enum.reduce(packet.top_contributors, writer, fn contrib, w ->
         w
-        |> PacketWriter.write_uint64(contrib.character_id)
+        |> PacketWriter.write_u64(contrib.character_id)
         |> PacketWriter.write_wide_string(contrib.name)
-        |> PacketWriter.write_uint32(contrib.contribution)
-        |> PacketWriter.write_uint32(contrib.damage_dealt)
+        |> PacketWriter.write_u32(contrib.contribution)
+        |> PacketWriter.write_u32(contrib.damage_dealt)
       end)
 
     {:ok, writer}

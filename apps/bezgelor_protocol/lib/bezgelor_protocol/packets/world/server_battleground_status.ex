@@ -61,11 +61,11 @@ defmodule BezgelorProtocol.Packets.World.ServerBattlegroundStatus do
 
     writer =
       writer
-      |> PacketWriter.write_byte(status_byte)
-      |> PacketWriter.write_uint32(packet.battleground_id || 0)
-      |> PacketWriter.write_uint32(packet.estimated_wait || 0)
-      |> PacketWriter.write_uint16(packet.position || 0)
-      |> PacketWriter.write_uint32(packet.time_remaining || 0)
+      |> PacketWriter.write_u8(status_byte)
+      |> PacketWriter.write_u32(packet.battleground_id || 0)
+      |> PacketWriter.write_u32(packet.estimated_wait || 0)
+      |> PacketWriter.write_u16(packet.position || 0)
+      |> PacketWriter.write_u32(packet.time_remaining || 0)
 
     {:ok, writer}
   end

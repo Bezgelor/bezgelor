@@ -38,10 +38,10 @@ defmodule BezgelorProtocol.Packets.World.ServerCinematicTransitionDurationSet do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint32(packet.type)
-      |> PacketWriter.write_uint16(packet.duration_start)
-      |> PacketWriter.write_uint16(packet.duration_mid)
-      |> PacketWriter.write_uint16(packet.duration_end)
+      |> PacketWriter.write_u32(packet.type)
+      |> PacketWriter.write_u16(packet.duration_start)
+      |> PacketWriter.write_u16(packet.duration_mid)
+      |> PacketWriter.write_u16(packet.duration_end)
 
     {:ok, writer}
   end

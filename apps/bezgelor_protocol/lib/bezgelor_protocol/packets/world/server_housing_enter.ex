@@ -33,9 +33,9 @@ defmodule BezgelorProtocol.Packets.World.ServerHousingEnter do
 
     writer =
       writer
-      |> PacketWriter.write_uint32(packet.plot_id)
-      |> PacketWriter.write_uint64(packet.owner_guid)
-      |> PacketWriter.write_byte(result_byte)
+      |> PacketWriter.write_u32(packet.plot_id)
+      |> PacketWriter.write_u64(packet.owner_guid)
+      |> PacketWriter.write_u8(result_byte)
 
     {:ok, writer}
   end

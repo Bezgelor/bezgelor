@@ -30,7 +30,7 @@ defmodule BezgelorProtocol.Packets.World.ServerStoreOffers do
 
     writer =
       writer
-      |> PacketWriter.write_uint32(length(offer_groups))
+      |> PacketWriter.write_u32(length(offer_groups))
       # No offer groups to write
       |> PacketWriter.flush_bits()
 

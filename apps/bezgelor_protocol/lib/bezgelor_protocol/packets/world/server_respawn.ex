@@ -42,12 +42,12 @@ defmodule BezgelorProtocol.Packets.World.ServerRespawn do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint64(packet.entity_guid)
-      |> PacketWriter.write_float32(packet.position_x)
-      |> PacketWriter.write_float32(packet.position_y)
-      |> PacketWriter.write_float32(packet.position_z)
-      |> PacketWriter.write_uint32(packet.health)
-      |> PacketWriter.write_uint32(packet.max_health)
+      |> PacketWriter.write_u64(packet.entity_guid)
+      |> PacketWriter.write_f32(packet.position_x)
+      |> PacketWriter.write_f32(packet.position_y)
+      |> PacketWriter.write_f32(packet.position_z)
+      |> PacketWriter.write_u32(packet.health)
+      |> PacketWriter.write_u32(packet.max_health)
 
     {:ok, writer}
   end

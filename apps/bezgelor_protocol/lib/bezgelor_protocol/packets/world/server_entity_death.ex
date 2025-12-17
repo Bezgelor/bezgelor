@@ -34,8 +34,8 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityDeath do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint64(packet.entity_guid)
-      |> PacketWriter.write_uint64(packet.killer_guid || 0)
+      |> PacketWriter.write_u64(packet.entity_guid)
+      |> PacketWriter.write_u64(packet.killer_guid || 0)
 
     {:ok, writer}
   end
