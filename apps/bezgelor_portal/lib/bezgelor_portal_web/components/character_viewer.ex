@@ -31,7 +31,7 @@ defmodule BezgelorPortalWeb.Components.CharacterViewer do
 
   ## Attributes
 
-    * `:character` (required) - Character map with at least `id`, `race_id`, and `sex` fields
+    * `:character` (required) - Character map with at least `id`, `race`, and `sex` fields
     * `:equipment` - List of equipped items (default: [])
     * `:class` - Additional CSS classes for the container
     * `:show_loading` - Whether to show loading spinner initially (default: true)
@@ -47,7 +47,7 @@ defmodule BezgelorPortalWeb.Components.CharacterViewer do
       id={"character-viewer-#{@character.id}"}
       class={"relative bg-base-300 rounded-lg overflow-hidden #{@class}"}
       phx-hook="CharacterViewer"
-      data-race={race_key(@character.race_id)}
+      data-race={race_key(@character.race)}
       data-gender={gender_key(@character.sex)}
       data-equipment={Jason.encode!(equipment_data(@equipment))}
     >
