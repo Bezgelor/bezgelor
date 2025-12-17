@@ -59,3 +59,42 @@ class M3Parser:
             index_offset=index_offset,
             index_count=index_count,
         )
+
+    def parse_chunks(self, file: BinaryIO) -> List[M3Chunk]:
+        """Parse chunk index from M3 file.
+
+        Args:
+            file: Open binary file handle positioned at start
+
+        Returns:
+            List of M3Chunk objects describing each chunk
+        """
+        # Parse header first to get chunk index location
+        header = self.parse_header(file)
+
+        if header.index_count == 0:
+            return []
+
+        # Seek to chunk index
+        file.seek(header.index_offset)
+
+        chunks = []
+        for _ in range(header.index_count):
+            chunk_data = file.read(16)
+            if len(chunk_data) < 16:
+                break
+
+            # Parse chunk header: id (4 bytes), offset, size, property_a
+            chunk_id = chunk_data[:4].decode("ascii", errors="replace")
+            offset, size, property_a = struct.unpack("<III", chunk_data[4:16])
+
+            chunks.append(
+                M3Chunk(
+                    id=chunk_id,
+                    offset=offset,
+                    size=size,
+                    property_a=property_a,
+                )
+            )
+
+        return chunks
