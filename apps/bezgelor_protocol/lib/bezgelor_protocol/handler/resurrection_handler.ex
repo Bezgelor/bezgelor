@@ -20,7 +20,7 @@ defmodule BezgelorProtocol.Handler.ResurrectionHandler do
     ClientResurrectAccept,
     ServerResurrect
   }
-  alias BezgelorWorld.DeathManager
+  alias BezgelorWorld.{CombatBroadcaster, DeathManager}
 
   require Logger
 
@@ -65,6 +65,9 @@ defmodule BezgelorProtocol.Handler.ResurrectionHandler do
         {x, y, z} = result.position
         health_percent = result.health_percent
 
+        # Broadcast resurrection to nearby players
+        broadcast_resurrection(entity_guid, {x, y, z}, health_percent, state)
+
         res_packet = ServerResurrect.new(:spell, zone_id, {x, y, z}, health_percent)
         {opcode, payload} = serialize_packet(res_packet)
 
@@ -97,6 +100,9 @@ defmodule BezgelorProtocol.Handler.ResurrectionHandler do
         # Apply death penalty (durability loss) when respawning at bindpoint
         apply_death_penalty(state)
 
+        # Broadcast resurrection to nearby players (at bindpoint location)
+        broadcast_resurrection(entity_guid, {x, y, z}, health_percent, state)
+
         res_packet = ServerResurrect.new(:bindpoint, zone_id, {x, y, z}, health_percent)
         {opcode, payload} = serialize_packet(res_packet)
 
@@ -126,6 +132,35 @@ defmodule BezgelorProtocol.Handler.ResurrectionHandler do
 
         {:error, reason} ->
           Logger.warning("Failed to apply durability loss: #{inspect(reason)}")
+      end
+    end
+  end
+
+  # Broadcast resurrection to nearby players
+  defp broadcast_resurrection(entity_guid, position, health_percent, state) do
+    zone_id = state.session_data[:zone_id]
+    character = state.session_data[:character]
+
+    if zone_id && character do
+      # Calculate actual health from percentage
+      max_health = character.base_health || 10000
+      health = round(max_health * health_percent / 100.0)
+
+      # Get nearby players in the zone
+      alias BezgelorWorld.WorldManager
+      nearby_guids = WorldManager.get_nearby_player_guids(zone_id, position, 100.0)
+
+      # Exclude the player who just resurrected
+      recipient_guids = Enum.reject(nearby_guids, &(&1 == entity_guid))
+
+      if recipient_guids != [] do
+        CombatBroadcaster.broadcast_player_resurrection(
+          entity_guid,
+          position,
+          health,
+          max_health,
+          recipient_guids
+        )
       end
     end
   end

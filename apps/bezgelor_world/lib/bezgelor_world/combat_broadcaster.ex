@@ -46,6 +46,38 @@ defmodule BezgelorWorld.CombatBroadcaster do
   end
 
   @doc """
+  Broadcast player resurrection to nearby players.
+
+  Notifies all players in range that a player has resurrected at a new position.
+  """
+  @spec broadcast_player_resurrection(
+          non_neg_integer(),
+          {float(), float(), float()},
+          non_neg_integer(),
+          non_neg_integer(),
+          [non_neg_integer()]
+        ) :: :ok
+  def broadcast_player_resurrection(player_guid, position, health, max_health, recipient_guids) do
+    {x, y, z} = position
+
+    packet = %ServerRespawn{
+      entity_guid: player_guid,
+      position_x: x,
+      position_y: y,
+      position_z: z,
+      health: health,
+      max_health: max_health
+    }
+
+    writer = PacketWriter.new()
+    {:ok, writer} = ServerRespawn.write(packet, writer)
+    packet_data = PacketWriter.to_binary(writer)
+
+    send_to_players(recipient_guids, :server_respawn, packet_data)
+    Logger.debug("Broadcast resurrection of player #{player_guid} to #{length(recipient_guids)} players")
+  end
+
+  @doc """
   Send XP gain notification to a player.
   """
   @spec send_xp_gain(non_neg_integer(), non_neg_integer(), atom(), non_neg_integer()) :: :ok
