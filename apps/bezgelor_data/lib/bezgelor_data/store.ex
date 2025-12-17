@@ -2341,8 +2341,8 @@ defmodule BezgelorData.Store do
     table_loaders = [
       # Core data
       fn -> load_table(:zones, "zones.json", "zones") end,
-      fn -> load_table(:spells, "spells.json", "spells") end,
-      fn -> load_table(:items, "items.json", "items") end,
+      fn -> load_spells_split() end,
+      fn -> load_items_split() end,
       fn -> load_client_table(:item_types, "Item2Type.json", "item2type") end,
       fn -> load_client_table(:creation_armor_sets, "CharacterCreationArmorSet.json", "charactercreationarmorset") end,
       fn -> load_table(:texts, "texts.json", "texts") end,
@@ -2828,6 +2828,92 @@ defmodule BezgelorData.Store do
     :ets.insert(table_name, results)
 
     Logger.debug("Loaded #{length(results)} full creature records from #{length(part_files)} parts (parallel)")
+  end
+
+  defp load_items_split do
+    table_name = table_name(:items)
+
+    # Clear existing data
+    :ets.delete_all_objects(table_name)
+
+    # Load from split part files (each under 100MB for GitHub) - in parallel
+    part_files = [
+      "items_part1.json",
+      "items_part2.json",
+      "items_part3.json",
+      "items_part4.json"
+    ]
+
+    # Load all parts in parallel, then insert
+    results =
+      part_files
+      |> Task.async_stream(
+        fn filename ->
+          json_path = Path.join(data_directory(), filename)
+
+          case load_json_raw(json_path) do
+            {:ok, data} ->
+              items = Map.get(data, :item2, [])
+              tuples = Enum.map(items, fn item -> {Map.get(item, :ID), item} end)
+              {:ok, tuples}
+
+            {:error, reason} ->
+              Logger.warning("Failed to load #{filename}: #{inspect(reason)}")
+              {:ok, []}
+          end
+        end,
+        max_concurrency: 4,
+        timeout: 60_000
+      )
+      |> Enum.reduce([], fn {:ok, {:ok, tuples}}, acc -> acc ++ tuples end)
+
+    # Bulk insert all at once
+    :ets.insert(table_name, results)
+
+    Logger.debug("Loaded #{length(results)} items from #{length(part_files)} parts (parallel)")
+  end
+
+  defp load_spells_split do
+    table_name = table_name(:spells)
+
+    # Clear existing data
+    :ets.delete_all_objects(table_name)
+
+    # Load from split part files (each under 100MB for GitHub) - in parallel
+    part_files = [
+      "spells_part1.json",
+      "spells_part2.json",
+      "spells_part3.json",
+      "spells_part4.json"
+    ]
+
+    # Load all parts in parallel, then insert
+    results =
+      part_files
+      |> Task.async_stream(
+        fn filename ->
+          json_path = Path.join(data_directory(), filename)
+
+          case load_json_raw(json_path) do
+            {:ok, data} ->
+              spells = Map.get(data, :spell4, [])
+              tuples = Enum.map(spells, fn spell -> {Map.get(spell, :ID), spell} end)
+              {:ok, tuples}
+
+            {:error, reason} ->
+              Logger.warning("Failed to load #{filename}: #{inspect(reason)}")
+              {:ok, []}
+          end
+        end,
+        max_concurrency: 4,
+        timeout: 60_000
+      )
+      |> Enum.reduce([], fn {:ok, {:ok, tuples}}, acc -> acc ++ tuples end)
+
+    # Bulk insert all at once
+    :ets.insert(table_name, results)
+
+    Logger.debug("Loaded #{length(results)} spells from #{length(part_files)} parts (parallel)")
   end
 
   defp load_loot_tables do
