@@ -2162,7 +2162,8 @@ defmodule BezgelorData.Store do
 
   defp add_item_name(item) do
     name = get_item_name(item)
-    Map.put(item, :name, name || "Item ##{item.id}")
+    item_id = Map.get(item, :ID) || Map.get(item, :id, 0)
+    Map.put(item, :name, name || "Item ##{item_id}")
   end
 
   defp get_item_name(item) do
