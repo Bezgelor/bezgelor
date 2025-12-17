@@ -24,12 +24,172 @@ import {Socket} from "phoenix"
 import {LiveSocket} from "phoenix_live_view"
 import {hooks as colocatedHooks} from "phoenix-colocated/bezgelor_portal"
 import topbar from "../vendor/topbar"
+import {CharacterViewer} from "./character_viewer"
+
+// ============================================
+// LIVEVEW HOOKS
+// ============================================
+
+/**
+ * CharacterViewer Hook
+ *
+ * Renders a 3D character model using Three.js.
+ * Data attributes:
+ *   - data-race: Character race key (e.g., "human", "aurin")
+ *   - data-gender: Character gender ("male" or "female")
+ *   - data-equipment: JSON array of equipped item IDs
+ */
+const CharacterViewerHook = {
+  mounted() {
+    const race = this.el.dataset.race || "human"
+    const gender = this.el.dataset.gender || "male"
+
+    // Parse equipment data if provided
+    let equipment = []
+    try {
+      equipment = JSON.parse(this.el.dataset.equipment || "[]")
+    } catch (e) {
+      console.warn("Failed to parse equipment data:", e)
+    }
+
+    // Create the viewer
+    this.viewer = new CharacterViewer(this.el, {
+      width: this.el.clientWidth || 400,
+      height: this.el.clientHeight || 500,
+    })
+
+    // Load the character model
+    const modelUrl = `/models/characters/${race}_${gender}.glb`
+    this.currentModelUrl = modelUrl
+    this.currentRace = race
+    this.currentGender = gender
+    this.viewer.loadModel(modelUrl).then((success) => {
+      if (success) {
+        // Hide the loading spinner
+        this._hideSpinner()
+        // Show animation controls if animations available
+        this._showAnimationControls()
+        // Load texture for this race/gender
+        this.viewer.loadTexture(race, gender)
+      } else {
+        // Show fallback message if model fails to load
+        this._showFallback()
+      }
+    })
+
+    // Handle resize
+    this.resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect
+        if (this.viewer && width > 0 && height > 0) {
+          this.viewer.resize(width, height)
+        }
+      }
+    })
+    this.resizeObserver.observe(this.el)
+  },
+
+  updated() {
+    // Reload model if race/gender changed
+    const race = this.el.dataset.race || "human"
+    const gender = this.el.dataset.gender || "male"
+    const modelUrl = `/models/characters/${race}_${gender}.glb`
+
+    if (this.viewer && this.currentModelUrl !== modelUrl) {
+      this.currentModelUrl = modelUrl
+      this.currentRace = race
+      this.currentGender = gender
+      this.viewer.loadModel(modelUrl).then((success) => {
+        if (success) {
+          this._hideSpinner()
+          this.viewer.loadTexture(race, gender)
+        } else {
+          this._showFallback()
+        }
+      })
+    }
+  },
+
+  destroyed() {
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect()
+      this.resizeObserver = null
+    }
+
+    if (this.viewer) {
+      this.viewer.dispose()
+      this.viewer = null
+    }
+  },
+
+  _hideSpinner() {
+    // Remove the loading spinner element
+    const spinner = this.el.querySelector('.loading')
+    if (spinner && spinner.parentElement) {
+      spinner.parentElement.remove()
+    }
+  },
+
+  _showAnimationControls() {
+    const animations = this.viewer.getAnimations()
+
+    // Only show controls if there are animations
+    if (animations.length === 0) {
+      return
+    }
+
+    // Remove existing controls
+    const existing = this.el.querySelector('.animation-controls')
+    if (existing) existing.remove()
+
+    // Create animation control panel
+    const controls = document.createElement('div')
+    controls.className = 'animation-controls absolute bottom-2 left-2 right-2 flex gap-1 flex-wrap justify-center'
+
+    animations.forEach(({ index, name }) => {
+      const btn = document.createElement('button')
+      btn.className = 'btn btn-xs btn-ghost bg-base-100/80'
+      btn.textContent = name
+      btn.addEventListener('click', () => {
+        this.viewer.playAnimation(index)
+        // Update active state
+        controls.querySelectorAll('button').forEach(b => b.classList.remove('btn-active'))
+        btn.classList.add('btn-active')
+      })
+      // Mark first as active
+      if (index === 0) btn.classList.add('btn-active')
+      controls.appendChild(btn)
+    })
+
+    this.el.appendChild(controls)
+  },
+
+  _showFallback() {
+    // Clear the container and show a fallback message
+    this.el.innerHTML = `
+      <div class="flex items-center justify-center h-full text-base-content/50">
+        <div class="text-center py-12">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <p>Character preview not available</p>
+        </div>
+      </div>
+    `
+  },
+}
+
+// Combine hooks
+const Hooks = {
+  ...colocatedHooks,
+  CharacterViewer: CharacterViewerHook,
+}
 
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 const liveSocket = new LiveSocket("/live", Socket, {
   longPollFallbackMs: 2500,
   params: {_csrf_token: csrfToken},
-  hooks: {...colocatedHooks},
+  hooks: Hooks,
 })
 
 // Show progress bar on live navigation and form submits

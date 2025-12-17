@@ -108,7 +108,7 @@ defmodule BezgelorPortalWeb.CharactersLive do
                 </span>
               </div>
             </div>
-            <.faction_badge faction_id={character.faction_id} size="xs" />
+            <.faction_badge race_id={character.race} size="xs" />
           </div>
 
           <div class="flex justify-between text-xs text-base-content/60 mt-2">
@@ -156,7 +156,7 @@ defmodule BezgelorPortalWeb.CharactersLive do
                     <.character_avatar character={character} size="sm" />
                     <div>
                       <div class="font-bold">{character.name}</div>
-                      <.faction_badge faction_id={character.faction_id} size="xs" />
+                      <.faction_badge race_id={character.race} size="xs" />
                     </div>
                   </div>
                 </td>
@@ -195,20 +195,29 @@ defmodule BezgelorPortalWeb.CharactersLive do
     assigns = assign(assigns, :size_class, size_class)
 
     ~H"""
-    <div class={"avatar placeholder"}>
-      <div class={"#{@size_class} rounded-full bg-base-300 text-base-content"}>
+    <div class="avatar placeholder">
+      <div class={"#{@size_class} rounded-full bg-base-300 text-base-content relative overflow-hidden"}>
         <span class={if @size == "lg", do: "text-xl", else: "text-sm"}>
           {String.first(@character.name)}
         </span>
+        <!-- Work in Progress Banner -->
+        <div
+          class="absolute text-black text-center font-bold"
+          style="background-color: #f7941d; width: 60px; top: 8px; left: -16px; transform: rotate(-45deg); font-size: 6px; line-height: 1.4;"
+        >
+          WiP
+        </div>
       </div>
     </div>
     """
   end
 
-  # Faction badge component
+  # Faction badge component - derives faction from race for accuracy
   defp faction_badge(assigns) do
     assigns = assign_new(assigns, :size, fn -> "sm" end)
-    faction = GameData.get_faction(assigns.faction_id)
+    # Use race to determine correct faction (CharacterCreation data has inverted mappings)
+    faction_id = GameData.faction_id_for_race(assigns.race_id)
+    faction = GameData.get_faction(faction_id)
 
     assigns = assign(assigns, :faction, faction)
 

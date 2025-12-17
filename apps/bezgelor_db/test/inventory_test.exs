@@ -22,9 +22,10 @@ defmodule BezgelorDb.InventoryTest do
       Characters.create_character(account.id, %{
         name: "InvTester#{System.unique_integer([:positive])}",
         sex: 0,
-        race: 0,
+        race: 1,
         class: 0,
-        faction_id: 166,
+        faction_id: 167,
+        realm_id: 1,
         world_id: 1,
         world_zone_id: 1
       })
@@ -242,6 +243,44 @@ defmodule BezgelorDb.InventoryTest do
 
       # Now should be slot 1
       assert {0, 1} = Inventory.find_empty_slot(character.id)
+    end
+  end
+
+  describe "admin_remove_item" do
+    test "removes item by inventory item ID", %{character: character} do
+      {:ok, [item]} = Inventory.add_item(character.id, 1001, 1)
+
+      assert {:ok, removed} = Inventory.admin_remove_item(character.id, item.id)
+      assert removed.id == item.id
+
+      # Verify it's gone
+      items = Inventory.get_items(character.id)
+      refute Enum.any?(items, &(&1.id == item.id))
+    end
+
+    test "returns error for non-existent item", %{character: character} do
+      assert {:error, :not_found} = Inventory.admin_remove_item(character.id, 999_999)
+    end
+
+    test "returns error when item belongs to different character", %{account: account, character: character} do
+      # Create another character
+      {:ok, other_char} =
+        Characters.create_character(account.id, %{
+          name: "OtherChar#{System.unique_integer([:positive])}",
+          sex: 0,
+          race: 1,
+          class: 0,
+          faction_id: 167,
+          realm_id: 1,
+          world_id: 1,
+          world_zone_id: 1
+        })
+
+      {:ok, _} = Inventory.init_bags(other_char.id)
+      {:ok, [other_item]} = Inventory.add_item(other_char.id, 1001, 1)
+
+      # Try to delete with wrong character ID
+      assert {:error, :not_found} = Inventory.admin_remove_item(character.id, other_item.id)
     end
   end
 end

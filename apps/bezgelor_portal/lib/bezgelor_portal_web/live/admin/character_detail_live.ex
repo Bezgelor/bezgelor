@@ -83,7 +83,7 @@ defmodule BezgelorPortalWeb.Admin.CharacterDetailLive do
           <%= if @character.deleted_at do %>
             <span class="badge badge-error badge-lg">Deleted</span>
           <% end %>
-          <.faction_badge faction_id={@character.faction_id} />
+          <.faction_badge race_id={@character.race} />
         </div>
       </div>
 
@@ -190,7 +190,11 @@ defmodule BezgelorPortalWeb.Admin.CharacterDetailLive do
             <% :overview -> %>
               <.overview_tab character={@character} />
             <% :inventory -> %>
-              <.inventory_tab equipped_items={@equipped_items} inventory_items={@inventory_items} />
+              <.inventory_tab
+                equipped_items={@equipped_items}
+                inventory_items={@inventory_items}
+                can_modify_items={"characters.modify_items" in @permissions}
+              />
             <% :currencies -> %>
               <.currencies_tab currencies={@currencies} />
           <% end %>
@@ -310,6 +314,7 @@ defmodule BezgelorPortalWeb.Admin.CharacterDetailLive do
 
   attr :equipped_items, :list, required: true
   attr :inventory_items, :list, required: true
+  attr :can_modify_items, :boolean, default: false
 
   defp inventory_tab(assigns) do
     ~H"""
@@ -326,6 +331,7 @@ defmodule BezgelorPortalWeb.Admin.CharacterDetailLive do
                   <th>Slot</th>
                   <th>Item ID</th>
                   <th>Stack</th>
+                  <th :if={@can_modify_items}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -333,6 +339,17 @@ defmodule BezgelorPortalWeb.Admin.CharacterDetailLive do
                   <td>{item.slot}</td>
                   <td class="font-mono">{item.item_id}</td>
                   <td>{item.quantity}</td>
+                  <td :if={@can_modify_items}>
+                    <button
+                      type="button"
+                      class="btn btn-ghost btn-xs text-error"
+                      phx-click="remove_item"
+                      phx-value-id={item.id}
+                      data-confirm="Remove this item from inventory?"
+                    >
+                      <.icon name="hero-trash" class="size-4" />
+                    </button>
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -353,6 +370,7 @@ defmodule BezgelorPortalWeb.Admin.CharacterDetailLive do
                   <th>Slot</th>
                   <th>Item ID</th>
                   <th>Stack</th>
+                  <th :if={@can_modify_items}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -361,6 +379,17 @@ defmodule BezgelorPortalWeb.Admin.CharacterDetailLive do
                   <td>{item.bag_index}</td>
                   <td class="font-mono">{item.item_id}</td>
                   <td>{item.quantity}</td>
+                  <td :if={@can_modify_items}>
+                    <button
+                      type="button"
+                      class="btn btn-ghost btn-xs text-error"
+                      phx-click="remove_item"
+                      phx-value-id={item.id}
+                      data-confirm="Remove this item from inventory?"
+                    >
+                      <.icon name="hero-trash" class="size-4" />
+                    </button>
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -600,10 +629,13 @@ defmodule BezgelorPortalWeb.Admin.CharacterDetailLive do
     """
   end
 
-  attr :faction_id, :integer, required: true
+  attr :race_id, :integer, required: true
 
+  # Faction badge - derives faction from race for accuracy
   defp faction_badge(assigns) do
-    faction = GameData.get_faction(assigns.faction_id)
+    # Use race to determine correct faction (CharacterCreation data has inverted mappings)
+    faction_id = GameData.faction_id_for_race(assigns.race_id)
+    faction = GameData.get_faction(faction_id)
     assigns = assign(assigns, :faction, faction)
 
     ~H"""
@@ -782,6 +814,32 @@ defmodule BezgelorPortalWeb.Admin.CharacterDetailLive do
       end
     else
       _ -> {:noreply, put_flash(socket, :error, "Invalid input")}
+    end
+  end
+
+  @impl true
+  def handle_event("remove_item", %{"id" => id_str}, socket) do
+    admin = socket.assigns.current_account
+    character = socket.assigns.character
+    {item_id, ""} = Integer.parse(id_str)
+
+    case Inventory.admin_remove_item(character.id, item_id) do
+      {:ok, removed} ->
+        Authorization.log_action(admin, "character.remove_item", "character", character.id, %{
+          item_id: removed.item_id,
+          inventory_item_id: item_id
+        })
+
+        {:noreply,
+         socket
+         |> put_flash(:info, "Item removed")
+         |> load_tab_data(:inventory)}
+
+      {:error, :not_found} ->
+        {:noreply, put_flash(socket, :error, "Item not found")}
+
+      {:error, _} ->
+        {:noreply, put_flash(socket, :error, "Failed to remove item")}
     end
   end
 
