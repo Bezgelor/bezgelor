@@ -14,7 +14,7 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
   alias BezgelorDb.{Characters, Guilds, Inventory, Tradeskills}
   alias BezgelorPortal.GameData
 
-  @tabs ~w(overview inventory currencies guild tradeskills)a
+  @tabs ~w(overview inventory bank currencies guild tradeskills)a
 
   @impl true
   def mount(%{"id" => id}, _session, socket) do
@@ -40,6 +40,7 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
            guild_membership: nil,
            inventory_items: [],
            equipped_items: [],
+           bank_items: [],
            tradeskills: [],
            show_delete_modal: false
          )
@@ -113,6 +114,7 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
   # Tab labels
   defp tab_label(:overview), do: "Overview"
   defp tab_label(:inventory), do: "Inventory"
+  defp tab_label(:bank), do: "Bank"
   defp tab_label(:currencies), do: "Currencies"
   defp tab_label(:guild), do: "Guild"
   defp tab_label(:tradeskills), do: "Tradeskills"
@@ -120,6 +122,7 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
   # Render tab content based on active tab
   defp render_tab_content(%{active_tab: :overview} = assigns), do: render_overview(assigns)
   defp render_tab_content(%{active_tab: :inventory} = assigns), do: render_inventory(assigns)
+  defp render_tab_content(%{active_tab: :bank} = assigns), do: render_bank(assigns)
   defp render_tab_content(%{active_tab: :currencies} = assigns), do: render_currencies(assigns)
   defp render_tab_content(%{active_tab: :guild} = assigns), do: render_guild(assigns)
   defp render_tab_content(%{active_tab: :tradeskills} = assigns), do: render_tradeskills(assigns)
@@ -268,6 +271,58 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
             </p>
           <% end %>
         </div>
+      </div>
+    </div>
+    """
+  end
+
+  # Bank Tab
+  defp render_bank(assigns) do
+    ~H"""
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body">
+        <h2 class="card-title">
+          <.icon name="hero-building-library" class="size-5" />
+          Bank Storage
+        </h2>
+        <%= if Enum.empty?(@bank_items) do %>
+          <div class="text-center py-8 text-base-content/50">
+            <.icon name="hero-building-library" class="size-12 mx-auto mb-2" />
+            <p>Bank is empty</p>
+          </div>
+        <% else %>
+          <div class="overflow-x-auto mt-4">
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>Item ID</th>
+                  <th>Location</th>
+                  <th>Qty</th>
+                  <th>Durability</th>
+                  <th>Bound</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr :for={item <- @bank_items}>
+                  <td class="font-mono">{item.item_id}</td>
+                  <td>Bank Bag {item.bag_index}, Slot {item.slot}</td>
+                  <td>{item.quantity}/{item.max_stack}</td>
+                  <td>
+                    <.durability_bar current={item.durability} max={item.max_durability} />
+                  </td>
+                  <td>
+                    <span class={if item.bound, do: "badge badge-warning badge-sm", else: "text-base-content/50"}>
+                      {if item.bound, do: "Yes", else: "No"}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="text-sm text-base-content/50 mt-2">
+            {length(@bank_items)} items in bank
+          </p>
+        <% end %>
       </div>
     </div>
     """
@@ -552,6 +607,14 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
     bag_items = Enum.filter(all_items, &(&1.container_type == :bag))
 
     assign(socket, equipped_items: equipped, inventory_items: bag_items)
+  end
+
+  defp load_tab_data(socket, :bank) do
+    character_id = socket.assigns.character.id
+    all_items = Inventory.get_items(character_id)
+    bank_items = Enum.filter(all_items, &(&1.container_type == :bank))
+
+    assign(socket, bank_items: bank_items)
   end
 
   defp load_tab_data(socket, :currencies), do: socket
