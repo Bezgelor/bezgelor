@@ -1948,6 +1948,122 @@ defmodule BezgelorData.Store do
   end
 
   @doc """
+  Get localized text by ID.
+
+  ## Returns
+
+  The localized text string, or nil if not found.
+
+  ## Examples
+
+      Store.get_text(2680) #=> "Some Item Name"
+      Store.get_text(0) #=> nil
+  """
+  @spec get_text(non_neg_integer()) :: String.t() | nil
+  def get_text(text_id) when is_integer(text_id) and text_id > 0 do
+    case :ets.lookup(table_name(:texts), text_id) do
+      [{^text_id, text}] when is_binary(text) -> text
+      _ -> nil
+    end
+  end
+
+  def get_text(_), do: nil
+
+  @doc """
+  Search items by ID or name.
+
+  Searches items by:
+  - Exact item ID (if query is numeric)
+  - Partial name match (case-insensitive)
+
+  Results include the localized item name for display.
+
+  ## Options
+
+    * `:limit` - Maximum number of results (default: 50)
+
+  ## Returns
+
+  List of item maps with an additional `:name` field containing the localized name.
+
+  ## Examples
+
+      # Search by ID
+      Store.search_items("12345") #=> [%{id: 12345, name: "Sword of Power", ...}]
+
+      # Search by name
+      Store.search_items("sword") #=> [%{id: 100, name: "Iron Sword", ...}, ...]
+  """
+  @spec search_items(String.t(), keyword()) :: [map()]
+  def search_items(query, opts \\ [])
+
+  def search_items(query, opts) when is_binary(query) do
+    query = String.trim(query)
+    limit = Keyword.get(opts, :limit, 50)
+
+    cond do
+      query == "" ->
+        []
+
+      # Check if query is a number (item ID)
+      numeric?(query) ->
+        case Integer.parse(query) do
+          {id, ""} ->
+            case get(:items, id) do
+              {:ok, item} -> [add_item_name(item)]
+              :error -> []
+            end
+
+          _ ->
+            []
+        end
+
+      # Search by name
+      true ->
+        search_items_by_name(query, limit)
+    end
+  end
+
+  def search_items(_, _), do: []
+
+  defp numeric?(str) do
+    case Integer.parse(str) do
+      {_, ""} -> true
+      _ -> false
+    end
+  end
+
+  defp search_items_by_name(query, limit) do
+    query_lower = String.downcase(query)
+
+    # Build a list of {item, name} for items that have names
+    table_name(:items)
+    |> :ets.tab2list()
+    |> Stream.map(fn {_id, item} -> {item, get_item_name(item)} end)
+    |> Stream.filter(fn {_item, name} -> name != nil end)
+    |> Stream.filter(fn {_item, name} ->
+      String.contains?(String.downcase(name), query_lower)
+    end)
+    |> Stream.map(fn {item, name} -> Map.put(item, :name, name) end)
+    |> Enum.take(limit)
+  end
+
+  defp add_item_name(item) do
+    name = get_item_name(item)
+    Map.put(item, :name, name || "Item ##{item.id}")
+  end
+
+  defp get_item_name(item) do
+    text_id = get_item_field(item, :name_text_id) || 0
+
+    if text_id > 0 do
+      get_text(text_id)
+    else
+      nil
+    end
+  end
+
+  @doc """
   Resolve loot table for a creature based on rules.
 
   Returns the loot table ID and modifiers for a creature based on:
