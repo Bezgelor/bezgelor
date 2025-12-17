@@ -619,4 +619,35 @@ defmodule BezgelorDb.Inventory do
     currency = get_or_create_currency(character_id)
     Map.get(currency, currency_type, 0)
   end
+
+  @doc """
+  Add a specific amount of currency to a character.
+
+  This is a convenience wrapper around `modify_currency/3` for adding currency.
+  """
+  @spec add_currency(integer(), atom(), non_neg_integer()) ::
+          {:ok, CharacterCurrency.t()} | {:error, atom()}
+  def add_currency(character_id, currency_type, amount)
+      when is_atom(currency_type) and amount >= 0 do
+    modify_currency(character_id, currency_type, amount)
+  end
+
+  @doc """
+  Spend a specific amount of currency from a character.
+
+  Returns `{:ok, currency}` if successful, `{:error, :insufficient_funds}` if
+  the character doesn't have enough of that currency.
+  """
+  @spec spend_currency(integer(), atom(), non_neg_integer()) ::
+          {:ok, CharacterCurrency.t()} | {:error, atom()}
+  def spend_currency(character_id, currency_type, amount)
+      when is_atom(currency_type) and amount >= 0 do
+    current = get_currency(character_id, currency_type)
+
+    if current >= amount do
+      modify_currency(character_id, currency_type, -amount)
+    else
+      {:error, :insufficient_funds}
+    end
+  end
 end
