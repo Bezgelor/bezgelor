@@ -195,11 +195,18 @@ defmodule BezgelorPortalWeb.CharactersLive do
     assigns = assign(assigns, :size_class, size_class)
 
     ~H"""
-    <div class={"avatar placeholder"}>
-      <div class={"#{@size_class} rounded-full bg-base-300 text-base-content"}>
+    <div class="avatar placeholder">
+      <div class={"#{@size_class} rounded-full bg-base-300 text-base-content relative overflow-hidden"}>
         <span class={if @size == "lg", do: "text-xl", else: "text-sm"}>
           {String.first(@character.name)}
         </span>
+        <!-- Work in Progress Banner -->
+        <div
+          class="absolute text-black text-center font-bold"
+          style="background-color: #f7941d; width: 60px; top: 8px; left: -16px; transform: rotate(-45deg); font-size: 6px; line-height: 1.4;"
+        >
+          WiP
+        </div>
       </div>
     </div>
     """
