@@ -1,0 +1,12 @@
+{
+  "name": "bezgelor-portal",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Frontend assets for Bezgelor Portal",
+  "scripts": {
+    "build": "esbuild js/app.js --bundle --target=es2022 --outdir=../priv/static/assets/js"
+  },
+  "dependencies": {
+    "three": "^0.170.0"
+  }
+}
