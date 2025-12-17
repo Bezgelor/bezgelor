@@ -14,8 +14,6 @@ defmodule BezgelorProtocol.Packets.World.ClientResurrectAtBindpoint do
 
   @behaviour BezgelorProtocol.Packet.Readable
 
-  alias BezgelorProtocol.PacketReader
-
   defstruct []
 
   @type t :: %__MODULE__{}
