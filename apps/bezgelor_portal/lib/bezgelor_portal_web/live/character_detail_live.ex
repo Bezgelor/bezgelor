@@ -13,6 +13,7 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
 
   alias BezgelorDb.{Characters, Guilds, Inventory, Tradeskills}
   alias BezgelorPortal.GameData
+  alias BezgelorPortalWeb.Components.CharacterViewer
 
   @tabs ~w(overview inventory bank currencies guild tradeskills)a
 
@@ -131,69 +132,81 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
   defp render_overview(assigns) do
 
     ~H"""
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <!-- Basic Info Card -->
-      <div class="card bg-base-100 shadow-xl">
-        <div class="card-body">
-          <h2 class="card-title">
-            <.icon name="hero-user" class="size-5" />
-            Basic Info
-          </h2>
-          <div class="grid grid-cols-2 gap-4 mt-4">
-            <.info_row label="Name" value={@character.name} />
-            <.info_row label="Level" value={@character.level} />
-            <.info_row label="Class" value={GameData.class_name(@character.class)} />
-            <.info_row label="Race" value={GameData.race_name(@character.race)} />
-            <.info_row label="Faction" value={GameData.faction_name(@character.faction_id)} />
-            <.info_row label="Path" value={GameData.path_name(@character.active_path)} />
-            <.info_row label="Title" value={title_display(@character.title)} />
-            <.info_row label="Active Spec" value={"Spec #{@character.active_spec + 1}"} />
-          </div>
-        </div>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- 3D Character Viewer -->
+      <div class="lg:col-span-1">
+        <CharacterViewer.character_viewer
+          character={@character}
+          equipment={@equipped_items}
+          class="h-[400px]"
+        />
       </div>
 
-      <!-- Play Time Card -->
-      <div class="card bg-base-100 shadow-xl">
-        <div class="card-body">
-          <h2 class="card-title">
-            <.icon name="hero-clock" class="size-5" />
-            Play Time
-          </h2>
-          <div class="grid grid-cols-2 gap-4 mt-4">
-            <.info_row label="Total Time" value={GameData.format_play_time(@character.time_played_total)} />
-            <.info_row label="This Level" value={GameData.format_play_time(@character.time_played_level)} />
-            <.info_row label="Last Online" value={GameData.format_relative_time(@character.last_online)} />
-            <.info_row label="Created" value={format_date(@character.inserted_at)} />
+      <!-- Info Cards -->
+      <div class="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Basic Info Card -->
+        <div class="card bg-base-100 shadow-xl">
+          <div class="card-body">
+            <h2 class="card-title">
+              <.icon name="hero-user" class="size-5" />
+              Basic Info
+            </h2>
+            <div class="grid grid-cols-2 gap-4 mt-4">
+              <.info_row label="Name" value={@character.name} />
+              <.info_row label="Level" value={@character.level} />
+              <.info_row label="Class" value={GameData.class_name(@character.class)} />
+              <.info_row label="Race" value={GameData.race_name(@character.race)} />
+              <.info_row label="Faction" value={GameData.faction_name(@character.faction_id)} />
+              <.info_row label="Path" value={GameData.path_name(@character.active_path)} />
+              <.info_row label="Title" value={title_display(@character.title)} />
+              <.info_row label="Active Spec" value={"Spec #{@character.active_spec + 1}"} />
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- Location Card -->
-      <div class="card bg-base-100 shadow-xl">
-        <div class="card-body">
-          <h2 class="card-title">
-            <.icon name="hero-map-pin" class="size-5" />
-            Location
-          </h2>
-          <div class="grid grid-cols-2 gap-4 mt-4">
-            <.info_row label="World" value={GameData.world_name(@character.world_id)} />
-            <.info_row label="Position" value={format_position(@character)} />
+        <!-- Play Time Card -->
+        <div class="card bg-base-100 shadow-xl">
+          <div class="card-body">
+            <h2 class="card-title">
+              <.icon name="hero-clock" class="size-5" />
+              Play Time
+            </h2>
+            <div class="grid grid-cols-2 gap-4 mt-4">
+              <.info_row label="Total Time" value={GameData.format_play_time(@character.time_played_total)} />
+              <.info_row label="This Level" value={GameData.format_play_time(@character.time_played_level)} />
+              <.info_row label="Last Online" value={GameData.format_relative_time(@character.last_online)} />
+              <.info_row label="Created" value={format_date(@character.inserted_at)} />
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- Experience Card -->
-      <div class="card bg-base-100 shadow-xl">
-        <div class="card-body">
-          <h2 class="card-title">
-            <.icon name="hero-chart-bar" class="size-5" />
-            Experience
-          </h2>
-          <div class="grid grid-cols-2 gap-4 mt-4">
-            <.info_row label="Total XP" value={format_number(@character.total_xp)} />
-            <.info_row label="Rest Bonus" value={format_number(@character.rest_bonus_xp)} />
+        <!-- Location Card -->
+        <div class="card bg-base-100 shadow-xl">
+          <div class="card-body">
+            <h2 class="card-title">
+              <.icon name="hero-map-pin" class="size-5" />
+              Location
+            </h2>
+            <div class="grid grid-cols-2 gap-4 mt-4">
+              <.info_row label="World" value={GameData.world_name(@character.world_id)} />
+              <.info_row label="Position" value={format_position(@character)} />
+            </div>
           </div>
-          <.xp_progress character={@character} />
+        </div>
+
+        <!-- Experience Card -->
+        <div class="card bg-base-100 shadow-xl">
+          <div class="card-body">
+            <h2 class="card-title">
+              <.icon name="hero-chart-bar" class="size-5" />
+              Experience
+            </h2>
+            <div class="grid grid-cols-2 gap-4 mt-4">
+              <.info_row label="Total XP" value={format_number(@character.total_xp)} />
+              <.info_row label="Rest Bonus" value={format_number(@character.rest_bonus_xp)} />
+            </div>
+            <.xp_progress character={@character} />
+          </div>
         </div>
       </div>
     </div>
@@ -598,7 +611,13 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
   defp rank_name(membership), do: "Rank #{membership.rank_index}"
 
   # Load data for the active tab
-  defp load_tab_data(socket, :overview), do: socket
+  defp load_tab_data(socket, :overview) do
+    character_id = socket.assigns.character.id
+    all_items = Inventory.get_items(character_id)
+    equipped = Enum.filter(all_items, &(&1.container_type == :equipped))
+
+    assign(socket, equipped_items: equipped)
+  end
 
   defp load_tab_data(socket, :inventory) do
     character_id = socket.assigns.character.id
