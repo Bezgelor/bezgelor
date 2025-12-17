@@ -20,8 +20,9 @@ defmodule BezgelorProtocol.Handler.VendorHandler do
 
   @behaviour BezgelorProtocol.Handler
 
+  alias BezgelorData
   alias BezgelorData.Store
-  alias BezgelorDb.{Characters, Inventory}
+  alias BezgelorDb.Inventory
   alias BezgelorProtocol.PacketReader
   alias BezgelorProtocol.Packets.World.ClientVendorPurchase
 
@@ -84,7 +85,7 @@ defmodule BezgelorProtocol.Handler.VendorHandler do
     item_id = vendor_item.item_id
 
     # Get item info for price
-    case Store.get_item(item_id) do
+    case BezgelorData.get_item(item_id) do
       {:ok, item} ->
         # Calculate cost
         base_price = Map.get(item, :buyFromVendorPrice, 0)
@@ -99,11 +100,11 @@ defmodule BezgelorProtocol.Handler.VendorHandler do
         total_cost = round(base_price * quantity * buy_multiplier)
 
         # Check player has enough gold (primary currency)
-        current_gold = Characters.get_currency(character_id, :gold)
+        current_gold = Inventory.get_currency(character_id, :gold)
 
         if current_gold >= total_cost do
           # Try to spend the currency
-          case Characters.spend_currency(character_id, :gold, total_cost) do
+          case Inventory.spend_currency(character_id, :gold, total_cost) do
             {:ok, _currency} ->
               # Add item to inventory
               case Inventory.add_item(character_id, item_id, quantity) do
@@ -114,7 +115,7 @@ defmodule BezgelorProtocol.Handler.VendorHandler do
 
                 {:error, reason} ->
                   # Refund currency on failure
-                  Characters.add_currency(character_id, :gold, total_cost)
+                  Inventory.add_currency(character_id, :gold, total_cost)
                   Logger.warning("Failed to add purchased item: #{inspect(reason)}")
               end
 

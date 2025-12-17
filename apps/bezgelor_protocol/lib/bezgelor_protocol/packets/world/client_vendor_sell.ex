@@ -37,8 +37,8 @@ defmodule BezgelorProtocol.Packets.World.ClientVendorSell do
 
   @impl true
   def read(reader) do
+    # Note: read_uint32 internally calls flush_bits, so no explicit flush needed
     with {:ok, location_int, reader} <- PacketReader.read_bits(reader, 9),
-         {:ok, reader} <- {:ok, PacketReader.flush_bits(reader)},
          {:ok, bag_index, reader} <- PacketReader.read_uint32(reader),
          {:ok, quantity, reader} <- PacketReader.read_uint32(reader) do
       packet = %__MODULE__{

@@ -13,8 +13,9 @@ defmodule BezgelorProtocol.Handler.VendorSellHandler do
 
   @behaviour BezgelorProtocol.Handler
 
+  alias BezgelorData
   alias BezgelorData.Store
-  alias BezgelorDb.{Characters, Inventory}
+  alias BezgelorDb.Inventory
   alias BezgelorProtocol.PacketReader
   alias BezgelorProtocol.Packets.World.ClientVendorSell
 
@@ -68,7 +69,7 @@ defmodule BezgelorProtocol.Handler.VendorSellHandler do
     item_id = inventory_item.item_id
 
     # Get item info for sell price
-    case Store.get_item(item_id) do
+    case BezgelorData.get_item(item_id) do
       {:ok, item} ->
         # Calculate sell price
         base_price = Map.get(item, :sellToVendorPrice, 0)
@@ -89,7 +90,7 @@ defmodule BezgelorProtocol.Handler.VendorSellHandler do
           case Inventory.remove_item(character_id, inventory_item.id, actual_quantity) do
             {:ok, _} ->
               # Grant currency
-              Characters.add_currency(character_id, :gold, total_value)
+              Inventory.add_currency(character_id, :gold, total_value)
 
               Logger.info(
                 "Player #{character_id} sold #{actual_quantity}x item #{item_id} for #{total_value} gold"
