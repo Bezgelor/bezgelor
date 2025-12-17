@@ -83,7 +83,7 @@ defmodule BezgelorPortalWeb.Admin.CharacterDetailLive do
           <%= if @character.deleted_at do %>
             <span class="badge badge-error badge-lg">Deleted</span>
           <% end %>
-          <.faction_badge faction_id={@character.faction_id} />
+          <.faction_badge race_id={@character.race} />
         </div>
       </div>
 
@@ -629,10 +629,13 @@ defmodule BezgelorPortalWeb.Admin.CharacterDetailLive do
     """
   end
 
-  attr :faction_id, :integer, required: true
+  attr :race_id, :integer, required: true
 
+  # Faction badge - derives faction from race for accuracy
   defp faction_badge(assigns) do
-    faction = GameData.get_faction(assigns.faction_id)
+    # Use race to determine correct faction (CharacterCreation data has inverted mappings)
+    faction_id = GameData.faction_id_for_race(assigns.race_id)
+    faction = GameData.get_faction(faction_id)
     assigns = assign(assigns, :faction, faction)
 
     ~H"""

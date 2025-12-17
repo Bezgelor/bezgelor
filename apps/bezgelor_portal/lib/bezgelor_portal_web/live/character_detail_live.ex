@@ -3,19 +3,19 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
   LiveView for displaying detailed character information.
 
   Tabs:
-  - Overview: Basic info, location, play time statistics
-  - Inventory: Equipped items, bags, bank contents
-  - Currencies: Gold and other in-game currencies
+  - Overview: Basic info, location, play time statistics, 3D character viewer
+  - Inventory: Equipped items, bags, currencies, and bank storage
   - Guild: Guild membership and rank
   - Tradeskills: Profession levels and progress
   """
   use BezgelorPortalWeb, :live_view
 
   alias BezgelorDb.{Characters, Guilds, Inventory, Tradeskills}
+  alias BezgelorData.Store
   alias BezgelorPortal.GameData
   alias BezgelorPortalWeb.Components.CharacterViewer
 
-  @tabs ~w(overview inventory bank currencies guild tradeskills)a
+  @tabs ~w(overview inventory guild tradeskills)a
 
   @impl true
   def mount(%{"id" => id}, _session, socket) do
@@ -66,9 +66,8 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
       <div class="flex items-center gap-4 mb-6">
         <.character_avatar character={@character} size="lg" />
         <div class="flex-1">
-          <h1 class="text-2xl font-bold flex items-center gap-2">
+          <h1 class="text-2xl font-bold">
             {@character.name}
-            <.faction_badge faction_id={@character.faction_id} />
           </h1>
           <p class="text-base-content/70">
             Level <span class="font-bold">{@character.level}</span>
@@ -76,6 +75,7 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
               {GameData.class_name(@character.class)}
             </span>
             &bull; {GameData.race_name(@character.race)}
+            &bull; {GameData.faction_name(GameData.faction_id_for_race(@character.race))}
           </p>
         </div>
 
@@ -115,16 +115,12 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
   # Tab labels
   defp tab_label(:overview), do: "Overview"
   defp tab_label(:inventory), do: "Inventory"
-  defp tab_label(:bank), do: "Bank"
-  defp tab_label(:currencies), do: "Currencies"
   defp tab_label(:guild), do: "Guild"
   defp tab_label(:tradeskills), do: "Tradeskills"
 
   # Render tab content based on active tab
   defp render_tab_content(%{active_tab: :overview} = assigns), do: render_overview(assigns)
   defp render_tab_content(%{active_tab: :inventory} = assigns), do: render_inventory(assigns)
-  defp render_tab_content(%{active_tab: :bank} = assigns), do: render_bank(assigns)
-  defp render_tab_content(%{active_tab: :currencies} = assigns), do: render_currencies(assigns)
   defp render_tab_content(%{active_tab: :guild} = assigns), do: render_guild(assigns)
   defp render_tab_content(%{active_tab: :tradeskills} = assigns), do: render_tradeskills(assigns)
 
@@ -157,7 +153,7 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
               <.info_row label="Level" value={@character.level} />
               <.info_row label="Class" value={GameData.class_name(@character.class)} />
               <.info_row label="Race" value={GameData.race_name(@character.race)} />
-              <.info_row label="Faction" value={GameData.faction_name(@character.faction_id)} />
+              <.info_row label="Faction" value={GameData.faction_name(GameData.faction_id_for_race(@character.race))} />
               <.info_row label="Path" value={GameData.path_name(@character.active_path)} />
               <.info_row label="Title" value={title_display(@character.title)} />
               <.info_row label="Active Spec" value={"Spec #{@character.active_spec + 1}"} />
@@ -216,47 +212,45 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
 
   # Inventory Tab
   defp render_inventory(assigns) do
-
     ~H"""
-    <div class="space-y-6">
-      <!-- Equipped Items -->
+    <div class="space-y-4">
+      <!-- Currencies -->
       <div class="card bg-base-100 shadow-xl">
-        <div class="card-body">
-          <h2 class="card-title">
-            <.icon name="hero-shield-check" class="size-5" />
-            Equipped Items
-          </h2>
-          <%= if Enum.empty?(@equipped_items) do %>
-            <div class="text-center py-8 text-base-content/50">
-              <.icon name="hero-inbox" class="size-12 mx-auto mb-2" />
-              <p>No items equipped</p>
-            </div>
-          <% else %>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4">
-              <.item_slot :for={item <- @equipped_items} item={item} />
-            </div>
-          <% end %>
+        <div class="card-body py-3 px-4">
+          <div class="flex items-center justify-between">
+            <h2 class="card-title text-base">
+              <.icon name="hero-currency-dollar" class="size-4" />
+              Currencies
+            </h2>
+            <span class="text-xs text-base-content/50">Coming soon</span>
+          </div>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2">
+            <.currency_card name="Gold" value={0} icon="hero-banknotes" color="warning" />
+            <.currency_card name="Elder Gems" value={0} icon="hero-sparkles" color="secondary" />
+            <.currency_card name="Renown" value={0} icon="hero-star" color="primary" />
+            <.currency_card name="Prestige" value={0} icon="hero-trophy" color="accent" />
+          </div>
         </div>
       </div>
 
       <!-- Bag Contents -->
       <div class="card bg-base-100 shadow-xl">
-        <div class="card-body">
+        <div class="card-body py-4">
           <h2 class="card-title">
             <.icon name="hero-archive-box" class="size-5" />
-            Inventory
+            Bags
           </h2>
           <%= if Enum.empty?(@inventory_items) do %>
-            <div class="text-center py-8 text-base-content/50">
-              <.icon name="hero-inbox" class="size-12 mx-auto mb-2" />
-              <p>Inventory is empty</p>
+            <div class="text-center py-6 text-base-content/50">
+              <.icon name="hero-inbox" class="size-10 mx-auto mb-2" />
+              <p>Bags are empty</p>
             </div>
           <% else %>
-            <div class="overflow-x-auto mt-4">
+            <div class="overflow-x-auto mt-3">
               <table class="table table-sm">
                 <thead>
                   <tr>
-                    <th>Item ID</th>
+                    <th>Item</th>
                     <th>Location</th>
                     <th>Qty</th>
                     <th>Durability</th>
@@ -265,7 +259,10 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
                 </thead>
                 <tbody>
                   <tr :for={item <- @inventory_items}>
-                    <td class="font-mono">{item.item_id}</td>
+                    <td>
+                      <div class="font-medium">{item.name}</div>
+                      <div class="text-xs text-base-content/50 font-mono">#{item.item_id}</div>
+                    </td>
                     <td>Bag {item.bag_index}, Slot {item.slot}</td>
                     <td>{item.quantity}/{item.max_stack}</td>
                     <td>
@@ -281,86 +278,61 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
               </table>
             </div>
             <p class="text-sm text-base-content/50 mt-2">
-              {length(@inventory_items)} items in inventory
+              {length(@inventory_items)} items in bags
             </p>
           <% end %>
         </div>
       </div>
-    </div>
-    """
-  end
 
-  # Bank Tab
-  defp render_bank(assigns) do
-    ~H"""
-    <div class="card bg-base-100 shadow-xl">
-      <div class="card-body">
-        <h2 class="card-title">
-          <.icon name="hero-building-library" class="size-5" />
-          Bank Storage
-        </h2>
-        <%= if Enum.empty?(@bank_items) do %>
-          <div class="text-center py-8 text-base-content/50">
-            <.icon name="hero-building-library" class="size-12 mx-auto mb-2" />
-            <p>Bank is empty</p>
-          </div>
-        <% else %>
-          <div class="overflow-x-auto mt-4">
-            <table class="table table-sm">
-              <thead>
-                <tr>
-                  <th>Item ID</th>
-                  <th>Location</th>
-                  <th>Qty</th>
-                  <th>Durability</th>
-                  <th>Bound</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr :for={item <- @bank_items}>
-                  <td class="font-mono">{item.item_id}</td>
-                  <td>Bank Bag {item.bag_index}, Slot {item.slot}</td>
-                  <td>{item.quantity}/{item.max_stack}</td>
-                  <td>
-                    <.durability_bar current={item.durability} max={item.max_durability} />
-                  </td>
-                  <td>
-                    <span class={if item.bound, do: "badge badge-warning badge-sm", else: "text-base-content/50"}>
-                      {if item.bound, do: "Yes", else: "No"}
-                    </span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <p class="text-sm text-base-content/50 mt-2">
-            {length(@bank_items)} items in bank
-          </p>
-        <% end %>
-      </div>
-    </div>
-    """
-  end
-
-  # Currencies Tab
-  defp render_currencies(assigns) do
-
-    ~H"""
-    <div class="card bg-base-100 shadow-xl">
-      <div class="card-body">
-        <h2 class="card-title">
-          <.icon name="hero-currency-dollar" class="size-5" />
-          Currencies
-        </h2>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-          <.currency_card name="Gold" value={0} icon="hero-banknotes" color="warning" />
-          <.currency_card name="Elder Gems" value={0} icon="hero-sparkles" color="secondary" />
-          <.currency_card name="Renown" value={0} icon="hero-star" color="primary" />
-          <.currency_card name="Prestige" value={0} icon="hero-trophy" color="accent" />
+      <!-- Bank Storage -->
+      <div class="card bg-base-100 shadow-xl">
+        <div class="card-body py-4">
+          <h2 class="card-title">
+            <.icon name="hero-building-library" class="size-5" />
+            Bank Storage
+          </h2>
+          <%= if Enum.empty?(@bank_items) do %>
+            <div class="text-center py-6 text-base-content/50">
+              <.icon name="hero-building-library" class="size-10 mx-auto mb-2" />
+              <p>Bank is empty</p>
+            </div>
+          <% else %>
+            <div class="overflow-x-auto mt-3">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>Location</th>
+                    <th>Qty</th>
+                    <th>Durability</th>
+                    <th>Bound</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr :for={item <- @bank_items}>
+                    <td>
+                      <div class="font-medium">{item.name}</div>
+                      <div class="text-xs text-base-content/50 font-mono">#{item.item_id}</div>
+                    </td>
+                    <td>Bank Bag {item.bag_index}, Slot {item.slot}</td>
+                    <td>{item.quantity}/{item.max_stack}</td>
+                    <td>
+                      <.durability_bar current={item.durability} max={item.max_durability} />
+                    </td>
+                    <td>
+                      <span class={if item.bound, do: "badge badge-warning badge-sm", else: "text-base-content/50"}>
+                        {if item.bound, do: "Yes", else: "No"}
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="text-sm text-base-content/50 mt-2">
+              {length(@bank_items)} items in bank
+            </p>
+          <% end %>
         </div>
-        <p class="text-sm text-base-content/50 mt-4">
-          Currency tracking coming soon. Data will be available when character logs in.
-        </p>
       </div>
     </div>
     """
@@ -492,9 +464,11 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
     """
   end
 
-  # Faction badge
+  # Faction badge - derives faction from race for accuracy
   defp faction_badge(assigns) do
-    faction = GameData.get_faction(assigns.faction_id)
+    # Use race to determine correct faction (CharacterCreation data has inverted mappings)
+    faction_id = GameData.faction_id_for_race(assigns.race_id)
+    faction = GameData.get_faction(faction_id)
     assigns = assign(assigns, :faction, faction)
 
     ~H"""
@@ -518,7 +492,7 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
   defp item_slot(assigns) do
     ~H"""
     <div class="bg-base-200 rounded p-2 text-center">
-      <div class="font-mono text-sm">{@item.item_id}</div>
+      <div class="text-sm font-medium truncate">{@item.name}</div>
       <div class="text-xs text-base-content/50">Slot {@item.slot}</div>
     </div>
     """
@@ -577,15 +551,15 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
     """
   end
 
-  # Equipment slot definitions
+  # Equipment slot definitions - using valid Heroicons
   @equipment_slots [
-    {0, "Head", "hero-user"},
+    {0, "Head", "hero-user-circle"},
     {1, "Shoulders", "hero-shield-check"},
-    {2, "Chest", "hero-shirt"},
+    {2, "Chest", "hero-user"},
     {3, "Hands", "hero-hand-raised"},
-    {4, "Legs", "hero-bolt"},
-    {5, "Feet", "hero-rocket-launch"},
-    {6, "Main Hand", "hero-sword"},
+    {4, "Legs", "hero-adjustments-vertical"},
+    {5, "Feet", "hero-chevron-double-down"},
+    {6, "Main Hand", "hero-bolt"},
     {7, "Off Hand", "hero-shield-exclamation"},
     {8, "Support", "hero-cog-6-tooth"},
     {9, "Gadget", "hero-sparkles"},
@@ -631,7 +605,7 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
       <div class="flex-1 min-w-0">
         <div class="text-xs text-base-content/50">{@name}</div>
         <%= if @item do %>
-          <div class="font-mono text-sm truncate">{@item.item_id}</div>
+          <div class="text-sm font-medium truncate">{@item.name}</div>
         <% else %>
           <div class="text-base-content/30 text-sm">Empty</div>
         <% end %>
@@ -682,7 +656,7 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
   defp load_tab_data(socket, :overview) do
     character_id = socket.assigns.character.id
     all_items = Inventory.get_items(character_id)
-    equipped = Enum.filter(all_items, &(&1.container_type == :equipped))
+    equipped = all_items |> Enum.filter(&(&1.container_type == :equipped)) |> add_item_names()
 
     assign(socket, equipped_items: equipped)
   end
@@ -690,21 +664,25 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
   defp load_tab_data(socket, :inventory) do
     character_id = socket.assigns.character.id
     all_items = Inventory.get_items(character_id)
-    equipped = Enum.filter(all_items, &(&1.container_type == :equipped))
-    bag_items = Enum.filter(all_items, &(&1.container_type == :bag))
+    equipped = all_items |> Enum.filter(&(&1.container_type == :equipped)) |> add_item_names()
+    bag_items = all_items |> Enum.filter(&(&1.container_type == :bag)) |> add_item_names()
+    bank_items = all_items |> Enum.filter(&(&1.container_type == :bank)) |> add_item_names()
 
-    assign(socket, equipped_items: equipped, inventory_items: bag_items)
+    assign(socket, equipped_items: equipped, inventory_items: bag_items, bank_items: bank_items)
   end
 
-  defp load_tab_data(socket, :bank) do
-    character_id = socket.assigns.character.id
-    all_items = Inventory.get_items(character_id)
-    bank_items = Enum.filter(all_items, &(&1.container_type == :bank))
+  # Add item names from the data store
+  defp add_item_names(items) do
+    Enum.map(items, fn item ->
+      name =
+        case Store.get_item_with_name(item.item_id) do
+          {:ok, data} -> data.name
+          :error -> "Item ##{item.item_id}"
+        end
 
-    assign(socket, bank_items: bank_items)
+      Map.put(item, :name, name)
+    end)
   end
-
-  defp load_tab_data(socket, :currencies), do: socket
 
   defp load_tab_data(socket, :guild) do
     character_id = socket.assigns.character.id

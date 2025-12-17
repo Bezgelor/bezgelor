@@ -108,7 +108,7 @@ defmodule BezgelorPortalWeb.CharactersLive do
                 </span>
               </div>
             </div>
-            <.faction_badge faction_id={character.faction_id} size="xs" />
+            <.faction_badge race_id={character.race} size="xs" />
           </div>
 
           <div class="flex justify-between text-xs text-base-content/60 mt-2">
@@ -156,7 +156,7 @@ defmodule BezgelorPortalWeb.CharactersLive do
                     <.character_avatar character={character} size="sm" />
                     <div>
                       <div class="font-bold">{character.name}</div>
-                      <.faction_badge faction_id={character.faction_id} size="xs" />
+                      <.faction_badge race_id={character.race} size="xs" />
                     </div>
                   </div>
                 </td>
@@ -205,10 +205,12 @@ defmodule BezgelorPortalWeb.CharactersLive do
     """
   end
 
-  # Faction badge component
+  # Faction badge component - derives faction from race for accuracy
   defp faction_badge(assigns) do
     assigns = assign_new(assigns, :size, fn -> "sm" end)
-    faction = GameData.get_faction(assigns.faction_id)
+    # Use race to determine correct faction (CharacterCreation data has inverted mappings)
+    faction_id = GameData.faction_id_for_race(assigns.race_id)
+    faction = GameData.get_faction(faction_id)
 
     assigns = assign(assigns, :faction, faction)
 
