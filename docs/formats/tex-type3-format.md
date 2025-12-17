@@ -64,21 +64,66 @@ The extreme compression ratio suggests:
 
 **Not LZ4 or zlib:** Tested decompression failed with both.
 
+**WildStar Studio Analysis:**
+- Examined source code from https://bitbucket.org/mugadr_m/wildstar-studio
+- The Texture.cpp only handles sequential mipmap reading after a 32-byte header
+- Does NOT handle the 68+ byte secondary header for complex type-3
+- Uses zlib for archive-level decompression (not texture-level)
+- Conclusion: This tool doesn't implement the complex type-3 decoder
+
 **Status:** ❌ Not yet supported
 
-## Recommendations
+## Extraction Strategy
 
-For the 3D character viewer:
+### Supported by tex_extractor.py
 
-1. **Short-term:** Use placeholder textures for type-3 complex textures
-2. **Medium-term:** Pre-extract textures using external tools if available
-3. **Long-term:** Reverse engineer the complex format using:
-   - NexusForever client memory dumps during texture loading
-   - GPU debugger captures to see final decompressed data
-   - Comparison with known BC7 implementations
+1. **Simple Type-3 (DXT, count=0)**: ✅ Full PNG/DDS export
+2. **Type-0 Standard textures**: ✅ Full support (if any exist)
+
+### Requires External Tool
+
+For complex type-3 textures (character skins, etc.), use WildStar Studio:
+
+1. Download WildStar Studio from the [OwnedCore release thread](https://www.ownedcore.com/forums/mmo/wildstar/wildstar-bots-programs/448310-wildstar-studio-file-viewer-explorer.html)
+2. Open the game archive (.index file)
+3. Navigate to texture directories (Art\Character\*, Art\Creature\*, etc.)
+4. Select textures and use "Export as PNG" or "Export as BMP"
+5. Place exported files in `priv/static/textures/` for web viewer
+
+**Note:** The compiled WildStar Studio binary can decode all textures despite
+the source code not showing the complex type-3 algorithm. This suggests either
+additional binary-only code or archive-level preprocessing.
+
+### Batch Extraction Script
+
+For batch extraction of character textures, create a list of required paths
+from the game data and extract manually via the GUI, OR use automation tools
+like AutoHotkey with WildStar Studio.
+
+### Fallback Approach
+
+For the 3D character viewer, if textures are unavailable:
+1. Use solid color placeholder materials based on armor type
+2. Generate procedural textures from item quality colors
+3. Display "texture not available" indicator
+
+## Technical Notes
+
+The complex type-3 compression appears to be:
+- NOT standard zlib, LZ4, or zstd
+- Possibly a custom streaming format for GPU decompression
+- May use the 4 RGB values in the secondary header as a base palette
+- Achieves ~18:1 compression beyond BC7 (unusual for texture compression)
+
+Further reverse engineering would require:
+- Memory dumps during WildStar client texture loading
+- GPU debugger captures (RenderDoc, etc.) to see decompressed data
+- Analysis of the compiled WildStar Studio binary (if legal to reverse engineer)
 
 ## References
 
 - [WildStar Wiki: TEX file](https://wildstaronline-archive.fandom.com/wiki/TEX_file)
+- [AddOn Studio: TEX format](https://addonstudio.org/wiki/WildStar:TEX_file)
+- [WildStar Studio Release](https://www.ownedcore.com/forums/mmo/wildstar/wildstar-bots-programs/448310-wildstar-studio-file-viewer-explorer.html)
 - [BC7 Format - Microsoft](https://learn.microsoft.com/en-us/windows/win32/direct3d11/bc7-format)
 - [NexusForever](https://github.com/NexusForever/NexusForever)
