@@ -15,6 +15,7 @@ Usage:
 import argparse
 import fnmatch
 import hashlib
+import lzma
 import struct
 import zlib
 from dataclasses import dataclass
@@ -22,10 +23,10 @@ from pathlib import Path
 from typing import BinaryIO, Dict, List, Optional, Tuple
 
 
-# Magic constants
-PACK_MAGIC = 0x4B434150  # 'PACK' little-endian
-AIDX_MAGIC = 0x58444941  # 'AIDX' little-endian
-AARC_MAGIC = 0x43524141  # 'AARC' little-endian
+# Magic constants (as bytes for reliable comparison)
+PACK_MAGIC = b'KCAP'  # 'PACK' stored little-endian
+AIDX_MAGIC = b'XDIA'  # 'AIDX' stored little-endian
+AARC_MAGIC = b'CRAA'  # 'AARC' stored little-endian
 
 
 @dataclass
@@ -52,7 +53,17 @@ class FileEntry:
     sha_hash: bytes
 
     def is_compressed(self) -> bool:
-        return self.flags == 3
+        """Check if file is compressed. Flags: 3=zlib, 5=LZMA."""
+        return self.flags in (3, 5)
+
+    def compression_type(self) -> str:
+        """Get compression type name."""
+        if self.flags == 3:
+            return "zlib"
+        elif self.flags == 5:
+            return "lzma"
+        else:
+            return "none"
 
 
 @dataclass
@@ -129,9 +140,9 @@ class WildStarArchive:
         f.seek(0)
 
         # Check magic
-        magic = struct.unpack("<I", f.read(4))[0]
+        magic = f.read(4)
         if magic != PACK_MAGIC:
-            raise ValueError(f"Invalid index magic: {magic:#x}, expected PACK")
+            raise ValueError(f"Invalid index magic: {magic!r}, expected {PACK_MAGIC!r}")
 
         version = struct.unpack("<I", f.read(4))[0]
         if version != 1:
@@ -154,7 +165,7 @@ class WildStarArchive:
             if block.block_size < 16:
                 continue
             f.seek(block.offset)
-            block_magic = struct.unpack("<I", f.read(4))[0]
+            block_magic = f.read(4)
             if block_magic == AIDX_MAGIC:
                 f.read(4)  # version
                 f.read(4)  # unk1
@@ -169,9 +180,9 @@ class WildStarArchive:
         f.seek(0)
 
         # Check magic
-        magic = struct.unpack("<I", f.read(4))[0]
+        magic = f.read(4)
         if magic != PACK_MAGIC:
-            raise ValueError(f"Invalid archive magic: {magic:#x}")
+            raise ValueError(f"Invalid archive magic: {magic!r}")
 
         version = struct.unpack("<I", f.read(4))[0]
         if version != 1:
@@ -196,7 +207,7 @@ class WildStarArchive:
             if block.block_size < 16:
                 continue
             f.seek(block.offset)
-            block_magic = struct.unpack("<I", f.read(4))[0]
+            block_magic = f.read(4)
             if block_magic == AARC_MAGIC:
                 f.read(4)  # version
                 aarc_entries = struct.unpack("<I", f.read(4))[0]
@@ -253,15 +264,16 @@ class WildStarArchive:
             full_path = f"{path_prefix}{name}/" if path_prefix else f"{name}/"
             subdirs.append((next_block, full_path))
 
-        # Parse file entries
+        # Parse file entries (56 bytes each)
+        # Structure: nameOffset(4) + flags(4) + unk(8) + uncompressedSize(8) + compressedSize(8) + hash(20) + padding(4)
         for _ in range(num_files):
             name_offset = struct.unpack("<I", f.read(4))[0]
             flags = struct.unpack("<I", f.read(4))[0]
-            f.read(4)  # unk
+            f.read(8)  # unk (8 bytes, not 4)
             uncompressed_size = struct.unpack("<Q", f.read(8))[0]
             compressed_size = struct.unpack("<Q", f.read(8))[0]
             sha_hash = f.read(20)
-            f.read(4)  # block (unused, we use AARC table)
+            f.read(4)  # remaining padding
 
             # Extract name
             name_end = string_data.find(b'\x00', name_offset)
@@ -327,13 +339,40 @@ class WildStarArchive:
         compressed_data = self._archive_file.read(int(block.block_size))
 
         # Decompress if needed
-        if entry.is_compressed():
+        if entry.flags == 3:
+            # zlib compression
             try:
                 data = zlib.decompress(compressed_data)
                 return data
             except zlib.error as e:
-                print(f"Decompression failed for {path}: {e}")
+                print(f"Zlib decompression failed for {path}: {e}")
                 return None
+        elif entry.flags == 5:
+            # LZMA compression
+            try:
+                # WildStar uses raw LZMA stream with custom header
+                # First byte is 0x5D (LZMA marker), followed by 4-byte dict size
+                # We need to construct proper LZMA header
+                data = lzma.decompress(compressed_data, format=lzma.FORMAT_AUTO)
+                return data
+            except lzma.LZMAError as e:
+                # Try with raw format and manually constructed properties
+                try:
+                    # LZMA properties: first 5 bytes of stream
+                    # Uncompressed size needs to be appended for raw format
+                    props = compressed_data[:5]
+                    compressed_payload = compressed_data[5:]
+
+                    # Build LZMA header: properties (5) + uncompressed size (8)
+                    header = props + struct.pack('<Q', entry.uncompressed_size)
+                    full_data = header + compressed_payload
+
+                    decompressor = lzma.LZMADecompressor(format=lzma.FORMAT_ALONE)
+                    data = decompressor.decompress(full_data)
+                    return data
+                except Exception as e2:
+                    print(f"LZMA decompression failed for {path}: {e} / {e2}")
+                    return None
         else:
             return compressed_data
 
@@ -382,8 +421,7 @@ def main():
                 print(f"Found {len(files)} files matching '{args.list}':")
                 for f in sorted(files)[:100]:
                     entry = archive.get_file_info(f)
-                    comp = "zlib" if entry.is_compressed() else "raw"
-                    print(f"  {f} ({entry.uncompressed_size:,} bytes, {comp})")
+                    print(f"  {f} ({entry.uncompressed_size:,} bytes, {entry.compression_type()})")
                 if len(files) > 100:
                     print(f"  ... and {len(files) - 100} more")
 
