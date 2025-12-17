@@ -33,7 +33,32 @@ python extract_models.py path/to/models/ -o output/
 
 ## Output
 
-Produces `.glb` files (binary glTF) compatible with Three.js GLTFLoader.
+- Models: `.glb` files (binary glTF) compatible with Three.js GLTFLoader
+- Textures: `.png` or `.dds` files
+
+## Texture Extraction
+
+Extract WildStar .tex texture files to PNG or DDS format:
+
+```bash
+# Extract single texture to PNG
+python tex_extractor.py path/to/texture.tex -o output/
+
+# Extract to DDS format
+python tex_extractor.py path/to/texture.tex -o output/ --format dds
+
+# Show texture info without extracting
+python tex_extractor.py path/to/texture.tex --info
+
+# Batch extract
+python tex_extractor.py path/to/textures/ -o output/
+```
+
+### TEX Format Support
+
+- DXT1, DXT3, DXT5 compressed textures
+- Uncompressed RGBA/RGB textures
+- All mipmap levels
 
 ## Development
 
@@ -46,3 +71,8 @@ python -m pytest tests/ -v
 ## Format Documentation
 
 See [docs/formats/m3-format.md](../../docs/formats/m3-format.md) for M3 file format details.
+
+## Credits
+
+- **M3 Format Research**: [akderebur](https://gist.github.com/akderebur) - WildStar M3 parsing reference and offset documentation
+- **Halon Archive Extractor**: Used to extract M3 files from WildStar .archive files

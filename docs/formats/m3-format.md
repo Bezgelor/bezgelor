@@ -113,8 +113,58 @@ struct Submesh {
 };
 ```
 
+## Skeleton / Bone Data
+
+Based on [NexusVault-Java](https://github.com/MarbleBag/NexusVault-Java) research:
+
+### Header Bone Pointer (at offset 0x180)
+
+```c
+struct BonePointer {
+    int64_t count;      // Number of bones
+    int64_t offset;     // Offset from header end (1584) to bone data
+};
+```
+
+### Bone Structure (0x160 = 352 bytes per bone)
+
+```c
+struct Bone {
+    int16_t gap_000;        // 0x000: Bind value (often 65535/-1)
+    uint16_t gap_002;       // 0x002: Unknown
+    int16_t parentId;       // 0x004: Parent bone index (-1 for root)
+    uint8_t gap_006[2];     // 0x006: Grouping index
+    uint32_t gap_008;       // 0x008: Bone binding value
+    int32_t padding_00C;    // 0x00C: Padding
+
+    // Pointer structures 0x010-0x0CF (animation data, etc.)
+
+    float matrix_0D0[16];   // 0x0D0: 4x4 transformation matrix (column-major)
+    float matrix_110[16];   // 0x110: 4x4 inverse bind matrix (column-major)
+
+    float x;                // 0x150: Position X
+    float y;                // 0x154: Position Y
+    float z;                // 0x158: Position Z
+    int32_t padding_15C;    // 0x15C: Padding
+};
+```
+
+### Bone Hierarchy
+
+- Root bones have `parentId = -1`
+- Child bones reference their parent by index
+- WildStar character models typically have 100-200 bones
+- Maximum hierarchy depth observed: 14 levels (for finger/facial bones)
+
+### Example: Aurin Female Character
+
+- Total bones: 173
+- Root bones: 1
+- Max depth: 14
+
 ## References
 
+- [NexusVault-Java](https://github.com/MarbleBag/NexusVault-Java) - Most complete M3 parsing implementation
 - [Wildstar M3 Model Load/Export Gist](https://gist.github.com/akderebur/adda1c91197d21b87350f0860ad817af)
 - [WoWDev M3 Documentation](https://wowdev.wiki/M3)
 - [OwnedCore Wildstar Studio Thread](https://www.ownedcore.com/forums/mmo/wildstar/wildstar-bots-programs/448310-wildstar-studio-file-viewer-explorer.html)
