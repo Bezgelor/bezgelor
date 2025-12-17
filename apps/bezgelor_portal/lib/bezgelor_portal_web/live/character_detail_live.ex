@@ -133,13 +133,14 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
 
     ~H"""
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <!-- 3D Character Viewer -->
-      <div class="lg:col-span-1">
+      <!-- 3D Character Viewer & Equipment -->
+      <div class="lg:col-span-1 space-y-6">
         <CharacterViewer.character_viewer
           character={@character}
           equipment={@equipped_items}
-          class="h-[400px]"
+          class="h-[300px]"
         />
+        <.equipment_grid equipped_items={@equipped_items} />
       </div>
 
       <!-- Info Cards -->
@@ -574,6 +575,73 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
       <progress class="progress progress-info w-full" value={@current} max={@total}></progress>
     </div>
     """
+  end
+
+  # Equipment slot definitions
+  @equipment_slots [
+    {0, "Head", "hero-user"},
+    {1, "Shoulders", "hero-shield-check"},
+    {2, "Chest", "hero-shirt"},
+    {3, "Hands", "hero-hand-raised"},
+    {4, "Legs", "hero-bolt"},
+    {5, "Feet", "hero-rocket-launch"},
+    {6, "Main Hand", "hero-sword"},
+    {7, "Off Hand", "hero-shield-exclamation"},
+    {8, "Support", "hero-cog-6-tooth"},
+    {9, "Gadget", "hero-sparkles"},
+    {10, "Implant", "hero-cpu-chip"}
+  ]
+
+  # Equipment grid component
+  attr :equipped_items, :list, required: true
+
+  defp equipment_grid(assigns) do
+    slots = @equipment_slots
+    assigns = assign(assigns, :slots, slots)
+
+    ~H"""
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body">
+        <h2 class="card-title">
+          <.icon name="hero-shield-check" class="size-5" />
+          Equipment
+        </h2>
+        <div class="grid grid-cols-2 gap-2 mt-4">
+          <.equipment_slot
+            :for={{slot_index, slot_name, icon} <- @slots}
+            name={slot_name}
+            icon={icon}
+            item={find_equipped(@equipped_items, slot_index)}
+          />
+        </div>
+      </div>
+    </div>
+    """
+  end
+
+  # Individual equipment slot
+  attr :name, :string, required: true
+  attr :icon, :string, required: true
+  attr :item, :map, default: nil
+
+  defp equipment_slot(assigns) do
+    ~H"""
+    <div class={"p-2 rounded flex items-center gap-2 #{if @item, do: "bg-base-200", else: "bg-base-300/50 border border-dashed border-base-300"}"}>
+      <.icon name={@icon} class="size-5 text-base-content/50" />
+      <div class="flex-1 min-w-0">
+        <div class="text-xs text-base-content/50">{@name}</div>
+        <%= if @item do %>
+          <div class="font-mono text-sm truncate">{@item.item_id}</div>
+        <% else %>
+          <div class="text-base-content/30 text-sm">Empty</div>
+        <% end %>
+      </div>
+    </div>
+    """
+  end
+
+  defp find_equipped(items, slot_index) do
+    Enum.find(items, &(&1.slot == slot_index))
   end
 
   # Helper functions
