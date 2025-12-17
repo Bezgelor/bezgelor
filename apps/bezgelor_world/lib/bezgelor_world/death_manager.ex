@@ -36,6 +36,12 @@ defmodule BezgelorWorld.DeathManager do
   # Default bindpoint (Thayd starting zone)
   @default_bindpoint %{zone_id: 426, position: {3949.0, -855.0, -1929.0}}
 
+  # Death count tracking window (15 minutes)
+  @death_count_window_ms 15 * 60 * 1000
+
+  # Threshold for resurrection sickness
+  @resurrection_sickness_threshold 3
+
   @type player_guid :: non_neg_integer()
   @type position :: {float(), float(), float()}
 
@@ -112,27 +118,58 @@ defmodule BezgelorWorld.DeathManager do
     GenServer.call(__MODULE__, {:respawn_at_bindpoint, player_guid})
   end
 
+  @doc """
+  Get the number of deaths for a player in the tracking window.
+
+  Returns the count of deaths within the last 15 minutes.
+  """
+  @spec get_death_count(player_guid()) :: non_neg_integer()
+  def get_death_count(player_guid) do
+    GenServer.call(__MODULE__, {:get_death_count, player_guid})
+  end
+
+  @doc """
+  Check if resurrection sickness should be applied.
+
+  Returns {should_apply, death_count} where should_apply is true
+  if the player has died 3+ times in the last 15 minutes.
+  """
+  @spec should_apply_resurrection_sickness?(player_guid()) :: {boolean(), non_neg_integer()}
+  def should_apply_resurrection_sickness?(player_guid) do
+    GenServer.call(__MODULE__, {:should_apply_sickness, player_guid})
+  end
+
   # ============================================================================
   # GenServer Callbacks
   # ============================================================================
 
   @impl true
   def init(_opts) do
-    {:ok, %{dead_players: %{}}}
+    {:ok, %{dead_players: %{}, death_counts: %{}}}
   end
 
   @impl true
   def handle_cast({:player_died, player_guid, zone_id, position, killer_guid}, state) do
+    now = System.monotonic_time(:millisecond)
+
     death_info = %{
       zone_id: zone_id,
       position: position,
       killer_guid: killer_guid,
-      died_at: System.monotonic_time(:millisecond),
+      died_at: now,
       res_offer: nil
     }
 
-    new_state = put_in(state, [:dead_players, player_guid], death_info)
-    Logger.debug("Player #{player_guid} died at zone #{zone_id}")
+    # Track death count
+    current_deaths = Map.get(state.death_counts, player_guid, [])
+    updated_deaths = [now | prune_old_deaths(current_deaths, now)]
+
+    new_state =
+      state
+      |> put_in([:dead_players, player_guid], death_info)
+      |> put_in([:death_counts, player_guid], updated_deaths)
+
+    Logger.debug("Player #{player_guid} died at zone #{zone_id} (#{length(updated_deaths)} deaths in window)")
 
     {:noreply, new_state}
   end
@@ -154,7 +191,24 @@ defmodule BezgelorWorld.DeathManager do
 
   @impl true
   def handle_call(:clear_all, _from, _state) do
-    {:reply, :ok, %{dead_players: %{}}}
+    {:reply, :ok, %{dead_players: %{}, death_counts: %{}}}
+  end
+
+  @impl true
+  def handle_call({:get_death_count, player_guid}, _from, state) do
+    now = System.monotonic_time(:millisecond)
+    deaths = Map.get(state.death_counts, player_guid, [])
+    recent_deaths = prune_old_deaths(deaths, now)
+    {:reply, length(recent_deaths), state}
+  end
+
+  @impl true
+  def handle_call({:should_apply_sickness, player_guid}, _from, state) do
+    now = System.monotonic_time(:millisecond)
+    deaths = Map.get(state.death_counts, player_guid, [])
+    recent_count = length(prune_old_deaths(deaths, now))
+    should_apply = recent_count >= @resurrection_sickness_threshold
+    {:reply, {should_apply, recent_count}, state}
   end
 
   def handle_call({:is_dead, player_guid}, _from, state) do
@@ -293,5 +347,11 @@ defmodule BezgelorWorld.DeathManager do
           bindpoint_id: bindpoint.bindpoint_id
         }
     end
+  end
+
+  # Remove death timestamps older than the tracking window
+  defp prune_old_deaths(deaths, now) do
+    cutoff = now - @death_count_window_ms
+    Enum.filter(deaths, fn timestamp -> timestamp >= cutoff end)
   end
 end

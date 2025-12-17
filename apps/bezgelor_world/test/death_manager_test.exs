@@ -217,4 +217,46 @@ defmodule BezgelorWorld.DeathManagerTest do
       assert is_float(z)
     end
   end
+
+  describe "get_death_count/1" do
+    test "returns 0 for player with no deaths" do
+      player_guid = 0x1000000000000001
+      assert DeathManager.get_death_count(player_guid) == 0
+    end
+
+    test "increments on death" do
+      player_guid = 0x1000000000000001
+
+      DeathManager.player_died(player_guid, 100, {0.0, 0.0, 0.0}, nil)
+      assert DeathManager.get_death_count(player_guid) == 1
+
+      DeathManager.player_died(player_guid, 100, {0.0, 0.0, 0.0}, nil)
+      assert DeathManager.get_death_count(player_guid) == 2
+    end
+  end
+
+  describe "should_apply_resurrection_sickness?/1" do
+    test "returns false for fewer than 3 deaths" do
+      player_guid = 0x1000000000000001
+
+      DeathManager.player_died(player_guid, 100, {0.0, 0.0, 0.0}, nil)
+      DeathManager.player_died(player_guid, 100, {0.0, 0.0, 0.0}, nil)
+
+      {should_apply, count} = DeathManager.should_apply_resurrection_sickness?(player_guid)
+      assert should_apply == false
+      assert count == 2
+    end
+
+    test "returns true for 3 or more deaths" do
+      player_guid = 0x1000000000000001
+
+      DeathManager.player_died(player_guid, 100, {0.0, 0.0, 0.0}, nil)
+      DeathManager.player_died(player_guid, 100, {0.0, 0.0, 0.0}, nil)
+      DeathManager.player_died(player_guid, 100, {0.0, 0.0, 0.0}, nil)
+
+      {should_apply, count} = DeathManager.should_apply_resurrection_sickness?(player_guid)
+      assert should_apply == true
+      assert count == 3
+    end
+  end
 end
