@@ -41,6 +41,7 @@ import {CharacterViewer} from "./character_viewer"
  */
 const CharacterViewerHook = {
   mounted() {
+    this.destroyed = false
     const race = this.el.dataset.race || "human"
     const gender = this.el.dataset.gender || "male"
 
@@ -52,41 +53,58 @@ const CharacterViewerHook = {
       console.warn("Failed to parse equipment data:", e)
     }
 
-    // Create the viewer
-    this.viewer = new CharacterViewer(this.el, {
-      width: this.el.clientWidth || 400,
-      height: this.el.clientHeight || 500,
-    })
+    // Defer heavy WebGL initialization to prevent blocking navigation
+    // Use requestIdleCallback for browsers that support it, otherwise setTimeout
+    const deferInit = window.requestIdleCallback || ((cb) => setTimeout(cb, 1))
 
-    // Load the character model
-    const modelUrl = `/models/characters/${race}_${gender}.glb`
-    this.currentModelUrl = modelUrl
-    this.currentRace = race
-    this.currentGender = gender
-    this.viewer.loadModel(modelUrl).then((success) => {
-      if (success) {
-        // Hide the loading spinner
-        this._hideSpinner()
-        // Show animation controls if animations available
-        this._showAnimationControls()
-        // Load texture for this race/gender
-        this.viewer.loadTexture(race, gender)
-      } else {
-        // Show fallback message if model fails to load
-        this._showFallback()
+    deferInit(() => {
+      // Check if we were destroyed during the defer
+      if (this.destroyed) return
+
+      // Create the viewer (this creates WebGL context)
+      this.viewer = new CharacterViewer(this.el, {
+        width: this.el.clientWidth || 400,
+        height: this.el.clientHeight || 500,
+      })
+
+      // Check again after viewer creation
+      if (this.destroyed) {
+        this.viewer?.dispose()
+        this.viewer = null
+        return
       }
-    })
 
-    // Handle resize
-    this.resizeObserver = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const { width, height } = entry.contentRect
-        if (this.viewer && width > 0 && height > 0) {
-          this.viewer.resize(width, height)
+      // Load the character model
+      const modelUrl = `/models/characters/${race}_${gender}.glb`
+      this.currentModelUrl = modelUrl
+      this.currentRace = race
+      this.currentGender = gender
+      this.viewer.loadModel(modelUrl).then((success) => {
+        if (this.destroyed) return
+        if (success) {
+          // Hide the loading spinner
+          this._hideSpinner()
+          // Show animation controls if animations available
+          this._showAnimationControls()
+          // Load texture for this race/gender
+          this.viewer.loadTexture(race, gender)
+        } else {
+          // Show fallback message if model fails to load
+          this._showFallback()
         }
-      }
+      })
+
+      // Handle resize
+      this.resizeObserver = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          const { width, height } = entry.contentRect
+          if (this.viewer && width > 0 && height > 0) {
+            this.viewer.resize(width, height)
+          }
+        }
+      })
+      this.resizeObserver.observe(this.el)
     })
-    this.resizeObserver.observe(this.el)
   },
 
   updated() {
@@ -111,6 +129,9 @@ const CharacterViewerHook = {
   },
 
   destroyed() {
+    // Set flag first to stop any pending async operations
+    this.destroyed = true
+
     if (this.resizeObserver) {
       this.resizeObserver.disconnect()
       this.resizeObserver = null
