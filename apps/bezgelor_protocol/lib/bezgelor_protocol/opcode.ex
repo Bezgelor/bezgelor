@@ -149,6 +149,11 @@ defmodule BezgelorProtocol.Opcode do
   @server_entity_death 0x0510
   @client_respawn 0x0511
   @server_respawn 0x0512
+  @server_player_death 0x0513
+  @server_resurrect_offer 0x0514
+  @client_resurrect_accept 0x0515
+  @client_resurrect_at_bindpoint 0x0516
+  @server_resurrect 0x0517
 
   # XP/Level opcodes
   @server_xp_gain 0x0520
@@ -377,6 +382,11 @@ defmodule BezgelorProtocol.Opcode do
     server_entity_death: @server_entity_death,
     client_respawn: @client_respawn,
     server_respawn: @server_respawn,
+    server_player_death: @server_player_death,
+    server_resurrect_offer: @server_resurrect_offer,
+    client_resurrect_accept: @client_resurrect_accept,
+    client_resurrect_at_bindpoint: @client_resurrect_at_bindpoint,
+    server_resurrect: @server_resurrect,
     # XP/Level
     server_xp_gain: @server_xp_gain,
     server_level_up: @server_level_up,
@@ -583,6 +593,11 @@ defmodule BezgelorProtocol.Opcode do
     server_entity_death: "ServerEntityDeath",
     client_respawn: "ClientRespawn",
     server_respawn: "ServerRespawn",
+    server_player_death: "ServerPlayerDeath",
+    server_resurrect_offer: "ServerResurrectOffer",
+    client_resurrect_accept: "ClientResurrectAccept",
+    client_resurrect_at_bindpoint: "ClientResurrectAtBindpoint",
+    server_resurrect: "ServerResurrect",
     server_xp_gain: "ServerXPGain",
     server_level_up: "ServerLevelUp",
     server_achievement_list: "ServerAchievementList",
