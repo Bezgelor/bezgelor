@@ -18,7 +18,8 @@ Bezgelor is an Elixir umbrella application that emulates WildStar game servers u
 - **Public Events** - World bosses, invasions, territory control
 - **Dungeons** - Instance management, boss encounters DSL, group finder, loot distribution
 - **Mythic+** - Keystones, affixes, timers, score calculation
-- **Account Portal** - Web-based player dashboard and admin console with real-time server management
+- **Player Portal** - Web dashboard with 3D character viewer, inventory browser, achievement tracker, guild management, mail center
+- **Admin Portal** - Real-time server monitoring, user/character management, economy tools, event control, audit logs
 
 ## Architecture
 
