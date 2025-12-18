@@ -17,6 +17,9 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
 
   @behaviour BezgelorProtocol.Handler
   @compile {:no_warn_undefined, [BezgelorWorld.Quest.QuestCache, BezgelorWorld.Handler.AchievementHandler, BezgelorWorld.Cinematic.CinematicManager, BezgelorWorld.TriggerManager, BezgelorWorld.Creature.ZoneManager, BezgelorWorld.CreatureManager, BezgelorWorld.WorldManager, BezgelorWorld.VisibilityBroadcaster]}
+  # Suppress warning for {:play, packets} clause - cinematics are intentionally disabled
+  # but this code is correct for when they're re-enabled
+  @dialyzer {:nowarn_function, build_cinematic_packets: 2}
 
   alias BezgelorProtocol.Packets.World.{ServerEntityCreate, ServerQuestList, ServerPlayerEnteredWorld}
   alias BezgelorProtocol.PacketWriter
@@ -30,6 +33,7 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
   alias BezgelorWorld.VisibilityBroadcaster
 
   require Logger
+  import Bitwise
 
   @impl true
   def handle(_payload, state) do
@@ -296,7 +300,7 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
 
           packet = %ServerEntityCommand{
             guid: guid,
-            time: System.monotonic_time(:millisecond) |> rem(0xFFFFFFFF),
+            time: System.system_time(:millisecond) |> band(0xFFFFFFFF),
             time_reset: false,
             server_controlled: true,
             commands: [state_command, move_defaults, rotation_defaults, path_command]
@@ -377,7 +381,7 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
 
         packet = %ServerEntityCommand{
           guid: guid,
-          time: System.monotonic_time(:millisecond) |> rem(0xFFFFFFFF),
+          time: System.system_time(:millisecond) |> band(0xFFFFFFFF),
           time_reset: false,
           server_controlled: true,
           commands: [state_command, move_defaults, rotation_defaults, path_command]
