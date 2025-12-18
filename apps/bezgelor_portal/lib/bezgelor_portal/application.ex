@@ -11,8 +11,12 @@ defmodule BezgelorPortal.Application do
       BezgelorPortalWeb.Telemetry,
       {DNSCluster, query: Application.get_env(:bezgelor_portal, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: BezgelorPortal.PubSub},
+      # Rate limiting for auth actions
+      {BezgelorPortal.Hammer, clean_period: :timer.minutes(10)},
       # Encryption vault for TOTP secrets
       BezgelorPortal.Vault,
+      # Log buffer for admin log viewer
+      BezgelorPortal.LogBuffer,
       # Start to serve requests, typically the last entry
       BezgelorPortalWeb.Endpoint
     ]
