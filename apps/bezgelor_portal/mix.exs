@@ -78,7 +78,7 @@ defmodule BezgelorPortal.MixProject do
       # Authentication & Security
       {:nimble_totp, "~> 1.0"},
       {:cloak_ecto, "~> 1.3"},
-      {:eqrcode, "~> 0.1.10"},
+      {:eqrcode, "~> 0.2.1"},
 
       # Email
       {:swoosh, "~> 1.17"},
@@ -86,7 +86,7 @@ defmodule BezgelorPortal.MixProject do
       {:hackney, "~> 1.9"},
 
       # Rate limiting
-      {:hammer, "~> 6.2"},
+      {:hammer, "~> 7.1"},
 
       # Observability
       {:orion, "~> 1.0"}

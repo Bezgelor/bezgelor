@@ -8,6 +8,8 @@ defmodule BezgelorProtocol.Application do
   @impl true
   def start(_type, _args) do
     children = [
+      # Rate limiting for auth attempts
+      {BezgelorProtocol.RateLimiter, clean_period: :timer.minutes(10)},
       BezgelorProtocol.PacketRegistry
     ]
 

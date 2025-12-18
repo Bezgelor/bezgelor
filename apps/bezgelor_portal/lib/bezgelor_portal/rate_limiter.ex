@@ -65,9 +65,9 @@ defmodule BezgelorPortal.RateLimiter do
   end
 
   defp check_rate(key, limit, window_ms) do
-    case Hammer.check_rate(key, window_ms, limit) do
-      {:allow, _count} -> :ok
-      {:deny, _limit} -> {:error, :rate_limited}
+    case BezgelorPortal.Hammer.hit(key, window_ms, limit) do
+      {:allow, _info} -> :ok
+      {:deny, _info} -> {:error, :rate_limited}
     end
   end
 end
