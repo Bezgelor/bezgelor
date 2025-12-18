@@ -22,7 +22,10 @@ defmodule BezgelorAuth.Sts.Handler.AuthHandler do
   """
   @spec handle_login_start(Packet.t(), Session.t()) :: {:ok, binary(), Session.t()} | {:error, integer(), String.t(), Session.t()}
   def handle_login_start(packet, session) do
-    if session.state != :connected do
+    # Allow LoginStart from both :connected state (fresh login) and :authenticated state (re-login)
+    # The WildStar client reuses the STS connection after logout, so we need to handle re-login
+    # on an already authenticated session by treating it as a new login attempt.
+    if session.state not in [:connected, :authenticated] do
       {:error, 400, "Bad Request", session}
     else
       # Parse the request body to get email
@@ -139,8 +142,8 @@ defmodule BezgelorAuth.Sts.Handler.AuthHandler do
   # Request parsing helpers
 
   defp parse_login_start_request(body) do
-    # The request body is XML-like or just contains the email
-    # For simplicity, try to extract email from XML or plain text
+    # The request body is XML: <Request><LoginName>email</LoginName></Request>
+    # or simpler format with just <LoginName>email</LoginName>
     cond do
       String.contains?(body, "<LoginName>") ->
         case Regex.run(~r/<LoginName>([^<]+)<\/LoginName>/, body) do

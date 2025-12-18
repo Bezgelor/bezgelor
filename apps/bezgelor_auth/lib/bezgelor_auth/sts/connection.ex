@@ -88,15 +88,14 @@ defmodule BezgelorAuth.Sts.Connection do
       {:ok, packet, remaining} ->
         Logger.debug("[STS] Recv: #{packet.method} #{packet.uri} (#{byte_size(packet.body)} bytes)")
 
-        start_time = System.monotonic_time(:microsecond)
         {response, new_session, init_encryption} = Handler.handle(packet, state.session)
-        elapsed_ms = (System.monotonic_time(:microsecond) - start_time) / 1000
 
-        Logger.debug("[STS] #{packet.uri} processed in #{Float.round(elapsed_ms, 2)}ms")
-
-        # Encrypt response if encryption is enabled (but NOT for the KeyData response itself)
+        # Encrypt response if encryption is CURRENTLY enabled on the connection.
+        # On first login: connection is unencrypted, KeyData response sent unencrypted, then init encryption
+        # On re-login: connection is already encrypted, KeyData response must be encrypted with OLD key
+        # The key insight: check state.session (current state) not new_session (after handler)
         {response_to_send, new_session} =
-          if response && Session.encryption_enabled?(new_session) && !init_encryption do
+          if response && Session.encryption_enabled?(state.session) do
             Session.encrypt(new_session, response)
           else
             {response, new_session}
@@ -105,10 +104,8 @@ defmodule BezgelorAuth.Sts.Connection do
         # Send response
         send_result =
           if response_to_send do
-            Logger.debug("[STS] Sending response for #{packet.uri}")
             state.transport.send(state.socket, response_to_send)
           else
-            Logger.debug("[STS] No response for #{packet.uri}")
             :ok
           end
 
@@ -123,8 +120,6 @@ defmodule BezgelorAuth.Sts.Connection do
                 new_session
               end
 
-            # Store remaining as undecrypted - we'll decrypt on next process_buffer call
-            # Actually, remaining should be stored encrypted if it arrived encrypted
             state = %{state | buffer: remaining, session: new_session}
 
             # Continue processing if there's more data
@@ -139,7 +134,6 @@ defmodule BezgelorAuth.Sts.Connection do
         end
 
       {:incomplete, _} ->
-        # Put the buffer back (it may have been decrypted)
         {:ok, %{state | buffer: buffer_to_parse}}
 
       {:error, reason} ->
@@ -151,7 +145,6 @@ defmodule BezgelorAuth.Sts.Connection do
   defp maybe_decrypt_buffer(%{session: session, buffer: buffer} = state) do
     if Session.encryption_enabled?(session) && byte_size(buffer) > 0 do
       {decrypted, new_session} = Session.decrypt(session, buffer)
-      Logger.debug("[STS] Decrypted #{byte_size(buffer)} bytes")
       {decrypted, %{state | session: new_session, buffer: <<>>}}
     else
       {buffer, state}
