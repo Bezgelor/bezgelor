@@ -17,6 +17,9 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
 
   @behaviour BezgelorProtocol.Handler
   @compile {:no_warn_undefined, [BezgelorWorld.Quest.QuestCache, BezgelorWorld.Handler.AchievementHandler, BezgelorWorld.Cinematic.CinematicManager, BezgelorWorld.TriggerManager, BezgelorWorld.Creature.ZoneManager, BezgelorWorld.CreatureManager, BezgelorWorld.WorldManager, BezgelorWorld.VisibilityBroadcaster]}
+  # Suppress warning for {:play, packets} clause - cinematics are intentionally disabled
+  # but this code is correct for when they're re-enabled
+  @dialyzer {:nowarn_function, build_cinematic_packets: 2}
 
   alias BezgelorProtocol.Packets.World.{ServerEntityCreate, ServerQuestList, ServerPlayerEnteredWorld}
   alias BezgelorProtocol.PacketWriter
@@ -30,6 +33,7 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
   alias BezgelorWorld.VisibilityBroadcaster
 
   require Logger
+  import Bitwise
 
   @impl true
   def handle(_payload, state) do
@@ -296,7 +300,7 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
 
           packet = %ServerEntityCommand{
             guid: guid,
-            time: System.monotonic_time(:millisecond) |> rem(0xFFFFFFFF),
+            time: System.system_time(:millisecond) |> band(0xFFFFFFFF),
             time_reset: false,
             server_controlled: true,
             commands: [state_command, move_defaults, rotation_defaults, path_command]
@@ -377,7 +381,7 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
 
         packet = %ServerEntityCommand{
           guid: guid,
-          time: System.monotonic_time(:millisecond) |> rem(0xFFFFFFFF),
+          time: System.system_time(:millisecond) |> band(0xFFFFFFFF),
           time_reset: false,
           server_controlled: true,
           commands: [state_command, move_defaults, rotation_defaults, path_command]
@@ -395,26 +399,12 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
   end
 
   # Build cinematic packets if a cinematic should play on zone entry
+  # NOTE: Cinematics are currently disabled in CinematicManager (see its moduledoc).
+  # When re-enabled, restore the {:play, packets} handling here.
   defp build_cinematic_packets(session_data, zone_id) do
-    case CinematicManager.on_zone_enter(session_data, zone_id) do
-      {:play, packets} ->
-        Logger.info("Playing zone entry cinematic with #{length(packets)} packets")
-        encode_cinematic_packets(packets)
-
-      :none ->
-        []
-    end
-  end
-
-  # Encode a list of cinematic packet structs to binary format
-  defp encode_cinematic_packets(packets) do
-    Enum.map(packets, fn packet ->
-      opcode = packet.__struct__.opcode()
-      writer = PacketWriter.new()
-      {:ok, writer} = packet.__struct__.write(packet, writer)
-      data = PacketWriter.to_binary(writer)
-      {opcode, data}
-    end)
+    # Returns :none while cinematics are disabled
+    _ = CinematicManager.on_zone_enter(session_data, zone_id)
+    []
   end
 
   # Convert session quests to format expected by ServerQuestList packet

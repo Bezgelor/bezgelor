@@ -48,8 +48,8 @@ defmodule BezgelorProtocol.Packets.World.ServerChat do
 
     writer =
       writer
-      |> PacketWriter.write_uint32(channel_int)
-      |> PacketWriter.write_uint64(packet.sender_guid || 0)
+      |> PacketWriter.write_u32(channel_int)
+      |> PacketWriter.write_u64(packet.sender_guid || 0)
       |> PacketWriter.write_wide_string(packet.sender_name || "")
       |> PacketWriter.write_wide_string(packet.message || "")
 

@@ -34,29 +34,29 @@ defmodule BezgelorProtocol.Packets.World.ServerInventoryList do
   @impl true
   def write(%__MODULE__{bags: bags, items: items}, writer) do
     # Write bags
-    writer = PacketWriter.write_byte(writer, length(bags))
+    writer = PacketWriter.write_u8(writer, length(bags))
 
     writer =
       Enum.reduce(bags, writer, fn bag, w ->
         w
-        |> PacketWriter.write_byte(bag.bag_index)
-        |> PacketWriter.write_uint32(bag.item_id || 0)
-        |> PacketWriter.write_byte(bag.size)
+        |> PacketWriter.write_u8(bag.bag_index)
+        |> PacketWriter.write_u32(bag.item_id || 0)
+        |> PacketWriter.write_u8(bag.size)
       end)
 
     # Write items
-    writer = PacketWriter.write_uint16(writer, length(items))
+    writer = PacketWriter.write_u16(writer, length(items))
 
     writer =
       Enum.reduce(items, writer, fn item, w ->
         w
-        |> PacketWriter.write_byte(container_type_to_int(item.container_type))
-        |> PacketWriter.write_byte(item.bag_index)
-        |> PacketWriter.write_uint16(item.slot)
-        |> PacketWriter.write_uint32(item.item_id)
-        |> PacketWriter.write_uint16(item.quantity)
-        |> PacketWriter.write_byte(item.durability || 100)
-        |> PacketWriter.write_byte(if(item.bound, do: 1, else: 0))
+        |> PacketWriter.write_u8(container_type_to_int(item.container_type))
+        |> PacketWriter.write_u8(item.bag_index)
+        |> PacketWriter.write_u16(item.slot)
+        |> PacketWriter.write_u32(item.item_id)
+        |> PacketWriter.write_u16(item.quantity)
+        |> PacketWriter.write_u8(item.durability || 100)
+        |> PacketWriter.write_u8(if(item.bound, do: 1, else: 0))
       end)
 
     {:ok, writer}

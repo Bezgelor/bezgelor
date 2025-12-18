@@ -27,7 +27,7 @@ defmodule BezgelorProtocol.MixProject do
   defp deps do
     [
       {:ranch, "~> 2.1"},
-      {:hammer, "~> 6.2"},
+      {:hammer, "~> 7.1"},
       {:bezgelor_core, in_umbrella: true},
       {:bezgelor_crypto, in_umbrella: true},
       {:bezgelor_data, in_umbrella: true},

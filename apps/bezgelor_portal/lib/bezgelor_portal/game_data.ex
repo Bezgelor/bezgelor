@@ -85,6 +85,21 @@ defmodule BezgelorPortal.GameData do
   def faction_name(id), do: get_faction(id).name
 
   @doc """
+  Get the correct faction ID for a race.
+
+  This derives faction from race rather than trusting stored faction_id,
+  since the CharacterCreation data has inverted faction mappings.
+  """
+  @spec faction_id_for_race(integer()) :: integer()
+  def faction_id_for_race(race_id) do
+    case get_race(race_id).faction do
+      :exile -> 166
+      :dominion -> 167
+      _ -> 166  # Default to Exile for unknown
+    end
+  end
+
+  @doc """
   Get faction color by ID.
   """
   @spec faction_color(integer()) :: String.t()

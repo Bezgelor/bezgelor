@@ -19,8 +19,8 @@ defmodule BezgelorProtocol.Packets.World.ServerQuestRemove do
   def write(%__MODULE__{quest_id: quest_id, reason: reason}, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint32(quest_id)
-      |> PacketWriter.write_byte(reason_to_int(reason))
+      |> PacketWriter.write_u32(quest_id)
+      |> PacketWriter.write_u8(reason_to_int(reason))
 
     {:ok, writer}
   end

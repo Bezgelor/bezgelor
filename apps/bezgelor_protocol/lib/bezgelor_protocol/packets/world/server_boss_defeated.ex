@@ -30,12 +30,12 @@ defmodule BezgelorProtocol.Packets.World.ServerBossDefeated do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint32(packet.boss_id)
-      |> PacketWriter.write_uint64(packet.boss_guid)
-      |> PacketWriter.write_uint32(packet.fight_duration)
-      |> PacketWriter.write_byte(if(packet.is_final_boss, do: 1, else: 0))
-      |> PacketWriter.write_byte(loot_method_to_int(packet.loot_method))
-      |> PacketWriter.write_byte(if(packet.lockout_created, do: 1, else: 0))
+      |> PacketWriter.write_u32(packet.boss_id)
+      |> PacketWriter.write_u64(packet.boss_guid)
+      |> PacketWriter.write_u32(packet.fight_duration)
+      |> PacketWriter.write_u8(if(packet.is_final_boss, do: 1, else: 0))
+      |> PacketWriter.write_u8(loot_method_to_int(packet.loot_method))
+      |> PacketWriter.write_u8(if(packet.lockout_created, do: 1, else: 0))
 
     {:ok, writer}
   end

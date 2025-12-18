@@ -23,12 +23,12 @@ defmodule BezgelorProtocol.Packets.World.ServerQuestAdd do
   def write(%__MODULE__{quest_id: quest_id, objectives: objectives}, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint32(quest_id)
-      |> PacketWriter.write_byte(length(objectives))
+      |> PacketWriter.write_u32(quest_id)
+      |> PacketWriter.write_u8(length(objectives))
 
     writer =
       Enum.reduce(objectives, writer, fn obj, w ->
-        PacketWriter.write_uint16(w, obj["target"] || obj[:target] || 1)
+        PacketWriter.write_u16(w, obj["target"] || obj[:target] || 1)
       end)
 
     {:ok, writer}

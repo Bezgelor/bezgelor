@@ -18,7 +18,8 @@ Bezgelor is an Elixir umbrella application that emulates WildStar game servers u
 - **Public Events** - World bosses, invasions, territory control
 - **Dungeons** - Instance management, boss encounters DSL, group finder, loot distribution
 - **Mythic+** - Keystones, affixes, timers, score calculation
-- **Account Portal** - Web-based player dashboard and admin console with real-time server management
+- **Player Portal** - Web dashboard with 3D character viewer, inventory browser, achievement tracker, guild management, mail center
+- **Admin Portal** - Real-time server monitoring, user/character management, economy tools, event control, audit logs
 
 ## Architecture
 
@@ -243,6 +244,8 @@ Role-based permissions (Player, GM, Admin, SuperAdmin) control access to feature
 
 ## Data Extraction
 
+### Game Data Tables
+
 Python tools in `tools/tbl_extractor/` extract WildStar game data:
 
 ```bash
@@ -252,6 +255,24 @@ python tools/tbl_extractor/tbl_extractor.py Creature2.tbl
 # Extract localized text
 python tools/tbl_extractor/language_extractor.py en-US.bin
 ```
+
+### 3D Models & Textures
+
+The portal's character viewer requires models and textures extracted from your game client. These are not redistributable and must be extracted locally.
+
+```bash
+# Extract and convert character models to glTF
+python tools/m3_extractor/extract_models.py path/to/models/ -o output/
+
+# Extract and convert textures to PNG
+python tools/m3_extractor/tex_extractor.py path/to/textures/ -o output/
+
+# For production: fetch from private storage
+export BEZGELOR_ASSETS_URL="s3://my-bucket/bezgelor-assets"
+mix assets.fetch
+```
+
+See [docs/asset-extraction.md](docs/asset-extraction.md) for the complete extraction guide.
 
 ## License
 

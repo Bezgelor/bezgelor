@@ -772,4 +772,68 @@ defmodule BezgelorWorld.CombatBroadcaster do
         end
     end
   end
+
+  @doc """
+  Broadcast entity visual update to a list of player GUIDs.
+
+  Used when a player equips or unequips gear to update their visible appearance.
+  Requires character info (race, sex) for the full packet format.
+
+  Merges body appearance visuals (skin, face, etc.) with equipment visuals.
+  """
+  @spec broadcast_item_visual_update(non_neg_integer(), map(), [map()], [non_neg_integer()]) :: :ok
+  def broadcast_item_visual_update(entity_guid, character, equipment_visuals, recipient_guids) do
+    alias BezgelorProtocol.Packets.World.ServerEntityVisualUpdate
+
+    # Get body visuals from character appearance (skin, face, hair, etc.)
+    body_visuals = get_body_visuals(character)
+
+    # Merge: equipment visuals override body visuals for the same slot
+    all_visuals = merge_visuals(body_visuals, equipment_visuals)
+
+    packet = %ServerEntityVisualUpdate{
+      unit_id: entity_guid,
+      race: character.race || 0,
+      sex: character.sex || 0,
+      creature_id: 0,
+      display_info: 0,
+      outfit_info: 0,
+      item_color_set_id: 0,
+      visuals: all_visuals
+    }
+
+    writer = PacketWriter.new()
+    {:ok, writer} = ServerEntityVisualUpdate.write(packet, writer)
+    packet_data = PacketWriter.to_binary(writer)
+
+    send_to_players(recipient_guids, :server_entity_visual_update, packet_data)
+  end
+
+  # Get body appearance visuals from character
+  defp get_body_visuals(character) do
+    case character do
+      %{appearance: %{visuals: visuals}} when is_list(visuals) ->
+        Enum.map(visuals, fn v ->
+          %{
+            slot: v[:slot] || v["slot"] || 0,
+            display_id: v[:display_id] || v["display_id"] || 0,
+            colour_set: v[:colour_set] || v["colour_set"] || 0,
+            dye_data: v[:dye_data] || v["dye_data"] || 0
+          }
+        end)
+
+      _ ->
+        []
+    end
+  end
+
+  # Merge body and equipment visuals, equipment takes precedence
+  defp merge_visuals(body_visuals, equipment_visuals) do
+    # Build a map keyed by slot, body first then equipment overwrites
+    body_map = Map.new(body_visuals, fn v -> {v.slot, v} end)
+    equipment_map = Map.new(equipment_visuals, fn v -> {v.slot, v} end)
+
+    Map.merge(body_map, equipment_map)
+    |> Map.values()
+  end
 end

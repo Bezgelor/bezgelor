@@ -44,14 +44,14 @@ defmodule BezgelorProtocol.Packets.World.ServerBuffApply do
 
     writer =
       writer
-      |> PacketWriter.write_uint64(packet.target_guid)
-      |> PacketWriter.write_uint64(packet.caster_guid)
-      |> PacketWriter.write_uint32(packet.buff_id)
-      |> PacketWriter.write_uint32(packet.spell_id)
-      |> PacketWriter.write_byte(packet.buff_type)
-      |> PacketWriter.write_bytes(amount_bytes)
-      |> PacketWriter.write_uint32(packet.duration)
-      |> PacketWriter.write_byte(is_debuff_byte)
+      |> PacketWriter.write_u64(packet.target_guid)
+      |> PacketWriter.write_u64(packet.caster_guid)
+      |> PacketWriter.write_u32(packet.buff_id)
+      |> PacketWriter.write_u32(packet.spell_id)
+      |> PacketWriter.write_u8(packet.buff_type)
+      |> PacketWriter.write_bytes_bits(amount_bytes)
+      |> PacketWriter.write_u32(packet.duration)
+      |> PacketWriter.write_u8(is_debuff_byte)
 
     {:ok, writer}
   end

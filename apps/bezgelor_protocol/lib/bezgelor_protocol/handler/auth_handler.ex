@@ -62,7 +62,7 @@ defmodule BezgelorProtocol.Handler.AuthHandler do
 
   # Check rate limit using Hammer
   defp check_rate_limit(client_ip) do
-    Hammer.check_rate("auth:#{client_ip}", @rate_limit_scale, @rate_limit_count)
+    BezgelorProtocol.RateLimiter.hit("auth:#{client_ip}", @rate_limit_scale, @rate_limit_count)
   end
 
   # Extract client IP from state (stored by connection handler)

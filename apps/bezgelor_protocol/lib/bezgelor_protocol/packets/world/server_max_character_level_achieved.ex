@@ -31,7 +31,7 @@ defmodule BezgelorProtocol.Packets.World.ServerMaxCharacterLevelAchieved do
   @impl true
   @spec write(t(), PacketWriter.t()) :: {:ok, PacketWriter.t()}
   def write(%__MODULE__{} = packet, writer) do
-    writer = PacketWriter.write_uint32(writer, packet.level)
+    writer = PacketWriter.write_u32(writer, packet.level)
     {:ok, writer}
   end
 end

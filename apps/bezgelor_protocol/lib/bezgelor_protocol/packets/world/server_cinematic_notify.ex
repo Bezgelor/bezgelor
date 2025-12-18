@@ -38,9 +38,9 @@ defmodule BezgelorProtocol.Packets.World.ServerCinematicNotify do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint16(packet.flags)
-      |> PacketWriter.write_uint16(packet.cancel)
-      |> PacketWriter.write_uint32(packet.duration)
+      |> PacketWriter.write_u16(packet.flags)
+      |> PacketWriter.write_u16(packet.cancel)
+      |> PacketWriter.write_u32(packet.duration)
       |> PacketWriter.write_bits(packet.cinematic_id, 14)
 
     {:ok, writer}

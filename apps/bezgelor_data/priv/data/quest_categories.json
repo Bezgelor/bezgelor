@@ -2,319 +2,319 @@
   "questcategory": [
     {
       "ID": 1,
-      "description": "n",
+      "description": "General",
       "localizedTextIdTitle": 0,
       "questCategoryTypeEnum": 321040
     },
     {
       "ID": 28,
-      "description": "o",
+      "description": "Zone - Exile Arkship - The Gambler's Ruin",
       "localizedTextIdTitle": 0,
       "questCategoryTypeEnum": 327534
     },
     {
       "ID": 29,
-      "description": "m",
+      "description": "Zone - Dominion Arkship - The Destiny",
       "localizedTextIdTitle": 0,
       "questCategoryTypeEnum": 327535
     },
     {
       "ID": 30,
-      "description": " ",
+      "description": "Zone - Northern Wilds",
       "localizedTextIdTitle": 0,
       "questCategoryTypeEnum": 327536
     },
     {
       "ID": 31,
-      "description": "-",
+      "description": "Zone - Everstar Grove",
       "localizedTextIdTitle": 0,
       "questCategoryTypeEnum": 327537
     },
     {
       "ID": 32,
-      "description": "-",
+      "description": "Zone - Crimson Isle",
       "localizedTextIdTitle": 0,
       "questCategoryTypeEnum": 327538
     },
     {
       "ID": 33,
-      "description": "o",
+      "description": "Zone - Levian Bay",
       "localizedTextIdTitle": 0,
       "questCategoryTypeEnum": 327539
     },
     {
       "ID": 34,
-      "description": "o",
+      "description": "Zone - Algoroc",
       "localizedTextIdTitle": 0,
       "questCategoryTypeEnum": 327540
     },
     {
       "ID": 35,
-      "description": "E",
+      "description": "Zone - Celestion",
       "localizedTextIdTitle": 0,
       "questCategoryTypeEnum": 327541
     },
     {
       "ID": 36,
-      "description": "-",
+      "description": "Zone - Deradune",
       "localizedTextIdTitle": 0,
       "questCategoryTypeEnum": 327542
     },
     {
       "ID": 37,
-      "description": "v",
+      "description": "Zone - Ellevar",
       "localizedTextIdTitle": 0,
       "questCategoryTypeEnum": 327543
     },
     {
       "ID": 38,
-      "description": "i",
+      "description": "Zone - Galeras",
       "localizedTextIdTitle": 0,
       "questCategoryTypeEnum": 327546
     },
     {
       "ID": 39,
-      "description": "r",
+      "description": "Zone - Auroria",
       "localizedTextIdTitle": 0,
       "questCategoryTypeEnum": 327547
     },
     {
       "ID": 40,
-      "description": "v",
+      "description": "Zone - Whitevale",
       "localizedTextIdTitle": 0,
       "questCategoryTypeEnum": 327548
     },
     {
       "ID": 41,
-      "description": "a",
+      "description": "Zone - Dreadmoor",
       "localizedTextIdTitle": 0,
       "questCategoryTypeEnum": 327550
     },
     {
       "ID": 42,
-      "description": "i",
+      "description": "Zone - Farside",
       "localizedTextIdTitle": 0,
       "questCategoryTypeEnum": 327551
     },
     {
       "ID": 43,
-      "description": "l",
+      "description": "Zone - Coralus",
       "localizedTextIdTitle": 0,
       "questCategoryTypeEnum": 327552
     },
     {
       "ID": 44,
-      "description": "l",
+      "description": "Zone - Murkmire",
       "localizedTextIdTitle": 0,
       "questCategoryTypeEnum": 327553
     },
     {
       "ID": 45,
-      "description": "l",
+      "description": "Zone - Wilderrun",
       "localizedTextIdTitle": 0,
       "questCategoryTypeEnum": 327554
     },
     {
       "ID": 46,
-      "description": "B",
+      "description": "Zone - Malgrave",
       "localizedTextIdTitle": 0,
       "questCategoryTypeEnum": 327555
     },
     {
       "ID": 47,
-      "description": "m",
+      "description": "Zone - Halon Ring 1 - Borellian Cluster",
       "localizedTextIdTitle": 0,
       "questCategoryTypeEnum": 327556
     },
     {
       "ID": 48,
-      "description": "a",
+      "description": "Zone - Grimvault",
       "localizedTextIdTitle": 0,
       "questCategoryTypeEnum": 327557
     },
     {
       "ID": 49,
-      "description": "k",
+      "description": "Dungeon",
       "localizedTextIdTitle": 0,
       "questCategoryTypeEnum": 327558
     },
     {
       "ID": 50,
-      "description": "t",
+      "description": "Adventure",
       "localizedTextIdTitle": 0,
       "questCategoryTypeEnum": 327559
     },
     {
       "ID": 51,
-      "description": "n",
+      "description": "Zone - Eternity Islands - Public Event Island",
       "localizedTextIdTitle": 0,
       "questCategoryTypeEnum": 327560
     },
     {
       "ID": 52,
-      "description": "A",
+      "description": "Housing",
       "localizedTextIdTitle": 0,
       "questCategoryTypeEnum": 327586
     },
     {
       "ID": 53,
-      "description": "t",
+      "description": "Tradeskills",
       "localizedTextIdTitle": 0,
       "questCategoryTypeEnum": 327608
     },
     {
       "ID": 54,
-      "description": "P",
+      "description": "Zone - Northern Malgrave",
       "localizedTextIdTitle": 0,
       "questCategoryTypeEnum": 327613
     },
     {
       "ID": 55,
-      "description": "R",
+      "description": "Zone - Halon Ring 2 - Apex-9",
       "localizedTextIdTitle": 0,
       "questCategoryTypeEnum": 327618
     },
     {
       "ID": 56,
-      "description": "",
+      "description": "Pocket Cap - Crimson Badlands",
       "localizedTextIdTitle": 0,
       "questCategoryTypeEnum": 327885
     },
     {
       "ID": 57,
-      "description": "",
+      "description": "Pocket Cap - Northern Wastes",
       "localizedTextIdTitle": 0,
       "questCategoryTypeEnum": 328246
     },
     {
       "ID": 58,
-      "description": "\u0004",
+      "description": "Shiphand Missions",
       "localizedTextIdTitle": 0,
       "questCategoryTypeEnum": 328252
     },
     {
       "ID": 60,
-      "description": "\r",
+      "description": "World Story",
       "localizedTextIdTitle": 0,
       "questCategoryTypeEnum": 458361
     },
     {
       "ID": 61,
-      "description": "\u0013",
+      "description": "Protostar Extravaganza",
       "localizedTextIdTitle": 0,
       "questCategoryTypeEnum": 512117
     },
     {
       "ID": 62,
-      "description": "",
+      "description": "Item Imbuements",
       "localizedTextIdTitle": 0,
       "questCategoryTypeEnum": 535919
     },
     {
       "ID": 63,
-      "description": "",
+      "description": "Daily Quests",
       "localizedTextIdTitle": 0,
       "questCategoryTypeEnum": 543473
     },
     {
       "ID": 64,
-      "description": ",",
+      "description": "Capital City - Thayd",
       "localizedTextIdTitle": 0,
       "questCategoryTypeEnum": 571099
     },
     {
       "ID": 65,
-      "description": "",
+      "description": "Capital City - Illium",
       "localizedTextIdTitle": 0,
       "questCategoryTypeEnum": 571100
     },
     {
       "ID": 66,
-      "description": "",
+      "description": "Malgrave PCP - Containment R-12",
       "localizedTextIdTitle": 0,
       "questCategoryTypeEnum": 581095
     },
     {
       "ID": 67,
-      "description": "",
+      "description": "Pocket Cap - Star-Comm Basin",
       "localizedTextIdTitle": 0,
       "questCategoryTypeEnum": 591792
     },
     {
       "ID": 68,
-      "description": "",
+      "description": "Live Events - Holiday - Shade's Eve",
       "localizedTextIdTitle": 0,
       "questCategoryTypeEnum": 623022
     },
     {
       "ID": 69,
-      "description": "",
+      "description": "Live Events - Holiday - Protostar Winterfest",
       "localizedTextIdTitle": 0,
       "questCategoryTypeEnum": 623023
     },
     {
       "ID": 70,
-      "description": "",
+      "description": "Live Events - Holiday - Party Gras",
       "localizedTextIdTitle": 0,
       "questCategoryTypeEnum": 623024
     },
     {
       "ID": 71,
-      "description": "",
+      "description": "Live Events - Holiday - Starfall",
       "localizedTextIdTitle": 0,
       "questCategoryTypeEnum": 623025
     },
     {
       "ID": 72,
-      "description": "",
+      "description": "Elder Gem Weekly Quests",
       "localizedTextIdTitle": 0,
       "questCategoryTypeEnum": 627178
     },
     {
       "ID": 73,
-      "description": "",
+      "description": "Zone - Blighthaven (Grimvault Tract 3)",
       "localizedTextIdTitle": 0,
       "questCategoryTypeEnum": 640600
     },
     {
       "ID": 74,
-      "description": "",
+      "description": "Zone - The Defile (Grimvault Tract 4)",
       "localizedTextIdTitle": 0,
       "questCategoryTypeEnum": 640604
     },
     {
       "ID": 75,
-      "description": "",
+      "description": "Weekly Quests",
       "localizedTextIdTitle": 0,
       "questCategoryTypeEnum": 676467
     },
     {
       "ID": 76,
-      "description": "",
+      "description": "Raid",
       "localizedTextIdTitle": 0,
       "questCategoryTypeEnum": 680839
     },
     {
       "ID": 77,
-      "description": "",
+      "description": "Zone - Arcterra",
       "localizedTextIdTitle": 0,
       "questCategoryTypeEnum": 685099
     },
     {
       "ID": 78,
-      "description": "",
+      "description": "Live Events - HA15 - Hoverboard Appreciation 2015",
       "localizedTextIdTitle": 0,
       "questCategoryTypeEnum": 703121
     },
     {
       "ID": 79,
-      "description": "",
+      "description": "PvP",
       "localizedTextIdTitle": 0,
       "questCategoryTypeEnum": 755556
     },
     {
       "ID": 80,
-      "description": "",
+      "description": "Live Events - HE17Q3 - Residence Renovation",
       "localizedTextIdTitle": 0,
       "questCategoryTypeEnum": 770895
     }

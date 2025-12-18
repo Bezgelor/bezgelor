@@ -9,7 +9,6 @@ defmodule BezgelorWorld.Handler.InventoryHandler do
 
   alias BezgelorDb.Inventory
   alias BezgelorProtocol.Packets.World.{
-    ClientMoveItem,
     ClientSplitStack,
     ServerInventoryList,
     ServerItemAdd,
@@ -65,62 +64,6 @@ defmodule BezgelorWorld.Handler.InventoryHandler do
         Logger.error("Failed to init inventory: #{inspect(reason)}")
         :ok
     end
-  end
-
-  @doc """
-  Handle move item request.
-  """
-  @spec handle_move_item(pid(), integer(), ClientMoveItem.t()) :: :ok
-  def handle_move_item(connection_pid, character_id, %ClientMoveItem{} = packet) do
-    src_item =
-      Inventory.get_item_at(
-        character_id,
-        packet.src_container,
-        packet.src_bag_index,
-        packet.src_slot
-      )
-
-    dst_item =
-      Inventory.get_item_at(
-        character_id,
-        packet.dst_container,
-        packet.dst_bag_index,
-        packet.dst_slot
-      )
-
-    result =
-      cond do
-        is_nil(src_item) ->
-          {:error, :no_source_item}
-
-        is_nil(dst_item) ->
-          # Simple move to empty slot
-          Inventory.move_item(
-            src_item,
-            packet.dst_container,
-            packet.dst_bag_index,
-            packet.dst_slot
-          )
-
-        src_item.item_id == dst_item.item_id and dst_item.quantity < dst_item.max_stack ->
-          # Try to stack
-          Inventory.stack_items(src_item, dst_item)
-
-        true ->
-          # Swap items
-          Inventory.swap_items(src_item, dst_item)
-      end
-
-    case result do
-      {:ok, _} ->
-        # Send updated inventory
-        send_inventory(connection_pid, character_id)
-
-      {:error, reason} ->
-        Logger.warning("Move item failed: #{inspect(reason)}")
-    end
-
-    :ok
   end
 
   @doc """

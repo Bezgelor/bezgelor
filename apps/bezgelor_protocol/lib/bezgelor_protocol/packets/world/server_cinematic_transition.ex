@@ -44,12 +44,12 @@ defmodule BezgelorProtocol.Packets.World.ServerCinematicTransition do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint32(packet.delay)
-      |> PacketWriter.write_uint32(packet.flags)
-      |> PacketWriter.write_uint32(packet.end_tran)
-      |> PacketWriter.write_uint16(packet.tran_duration_start)
-      |> PacketWriter.write_uint16(packet.tran_duration_mid)
-      |> PacketWriter.write_uint16(packet.tran_duration_end)
+      |> PacketWriter.write_u32(packet.delay)
+      |> PacketWriter.write_u32(packet.flags)
+      |> PacketWriter.write_u32(packet.end_tran)
+      |> PacketWriter.write_u16(packet.tran_duration_start)
+      |> PacketWriter.write_u16(packet.tran_duration_mid)
+      |> PacketWriter.write_u16(packet.tran_duration_end)
 
     {:ok, writer}
   end

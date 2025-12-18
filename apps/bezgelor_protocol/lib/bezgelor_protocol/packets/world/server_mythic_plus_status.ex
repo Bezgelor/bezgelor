@@ -37,19 +37,19 @@ defmodule BezgelorProtocol.Packets.World.ServerMythicPlusStatus do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_byte(status_to_int(packet.status))
-      |> PacketWriter.write_uint32(packet.elapsed_time)
-      |> PacketWriter.write_uint32(packet.time_limit)
-      |> PacketWriter.write_byte(packet.deaths)
-      |> PacketWriter.write_byte(packet.trash_percent)
-      |> PacketWriter.write_byte(packet.bosses_killed)
-      |> PacketWriter.write_byte(packet.bosses_required)
-      |> PacketWriter.write_byte(packet.keystone_level)
-      |> PacketWriter.write_byte(length(packet.affix_ids))
+      |> PacketWriter.write_u8(status_to_int(packet.status))
+      |> PacketWriter.write_u32(packet.elapsed_time)
+      |> PacketWriter.write_u32(packet.time_limit)
+      |> PacketWriter.write_u8(packet.deaths)
+      |> PacketWriter.write_u8(packet.trash_percent)
+      |> PacketWriter.write_u8(packet.bosses_killed)
+      |> PacketWriter.write_u8(packet.bosses_required)
+      |> PacketWriter.write_u8(packet.keystone_level)
+      |> PacketWriter.write_u8(length(packet.affix_ids))
 
     writer =
       Enum.reduce(packet.affix_ids, writer, fn id, w ->
-        PacketWriter.write_byte(w, id)
+        PacketWriter.write_u8(w, id)
       end)
 
     {:ok, writer}

@@ -16,7 +16,7 @@ defmodule BezgelorProtocol.Packets.World.ServerPathLevelUp do
 
   @impl true
   def write(%__MODULE__{} = packet, writer) do
-    writer = PacketWriter.write_byte(writer, packet.new_level)
+    writer = PacketWriter.write_u8(writer, packet.new_level)
     {:ok, writer}
   end
 end

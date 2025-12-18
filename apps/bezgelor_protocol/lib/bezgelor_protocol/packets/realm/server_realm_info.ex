@@ -69,12 +69,12 @@ defmodule BezgelorProtocol.Packets.Realm.ServerRealmInfo do
     # Address is written in little-endian (client expects it this way)
     writer =
       writer
-      |> PacketWriter.write_uint32(packet.address)
-      |> PacketWriter.write_uint16(packet.port)
-      |> PacketWriter.write_bytes(packet.session_key)
-      |> PacketWriter.write_uint32(packet.account_id)
+      |> PacketWriter.write_u32(packet.address)
+      |> PacketWriter.write_u16(packet.port)
+      |> PacketWriter.write_bytes_bits(packet.session_key)
+      |> PacketWriter.write_u32(packet.account_id)
       |> PacketWriter.write_wide_string(packet.realm_name)
-      |> PacketWriter.write_uint32(packet.flags)
+      |> PacketWriter.write_u32(packet.flags)
       # Type and NoteTextId are bit-packed (2 bits + 21 bits)
       |> PacketWriter.write_bits(type_int, 2)
       |> PacketWriter.write_bits(packet.note_text_id, 21)

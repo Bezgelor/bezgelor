@@ -28,7 +28,7 @@ defmodule BezgelorProtocol.Packets.Realm.ServerAuthAccepted do
   @impl true
   @spec write(t(), PacketWriter.t()) :: {:ok, PacketWriter.t()}
   def write(%__MODULE__{} = packet, writer) do
-    writer = PacketWriter.write_uint32(writer, packet.disconnected_for_lag)
+    writer = PacketWriter.write_u32(writer, packet.disconnected_for_lag)
     {:ok, writer}
   end
 end

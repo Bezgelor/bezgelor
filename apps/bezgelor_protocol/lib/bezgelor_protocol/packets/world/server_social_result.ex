@@ -31,8 +31,8 @@ defmodule BezgelorProtocol.Packets.World.ServerSocialResult do
 
     writer =
       writer
-      |> PacketWriter.write_uint32(result_code)
-      |> PacketWriter.write_uint32(op_code)
+      |> PacketWriter.write_u32(result_code)
+      |> PacketWriter.write_u32(op_code)
       |> PacketWriter.write_wide_string(packet.target_name || "")
 
     {:ok, writer}

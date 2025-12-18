@@ -68,8 +68,8 @@ defmodule BezgelorProtocol.Packets.World.ServerChatResult do
 
     writer =
       writer
-      |> PacketWriter.write_uint32(result_code)
-      |> PacketWriter.write_uint32(channel_int)
+      |> PacketWriter.write_u32(result_code)
+      |> PacketWriter.write_u32(channel_int)
 
     {:ok, writer}
   end

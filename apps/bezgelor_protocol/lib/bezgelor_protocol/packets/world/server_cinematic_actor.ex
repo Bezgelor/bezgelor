@@ -65,23 +65,23 @@ defmodule BezgelorProtocol.Packets.World.ServerCinematicActor do
 
     writer =
       writer
-      |> PacketWriter.write_uint32(packet.delay)
-      |> PacketWriter.write_uint16(packet.flags)
-      |> PacketWriter.write_uint16(packet.unknown0)
-      |> PacketWriter.write_uint32(packet.spawn_handle)
-      |> PacketWriter.write_uint32(packet.creature_type)
-      |> PacketWriter.write_uint32(packet.movement_mode)
+      |> PacketWriter.write_u32(packet.delay)
+      |> PacketWriter.write_u16(packet.flags)
+      |> PacketWriter.write_u16(packet.unknown0)
+      |> PacketWriter.write_u32(packet.spawn_handle)
+      |> PacketWriter.write_u32(packet.creature_type)
+      |> PacketWriter.write_u32(packet.movement_mode)
       # Position
-      |> PacketWriter.write_float32(pos.x)
-      |> PacketWriter.write_float32(pos.y)
-      |> PacketWriter.write_float32(pos.z)
+      |> PacketWriter.write_f32(pos.x)
+      |> PacketWriter.write_f32(pos.y)
+      |> PacketWriter.write_f32(pos.z)
       # Rotation quaternion
-      |> PacketWriter.write_float32(pos.rx)
-      |> PacketWriter.write_float32(pos.ry)
-      |> PacketWriter.write_float32(pos.rz)
-      |> PacketWriter.write_float32(pos.rw)
-      |> PacketWriter.write_uint64(packet.active_prop_id)
-      |> PacketWriter.write_uint32(packet.socket_id)
+      |> PacketWriter.write_f32(pos.rx)
+      |> PacketWriter.write_f32(pos.ry)
+      |> PacketWriter.write_f32(pos.rz)
+      |> PacketWriter.write_f32(pos.rw)
+      |> PacketWriter.write_u64(packet.active_prop_id)
+      |> PacketWriter.write_u32(packet.socket_id)
 
     {:ok, writer}
   end

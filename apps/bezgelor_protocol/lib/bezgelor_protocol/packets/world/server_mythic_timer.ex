@@ -38,16 +38,16 @@ defmodule BezgelorProtocol.Packets.World.ServerMythicTimer do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint32(packet.elapsed_ms)
-      |> PacketWriter.write_uint32(packet.time_limit_ms)
-      |> PacketWriter.write_uint32(packet.plus_two_ms)
-      |> PacketWriter.write_uint32(packet.plus_three_ms)
-      |> PacketWriter.write_byte(packet.trash_percent)
-      |> PacketWriter.write_byte(packet.trash_required)
-      |> PacketWriter.write_byte(packet.bosses_killed)
-      |> PacketWriter.write_byte(packet.bosses_total)
-      |> PacketWriter.write_uint16(packet.deaths)
-      |> PacketWriter.write_uint32(packet.death_penalty_ms)
+      |> PacketWriter.write_u32(packet.elapsed_ms)
+      |> PacketWriter.write_u32(packet.time_limit_ms)
+      |> PacketWriter.write_u32(packet.plus_two_ms)
+      |> PacketWriter.write_u32(packet.plus_three_ms)
+      |> PacketWriter.write_u8(packet.trash_percent)
+      |> PacketWriter.write_u8(packet.trash_required)
+      |> PacketWriter.write_u8(packet.bosses_killed)
+      |> PacketWriter.write_u8(packet.bosses_total)
+      |> PacketWriter.write_u16(packet.deaths)
+      |> PacketWriter.write_u32(packet.death_penalty_ms)
 
     {:ok, writer}
   end

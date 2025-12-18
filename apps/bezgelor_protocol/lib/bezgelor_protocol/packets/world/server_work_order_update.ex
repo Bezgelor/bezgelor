@@ -26,9 +26,9 @@ defmodule BezgelorProtocol.Packets.World.ServerWorkOrderUpdate do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint32(packet.work_order_id)
-      |> PacketWriter.write_uint16(packet.quantity_completed)
-      |> PacketWriter.write_byte(status_to_int(packet.status))
+      |> PacketWriter.write_u32(packet.work_order_id)
+      |> PacketWriter.write_u16(packet.quantity_completed)
+      |> PacketWriter.write_u8(status_to_int(packet.status))
 
     {:ok, writer}
   end

@@ -225,18 +225,30 @@ class TblExtractor:
 
         elif data_type == DataType.STRING:
             # Two uint32 offsets - use the larger one
+            # The offset is relative to the start of records, not the string table!
+            # We need to subtract total_record_bytes to get the string table offset
             offset1, offset2 = struct.unpack_from('<II', self._data, offset)
-            string_offset = max(offset1, offset2)
+            raw_offset = max(offset1, offset2)
 
-            if string_offset > 0:
+            if raw_offset > 0:
+                # Subtract total record bytes to get string table offset
+                total_record_bytes = self.header.record_size * self.header.record_count
+                string_offset = raw_offset - total_record_bytes
                 string_start = self._string_table_offset + string_offset
-                # Read null-terminated string
-                string_end = self._data.find(b'\x00', string_start)
-                if string_end == -1:
-                    string_end = len(self._data)
-                try:
-                    value = self._data[string_start:string_end].decode('utf-8')
-                except UnicodeDecodeError:
+
+                if string_start < len(self._data):
+                    # Strings are UTF-16LE (wide strings) - find null terminator (\x00\x00)
+                    string_end = string_start
+                    while string_end + 1 < len(self._data):
+                        # Check for two consecutive null bytes (UTF-16 null terminator)
+                        if self._data[string_end] == 0 and self._data[string_end + 1] == 0:
+                            break
+                        string_end += 2  # UTF-16 uses 2 bytes per character
+                    try:
+                        value = self._data[string_start:string_end].decode('utf-16-le')
+                    except UnicodeDecodeError:
+                        value = ""
+                else:
                     value = ""
             else:
                 value = ""

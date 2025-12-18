@@ -23,19 +23,19 @@ defmodule BezgelorProtocol.Packets.World.ServerGroupFinderQueued do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_byte(instance_type_to_int(packet.instance_type))
-      |> PacketWriter.write_byte(difficulty_to_int(packet.difficulty))
-      |> PacketWriter.write_byte(length(packet.roles))
+      |> PacketWriter.write_u8(instance_type_to_int(packet.instance_type))
+      |> PacketWriter.write_u8(difficulty_to_int(packet.difficulty))
+      |> PacketWriter.write_u8(length(packet.roles))
 
     writer =
       Enum.reduce(packet.roles, writer, fn role, w ->
-        PacketWriter.write_byte(w, role_to_int(role))
+        PacketWriter.write_u8(w, role_to_int(role))
       end)
 
     writer =
       writer
-      |> PacketWriter.write_uint16(packet.queue_position)
-      |> PacketWriter.write_uint32(packet.estimated_wait)
+      |> PacketWriter.write_u16(packet.queue_position)
+      |> PacketWriter.write_u32(packet.estimated_wait)
 
     {:ok, writer}
   end

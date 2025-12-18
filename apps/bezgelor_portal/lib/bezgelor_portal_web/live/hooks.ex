@@ -95,6 +95,9 @@ defmodule BezgelorPortalWeb.Live.Hooks do
         {:halt, socket}
 
       true ->
+        # Load permissions for sidebar and page-level access checks
+        permissions = Authorization.get_account_permissions(account) |> Enum.map(& &1.key)
+        socket = assign(socket, :permissions, permissions)
         {:cont, socket}
     end
   end

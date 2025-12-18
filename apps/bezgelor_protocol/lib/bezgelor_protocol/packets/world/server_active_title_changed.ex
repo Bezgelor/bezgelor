@@ -19,8 +19,8 @@ defmodule BezgelorProtocol.Packets.World.ServerActiveTitleChanged do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint32(packet.title_id || 0)
-      |> PacketWriter.write_byte(if(packet.success, do: 1, else: 0))
+      |> PacketWriter.write_u32(packet.title_id || 0)
+      |> PacketWriter.write_u8(if(packet.success, do: 1, else: 0))
 
     {:ok, writer}
   end

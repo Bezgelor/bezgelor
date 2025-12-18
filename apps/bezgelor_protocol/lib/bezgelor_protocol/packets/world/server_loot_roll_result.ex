@@ -33,21 +33,21 @@ defmodule BezgelorProtocol.Packets.World.ServerLootRollResult do
 
     writer =
       writer
-      |> PacketWriter.write_uint64(packet.loot_id)
-      |> PacketWriter.write_uint32(packet.item_id)
-      |> PacketWriter.write_uint64(packet.winner_id || 0)
-      |> PacketWriter.write_byte(byte_size(name_bytes))
+      |> PacketWriter.write_u64(packet.loot_id)
+      |> PacketWriter.write_u32(packet.item_id)
+      |> PacketWriter.write_u64(packet.winner_id || 0)
+      |> PacketWriter.write_u8(byte_size(name_bytes))
       |> PacketWriter.write_wide_string(name_bytes)
-      |> PacketWriter.write_byte(roll_type_to_int(packet.roll_type))
-      |> PacketWriter.write_byte(packet.roll_value || 0)
-      |> PacketWriter.write_byte(length(packet.rolls))
+      |> PacketWriter.write_u8(roll_type_to_int(packet.roll_type))
+      |> PacketWriter.write_u8(packet.roll_value || 0)
+      |> PacketWriter.write_u8(length(packet.rolls))
 
     writer =
       Enum.reduce(packet.rolls, writer, fn roll, w ->
         w
-        |> PacketWriter.write_uint64(roll.character_id)
-        |> PacketWriter.write_byte(roll_type_to_int(roll.roll_type))
-        |> PacketWriter.write_byte(roll.roll_value)
+        |> PacketWriter.write_u64(roll.character_id)
+        |> PacketWriter.write_u8(roll_type_to_int(roll.roll_type))
+        |> PacketWriter.write_u8(roll.roll_value)
       end)
 
     {:ok, writer}

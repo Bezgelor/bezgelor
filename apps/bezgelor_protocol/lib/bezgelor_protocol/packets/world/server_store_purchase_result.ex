@@ -42,11 +42,11 @@ defmodule BezgelorProtocol.Packets.World.ServerStorePurchaseResult do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_byte(result_to_byte(packet.result))
-      |> PacketWriter.write_uint32(packet.item_id)
-      |> PacketWriter.write_uint32(packet.amount_paid)
-      |> PacketWriter.write_uint32(packet.discount)
-      |> PacketWriter.write_byte(currency_to_byte(packet.currency_type))
+      |> PacketWriter.write_u8(result_to_byte(packet.result))
+      |> PacketWriter.write_u32(packet.item_id)
+      |> PacketWriter.write_u32(packet.amount_paid)
+      |> PacketWriter.write_u32(packet.discount)
+      |> PacketWriter.write_u8(currency_to_byte(packet.currency_type))
 
     {:ok, writer}
   end

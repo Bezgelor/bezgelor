@@ -31,11 +31,11 @@ defmodule BezgelorProtocol.Packets.World.ServerGuildMemberUpdate do
   def write(%__MODULE__{update_type: :join} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_byte(@update_join)
-      |> PacketWriter.write_uint32(packet.character_id)
-      |> PacketWriter.write_byte(byte_size(packet.name))
-      |> PacketWriter.write_bytes(packet.name)
-      |> PacketWriter.write_byte(packet.rank_index)
+      |> PacketWriter.write_u8(@update_join)
+      |> PacketWriter.write_u32(packet.character_id)
+      |> PacketWriter.write_u8(byte_size(packet.name))
+      |> PacketWriter.write_bytes_bits(packet.name)
+      |> PacketWriter.write_u8(packet.rank_index)
 
     {:ok, writer}
   end
@@ -43,8 +43,8 @@ defmodule BezgelorProtocol.Packets.World.ServerGuildMemberUpdate do
   def write(%__MODULE__{update_type: :leave} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_byte(@update_leave)
-      |> PacketWriter.write_uint32(packet.character_id)
+      |> PacketWriter.write_u8(@update_leave)
+      |> PacketWriter.write_u32(packet.character_id)
 
     {:ok, writer}
   end
@@ -52,9 +52,9 @@ defmodule BezgelorProtocol.Packets.World.ServerGuildMemberUpdate do
   def write(%__MODULE__{update_type: :rank_change} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_byte(@update_rank_change)
-      |> PacketWriter.write_uint32(packet.character_id)
-      |> PacketWriter.write_byte(packet.rank_index)
+      |> PacketWriter.write_u8(@update_rank_change)
+      |> PacketWriter.write_u32(packet.character_id)
+      |> PacketWriter.write_u8(packet.rank_index)
 
     {:ok, writer}
   end
@@ -62,8 +62,8 @@ defmodule BezgelorProtocol.Packets.World.ServerGuildMemberUpdate do
   def write(%__MODULE__{update_type: :online} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_byte(@update_online)
-      |> PacketWriter.write_uint32(packet.character_id)
+      |> PacketWriter.write_u8(@update_online)
+      |> PacketWriter.write_u32(packet.character_id)
 
     {:ok, writer}
   end
@@ -71,8 +71,8 @@ defmodule BezgelorProtocol.Packets.World.ServerGuildMemberUpdate do
   def write(%__MODULE__{update_type: :offline} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_byte(@update_offline)
-      |> PacketWriter.write_uint32(packet.character_id)
+      |> PacketWriter.write_u8(@update_offline)
+      |> PacketWriter.write_u32(packet.character_id)
 
     {:ok, writer}
   end

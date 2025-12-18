@@ -14,6 +14,7 @@ defmodule BezgelorPortalWeb.Admin.CharacterDetailLive do
   """
   use BezgelorPortalWeb, :live_view
 
+  alias BezgelorData
   alias BezgelorDb.{Characters, Inventory, Authorization}
   alias BezgelorPortal.GameData
 
@@ -28,7 +29,9 @@ defmodule BezgelorPortalWeb.Admin.CharacterDetailLive do
         {:ok,
          socket
          |> assign(
-           page_title: "Character: #{character.name}",
+           page_title: character.name,
+           parent_path: ~p"/admin/characters",
+           parent_label: "Characters",
            character: character,
            permissions: permission_keys,
            active_tab: :overview,
@@ -64,27 +67,21 @@ defmodule BezgelorPortalWeb.Admin.CharacterDetailLive do
       <!-- Header -->
       <div class="flex items-center justify-between">
         <div>
-          <.link navigate={~p"/admin/characters"} class="text-sm text-base-content/70 hover:text-primary flex items-center gap-1">
-            <.icon name="hero-arrow-left" class="size-4" />
-            Back to Characters
-          </.link>
-          <h1 class="text-2xl font-bold mt-2 flex items-center gap-3">
+          <h1 class="text-2xl font-bold flex items-center gap-3">
             {@character.name}
             <span class="badge badge-lg" style={"background-color: #{GameData.class_color(@character.class)}; color: white"}>
               {GameData.class_name(@character.class)}
             </span>
+            <.faction_badge race_id={@character.race} />
           </h1>
           <p class="text-base-content/70">
             Level {@character.level} {GameData.race_name(@character.race)} •
             Owner: <.link navigate={~p"/admin/users/#{@character.account_id}"} class="link link-primary">{@character.account.email}</.link>
           </p>
         </div>
-        <div class="flex gap-2">
-          <%= if @character.deleted_at do %>
-            <span class="badge badge-error badge-lg">Deleted</span>
-          <% end %>
-          <.faction_badge faction_id={@character.faction_id} />
-        </div>
+        <%= if @character.deleted_at do %>
+          <span class="badge badge-error badge-lg">Deleted</span>
+        <% end %>
       </div>
 
       <!-- Actions Card -->
@@ -190,7 +187,11 @@ defmodule BezgelorPortalWeb.Admin.CharacterDetailLive do
             <% :overview -> %>
               <.overview_tab character={@character} />
             <% :inventory -> %>
-              <.inventory_tab equipped_items={@equipped_items} inventory_items={@inventory_items} />
+              <.inventory_tab
+                equipped_items={@equipped_items}
+                inventory_items={@inventory_items}
+                can_modify_items={"characters.modify_items" in @permissions}
+              />
             <% :currencies -> %>
               <.currencies_tab currencies={@currencies} />
           <% end %>
@@ -310,6 +311,7 @@ defmodule BezgelorPortalWeb.Admin.CharacterDetailLive do
 
   attr :equipped_items, :list, required: true
   attr :inventory_items, :list, required: true
+  attr :can_modify_items, :boolean, default: false
 
   defp inventory_tab(assigns) do
     ~H"""
@@ -323,16 +325,28 @@ defmodule BezgelorPortalWeb.Admin.CharacterDetailLive do
             <table class="table table-sm">
               <thead>
                 <tr>
-                  <th>Slot</th>
-                  <th>Item ID</th>
+                  <th>Slot (ID)</th>
+                  <th>Name (ID)</th>
                   <th>Stack</th>
+                  <th :if={@can_modify_items}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 <tr :for={item <- @equipped_items}>
-                  <td>{item.slot}</td>
-                  <td class="font-mono">{item.item_id}</td>
+                  <td>{slot_name(item.slot)} <span class="text-base-content/50">({item.slot})</span></td>
+                  <td>{item_name(item.item_id)} <span class="text-base-content/50">({item.item_id})</span></td>
                   <td>{item.quantity}</td>
+                  <td :if={@can_modify_items}>
+                    <button
+                      type="button"
+                      class="btn btn-ghost btn-xs text-error"
+                      phx-click="remove_item"
+                      phx-value-id={item.id}
+                      data-confirm="Remove this item from inventory?"
+                    >
+                      <.icon name="hero-trash" class="size-4" />
+                    </button>
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -351,16 +365,28 @@ defmodule BezgelorPortalWeb.Admin.CharacterDetailLive do
                 <tr>
                   <th>Bag</th>
                   <th>Slot</th>
-                  <th>Item ID</th>
+                  <th>Name (ID)</th>
                   <th>Stack</th>
+                  <th :if={@can_modify_items}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 <tr :for={item <- @inventory_items}>
                   <td>{item.container_type}</td>
                   <td>{item.bag_index}</td>
-                  <td class="font-mono">{item.item_id}</td>
+                  <td>{item_name(item.item_id)} <span class="text-base-content/50">({item.item_id})</span></td>
                   <td>{item.quantity}</td>
+                  <td :if={@can_modify_items}>
+                    <button
+                      type="button"
+                      class="btn btn-ghost btn-xs text-error"
+                      phx-click="remove_item"
+                      phx-value-id={item.id}
+                      data-confirm="Remove this item from inventory?"
+                    >
+                      <.icon name="hero-trash" class="size-4" />
+                    </button>
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -600,10 +626,13 @@ defmodule BezgelorPortalWeb.Admin.CharacterDetailLive do
     """
   end
 
-  attr :faction_id, :integer, required: true
+  attr :race_id, :integer, required: true
 
+  # Faction badge - derives faction from race for accuracy
   defp faction_badge(assigns) do
-    faction = GameData.get_faction(assigns.faction_id)
+    # Use race to determine correct faction (CharacterCreation data has inverted mappings)
+    faction_id = GameData.faction_id_for_race(assigns.race_id)
+    faction = GameData.get_faction(faction_id)
     assigns = assign(assigns, :faction, faction)
 
     ~H"""
@@ -708,7 +737,7 @@ defmodule BezgelorPortalWeb.Admin.CharacterDetailLive do
         {:noreply,
          socket
          |> put_flash(:info, "Character renamed to #{new_name}")
-         |> assign(character: updated, show_rename_modal: false, page_title: "Character: #{new_name}")}
+         |> assign(character: updated, show_rename_modal: false, page_title: new_name)}
 
       {:error, :name_taken} ->
         {:noreply, put_flash(socket, :error, "Name is already taken")}
@@ -782,6 +811,32 @@ defmodule BezgelorPortalWeb.Admin.CharacterDetailLive do
       end
     else
       _ -> {:noreply, put_flash(socket, :error, "Invalid input")}
+    end
+  end
+
+  @impl true
+  def handle_event("remove_item", %{"id" => id_str}, socket) do
+    admin = socket.assigns.current_account
+    character = socket.assigns.character
+    {item_id, ""} = Integer.parse(id_str)
+
+    case Inventory.admin_remove_item(character.id, item_id) do
+      {:ok, removed} ->
+        Authorization.log_action(admin, "character.remove_item", "character", character.id, %{
+          item_id: removed.item_id,
+          inventory_item_id: item_id
+        })
+
+        {:noreply,
+         socket
+         |> put_flash(:info, "Item removed")
+         |> load_tab_data(:inventory)}
+
+      {:error, :not_found} ->
+        {:noreply, put_flash(socket, :error, "Item not found")}
+
+      {:error, _} ->
+        {:noreply, put_flash(socket, :error, "Failed to remove item")}
     end
   end
 
@@ -917,4 +972,24 @@ defmodule BezgelorPortalWeb.Admin.CharacterDetailLive do
       _ -> map
     end
   end
+
+  defp item_name(item_id) do
+    case BezgelorData.get_item_with_name(item_id) do
+      {:ok, %{name: name}} when name != "" -> name
+      _ -> "Unknown Item"
+    end
+  end
+
+  defp slot_name(0), do: "Head"
+  defp slot_name(1), do: "Shoulders"
+  defp slot_name(2), do: "Chest"
+  defp slot_name(3), do: "Hands"
+  defp slot_name(4), do: "Legs"
+  defp slot_name(5), do: "Feet"
+  defp slot_name(6), do: "Main Hand"
+  defp slot_name(7), do: "Off Hand"
+  defp slot_name(8), do: "Support"
+  defp slot_name(9), do: "Gadget"
+  defp slot_name(10), do: "Implant"
+  defp slot_name(_), do: "Unknown"
 end

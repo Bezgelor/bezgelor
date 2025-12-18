@@ -3,18 +3,19 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
   LiveView for displaying detailed character information.
 
   Tabs:
-  - Overview: Basic info, location, play time statistics
-  - Inventory: Equipped items, bags, bank contents
-  - Currencies: Gold and other in-game currencies
+  - Overview: Basic info, location, play time statistics, 3D character viewer
+  - Inventory: Equipped items, bags, currencies, and bank storage
   - Guild: Guild membership and rank
   - Tradeskills: Profession levels and progress
   """
   use BezgelorPortalWeb, :live_view
 
   alias BezgelorDb.{Characters, Guilds, Inventory, Tradeskills}
+  alias BezgelorData.Store
   alias BezgelorPortal.GameData
+  alias BezgelorPortalWeb.Components.CharacterViewer
 
-  @tabs ~w(overview inventory currencies guild tradeskills)a
+  @tabs ~w(overview inventory guild tradeskills)a
 
   @impl true
   def mount(%{"id" => id}, _session, socket) do
@@ -40,6 +41,7 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
            guild_membership: nil,
            inventory_items: [],
            equipped_items: [],
+           bank_items: [],
            tradeskills: [],
            show_delete_modal: false
          )
@@ -64,9 +66,8 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
       <div class="flex items-center gap-4 mb-6">
         <.character_avatar character={@character} size="lg" />
         <div class="flex-1">
-          <h1 class="text-2xl font-bold flex items-center gap-2">
+          <h1 class="text-2xl font-bold">
             {@character.name}
-            <.faction_badge faction_id={@character.faction_id} />
           </h1>
           <p class="text-base-content/70">
             Level <span class="font-bold">{@character.level}</span>
@@ -74,6 +75,7 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
               {GameData.class_name(@character.class)}
             </span>
             &bull; {GameData.race_name(@character.race)}
+            &bull; {GameData.faction_name(GameData.faction_id_for_race(@character.race))}
           </p>
         </div>
 
@@ -113,14 +115,12 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
   # Tab labels
   defp tab_label(:overview), do: "Overview"
   defp tab_label(:inventory), do: "Inventory"
-  defp tab_label(:currencies), do: "Currencies"
   defp tab_label(:guild), do: "Guild"
   defp tab_label(:tradeskills), do: "Tradeskills"
 
   # Render tab content based on active tab
   defp render_tab_content(%{active_tab: :overview} = assigns), do: render_overview(assigns)
   defp render_tab_content(%{active_tab: :inventory} = assigns), do: render_inventory(assigns)
-  defp render_tab_content(%{active_tab: :currencies} = assigns), do: render_currencies(assigns)
   defp render_tab_content(%{active_tab: :guild} = assigns), do: render_guild(assigns)
   defp render_tab_content(%{active_tab: :tradeskills} = assigns), do: render_tradeskills(assigns)
 
@@ -128,69 +128,82 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
   defp render_overview(assigns) do
 
     ~H"""
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <!-- Basic Info Card -->
-      <div class="card bg-base-100 shadow-xl">
-        <div class="card-body">
-          <h2 class="card-title">
-            <.icon name="hero-user" class="size-5" />
-            Basic Info
-          </h2>
-          <div class="grid grid-cols-2 gap-4 mt-4">
-            <.info_row label="Name" value={@character.name} />
-            <.info_row label="Level" value={@character.level} />
-            <.info_row label="Class" value={GameData.class_name(@character.class)} />
-            <.info_row label="Race" value={GameData.race_name(@character.race)} />
-            <.info_row label="Faction" value={GameData.faction_name(@character.faction_id)} />
-            <.info_row label="Path" value={GameData.path_name(@character.active_path)} />
-            <.info_row label="Title" value={title_display(@character.title)} />
-            <.info_row label="Active Spec" value={"Spec #{@character.active_spec + 1}"} />
-          </div>
-        </div>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- 3D Character Viewer & Equipment -->
+      <div class="lg:col-span-1 space-y-6">
+        <CharacterViewer.character_viewer
+          character={@character}
+          equipment={@equipped_items}
+          class="h-[300px]"
+        />
+        <.equipment_grid equipped_items={@equipped_items} />
       </div>
 
-      <!-- Play Time Card -->
-      <div class="card bg-base-100 shadow-xl">
-        <div class="card-body">
-          <h2 class="card-title">
-            <.icon name="hero-clock" class="size-5" />
-            Play Time
-          </h2>
-          <div class="grid grid-cols-2 gap-4 mt-4">
-            <.info_row label="Total Time" value={GameData.format_play_time(@character.time_played_total)} />
-            <.info_row label="This Level" value={GameData.format_play_time(@character.time_played_level)} />
-            <.info_row label="Last Online" value={GameData.format_relative_time(@character.last_online)} />
-            <.info_row label="Created" value={format_date(@character.inserted_at)} />
+      <!-- Info Cards -->
+      <div class="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Basic Info Card -->
+        <div class="card bg-base-100 shadow-xl">
+          <div class="card-body">
+            <h2 class="card-title">
+              <.icon name="hero-user" class="size-5" />
+              Basic Info
+            </h2>
+            <div class="grid grid-cols-2 gap-4 mt-4">
+              <.info_row label="Name" value={@character.name} />
+              <.info_row label="Level" value={@character.level} />
+              <.info_row label="Class" value={GameData.class_name(@character.class)} />
+              <.info_row label="Race" value={GameData.race_name(@character.race)} />
+              <.info_row label="Faction" value={GameData.faction_name(GameData.faction_id_for_race(@character.race))} />
+              <.info_row label="Path" value={GameData.path_name(@character.active_path)} />
+              <.info_row label="Title" value={title_display(@character.title)} />
+              <.info_row label="Active Spec" value={"Spec #{@character.active_spec + 1}"} />
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- Location Card -->
-      <div class="card bg-base-100 shadow-xl">
-        <div class="card-body">
-          <h2 class="card-title">
-            <.icon name="hero-map-pin" class="size-5" />
-            Location
-          </h2>
-          <div class="grid grid-cols-2 gap-4 mt-4">
-            <.info_row label="World" value={GameData.world_name(@character.world_id)} />
-            <.info_row label="Position" value={format_position(@character)} />
+        <!-- Play Time Card -->
+        <div class="card bg-base-100 shadow-xl">
+          <div class="card-body">
+            <h2 class="card-title">
+              <.icon name="hero-clock" class="size-5" />
+              Play Time
+            </h2>
+            <div class="grid grid-cols-2 gap-4 mt-4">
+              <.info_row label="Total Time" value={GameData.format_play_time(@character.time_played_total)} />
+              <.info_row label="This Level" value={GameData.format_play_time(@character.time_played_level)} />
+              <.info_row label="Last Online" value={GameData.format_relative_time(@character.last_online)} />
+              <.info_row label="Created" value={format_date(@character.inserted_at)} />
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- Experience Card -->
-      <div class="card bg-base-100 shadow-xl">
-        <div class="card-body">
-          <h2 class="card-title">
-            <.icon name="hero-chart-bar" class="size-5" />
-            Experience
-          </h2>
-          <div class="grid grid-cols-2 gap-4 mt-4">
-            <.info_row label="Total XP" value={format_number(@character.total_xp)} />
-            <.info_row label="Rest Bonus" value={format_number(@character.rest_bonus_xp)} />
+        <!-- Location Card -->
+        <div class="card bg-base-100 shadow-xl">
+          <div class="card-body">
+            <h2 class="card-title">
+              <.icon name="hero-map-pin" class="size-5" />
+              Location
+            </h2>
+            <div class="grid grid-cols-2 gap-4 mt-4">
+              <.info_row label="World" value={GameData.world_name(@character.world_id)} />
+              <.info_row label="Position" value={format_position(@character)} />
+            </div>
           </div>
-          <.xp_progress character={@character} />
+        </div>
+
+        <!-- Experience Card -->
+        <div class="card bg-base-100 shadow-xl">
+          <div class="card-body">
+            <h2 class="card-title">
+              <.icon name="hero-chart-bar" class="size-5" />
+              Experience
+            </h2>
+            <div class="grid grid-cols-2 gap-4 mt-4">
+              <.info_row label="Total XP" value={format_number(@character.total_xp)} />
+              <.info_row label="Rest Bonus" value={format_number(@character.rest_bonus_xp)} />
+            </div>
+            <.xp_progress character={@character} />
+          </div>
         </div>
       </div>
     </div>
@@ -199,47 +212,45 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
 
   # Inventory Tab
   defp render_inventory(assigns) do
-
     ~H"""
-    <div class="space-y-6">
-      <!-- Equipped Items -->
+    <div class="space-y-4">
+      <!-- Currencies -->
       <div class="card bg-base-100 shadow-xl">
-        <div class="card-body">
-          <h2 class="card-title">
-            <.icon name="hero-shield-check" class="size-5" />
-            Equipped Items
-          </h2>
-          <%= if Enum.empty?(@equipped_items) do %>
-            <div class="text-center py-8 text-base-content/50">
-              <.icon name="hero-inbox" class="size-12 mx-auto mb-2" />
-              <p>No items equipped</p>
-            </div>
-          <% else %>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4">
-              <.item_slot :for={item <- @equipped_items} item={item} />
-            </div>
-          <% end %>
+        <div class="card-body py-3 px-4">
+          <div class="flex items-center justify-between">
+            <h2 class="card-title text-base">
+              <.icon name="hero-currency-dollar" class="size-4" />
+              Currencies
+            </h2>
+            <span class="text-xs text-base-content/50">Coming soon</span>
+          </div>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2">
+            <.currency_card name="Gold" value={0} icon="hero-banknotes" color="warning" />
+            <.currency_card name="Elder Gems" value={0} icon="hero-sparkles" color="secondary" />
+            <.currency_card name="Renown" value={0} icon="hero-star" color="primary" />
+            <.currency_card name="Prestige" value={0} icon="hero-trophy" color="accent" />
+          </div>
         </div>
       </div>
 
       <!-- Bag Contents -->
       <div class="card bg-base-100 shadow-xl">
-        <div class="card-body">
+        <div class="card-body py-4">
           <h2 class="card-title">
             <.icon name="hero-archive-box" class="size-5" />
-            Inventory
+            Bags
           </h2>
           <%= if Enum.empty?(@inventory_items) do %>
-            <div class="text-center py-8 text-base-content/50">
-              <.icon name="hero-inbox" class="size-12 mx-auto mb-2" />
-              <p>Inventory is empty</p>
+            <div class="text-center py-6 text-base-content/50">
+              <.icon name="hero-inbox" class="size-10 mx-auto mb-2" />
+              <p>Bags are empty</p>
             </div>
           <% else %>
-            <div class="overflow-x-auto mt-4">
+            <div class="overflow-x-auto mt-3">
               <table class="table table-sm">
                 <thead>
                   <tr>
-                    <th>Item ID</th>
+                    <th>Item</th>
                     <th>Location</th>
                     <th>Qty</th>
                     <th>Durability</th>
@@ -248,7 +259,10 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
                 </thead>
                 <tbody>
                   <tr :for={item <- @inventory_items}>
-                    <td class="font-mono">{item.item_id}</td>
+                    <td>
+                      <div class="font-medium">{item.name}</div>
+                      <div class="text-xs text-base-content/50 font-mono">#{item.item_id}</div>
+                    </td>
                     <td>Bag {item.bag_index}, Slot {item.slot}</td>
                     <td>{item.quantity}/{item.max_stack}</td>
                     <td>
@@ -264,34 +278,61 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
               </table>
             </div>
             <p class="text-sm text-base-content/50 mt-2">
-              {length(@inventory_items)} items in inventory
+              {length(@inventory_items)} items in bags
             </p>
           <% end %>
         </div>
       </div>
-    </div>
-    """
-  end
 
-  # Currencies Tab
-  defp render_currencies(assigns) do
-
-    ~H"""
-    <div class="card bg-base-100 shadow-xl">
-      <div class="card-body">
-        <h2 class="card-title">
-          <.icon name="hero-currency-dollar" class="size-5" />
-          Currencies
-        </h2>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-          <.currency_card name="Gold" value={0} icon="hero-banknotes" color="warning" />
-          <.currency_card name="Elder Gems" value={0} icon="hero-sparkles" color="secondary" />
-          <.currency_card name="Renown" value={0} icon="hero-star" color="primary" />
-          <.currency_card name="Prestige" value={0} icon="hero-trophy" color="accent" />
+      <!-- Bank Storage -->
+      <div class="card bg-base-100 shadow-xl">
+        <div class="card-body py-4">
+          <h2 class="card-title">
+            <.icon name="hero-building-library" class="size-5" />
+            Bank Storage
+          </h2>
+          <%= if Enum.empty?(@bank_items) do %>
+            <div class="text-center py-6 text-base-content/50">
+              <.icon name="hero-building-library" class="size-10 mx-auto mb-2" />
+              <p>Bank is empty</p>
+            </div>
+          <% else %>
+            <div class="overflow-x-auto mt-3">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>Location</th>
+                    <th>Qty</th>
+                    <th>Durability</th>
+                    <th>Bound</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr :for={item <- @bank_items}>
+                    <td>
+                      <div class="font-medium">{item.name}</div>
+                      <div class="text-xs text-base-content/50 font-mono">#{item.item_id}</div>
+                    </td>
+                    <td>Bank Bag {item.bag_index}, Slot {item.slot}</td>
+                    <td>{item.quantity}/{item.max_stack}</td>
+                    <td>
+                      <.durability_bar current={item.durability} max={item.max_durability} />
+                    </td>
+                    <td>
+                      <span class={if item.bound, do: "badge badge-warning badge-sm", else: "text-base-content/50"}>
+                        {if item.bound, do: "Yes", else: "No"}
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="text-sm text-base-content/50 mt-2">
+              {length(@bank_items)} items in bank
+            </p>
+          <% end %>
         </div>
-        <p class="text-sm text-base-content/50 mt-4">
-          Currency tracking coming soon. Data will be available when character logs in.
-        </p>
       </div>
     </div>
     """
@@ -416,22 +457,17 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
 
     ~H"""
     <div class="avatar placeholder">
-      <div class={"#{@size_class} rounded-full bg-base-300 text-base-content"}>
+      <div class={"#{@size_class} rounded-full bg-base-300 text-base-content relative overflow-hidden"}>
         <span class="text-xl">{String.first(@character.name)}</span>
+        <!-- Work in Progress Banner -->
+        <div
+          class="absolute text-black text-center font-bold"
+          style="background-color: #f7941d; width: 100px; top: 14px; left: -28px; transform: rotate(-45deg); font-size: 8px; line-height: 1.4;"
+        >
+          WiP
+        </div>
       </div>
     </div>
-    """
-  end
-
-  # Faction badge
-  defp faction_badge(assigns) do
-    faction = GameData.get_faction(assigns.faction_id)
-    assigns = assign(assigns, :faction, faction)
-
-    ~H"""
-    <span class="badge badge-sm" style={"background-color: #{@faction.color}; color: white"}>
-      {@faction.name}
-    </span>
     """
   end
 
@@ -441,16 +477,6 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
     <div>
       <div class="text-sm text-base-content/50">{@label}</div>
       <div class="font-medium">{@value}</div>
-    </div>
-    """
-  end
-
-  # Item slot component
-  defp item_slot(assigns) do
-    ~H"""
-    <div class="bg-base-200 rounded p-2 text-center">
-      <div class="font-mono text-sm">{@item.item_id}</div>
-      <div class="text-xs text-base-content/50">Slot {@item.slot}</div>
     </div>
     """
   end
@@ -508,6 +534,73 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
     """
   end
 
+  # Equipment slot definitions - using valid Heroicons
+  @equipment_slots [
+    {0, "Head", "hero-user-circle"},
+    {1, "Shoulders", "hero-shield-check"},
+    {2, "Chest", "hero-user"},
+    {3, "Hands", "hero-hand-raised"},
+    {4, "Legs", "hero-adjustments-vertical"},
+    {5, "Feet", "hero-chevron-double-down"},
+    {6, "Main Hand", "hero-bolt"},
+    {7, "Off Hand", "hero-shield-exclamation"},
+    {8, "Support", "hero-cog-6-tooth"},
+    {9, "Gadget", "hero-sparkles"},
+    {10, "Implant", "hero-cpu-chip"}
+  ]
+
+  # Equipment grid component
+  attr :equipped_items, :list, required: true
+
+  defp equipment_grid(assigns) do
+    slots = @equipment_slots
+    assigns = assign(assigns, :slots, slots)
+
+    ~H"""
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body">
+        <h2 class="card-title">
+          <.icon name="hero-shield-check" class="size-5" />
+          Equipment
+        </h2>
+        <div class="grid grid-cols-2 gap-2 mt-4">
+          <.equipment_slot
+            :for={{slot_index, slot_name, icon} <- @slots}
+            name={slot_name}
+            icon={icon}
+            item={find_equipped(@equipped_items, slot_index)}
+          />
+        </div>
+      </div>
+    </div>
+    """
+  end
+
+  # Individual equipment slot
+  attr :name, :string, required: true
+  attr :icon, :string, required: true
+  attr :item, :map, default: nil
+
+  defp equipment_slot(assigns) do
+    ~H"""
+    <div class={"p-2 rounded flex items-center gap-2 #{if @item, do: "bg-base-200", else: "bg-base-300/50 border border-dashed border-base-300"}"}>
+      <.icon name={@icon} class="size-5 text-base-content/50" />
+      <div class="flex-1 min-w-0">
+        <div class="text-xs text-base-content/50">{@name}</div>
+        <%= if @item do %>
+          <div class="text-sm font-medium truncate">{@item.name}</div>
+        <% else %>
+          <div class="text-base-content/30 text-sm">Empty</div>
+        <% end %>
+      </div>
+    </div>
+    """
+  end
+
+  defp find_equipped(items, slot_index) do
+    Enum.find(items, &(&1.slot == slot_index))
+  end
+
   # Helper functions
   defp title_display(0), do: "None"
   defp title_display(title_id), do: "Title ##{title_id}"
@@ -543,18 +636,23 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
   defp rank_name(membership), do: "Rank #{membership.rank_index}"
 
   # Load data for the active tab
-  defp load_tab_data(socket, :overview), do: socket
+  defp load_tab_data(socket, :overview) do
+    character_id = socket.assigns.character.id
+    all_items = Inventory.get_items(character_id)
+    equipped = all_items |> Enum.filter(&(&1.container_type == :equipped)) |> add_item_names()
+
+    assign(socket, equipped_items: equipped)
+  end
 
   defp load_tab_data(socket, :inventory) do
     character_id = socket.assigns.character.id
     all_items = Inventory.get_items(character_id)
-    equipped = Enum.filter(all_items, &(&1.container_type == :equipped))
-    bag_items = Enum.filter(all_items, &(&1.container_type == :bag))
+    equipped = all_items |> Enum.filter(&(&1.container_type == :equipped)) |> add_item_names()
+    bag_items = all_items |> Enum.filter(&(&1.container_type == :bag)) |> add_item_names()
+    bank_items = all_items |> Enum.filter(&(&1.container_type == :bank)) |> add_item_names()
 
-    assign(socket, equipped_items: equipped, inventory_items: bag_items)
+    assign(socket, equipped_items: equipped, inventory_items: bag_items, bank_items: bank_items)
   end
-
-  defp load_tab_data(socket, :currencies), do: socket
 
   defp load_tab_data(socket, :guild) do
     character_id = socket.assigns.character.id
@@ -572,6 +670,19 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
     character_id = socket.assigns.character.id
     tradeskills = Tradeskills.get_professions(character_id)
     assign(socket, tradeskills: tradeskills)
+  end
+
+  # Add item names from the data store
+  defp add_item_names(items) do
+    Enum.map(items, fn item ->
+      name =
+        case Store.get_item_with_name(item.item_id) do
+          {:ok, data} -> data.name
+          :error -> "Item ##{item.item_id}"
+        end
+
+      Map.put(item, :name, name)
+    end)
   end
 
   # Event handlers

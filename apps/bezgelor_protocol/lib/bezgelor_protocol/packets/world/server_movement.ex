@@ -67,18 +67,18 @@ defmodule BezgelorProtocol.Packets.World.ServerMovement do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint64(packet.guid)
-      |> PacketWriter.write_float32(packet.position_x)
-      |> PacketWriter.write_float32(packet.position_y)
-      |> PacketWriter.write_float32(packet.position_z)
-      |> PacketWriter.write_float32(packet.rotation_x || 0.0)
-      |> PacketWriter.write_float32(packet.rotation_y || 0.0)
-      |> PacketWriter.write_float32(packet.rotation_z || 0.0)
-      |> PacketWriter.write_float32(packet.velocity_x || 0.0)
-      |> PacketWriter.write_float32(packet.velocity_y || 0.0)
-      |> PacketWriter.write_float32(packet.velocity_z || 0.0)
-      |> PacketWriter.write_uint32(packet.movement_flags || 0)
-      |> PacketWriter.write_uint32(packet.timestamp || 0)
+      |> PacketWriter.write_u64(packet.guid)
+      |> PacketWriter.write_f32(packet.position_x)
+      |> PacketWriter.write_f32(packet.position_y)
+      |> PacketWriter.write_f32(packet.position_z)
+      |> PacketWriter.write_f32(packet.rotation_x || 0.0)
+      |> PacketWriter.write_f32(packet.rotation_y || 0.0)
+      |> PacketWriter.write_f32(packet.rotation_z || 0.0)
+      |> PacketWriter.write_f32(packet.velocity_x || 0.0)
+      |> PacketWriter.write_f32(packet.velocity_y || 0.0)
+      |> PacketWriter.write_f32(packet.velocity_z || 0.0)
+      |> PacketWriter.write_u32(packet.movement_flags || 0)
+      |> PacketWriter.write_u32(packet.timestamp || 0)
 
     {:ok, writer}
   end

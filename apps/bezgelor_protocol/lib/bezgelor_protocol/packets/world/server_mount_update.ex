@@ -37,9 +37,9 @@ defmodule BezgelorProtocol.Packets.World.ServerMountUpdate do
 
     writer =
       writer
-      |> PacketWriter.write_uint64(packet.entity_guid)
-      |> PacketWriter.write_uint32(packet.mount_id || 0)
-      |> PacketWriter.write_byte(state_byte)
+      |> PacketWriter.write_u64(packet.entity_guid)
+      |> PacketWriter.write_u32(packet.mount_id || 0)
+      |> PacketWriter.write_u8(state_byte)
 
     {:ok, writer}
   end

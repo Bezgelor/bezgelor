@@ -38,16 +38,16 @@ defmodule BezgelorProtocol.Packets.World.ServerInstanceInfo do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_bytes(packet.instance_guid)
-      |> PacketWriter.write_uint32(packet.instance_id)
-      |> PacketWriter.write_byte(instance_type_to_int(packet.instance_type))
-      |> PacketWriter.write_byte(difficulty_to_int(packet.difficulty))
-      |> PacketWriter.write_uint32(packet.zone_id)
-      |> PacketWriter.write_byte(packet.boss_count)
-      |> PacketWriter.write_byte(packet.bosses_killed)
-      |> PacketWriter.write_byte(packet.trash_percent)
-      |> PacketWriter.write_uint32(packet.time_limit_sec)
-      |> PacketWriter.write_byte(if(packet.lockout_extends, do: 1, else: 0))
+      |> PacketWriter.write_bytes_bits(packet.instance_guid)
+      |> PacketWriter.write_u32(packet.instance_id)
+      |> PacketWriter.write_u8(instance_type_to_int(packet.instance_type))
+      |> PacketWriter.write_u8(difficulty_to_int(packet.difficulty))
+      |> PacketWriter.write_u32(packet.zone_id)
+      |> PacketWriter.write_u8(packet.boss_count)
+      |> PacketWriter.write_u8(packet.bosses_killed)
+      |> PacketWriter.write_u8(packet.trash_percent)
+      |> PacketWriter.write_u32(packet.time_limit_sec)
+      |> PacketWriter.write_u8(if(packet.lockout_extends, do: 1, else: 0))
 
     {:ok, writer}
   end

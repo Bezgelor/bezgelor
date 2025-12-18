@@ -56,11 +56,11 @@ defmodule BezgelorProtocol.Packets.World.ServerXPGain do
 
     writer =
       writer
-      |> PacketWriter.write_uint32(packet.xp_amount)
-      |> PacketWriter.write_uint32(source_int)
-      |> PacketWriter.write_uint64(packet.source_guid || 0)
-      |> PacketWriter.write_uint32(packet.current_xp)
-      |> PacketWriter.write_uint32(packet.xp_to_level)
+      |> PacketWriter.write_u32(packet.xp_amount)
+      |> PacketWriter.write_u32(source_int)
+      |> PacketWriter.write_u64(packet.source_guid || 0)
+      |> PacketWriter.write_u32(packet.current_xp)
+      |> PacketWriter.write_u32(packet.xp_to_level)
 
     {:ok, writer}
   end

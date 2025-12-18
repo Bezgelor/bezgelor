@@ -34,16 +34,16 @@ defmodule BezgelorProtocol.Packets.World.ServerTradeskillList do
 
   @impl true
   def write(%__MODULE__{professions: professions}, writer) do
-    writer = PacketWriter.write_byte(writer, length(professions))
+    writer = PacketWriter.write_u8(writer, length(professions))
 
     writer =
       Enum.reduce(professions, writer, fn prof, w ->
         w
-        |> PacketWriter.write_uint32(prof.profession_id)
-        |> PacketWriter.write_byte(profession_type_to_int(prof.profession_type))
-        |> PacketWriter.write_uint16(prof.skill_level)
-        |> PacketWriter.write_uint32(prof.skill_xp)
-        |> PacketWriter.write_byte(if(prof.is_active, do: 1, else: 0))
+        |> PacketWriter.write_u32(prof.profession_id)
+        |> PacketWriter.write_u8(profession_type_to_int(prof.profession_type))
+        |> PacketWriter.write_u16(prof.skill_level)
+        |> PacketWriter.write_u32(prof.skill_xp)
+        |> PacketWriter.write_u8(if(prof.is_active, do: 1, else: 0))
       end)
 
     {:ok, writer}

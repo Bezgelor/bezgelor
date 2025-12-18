@@ -51,11 +51,11 @@ defmodule BezgelorProtocol.Packets.ServerRealmInfo do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint32(packet.account_id)
-      |> PacketWriter.write_uint32(packet.realm_id)
+      |> PacketWriter.write_u32(packet.account_id)
+      |> PacketWriter.write_u32(packet.realm_id)
       |> PacketWriter.write_wide_string(packet.realm_name)
-      |> PacketWriter.write_bytes(packet.realm_address <> <<0>>)
-      |> PacketWriter.write_bytes(packet.session_key)
+      |> PacketWriter.write_bytes_bits(packet.realm_address <> <<0>>)
+      |> PacketWriter.write_bytes_bits(packet.session_key)
 
     {:ok, writer}
   end

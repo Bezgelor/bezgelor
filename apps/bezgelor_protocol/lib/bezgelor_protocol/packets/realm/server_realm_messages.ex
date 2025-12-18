@@ -44,12 +44,12 @@ defmodule BezgelorProtocol.Packets.Realm.ServerRealmMessages do
   @impl true
   @spec write(t(), PacketWriter.t()) :: {:ok, PacketWriter.t()}
   def write(%__MODULE__{} = packet, writer) do
-    writer = PacketWriter.write_uint32(writer, length(packet.messages))
+    writer = PacketWriter.write_u32(writer, length(packet.messages))
 
     writer =
       Enum.reduce(packet.messages, writer, fn msg, w ->
         w
-        |> PacketWriter.write_uint32(msg.index)
+        |> PacketWriter.write_u32(msg.index)
         |> PacketWriter.write_wide_string(msg.message)
       end)
 

@@ -61,12 +61,12 @@ defmodule BezgelorProtocol.Packets.World.ServerRewardTierUpdate do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint32(packet.instance_id)
-      |> PacketWriter.write_uint64(packet.character_id)
-      |> PacketWriter.write_byte(tier_to_int(packet.tier))
-      |> PacketWriter.write_uint32(packet.contribution)
-      |> PacketWriter.write_uint32(packet.tier_threshold)
-      |> PacketWriter.write_uint32(packet.next_threshold)
+      |> PacketWriter.write_u32(packet.instance_id)
+      |> PacketWriter.write_u64(packet.character_id)
+      |> PacketWriter.write_u8(tier_to_int(packet.tier))
+      |> PacketWriter.write_u32(packet.contribution)
+      |> PacketWriter.write_u32(packet.tier_threshold)
+      |> PacketWriter.write_u32(packet.next_threshold)
 
     {:ok, writer}
   end

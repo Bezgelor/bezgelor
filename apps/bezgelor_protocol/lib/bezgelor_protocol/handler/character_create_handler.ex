@@ -122,7 +122,6 @@ defmodule BezgelorProtocol.Handler.CharacterCreateHandler do
   defp valid_bone_value?(_), do: false
 
   defp do_create(account_id, packet, state) do
-    # Look up the character creation template
     case Store.get_character_creation(packet.character_creation_id) do
       {:ok, creation_entry} ->
         create_from_template(account_id, packet, creation_entry, state)
@@ -136,17 +135,14 @@ defmodule BezgelorProtocol.Handler.CharacterCreateHandler do
 
   defp create_from_template(account_id, packet, creation_entry, state) do
     # Extract race, class, sex, faction from the creation template
-    # The JSON uses string keys like "raceId", "classId", etc.
-    race = Map.get(creation_entry, "raceId") || Map.get(creation_entry, :raceId)
-    class = Map.get(creation_entry, "classId") || Map.get(creation_entry, :classId)
-    sex = Map.get(creation_entry, "sex") || Map.get(creation_entry, :sex)
-    faction_id = Map.get(creation_entry, "factionId") || Map.get(creation_entry, :factionId)
+    # JSON is loaded with keys: :atoms, so keys are atoms
+    race = Map.get(creation_entry, :raceId)
+    class = Map.get(creation_entry, :classId)
+    sex = Map.get(creation_entry, :sex)
+    faction_id = Map.get(creation_entry, :factionId)
 
     # Get creation start type (0=Arkship, 3=Nexus/Veteran, 4=PreTutorial/Novice, 5=Level50)
-    creation_start =
-      Map.get(creation_entry, "characterCreationStartEnum") ||
-        Map.get(creation_entry, :characterCreationStartEnum) ||
-        4
+    creation_start = Map.get(creation_entry, :characterCreationStartEnum) || 4
 
     # Get starting location based on creation type and faction
     spawn = Zone.starting_location(creation_start, faction_id)
@@ -185,13 +181,21 @@ defmodule BezgelorProtocol.Handler.CharacterCreateHandler do
     visuals = compute_visuals(race, sex, packet.labels, packet.values)
     customization_attrs = Map.put(customization_attrs, :visuals, visuals)
 
-    case Characters.create_character(account_id, character_attrs, customization_attrs) do
+    result = Characters.create_character(account_id, character_attrs, customization_attrs)
+
+    case result do
       {:ok, character} ->
         Logger.info("Created character '#{character.name}' (ID: #{character.id}) for account #{account_id} in world #{character.world_id}")
 
         # Initialize inventory bags and add starting gear
-        Inventory.init_bags(character.id)
-        add_starting_gear(character.id, creation_entry)
+        try do
+          Inventory.init_bags(character.id)
+          add_starting_gear(character.id, creation_entry)
+        rescue
+          e ->
+            Logger.error("Failed to add starting gear: #{inspect(e)}")
+            Logger.error(Exception.format_stacktrace(__STACKTRACE__))
+        end
 
         response = ServerCharacterCreate.success(character.id, character.world_id)
         {:reply_world_encrypted, :server_character_create, encode_packet(response), state}
@@ -247,34 +251,46 @@ defmodule BezgelorProtocol.Handler.CharacterCreateHandler do
   defp item_key(n) when n < 10, do: "itemId0#{n}"
   defp item_key(n), do: "itemId0#{n}"
 
-  defp get_item_id(entry, key) do
-    Map.get(entry, key) || Map.get(entry, String.to_atom(key)) || 0
+  defp get_item_id(entry, key) when is_binary(key) do
+    # Keys are atoms from JSON loading
+    Map.get(entry, String.to_atom(key), 0)
   end
+
+  alias BezgelorProtocol.ItemSlots
 
   # Add a single item to the character's equipped container
   defp add_equipped_item(character_id, item_id) do
-    case Store.get_item_slot(item_id) do
+    item_slot = Store.get_item_slot(item_id)
+
+    case item_slot do
       nil ->
         Logger.debug("Item #{item_id} has no slot, skipping")
 
-      slot when slot > 0 ->
-        # Add item to equipped container at the correct slot
-        attrs = %{
-          character_id: character_id,
-          item_id: item_id,
-          container_type: :equipped,
-          bag_index: 0,
-          slot: slot,
-          quantity: 1,
-          max_stack: 1
-        }
+      item_slot when item_slot > 0 ->
+        case ItemSlots.item_slot_to_equipped(item_slot) do
+          nil ->
+            Logger.debug("Item #{item_id} has unmapped ItemSlot #{item_slot}, skipping")
 
-        case BezgelorDb.Repo.insert(BezgelorDb.Schema.InventoryItem.changeset(%BezgelorDb.Schema.InventoryItem{}, attrs)) do
-          {:ok, _item} ->
-            Logger.debug("Added starting item #{item_id} to slot #{slot}")
+          equipped_slot ->
+            attrs = %{
+              character_id: character_id,
+              item_id: item_id,
+              container_type: :equipped,
+              bag_index: 0,
+              slot: equipped_slot,
+              quantity: 1,
+              max_stack: 1,
+              durability: 100,
+              max_durability: 100
+            }
 
-          {:error, changeset} ->
-            Logger.warning("Failed to add starting item #{item_id}: #{inspect(changeset.errors)}")
+            case BezgelorDb.Repo.insert(BezgelorDb.Schema.InventoryItem.changeset(%BezgelorDb.Schema.InventoryItem{}, attrs)) do
+              {:ok, _item} ->
+                :ok
+
+              {:error, changeset} ->
+                Logger.warning("Failed to add starting item #{item_id}: #{inspect(changeset.errors)}")
+            end
         end
 
       _ ->

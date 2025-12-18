@@ -52,8 +52,8 @@ defmodule BezgelorProtocol.Packets.World.ServerHousingDecorList do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint32(packet.plot_id)
-      |> PacketWriter.write_uint16(length(packet.decor))
+      |> PacketWriter.write_u32(packet.plot_id)
+      |> PacketWriter.write_u16(length(packet.decor))
 
     writer = Enum.reduce(packet.decor, writer, &write_decor_entry/2)
 
@@ -64,16 +64,16 @@ defmodule BezgelorProtocol.Packets.World.ServerHousingDecorList do
     exterior_byte = if entry.is_exterior, do: 1, else: 0
 
     writer
-    |> PacketWriter.write_uint32(entry.id)
-    |> PacketWriter.write_uint32(entry.decor_id)
-    |> PacketWriter.write_float32(entry.pos_x)
-    |> PacketWriter.write_float32(entry.pos_y)
-    |> PacketWriter.write_float32(entry.pos_z)
-    |> PacketWriter.write_float32(entry.rot_pitch)
-    |> PacketWriter.write_float32(entry.rot_yaw)
-    |> PacketWriter.write_float32(entry.rot_roll)
-    |> PacketWriter.write_float32(entry.scale)
-    |> PacketWriter.write_byte(exterior_byte)
+    |> PacketWriter.write_u32(entry.id)
+    |> PacketWriter.write_u32(entry.decor_id)
+    |> PacketWriter.write_f32(entry.pos_x)
+    |> PacketWriter.write_f32(entry.pos_y)
+    |> PacketWriter.write_f32(entry.pos_z)
+    |> PacketWriter.write_f32(entry.rot_pitch)
+    |> PacketWriter.write_f32(entry.rot_yaw)
+    |> PacketWriter.write_f32(entry.rot_roll)
+    |> PacketWriter.write_f32(entry.scale)
+    |> PacketWriter.write_u8(exterior_byte)
   end
 
   @doc "Create from plot ID and list of HousingDecor structs."

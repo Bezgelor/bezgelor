@@ -25,8 +25,8 @@ defmodule BezgelorProtocol.Packets.World.ServerTitleUnlocked do
 
     writer =
       writer
-      |> PacketWriter.write_uint32(packet.title_id)
-      |> PacketWriter.write_uint64(unlocked_ts)
+      |> PacketWriter.write_u32(packet.title_id)
+      |> PacketWriter.write_u64(unlocked_ts)
 
     {:ok, writer}
   end

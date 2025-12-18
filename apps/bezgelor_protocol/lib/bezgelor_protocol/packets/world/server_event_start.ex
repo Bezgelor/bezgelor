@@ -30,20 +30,20 @@ defmodule BezgelorProtocol.Packets.World.ServerEventStart do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint32(packet.instance_id)
-      |> PacketWriter.write_uint32(packet.event_id)
-      |> PacketWriter.write_byte(event_type_to_int(packet.event_type))
-      |> PacketWriter.write_byte(packet.phase)
-      |> PacketWriter.write_uint32(packet.duration_ms)
-      |> PacketWriter.write_byte(length(packet.objectives))
+      |> PacketWriter.write_u32(packet.instance_id)
+      |> PacketWriter.write_u32(packet.event_id)
+      |> PacketWriter.write_u8(event_type_to_int(packet.event_type))
+      |> PacketWriter.write_u8(packet.phase)
+      |> PacketWriter.write_u32(packet.duration_ms)
+      |> PacketWriter.write_u8(length(packet.objectives))
 
     writer =
       Enum.reduce(packet.objectives, writer, fn obj, w ->
         w
-        |> PacketWriter.write_byte(obj.index)
-        |> PacketWriter.write_byte(objective_type_to_int(obj.type))
-        |> PacketWriter.write_uint32(obj.target)
-        |> PacketWriter.write_uint32(obj.current)
+        |> PacketWriter.write_u8(obj.index)
+        |> PacketWriter.write_u8(objective_type_to_int(obj.type))
+        |> PacketWriter.write_u32(obj.target)
+        |> PacketWriter.write_u32(obj.current)
       end)
 
     {:ok, writer}

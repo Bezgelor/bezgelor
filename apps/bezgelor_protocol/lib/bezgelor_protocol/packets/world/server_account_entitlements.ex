@@ -54,7 +54,7 @@ defmodule BezgelorProtocol.Packets.World.ServerAccountEntitlements do
     entitlements = packet.entitlements || []
 
     # Write count
-    writer = PacketWriter.write_uint32(writer, length(entitlements))
+    writer = PacketWriter.write_u32(writer, length(entitlements))
 
     # Write each entitlement
     writer =

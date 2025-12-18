@@ -41,10 +41,10 @@ defmodule BezgelorProtocol.Packets.World.ServerCinematicActorAttach do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint32(packet.attach_type)
-      |> PacketWriter.write_uint32(packet.attach_id)
-      |> PacketWriter.write_uint32(packet.delay)
-      |> PacketWriter.write_uint32(packet.parent_unit)
+      |> PacketWriter.write_u32(packet.attach_type)
+      |> PacketWriter.write_u32(packet.attach_id)
+      |> PacketWriter.write_u32(packet.delay)
+      |> PacketWriter.write_u32(packet.parent_unit)
       |> PacketWriter.write_bits(bool_to_int(packet.use_rotation), 1)
 
     {:ok, writer}

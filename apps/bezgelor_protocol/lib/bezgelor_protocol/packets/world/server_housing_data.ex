@@ -55,15 +55,15 @@ defmodule BezgelorProtocol.Packets.World.ServerHousingData do
 
     writer =
       writer
-      |> PacketWriter.write_uint32(packet.plot_id)
-      |> PacketWriter.write_uint64(packet.character_id)
-      |> PacketWriter.write_uint32(packet.house_type_id)
-      |> PacketWriter.write_byte(permission_byte)
-      |> PacketWriter.write_uint32(packet.sky_id || 0)
-      |> PacketWriter.write_uint32(packet.music_id || 0)
-      |> PacketWriter.write_uint32(packet.ground_id || 0)
-      |> PacketWriter.write_uint16(length(name_bytes))
-      |> PacketWriter.write_bytes(name)
+      |> PacketWriter.write_u32(packet.plot_id)
+      |> PacketWriter.write_u64(packet.character_id)
+      |> PacketWriter.write_u32(packet.house_type_id)
+      |> PacketWriter.write_u8(permission_byte)
+      |> PacketWriter.write_u32(packet.sky_id || 0)
+      |> PacketWriter.write_u32(packet.music_id || 0)
+      |> PacketWriter.write_u32(packet.ground_id || 0)
+      |> PacketWriter.write_u16(length(name_bytes))
+      |> PacketWriter.write_bytes_bits(name)
 
     {:ok, writer}
   end

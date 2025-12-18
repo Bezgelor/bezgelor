@@ -56,8 +56,8 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityDestroy do
 
     writer =
       writer
-      |> PacketWriter.write_uint64(packet.guid)
-      |> PacketWriter.write_uint32(reason_code)
+      |> PacketWriter.write_u64(packet.guid)
+      |> PacketWriter.write_u32(reason_code)
 
     {:ok, writer}
   end

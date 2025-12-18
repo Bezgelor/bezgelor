@@ -33,10 +33,10 @@ defmodule BezgelorProtocol.Packets.World.ServerPetXP do
 
     writer =
       writer
-      |> PacketWriter.write_uint32(packet.xp_gained)
-      |> PacketWriter.write_uint32(packet.current_xp)
-      |> PacketWriter.write_byte(packet.level)
-      |> PacketWriter.write_byte(leveled_up_byte)
+      |> PacketWriter.write_u32(packet.xp_gained)
+      |> PacketWriter.write_u32(packet.current_xp)
+      |> PacketWriter.write_u8(packet.level)
+      |> PacketWriter.write_u8(leveled_up_byte)
 
     {:ok, writer}
   end

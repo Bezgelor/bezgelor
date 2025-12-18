@@ -115,6 +115,8 @@ defmodule BezgelorProtocol.PacketRegistry do
       client_request_input_key_set: Handler.InputKeySetHandler,
       # Entity targeting/selection
       client_entity_select: Handler.EntitySelectHandler,
+      # Item/Inventory
+      client_item_move: Handler.ItemMoveHandler,
       # Dialog acknowledgment
       client_dialog_opened: Handler.DialogOpenedHandler,
       # Marketplace/Auction

@@ -25,17 +25,17 @@ defmodule BezgelorProtocol.Packets.World.ServerEventList do
 
   @impl true
   def write(%__MODULE__{} = packet, writer) do
-    writer = PacketWriter.write_byte(writer, length(packet.events))
+    writer = PacketWriter.write_u8(writer, length(packet.events))
 
     writer =
       Enum.reduce(packet.events, writer, fn event, w ->
         w
-        |> PacketWriter.write_uint32(event.instance_id)
-        |> PacketWriter.write_uint32(event.event_id)
-        |> PacketWriter.write_byte(event_type_to_int(event.event_type))
-        |> PacketWriter.write_byte(event.phase)
-        |> PacketWriter.write_uint32(event.time_remaining_ms)
-        |> PacketWriter.write_uint16(event.participant_count)
+        |> PacketWriter.write_u32(event.instance_id)
+        |> PacketWriter.write_u32(event.event_id)
+        |> PacketWriter.write_u8(event_type_to_int(event.event_type))
+        |> PacketWriter.write_u8(event.phase)
+        |> PacketWriter.write_u32(event.time_remaining_ms)
+        |> PacketWriter.write_u16(event.participant_count)
       end)
 
     {:ok, writer}

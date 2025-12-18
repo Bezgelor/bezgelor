@@ -48,42 +48,42 @@ defmodule BezgelorProtocol.Packets.World.ServerGuildData do
 
   @impl true
   def write(%__MODULE__{has_guild: false}, writer) do
-    writer = PacketWriter.write_byte(writer, 0)
+    writer = PacketWriter.write_u8(writer, 0)
     {:ok, writer}
   end
 
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_byte(1)
-      |> PacketWriter.write_uint32(packet.guild_id)
-      |> PacketWriter.write_byte(byte_size(packet.name))
-      |> PacketWriter.write_bytes(packet.name)
-      |> PacketWriter.write_bytes(packet.tag)
-      |> PacketWriter.write_uint16(byte_size(packet.motd))
-      |> PacketWriter.write_bytes(packet.motd)
-      |> PacketWriter.write_uint32(packet.influence)
-      |> PacketWriter.write_byte(length(packet.ranks))
+      |> PacketWriter.write_u8(1)
+      |> PacketWriter.write_u32(packet.guild_id)
+      |> PacketWriter.write_u8(byte_size(packet.name))
+      |> PacketWriter.write_bytes_bits(packet.name)
+      |> PacketWriter.write_bytes_bits(packet.tag)
+      |> PacketWriter.write_u16(byte_size(packet.motd))
+      |> PacketWriter.write_bytes_bits(packet.motd)
+      |> PacketWriter.write_u32(packet.influence)
+      |> PacketWriter.write_u8(length(packet.ranks))
 
     writer =
       Enum.reduce(packet.ranks, writer, fn rank, w ->
         w
-        |> PacketWriter.write_byte(rank.rank_index)
-        |> PacketWriter.write_byte(byte_size(rank.name))
-        |> PacketWriter.write_bytes(rank.name)
-        |> PacketWriter.write_uint16(rank.permissions)
+        |> PacketWriter.write_u8(rank.rank_index)
+        |> PacketWriter.write_u8(byte_size(rank.name))
+        |> PacketWriter.write_bytes_bits(rank.name)
+        |> PacketWriter.write_u16(rank.permissions)
       end)
 
-    writer = PacketWriter.write_uint16(writer, length(packet.members))
+    writer = PacketWriter.write_u16(writer, length(packet.members))
 
     writer =
       Enum.reduce(packet.members, writer, fn member, w ->
         w
-        |> PacketWriter.write_uint32(member.character_id)
-        |> PacketWriter.write_byte(byte_size(member.name))
-        |> PacketWriter.write_bytes(member.name)
-        |> PacketWriter.write_byte(member.rank_index)
-        |> PacketWriter.write_byte(if(member.online, do: 1, else: 0))
+        |> PacketWriter.write_u32(member.character_id)
+        |> PacketWriter.write_u8(byte_size(member.name))
+        |> PacketWriter.write_bytes_bits(member.name)
+        |> PacketWriter.write_u8(member.rank_index)
+        |> PacketWriter.write_u8(if(member.online, do: 1, else: 0))
       end)
 
     {:ok, writer}

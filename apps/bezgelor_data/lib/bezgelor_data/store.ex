@@ -53,6 +53,7 @@ defmodule BezgelorData.Store do
   use GenServer
 
   require Logger
+  import Bitwise
 
   alias BezgelorData.Compiler
 
@@ -129,6 +130,8 @@ defmodule BezgelorData.Store do
     :character_customizations,
     # Item display source entries (for level-scaled item visuals)
     :item_display_sources,
+    # Item display data (model paths, textures)
+    :item_displays,
     # Patrol paths for creature movement
     :patrol_paths,
     # Spline data (from client Spline2.tbl and Spline2Node.tbl)
@@ -195,9 +198,16 @@ defmodule BezgelorData.Store do
   """
   @spec get(atom(), non_neg_integer()) :: {:ok, map()} | :error
   def get(table, id) do
-    case :ets.lookup(table_name(table), id) do
-      [{^id, data}] -> {:ok, data}
-      [] -> :error
+    ets_table = table_name(table)
+    case :ets.info(ets_table) do
+      :undefined ->
+        :error
+
+      _ ->
+        case :ets.lookup(ets_table, id) do
+          [{^id, data}] -> {:ok, data}
+          [] -> :error
+        end
     end
   end
 
@@ -1100,12 +1110,59 @@ defmodule BezgelorData.Store do
   end
 
   defp get_item_type_id(item) do
-    Map.get(item, "type_id") || Map.get(item, :type_id) || 0
+    # Field is item2TypeId in the JSON data (loaded with keys: :atoms)
+    Map.get(item, :item2TypeId, 0)
   end
 
   defp get_slot_id(item_type) do
-    Map.get(item_type, "itemSlotId") || Map.get(item_type, :itemSlotId) || 0
+    Map.get(item_type, :itemSlotId, 0)
   end
+
+  @doc """
+  Get the EquippedItem slot index for an item.
+
+  Uses the item's `equippedSlotFlags` bitmask to determine which equipped slot
+  the item goes into. The lowest set bit determines the primary slot.
+
+  ## Parameters
+
+  - `item_id` - The item ID
+
+  ## Returns
+
+  The EquippedItem slot index (0=Chest, 1=Legs, 2=Head, etc.) or nil if not equippable.
+  """
+  @spec get_item_equipped_slot(non_neg_integer()) :: non_neg_integer() | nil
+  def get_item_equipped_slot(item_id) do
+    case get(:items, item_id) do
+      {:ok, item} ->
+        flags = Map.get(item, :equippedSlotFlags, 0)
+        if flags > 0 do
+          # Find the lowest set bit (primary equipped slot)
+          find_lowest_bit(flags)
+        else
+          nil
+        end
+
+      _ ->
+        nil
+    end
+  end
+
+  # Find the position of the lowest set bit in a flags value
+  defp find_lowest_bit(flags) when flags > 0 do
+    do_find_lowest_bit(flags, 0)
+  end
+  defp find_lowest_bit(_), do: nil
+
+  defp do_find_lowest_bit(flags, position) when position < 32 do
+    if band(flags, 1) == 1 do
+      position
+    else
+      do_find_lowest_bit(bsr(flags, 1), position + 1)
+    end
+  end
+  defp do_find_lowest_bit(_, _), do: nil
 
   @doc """
   Get default gear visuals for a character class.
@@ -1128,8 +1185,8 @@ defmodule BezgelorData.Store do
 
     armor_set =
       Enum.find(armor_sets, fn set ->
-        set_class = Map.get(set, "classId") || Map.get(set, :classId) || 0
-        gear_set = Map.get(set, "creationGearSetEnum") || Map.get(set, :creationGearSetEnum) || 0
+        set_class = Map.get(set, :classId, 0)
+        gear_set = Map.get(set, :creationGearSetEnum, 0)
         set_class == class_id && gear_set == 0
       end)
 
@@ -1143,18 +1200,18 @@ defmodule BezgelorData.Store do
       # ItemDisplayId05 = ArmorFeet (slot 5)
       # ItemDisplayId06 = ArmorHands (slot 6)
       slot_mapping = [
-        {"itemDisplayId00", 20},  # WeaponPrimary
-        {"itemDisplayId01", 1},   # ArmorChest
-        {"itemDisplayId02", 2},   # ArmorLegs
-        {"itemDisplayId03", 3},   # ArmorHead
-        {"itemDisplayId04", 4},   # ArmorShoulder
-        {"itemDisplayId05", 5},   # ArmorFeet
-        {"itemDisplayId06", 6}    # ArmorHands
+        {:itemDisplayId00, 20},  # WeaponPrimary
+        {:itemDisplayId01, 1},   # ArmorChest
+        {:itemDisplayId02, 2},   # ArmorLegs
+        {:itemDisplayId03, 3},   # ArmorHead
+        {:itemDisplayId04, 4},   # ArmorShoulder
+        {:itemDisplayId05, 5},   # ArmorFeet
+        {:itemDisplayId06, 6}    # ArmorHands
       ]
 
       slot_mapping
       |> Enum.map(fn {key, slot} ->
-        display_id = Map.get(armor_set, key) || Map.get(armor_set, String.to_atom(key)) || 0
+        display_id = Map.get(armor_set, key, 0)
         if display_id > 0, do: %{slot: slot, display_id: display_id}, else: nil
       end)
       |> Enum.reject(&is_nil/1)
@@ -1191,16 +1248,14 @@ defmodule BezgelorData.Store do
   def get_item_display_id(item_id, power_level \\ nil) do
     case get(:items, item_id) do
       {:ok, item} ->
-        item_source_id = get_item_field(item, :item_source_id) || 0
-        display_id = get_item_field(item, :display_id) || 0
-        item_power_level = power_level || get_item_field(item, :power_level) || 0
-        type_id = get_item_field(item, :type_id) || 0
+        item_source_id = Map.get(item, :itemSourceId) || 0
+        display_id = Map.get(item, :itemDisplayId) || 0
+        item_power_level = power_level || Map.get(item, :powerLevel) || 0
+        type_id = Map.get(item, :item2TypeId) || 0
 
         if item_source_id > 0 do
-          # Look up from ItemDisplaySourceEntry by source_id and level
           resolve_display_from_source(item_source_id, type_id, item_power_level, display_id)
         else
-          # Use direct display_id
           display_id
         end
 
@@ -1209,14 +1264,45 @@ defmodule BezgelorData.Store do
     end
   end
 
+  @doc """
+  Get the display ID and visual slot for an item.
+
+  Returns {display_id, visual_slot} where visual_slot comes from Item2Type.itemSlotId.
+  This is used for building ItemVisual structs for entity creation.
+  """
+  @spec get_item_visual_info(non_neg_integer(), non_neg_integer() | nil) :: {non_neg_integer(), non_neg_integer()}
+  def get_item_visual_info(item_id, power_level \\ nil) do
+    case get(:items, item_id) do
+      {:ok, item} ->
+        display_id = get_item_display_id(item_id, power_level)
+        type_id = Map.get(item, :item2TypeId) || 0
+        visual_slot = get_item_slot_id(type_id)
+        {display_id, visual_slot}
+
+      :error ->
+        {0, 0}
+    end
+  end
+
+  # Get the visual slot ID (ItemSlot) from Item2Type
+  defp get_item_slot_id(type_id) when type_id > 0 do
+    case get(:item_types, type_id) do
+      {:ok, item_type} ->
+        Map.get(item_type, :itemSlotId) || 0
+
+      :error ->
+        0
+    end
+  end
+
+  defp get_item_slot_id(_), do: 0
+
   # Resolve display_id from ItemDisplaySourceEntry table
   defp resolve_display_from_source(source_id, type_id, power_level, fallback_display_id) do
-    # Get all entries for this source_id
     entries = get_display_source_entries(source_id)
 
-    # Filter by type_id
     matching_entries = Enum.filter(entries, fn entry ->
-      entry_type_id = Map.get(entry, :Item2TypeId) || Map.get(entry, "Item2TypeId") || 0
+      entry_type_id = Map.get(entry, :item2TypeId) || 0
       entry_type_id == type_id
     end)
 
@@ -1227,7 +1313,7 @@ defmodule BezgelorData.Store do
 
       [single] ->
         # Single entry, use its display_id
-        Map.get(single, :ItemDisplayId) || Map.get(single, "ItemDisplayId") || fallback_display_id
+        Map.get(single, :itemDisplayId) || fallback_display_id
 
       multiple when is_list(multiple) ->
         # Multiple entries - check if we have an explicit display_id first
@@ -1236,13 +1322,13 @@ defmodule BezgelorData.Store do
         else
           # Find entry matching level range
           level_match = Enum.find(multiple, fn entry ->
-            min_level = Map.get(entry, :ItemMinLevel) || Map.get(entry, "ItemMinLevel") || 0
-            max_level = Map.get(entry, :ItemMaxLevel) || Map.get(entry, "ItemMaxLevel") || 999
+            min_level = Map.get(entry, :itemMinLevel) || 0
+            max_level = Map.get(entry, :itemMaxLevel) || 999
             power_level >= min_level and power_level <= max_level
           end)
 
           if level_match do
-            Map.get(level_match, :ItemDisplayId) || Map.get(level_match, "ItemDisplayId") || fallback_display_id
+            Map.get(level_match, :itemDisplayId) || fallback_display_id
           else
             fallback_display_id
           end
@@ -1252,7 +1338,15 @@ defmodule BezgelorData.Store do
 
   # Get display source entries for a source_id (uses index)
   defp get_display_source_entries(source_id) do
-    case :ets.lookup(index_table_name(:display_sources_by_source_id), source_id) do
+    require Logger
+    index_name = index_table_name(:display_sources_by_source_id)
+    table_size = :ets.info(index_name, :size)
+
+    if table_size == 0 do
+      Logger.warning("get_display_source_entries: INDEX IS EMPTY! Table: #{index_name}")
+    end
+
+    case :ets.lookup(index_name, source_id) do
       [{^source_id, entries}] -> entries
       [] -> []
     end
@@ -1261,6 +1355,237 @@ defmodule BezgelorData.Store do
   # Helper to get item field with both atom and string key support
   defp get_item_field(item, field) when is_atom(field) do
     Map.get(item, field) || Map.get(item, Atom.to_string(field))
+  end
+
+  @doc """
+  Get the 3D model path for an item by item ID.
+
+  Resolves the display ID (handling level-scaled items) and looks up the
+  model path from the ItemDisplay table.
+
+  ## Parameters
+
+  - `item_id` - The item ID
+  - `power_level` - Optional power level for level-based lookups (defaults to item's power_level)
+
+  ## Returns
+
+  A map with model information, or nil if not found:
+  - `:model_path` - Path to the .m3 model file (uses objectModelL or skinnedModelL)
+  - `:display_id` - The resolved display ID
+  - `:description` - Model description from ItemDisplay
+
+  ## Example
+
+      Store.get_item_model_path(1)
+      #=> %{model_path: "Art\\Item\\Armor\\Light\\...", display_id: 3954, description: "AMR_D_Light_012_Chest"}
+
+      Store.get_item_model_path(999999) #=> nil
+  """
+  @spec get_item_model_path(non_neg_integer(), non_neg_integer() | nil) :: map() | nil
+  def get_item_model_path(item_id, power_level \\ nil) do
+    display_id = get_item_display_id(item_id, power_level)
+
+    if display_id > 0 do
+      get_display_model_path(display_id)
+    else
+      nil
+    end
+  end
+
+  @doc """
+  Get the 3D model path for a display ID directly.
+
+  Looks up the model path from the ItemDisplay table by display ID.
+
+  ## Parameters
+
+  - `display_id` - The ItemDisplay ID
+
+  ## Returns
+
+  A map with model information, or nil if not found:
+  - `:model_path` - Path to the .m3 model file
+  - `:display_id` - The display ID
+  - `:description` - Model description
+
+  ## Example
+
+      Store.get_display_model_path(3954)
+      #=> %{model_path: "Art\\Item\\Armor\\Light\\...", display_id: 3954, description: "..."}
+  """
+  @spec get_display_model_path(non_neg_integer()) :: map() | nil
+  def get_display_model_path(display_id) when is_integer(display_id) and display_id > 0 do
+    case :ets.lookup(table_name(:item_displays), display_id) do
+      [{^display_id, display}] ->
+        # Prefer objectModelL (world model), fall back to skinnedModelL (equipped model)
+        model_path =
+          get_display_field(display, :objectModelL) ||
+            get_display_field(display, :skinnedModelL) ||
+            get_display_field(display, :objectModel) ||
+            get_display_field(display, :skinnedModel) ||
+            ""
+
+        if model_path != "" do
+          %{
+            model_path: model_path,
+            display_id: display_id,
+            description: get_display_field(display, :description) || ""
+          }
+        else
+          nil
+        end
+
+      [] ->
+        nil
+    end
+  end
+
+  def get_display_model_path(_), do: nil
+
+  # Helper to get display field with both atom and string key support
+  defp get_display_field(display, field) when is_atom(field) do
+    value = Map.get(display, field) || Map.get(display, Atom.to_string(field))
+    if value == "", do: nil, else: value
+  end
+
+  @doc """
+  Get localized text by ID.
+
+  ## Returns
+
+  The localized text string, or nil if not found.
+
+  ## Examples
+
+      Store.get_text(2680) #=> "Some Item Name"
+      Store.get_text(0) #=> nil
+  """
+  @spec get_text(non_neg_integer()) :: String.t() | nil
+  def get_text(text_id) when is_integer(text_id) and text_id > 0 do
+    case :ets.lookup(table_name(:texts), text_id) do
+      [{^text_id, text}] when is_binary(text) -> text
+      _ -> nil
+    end
+  end
+
+  def get_text(_), do: nil
+
+  @doc """
+  Search items by ID or name.
+
+  Searches items by:
+  - Exact item ID (if query is numeric)
+  - Partial name match (case-insensitive)
+
+  Results include the localized item name for display.
+
+  ## Options
+
+    * `:limit` - Maximum number of results (default: 50)
+
+  ## Returns
+
+  List of item maps with an additional `:name` field containing the localized name.
+
+  ## Examples
+
+      # Search by ID
+      Store.search_items("12345") #=> [%{id: 12345, name: "Sword of Power", ...}]
+
+      # Search by name
+      Store.search_items("sword") #=> [%{id: 100, name: "Iron Sword", ...}, ...]
+  """
+  @spec search_items(String.t(), keyword()) :: [map()]
+  def search_items(query, opts \\ [])
+
+  def search_items(query, opts) when is_binary(query) do
+    query = String.trim(query)
+    limit = Keyword.get(opts, :limit, 50)
+
+    cond do
+      query == "" ->
+        []
+
+      # Check if query is a number (item ID)
+      numeric?(query) ->
+        case Integer.parse(query) do
+          {id, ""} ->
+            case get(:items, id) do
+              {:ok, item} -> [add_item_name(item)]
+              :error -> []
+            end
+
+          _ ->
+            []
+        end
+
+      # Search by name
+      true ->
+        search_items_by_name(query, limit)
+    end
+  end
+
+  def search_items(_, _), do: []
+
+  defp numeric?(str) do
+    case Integer.parse(str) do
+      {_, ""} -> true
+      _ -> false
+    end
+  end
+
+  defp search_items_by_name(query, limit) do
+    query_lower = String.downcase(query)
+
+    # Build a list of {item, name} for items that have names
+    table_name(:items)
+    |> :ets.tab2list()
+    |> Stream.map(fn {_id, item} -> {item, get_item_name(item)} end)
+    |> Stream.filter(fn {_item, name} -> name != nil end)
+    |> Stream.filter(fn {_item, name} ->
+      String.contains?(String.downcase(name), query_lower)
+    end)
+    |> Stream.map(fn {item, name} -> Map.put(item, :name, name) end)
+    |> Enum.take(limit)
+  end
+
+  @doc """
+  Get an item by ID with its localized name.
+
+  Returns {:ok, item_with_name} or :error if item not found.
+
+  ## Example
+
+      {:ok, item} = Store.get_item_with_name(12345)
+      item.name #=> "Iron Sword"
+  """
+  @spec get_item_with_name(non_neg_integer()) :: {:ok, map()} | :error
+  def get_item_with_name(item_id) do
+    case get(:items, item_id) do
+      {:ok, item} -> {:ok, add_item_name(item)}
+      :error -> :error
+    end
+  end
+
+  defp add_item_name(item) do
+    name = get_item_name(item)
+    item_id = Map.get(item, :ID) || Map.get(item, :id, 0)
+    Map.put(item, :name, name || "Item ##{item_id}")
+  end
+
+  defp get_item_name(item) do
+    # Check both naming conventions: our internal name and the raw JSON field name
+    text_id =
+      get_item_field(item, :name_text_id) ||
+        Map.get(item, :localizedTextIdName) ||
+        0
+
+    if text_id > 0 do
+      get_text(text_id)
+    else
+      nil
+    end
   end
 
   @doc """
@@ -1440,8 +1765,8 @@ defmodule BezgelorData.Store do
     table_loaders = [
       # Core data
       fn -> load_table(:zones, "zones.json", "zones") end,
-      fn -> load_table(:spells, "spells.json", "spells") end,
-      fn -> load_table(:items, "items.json", "items") end,
+      fn -> load_spells_split() end,
+      fn -> load_items_split() end,
       fn -> load_client_table(:item_types, "Item2Type.json", "item2type") end,
       fn -> load_client_table(:creation_armor_sets, "CharacterCreationArmorSet.json", "charactercreationarmorset") end,
       fn -> load_table(:texts, "texts.json", "texts") end,
@@ -1512,6 +1837,8 @@ defmodule BezgelorData.Store do
       fn -> load_character_customizations() end,
       # Item display source entries
       fn -> load_item_display_sources() end,
+      # Item display data (model paths)
+      fn -> load_item_displays() end,
       # Patrol paths
       fn -> load_patrol_paths() end,
       # Spline data
@@ -1930,6 +2257,92 @@ defmodule BezgelorData.Store do
     Logger.debug("Loaded #{length(results)} full creature records from #{length(part_files)} parts (parallel)")
   end
 
+  defp load_items_split do
+    table_name = table_name(:items)
+
+    # Clear existing data
+    :ets.delete_all_objects(table_name)
+
+    # Load from split part files (each under 100MB for GitHub) - in parallel
+    part_files = [
+      "items_part1.json",
+      "items_part2.json",
+      "items_part3.json",
+      "items_part4.json"
+    ]
+
+    # Load all parts in parallel, then insert
+    results =
+      part_files
+      |> Task.async_stream(
+        fn filename ->
+          json_path = Path.join(data_directory(), filename)
+
+          case load_json_raw(json_path) do
+            {:ok, data} ->
+              items = Map.get(data, :item2, [])
+              tuples = Enum.map(items, fn item -> {Map.get(item, :ID), item} end)
+              {:ok, tuples}
+
+            {:error, reason} ->
+              Logger.warning("Failed to load #{filename}: #{inspect(reason)}")
+              {:ok, []}
+          end
+        end,
+        max_concurrency: 4,
+        timeout: 60_000
+      )
+      |> Enum.reduce([], fn {:ok, {:ok, tuples}}, acc -> acc ++ tuples end)
+
+    # Bulk insert all at once
+    :ets.insert(table_name, results)
+
+    Logger.debug("Loaded #{length(results)} items from #{length(part_files)} parts (parallel)")
+  end
+
+  defp load_spells_split do
+    table_name = table_name(:spells)
+
+    # Clear existing data
+    :ets.delete_all_objects(table_name)
+
+    # Load from split part files (each under 100MB for GitHub) - in parallel
+    part_files = [
+      "spells_part1.json",
+      "spells_part2.json",
+      "spells_part3.json",
+      "spells_part4.json"
+    ]
+
+    # Load all parts in parallel, then insert
+    results =
+      part_files
+      |> Task.async_stream(
+        fn filename ->
+          json_path = Path.join(data_directory(), filename)
+
+          case load_json_raw(json_path) do
+            {:ok, data} ->
+              spells = Map.get(data, :spell4, [])
+              tuples = Enum.map(spells, fn spell -> {Map.get(spell, :ID), spell} end)
+              {:ok, tuples}
+
+            {:error, reason} ->
+              Logger.warning("Failed to load #{filename}: #{inspect(reason)}")
+              {:ok, []}
+          end
+        end,
+        max_concurrency: 4,
+        timeout: 60_000
+      )
+      |> Enum.reduce([], fn {:ok, {:ok, tuples}}, acc -> acc ++ tuples end)
+
+    # Bulk insert all at once
+    :ets.insert(table_name, results)
+
+    Logger.debug("Loaded #{length(results)} spells from #{length(part_files)} parts (parallel)")
+  end
+
   defp load_loot_tables do
     table_name = table_name(:loot_tables)
 
@@ -2089,6 +2502,50 @@ defmodule BezgelorData.Store do
       {:ok, data} ->
         items = Map.get(data, :itemdisplaysourceentry, [])
 
+        tuples =
+          items
+          |> Enum.filter(fn item -> Map.has_key?(item, :ID) end)
+          |> Enum.map(fn item ->
+            id = Map.get(item, :ID)
+            normalized = Map.put(item, :id, id)
+            {id, normalized}
+          end)
+
+        :ets.insert(table_name, tuples)
+        build_display_source_index(items)
+        Logger.debug("Loaded #{length(tuples)} item display source entries")
+
+      {:error, _reason} ->
+        Logger.debug("ItemDisplaySourceEntry.json not found (optional)")
+    end
+  end
+
+  # Build the display_sources_by_source_id index for efficient lookup
+  defp build_display_source_index(items) do
+    index_name = index_table_name(:display_sources_by_source_id)
+
+    tuples =
+      items
+      |> Enum.group_by(fn item -> Map.get(item, :itemSourceId) || 0 end)
+      |> Enum.filter(fn {source_id, _} -> source_id > 0 end)
+
+    :ets.insert(index_name, tuples)
+  end
+
+  # Load ItemDisplay data for model paths and textures
+  # File structure: { "itemdisplay": [ {ID, description, objectModel, skinnedModel, ...}, ...] }
+  defp load_item_displays do
+    table_name = table_name(:item_displays)
+
+    # Clear existing data
+    :ets.delete_all_objects(table_name)
+
+    json_path = Path.join(data_directory(), "ItemDisplay.json")
+
+    case load_json_raw(json_path) do
+      {:ok, data} ->
+        items = Map.get(data, :itemdisplay, [])
+
         # Bulk insert with ID normalization
         tuples =
           items
@@ -2100,32 +2557,11 @@ defmodule BezgelorData.Store do
           end)
 
         :ets.insert(table_name, tuples)
-
-        # Build the source_id index for efficient lookup
-        build_display_source_index(items)
-
-        Logger.debug("Loaded #{length(tuples)} item display source entries")
+        Logger.debug("Loaded #{length(tuples)} item displays")
 
       {:error, _reason} ->
-        # ItemDisplaySourceEntry.json is optional - many items don't use it
-        Logger.debug("ItemDisplaySourceEntry.json not found (optional - items will use direct display_id)")
+        Logger.debug("ItemDisplay.json not found (optional - 3D models unavailable)")
     end
-  end
-
-  # Build the display_sources_by_source_id index for efficient lookup
-  defp build_display_source_index(items) do
-    index_name = index_table_name(:display_sources_by_source_id)
-
-    # Group by ItemSourceId and bulk insert
-    tuples =
-      items
-      |> Enum.group_by(fn item ->
-        Map.get(item, :ItemSourceId) || Map.get(item, "ItemSourceId") || 0
-      end)
-      |> Enum.filter(fn {source_id, _} -> source_id > 0 end)
-      |> Enum.map(fn {source_id, entries} -> {source_id, entries} end)
-
-    :ets.insert(index_name, tuples)
   end
 
   defp validate_loot_data do
@@ -2153,16 +2589,16 @@ defmodule BezgelorData.Store do
 
     # Try loading from pre-enriched ETF cache first
     enriched_etf_path = Path.join(compiled_directory(), "creature_spawns_enriched.etf")
-    Logger.info("Creature spawns: checking ETF at #{enriched_etf_path}, exists? #{File.exists?(enriched_etf_path)}")
+    Logger.debug("Creature spawns: checking ETF at #{enriched_etf_path}, exists? #{File.exists?(enriched_etf_path)}")
     is_fresh = enriched_etf_cache_fresh?(enriched_etf_path)
-    Logger.info("Creature spawns: enriched ETF fresh? #{is_fresh}")
+    Logger.debug("Creature spawns: enriched ETF fresh? #{is_fresh}")
 
     if is_fresh do
       result = load_creature_spawns_from_etf(enriched_etf_path, table_name)
-      Logger.info("Loaded creature spawns from enriched ETF cache: #{result}")
+      Logger.debug("Loaded creature spawns from enriched ETF cache: #{result}")
       result
     else
-      Logger.info("Enriched ETF not fresh, loading from JSON and will re-enrich")
+      Logger.debug("Enriched ETF not fresh, loading from JSON and will re-enrich")
       load_creature_spawns_from_json(table_name)
     end
   end
@@ -2321,13 +2757,13 @@ defmodule BezgelorData.Store do
 
     # Skip if ETF cache is fresh (data was already loaded enriched)
     is_fresh = enriched_etf_cache_fresh?(enriched_etf_path)
-    Logger.info("Spawn enrichment: ETF fresh? #{is_fresh}")
+    Logger.debug("Spawn enrichment: ETF fresh? #{is_fresh}")
 
     if is_fresh do
-      Logger.info("Spawn enrichment: skipping (using cached data)")
+      Logger.debug("Spawn enrichment: skipping (using cached data)")
       :skipped
     else
-      Logger.info("Spawn enrichment: running enrichment process")
+      Logger.debug("Spawn enrichment: running enrichment process")
       do_enrich_creature_spawns_with_splines(enriched_etf_path)
     end
   end
@@ -2390,7 +2826,7 @@ defmodule BezgelorData.Store do
       end)
 
     # Update ETS with enriched data
-    total_enriched =
+    _total_enriched =
       Enum.reduce(enriched_zones, 0, fn {world_id, zone_data, count}, acc ->
         :ets.insert(creature_table, {world_id, zone_data})
         acc + count
@@ -2399,7 +2835,7 @@ defmodule BezgelorData.Store do
     # Save enriched data to ETF cache for fast subsequent loads
     save_enriched_spawns_to_etf(etf_path, enriched_zones)
 
-    Logger.info("Enriched #{total_enriched} creature spawns with patrol paths (cached)")
+    Logger.debug("Enriched creature spawns with patrol paths (cached)")
   end
 
   # Save enriched creature spawn data to ETF cache
@@ -2680,9 +3116,9 @@ defmodule BezgelorData.Store do
           :ets.insert(table_name, {world_id, entities})
         end
 
-        total = Map.get(data, :total_count, 0)
+        _total = Map.get(data, :total_count, 0)
         worlds = map_size(by_world)
-        Logger.info("Loaded #{total} entity spline mappings across #{worlds} worlds")
+        Logger.debug("Loaded entity spline mappings across #{worlds} worlds")
 
       {:error, reason} ->
         Logger.warning("No entity spline data found: #{inspect(reason)}")
@@ -2771,9 +3207,11 @@ defmodule BezgelorData.Store do
   defp build_all_indexes do
     Logger.debug("Building secondary indexes...")
 
-    # Clear all index tables EXCEPT customizations_by_race_sex
-    # (which is built during load_character_customizations)
-    for table <- @index_tables, table != :customizations_by_race_sex do
+    # Clear all index tables EXCEPT those built during load functions:
+    # - customizations_by_race_sex (built during load_character_customizations)
+    # - display_sources_by_source_id (built during load_item_display_sources)
+    skip_tables = [:customizations_by_race_sex, :display_sources_by_source_id]
+    for table <- @index_tables, table not in skip_tables do
       :ets.delete_all_objects(index_table_name(table))
     end
 

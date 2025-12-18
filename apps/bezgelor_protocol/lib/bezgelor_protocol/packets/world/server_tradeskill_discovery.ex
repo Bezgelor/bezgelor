@@ -24,8 +24,8 @@ defmodule BezgelorProtocol.Packets.World.ServerTradeskillDiscovery do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint32(packet.schematic_id)
-      |> PacketWriter.write_uint32(packet.variant_id || 0)
+      |> PacketWriter.write_u32(packet.schematic_id)
+      |> PacketWriter.write_u32(packet.variant_id || 0)
 
     {:ok, writer}
   end

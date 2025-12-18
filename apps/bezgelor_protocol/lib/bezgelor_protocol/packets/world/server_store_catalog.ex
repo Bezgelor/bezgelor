@@ -22,36 +22,36 @@ defmodule BezgelorProtocol.Packets.World.ServerStoreCatalog do
   @impl true
   def write(%__MODULE__{} = packet, writer) do
     # Write categories
-    writer = PacketWriter.write_uint16(writer, length(packet.categories))
+    writer = PacketWriter.write_u16(writer, length(packet.categories))
 
     writer =
       Enum.reduce(packet.categories, writer, fn cat, w ->
         w
-        |> PacketWriter.write_uint32(cat.id)
+        |> PacketWriter.write_u32(cat.id)
         |> PacketWriter.write_wide_string(cat.name)
-        |> PacketWriter.write_uint32(cat.parent_id || 0)
+        |> PacketWriter.write_u32(cat.parent_id || 0)
         |> PacketWriter.write_wide_string(cat.icon || "")
       end)
 
     # Write items
-    writer = PacketWriter.write_uint16(writer, length(packet.items))
+    writer = PacketWriter.write_u16(writer, length(packet.items))
 
     writer =
       Enum.reduce(packet.items, writer, fn item, w ->
         w
-        |> PacketWriter.write_uint32(item.id)
+        |> PacketWriter.write_u32(item.id)
         |> PacketWriter.write_wide_string(item.item_type)
-        |> PacketWriter.write_uint32(item.item_id)
+        |> PacketWriter.write_u32(item.item_id)
         |> PacketWriter.write_wide_string(item.name)
         |> PacketWriter.write_wide_string(item.description || "")
-        |> PacketWriter.write_uint32(item.premium_price || 0)
-        |> PacketWriter.write_uint32(item.bonus_price || 0)
-        |> PacketWriter.write_uint64(item.gold_price || 0)
-        |> PacketWriter.write_uint32(item.category_id || 0)
-        |> PacketWriter.write_byte(if(item.featured, do: 1, else: 0))
-        |> PacketWriter.write_uint32(item.sale_price || 0)
-        |> PacketWriter.write_uint64(datetime_to_unix(item.sale_ends_at))
-        |> PacketWriter.write_byte(if(item.is_new, do: 1, else: 0))
+        |> PacketWriter.write_u32(item.premium_price || 0)
+        |> PacketWriter.write_u32(item.bonus_price || 0)
+        |> PacketWriter.write_u64(item.gold_price || 0)
+        |> PacketWriter.write_u32(item.category_id || 0)
+        |> PacketWriter.write_u8(if(item.featured, do: 1, else: 0))
+        |> PacketWriter.write_u32(item.sale_price || 0)
+        |> PacketWriter.write_u64(datetime_to_unix(item.sale_ends_at))
+        |> PacketWriter.write_u8(if(item.is_new, do: 1, else: 0))
       end)
 
     {:ok, writer}

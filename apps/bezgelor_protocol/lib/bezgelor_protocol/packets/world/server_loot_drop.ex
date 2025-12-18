@@ -43,15 +43,15 @@ defmodule BezgelorProtocol.Packets.World.ServerLootDrop do
 
     writer =
       writer
-      |> PacketWriter.write_uint64(packet.source_guid)
-      |> PacketWriter.write_uint32(packet.gold || 0)
-      |> PacketWriter.write_uint32(length(items))
+      |> PacketWriter.write_u64(packet.source_guid)
+      |> PacketWriter.write_u32(packet.gold || 0)
+      |> PacketWriter.write_u32(length(items))
 
     writer =
       Enum.reduce(items, writer, fn {item_id, quantity}, w ->
         w
-        |> PacketWriter.write_uint32(item_id)
-        |> PacketWriter.write_uint32(quantity)
+        |> PacketWriter.write_u32(item_id)
+        |> PacketWriter.write_u32(quantity)
       end)
 
     {:ok, writer}

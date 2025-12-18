@@ -48,23 +48,23 @@ defmodule BezgelorProtocol.Packets.World.ServerGuildResult do
 
     writer =
       writer
-      |> PacketWriter.write_byte(result_code)
-      |> PacketWriter.write_byte(op_code)
+      |> PacketWriter.write_u8(result_code)
+      |> PacketWriter.write_u8(op_code)
 
     writer =
       case packet.operation do
         :create when packet.result == :ok ->
           writer
-          |> PacketWriter.write_uint32(packet.guild_id || 0)
-          |> PacketWriter.write_byte(byte_size(packet.guild_name || ""))
-          |> PacketWriter.write_bytes(packet.guild_name || "")
+          |> PacketWriter.write_u32(packet.guild_id || 0)
+          |> PacketWriter.write_u8(byte_size(packet.guild_name || ""))
+          |> PacketWriter.write_bytes_bits(packet.guild_name || "")
 
         :invite ->
           name = packet.target_name || ""
 
           writer
-          |> PacketWriter.write_byte(byte_size(name))
-          |> PacketWriter.write_bytes(name)
+          |> PacketWriter.write_u8(byte_size(name))
+          |> PacketWriter.write_bytes_bits(name)
 
         _ ->
           writer

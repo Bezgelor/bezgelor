@@ -53,11 +53,11 @@ defmodule BezgelorProtocol.Packets.World.ServerWorldEnter do
     writer =
       writer
       |> PacketWriter.write_bits(packet.world_id || 0, 15)
-      |> PacketWriter.write_float32_bits(packet.position_x || 0.0)
-      |> PacketWriter.write_float32_bits(packet.position_y || 0.0)
-      |> PacketWriter.write_float32_bits(packet.position_z || 0.0)
-      |> PacketWriter.write_float32_bits(packet.yaw || 0.0)
-      |> PacketWriter.write_float32_bits(packet.pitch || 0.0)
+      |> PacketWriter.write_f32(packet.position_x || 0.0)
+      |> PacketWriter.write_f32(packet.position_y || 0.0)
+      |> PacketWriter.write_f32(packet.position_z || 0.0)
+      |> PacketWriter.write_f32(packet.yaw || 0.0)
+      |> PacketWriter.write_f32(packet.pitch || 0.0)
       |> PacketWriter.flush_bits()
 
     {:ok, writer}

@@ -31,16 +31,16 @@ defmodule BezgelorProtocol.Packets.World.ServerMythicKeystoneUpdate do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint64(packet.keystone_id)
-      |> PacketWriter.write_uint32(packet.instance_id)
-      |> PacketWriter.write_byte(packet.old_level)
-      |> PacketWriter.write_byte(packet.new_level)
-      |> PacketWriter.write_byte(if(packet.depleted, do: 1, else: 0))
-      |> PacketWriter.write_byte(length(packet.affix_ids))
+      |> PacketWriter.write_u64(packet.keystone_id)
+      |> PacketWriter.write_u32(packet.instance_id)
+      |> PacketWriter.write_u8(packet.old_level)
+      |> PacketWriter.write_u8(packet.new_level)
+      |> PacketWriter.write_u8(if(packet.depleted, do: 1, else: 0))
+      |> PacketWriter.write_u8(length(packet.affix_ids))
 
     writer =
       Enum.reduce(packet.affix_ids, writer, fn affix_id, w ->
-        PacketWriter.write_uint32(w, affix_id)
+        PacketWriter.write_u32(w, affix_id)
       end)
 
     {:ok, writer}

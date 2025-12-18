@@ -44,9 +44,9 @@ defmodule BezgelorProtocol.Packets.World.ServerMailResult do
 
     writer =
       writer
-      |> PacketWriter.write_byte(result_code)
-      |> PacketWriter.write_byte(op_code)
-      |> PacketWriter.write_uint32(packet.mail_id || 0)
+      |> PacketWriter.write_u8(result_code)
+      |> PacketWriter.write_u8(op_code)
+      |> PacketWriter.write_u32(packet.mail_id || 0)
 
     {:ok, writer}
   end

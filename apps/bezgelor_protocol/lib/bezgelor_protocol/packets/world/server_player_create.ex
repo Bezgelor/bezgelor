@@ -99,7 +99,7 @@ defmodule BezgelorProtocol.Packets.World.ServerPlayerCreate do
     writer =
       writer
       # Inventory count and items
-      |> PacketWriter.write_uint32(length(packet.inventory))
+      |> PacketWriter.write_u32(length(packet.inventory))
       |> write_inventory_items(packet.inventory)
       # Money[16] - 16 uint64 currencies (all zero)
       |> write_money()
@@ -139,7 +139,7 @@ defmodule BezgelorProtocol.Packets.World.ServerPlayerCreate do
       # Tradeskill materials[512] - all zeros
       |> write_tradeskill_materials()
       # Gear score (float)
-      |> PacketWriter.write_float32_bits(packet.gear_score)
+      |> PacketWriter.write_f32(packet.gear_score)
       # Is PvP server (bool)
       |> PacketWriter.write_bits(if(packet.is_pvp_server, do: 1, else: 0), 1)
       # Matching eligibility flags
@@ -184,12 +184,35 @@ defmodule BezgelorProtocol.Packets.World.ServerPlayerCreate do
     %__MODULE__{
       xp: character.total_xp || 0,
       rest_bonus_xp: character.rest_bonus_xp || 0,
+      item_proficiencies: get_class_proficiencies(character.class),
       spec_index: character.active_spec || 0,
       faction_id: character.faction_id || 166,
       active_costume_index: character.active_costume_index || -1,
       inventory: inventory
     }
   end
+
+  # Item proficiency flags from NexusForever ItemProficiency enum
+  @proficiency_heavy_armor 0x000002
+  @proficiency_medium_armor 0x000004
+  @proficiency_light_armor 0x000008
+  @proficiency_great_weapon 0x000010
+  @proficiency_heavy_gun 0x000040
+  @proficiency_resonators 0x000100
+  @proficiency_pistols 0x001000
+  @proficiency_psyblade 0x040000
+  @proficiency_claws 0x100000
+
+  # Get item proficiencies bitmask based on class
+  # Class IDs: 1=Warrior, 2=Engineer, 3=Esper, 4=Medic, 5=Stalker, 7=Spellslinger
+  defp get_class_proficiencies(1), do: @proficiency_heavy_armor ||| @proficiency_great_weapon
+  defp get_class_proficiencies(2), do: @proficiency_heavy_armor ||| @proficiency_heavy_gun
+  defp get_class_proficiencies(3), do: @proficiency_light_armor ||| @proficiency_psyblade
+  defp get_class_proficiencies(4), do: @proficiency_medium_armor ||| @proficiency_resonators
+  defp get_class_proficiencies(5), do: @proficiency_medium_armor ||| @proficiency_claws
+  defp get_class_proficiencies(7), do: @proficiency_light_armor ||| @proficiency_pistols
+  # Default: allow all armor types if class unknown
+  defp get_class_proficiencies(_), do: @proficiency_heavy_armor ||| @proficiency_medium_armor ||| @proficiency_light_armor
 
   # Write all inventory items
   defp write_inventory_items(writer, []), do: writer
@@ -202,42 +225,47 @@ defmodule BezgelorProtocol.Packets.World.ServerPlayerCreate do
 
   # Write a single inventory item (InventoryItem = Item + 6-bit reason)
   defp write_inventory_item(writer, item) do
+    require Logger
     # Generate guid from item ID or use database ID
     guid = item[:id] || generate_item_guid(item)
 
+    Logger.debug(
+      "WriteItem: guid=#{guid} item_id=#{item[:item_id]} location=#{item[:container_type]} slot=#{item[:slot]}"
+    )
+
     writer
     # Item guid (uint64)
-    |> PacketWriter.write_uint64(guid)
+    |> PacketWriter.write_u64(guid)
     # Unknown0 (uint64)
-    |> PacketWriter.write_uint64(0)
+    |> PacketWriter.write_u64(0)
     # Item ID (18 bits)
     |> PacketWriter.write_bits(item[:item_id] || 0, 18)
     # Location (9 bits)
     |> PacketWriter.write_bits(location_to_int(item[:container_type]), 9)
     # Bag index (uint32) - for equipped items, this is the slot number
-    |> PacketWriter.write_uint32(item[:slot] || 0)
+    |> PacketWriter.write_u32(item[:slot] || 0)
     # Stack count (uint32)
-    |> PacketWriter.write_uint32(item[:quantity] || 1)
+    |> PacketWriter.write_u32(item[:quantity] || 1)
     # Charges (uint32)
-    |> PacketWriter.write_uint32(item[:charges] || 0)
+    |> PacketWriter.write_u32(item[:charges] || 0)
     # Random circuit data (uint64)
-    |> PacketWriter.write_uint64(0)
+    |> PacketWriter.write_u64(0)
     # Random glyph data (uint32)
-    |> PacketWriter.write_uint32(0)
+    |> PacketWriter.write_u32(0)
     # Threshold data (uint64)
-    |> PacketWriter.write_uint64(0)
+    |> PacketWriter.write_u64(0)
     # Durability (float32)
-    |> PacketWriter.write_float32(normalize_durability(item[:durability]))
+    |> PacketWriter.write_f32(normalize_durability(item[:durability]))
     # Unknown44 (uint32)
-    |> PacketWriter.write_uint32(0)
+    |> PacketWriter.write_u32(0)
     # Unknown48 (uint8)
-    |> PacketWriter.write_byte(0)
+    |> PacketWriter.write_u8(0)
     # Dye data (uint32)
-    |> PacketWriter.write_uint32(0)
+    |> PacketWriter.write_u32(0)
     # Dynamic flags (uint32)
-    |> PacketWriter.write_uint32(0)
+    |> PacketWriter.write_u32(0)
     # Expiration time left (uint32)
-    |> PacketWriter.write_uint32(0)
+    |> PacketWriter.write_u32(0)
     # Unknown58 array (2 elements, each 3-bit + uint32 + uint32)
     |> write_unknown58_entry()
     |> write_unknown58_entry()
@@ -250,7 +278,7 @@ defmodule BezgelorProtocol.Packets.World.ServerPlayerCreate do
     # Unknown88 count (6 bits) + array
     |> PacketWriter.write_bits(0, 6)
     # Effective item level (uint32)
-    |> PacketWriter.write_uint32(0)
+    |> PacketWriter.write_u32(0)
     # ItemUpdateReason (6 bits)
     |> PacketWriter.write_bits(@reason_no_reason, 6)
   end
@@ -259,8 +287,8 @@ defmodule BezgelorProtocol.Packets.World.ServerPlayerCreate do
   defp write_unknown58_entry(writer) do
     writer
     |> PacketWriter.write_bits(0, 3)
-    |> PacketWriter.write_uint32(0)
-    |> PacketWriter.write_uint32(0)
+    |> PacketWriter.write_u32(0)
+    |> PacketWriter.write_u32(0)
   end
 
   # Convert durability (0-100) to float 0.0-1.0

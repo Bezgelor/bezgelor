@@ -90,6 +90,7 @@ defmodule BezgelorPortalWeb.Router do
 
       # User Management
       live "/users", UsersLive, :index
+      live "/users/bans", BansLive, :index
       live "/users/:id", UserDetailLive, :show
 
       # Character Management
@@ -102,18 +103,23 @@ defmodule BezgelorPortalWeb.Router do
       # Economy Management
       live "/economy", EconomyLive, :index
 
+      # Item Database
+      live "/items", ItemsLive, :index
+
       # Role Management
       live "/roles", RolesLive, :index
       live "/roles/:id/edit", RoleEditLive, :edit
 
       # Event Management
       live "/events", EventsLive, :index
+      live "/events/broadcast", BroadcastLive, :index
 
       # Instance Management
       live "/instances", InstancesLive, :index
 
       # Server Operations
       live "/server", ServerLive, :index
+      live "/server/logs", LogsLive, :index
 
       # Analytics
       live "/analytics", AnalyticsLive, :index

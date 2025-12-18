@@ -35,15 +35,15 @@ defmodule BezgelorProtocol.Packets.World.ServerTradeskillTalentList do
 
     writer =
       writer
-      |> PacketWriter.write_uint32(packet.profession_id)
-      |> PacketWriter.write_uint16(packet.total_points || 0)
-      |> PacketWriter.write_byte(length(talents))
+      |> PacketWriter.write_u32(packet.profession_id)
+      |> PacketWriter.write_u16(packet.total_points || 0)
+      |> PacketWriter.write_u8(length(talents))
 
     writer =
       Enum.reduce(talents, writer, fn talent, w ->
         w
-        |> PacketWriter.write_uint32(talent.talent_id)
-        |> PacketWriter.write_byte(talent.points_spent)
+        |> PacketWriter.write_u32(talent.talent_id)
+        |> PacketWriter.write_u8(talent.points_spent)
       end)
 
     {:ok, writer}
