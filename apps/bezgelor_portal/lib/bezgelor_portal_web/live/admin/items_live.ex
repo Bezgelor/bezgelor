@@ -94,30 +94,18 @@ defmodule BezgelorPortalWeb.Admin.ItemsLive do
                     <th>Type</th>
                     <th>Level</th>
                     <th>Quality</th>
-                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr :for={item <- @search_results} class="hover">
-                    <td class="font-mono">{item.id}</td>
+                  <tr :for={item <- @search_results} class="hover cursor-pointer" phx-click="view_item" phx-value-id={item[:ID]}>
+                    <td class="font-mono">{item[:ID]}</td>
                     <td class={item_quality_class(item)}>{item.name}</td>
                     <td>{item_family_name(item)}</td>
-                    <td>{Map.get(item, :power_level, "-")}</td>
+                    <td>{Map.get(item, :powerLevel, "-")}</td>
                     <td>
                       <span class={"badge badge-sm #{quality_badge_class(item)}"}>
                         {quality_name(item)}
                       </span>
-                    </td>
-                    <td>
-                      <button
-                        type="button"
-                        class="btn btn-ghost btn-xs"
-                        phx-click="view_item"
-                        phx-value-id={item.id}
-                      >
-                        <.icon name="hero-eye" class="size-4" />
-                        View
-                      </button>
                     </td>
                   </tr>
                 </tbody>
@@ -136,7 +124,7 @@ defmodule BezgelorPortalWeb.Admin.ItemsLive do
   defp item_detail_modal(assigns) do
     ~H"""
     <div class="modal modal-open">
-      <div class="modal-box max-w-2xl">
+      <div class="modal-box max-w-2xl max-h-[80vh] overflow-y-auto">
         <button
           type="button"
           class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
@@ -145,14 +133,26 @@ defmodule BezgelorPortalWeb.Admin.ItemsLive do
           <.icon name="hero-x-mark" class="size-4" />
         </button>
 
-        <h3 class={"font-bold text-lg mb-4 #{item_quality_class(@item)}"}>
-          {@item.name}
-        </h3>
+        <div class="flex items-center gap-4 mb-4">
+          <div class={"relative p-3 rounded-lg bg-base-200 overflow-hidden #{item_quality_bg(@item)}"}>
+            <.icon name={item_family_icon(@item)} class={"size-12 #{item_quality_class(@item)}"} />
+            <div
+              class="absolute text-black text-center font-bold uppercase tracking-wide"
+              style="background-color: #f7941d; width: 80px; top: 12px; left: -20px; transform: rotate(-45deg); font-size: 10px; line-height: 1.6; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"
+            >
+              WiP
+            </div>
+          </div>
+          <div>
+            <h3 class={"font-bold text-lg #{item_quality_class(@item)}"}>{@item.name}</h3>
+            <p class="text-sm text-base-content/50">{item_family_name(@item)} • ID: {@item[:ID]}</p>
+          </div>
+        </div>
 
         <div class="grid grid-cols-2 gap-4 text-sm">
           <div>
             <span class="text-base-content/50">Item ID:</span>
-            <span class="font-mono ml-2">{@item.id}</span>
+            <span class="font-mono ml-2">{@item[:ID]}</span>
           </div>
           <div>
             <span class="text-base-content/50">Family:</span>
@@ -160,19 +160,19 @@ defmodule BezgelorPortalWeb.Admin.ItemsLive do
           </div>
           <div>
             <span class="text-base-content/50">Category:</span>
-            <span class="ml-2">{Map.get(@item, :category_id, 0)}</span>
+            <span class="ml-2">{Map.get(@item, :item2CategoryId, 0)}</span>
           </div>
           <div>
             <span class="text-base-content/50">Type:</span>
-            <span class="ml-2">{Map.get(@item, :type_id, 0)}</span>
+            <span class="ml-2">{Map.get(@item, :item2TypeId, 0)}</span>
           </div>
           <div>
             <span class="text-base-content/50">Power Level:</span>
-            <span class="ml-2">{Map.get(@item, :power_level, 0)}</span>
+            <span class="ml-2">{Map.get(@item, :powerLevel, 0)}</span>
           </div>
           <div>
             <span class="text-base-content/50">Required Level:</span>
-            <span class="ml-2">{Map.get(@item, :required_level, 0)}</span>
+            <span class="ml-2">{Map.get(@item, :requiredLevel, 0)}</span>
           </div>
           <div>
             <span class="text-base-content/50">Quality:</span>
@@ -180,7 +180,7 @@ defmodule BezgelorPortalWeb.Admin.ItemsLive do
           </div>
           <div>
             <span class="text-base-content/50">Max Stack:</span>
-            <span class="ml-2">{Map.get(@item, :max_stack_count, 1)}</span>
+            <span class="ml-2">{Map.get(@item, :maxStackCount, 1)}</span>
           </div>
           <div>
             <span class="text-base-content/50">Bind Flags:</span>
@@ -188,7 +188,7 @@ defmodule BezgelorPortalWeb.Admin.ItemsLive do
           </div>
           <div>
             <span class="text-base-content/50">Display ID:</span>
-            <span class="font-mono ml-2">{Map.get(@item, :display_id, 0)}</span>
+            <span class="font-mono ml-2">{Map.get(@item, :itemDisplayId, 0)}</span>
           </div>
         </div>
 
@@ -196,7 +196,7 @@ defmodule BezgelorPortalWeb.Admin.ItemsLive do
 
         <div class="text-sm">
           <h4 class="font-semibold mb-2">Raw Data</h4>
-          <pre class="bg-base-200 p-3 rounded-lg overflow-x-auto text-xs"><%= @item |> Map.drop([:name]) |> inspect(pretty: true, limit: :infinity) %></pre>
+          <pre class="bg-base-200 p-3 rounded-lg overflow-auto max-h-60 text-xs"><%= @item |> Map.drop([:name]) |> inspect(pretty: true, limit: :infinity) %></pre>
         </div>
 
         <div class="modal-action">
@@ -243,7 +243,7 @@ defmodule BezgelorPortalWeb.Admin.ItemsLive do
 
   # Quality ID to text color class
   defp item_quality_class(item) do
-    case Map.get(item, :quality_id, 2) do
+    case Map.get(item, :itemQualityId, 2) do
       1 -> "text-gray-400"
       2 -> ""
       3 -> "text-green-500"
@@ -257,7 +257,7 @@ defmodule BezgelorPortalWeb.Admin.ItemsLive do
 
   # Quality ID to badge class
   defp quality_badge_class(item) do
-    case Map.get(item, :quality_id, 2) do
+    case Map.get(item, :itemQualityId, 2) do
       1 -> "badge-ghost"
       2 -> ""
       3 -> "badge-success"
@@ -271,7 +271,7 @@ defmodule BezgelorPortalWeb.Admin.ItemsLive do
 
   # Quality ID to name
   defp quality_name(item) do
-    case Map.get(item, :quality_id, 2) do
+    case Map.get(item, :itemQualityId, 2) do
       1 -> "Poor"
       2 -> "Common"
       3 -> "Uncommon"
@@ -283,9 +283,46 @@ defmodule BezgelorPortalWeb.Admin.ItemsLive do
     end
   end
 
+  # Item family ID to icon
+  defp item_family_icon(item) do
+    case Map.get(item, :item2FamilyId, 0) do
+      1 -> "hero-shield-check"      # Armor
+      2 -> "hero-bolt"              # Weapon
+      3 -> "hero-archive-box"       # Bag
+      4 -> "hero-beaker"            # Consumable
+      5 -> "hero-currency-dollar"   # Currency
+      6 -> "hero-clipboard-document" # Quest
+      7 -> "hero-home"              # Housing
+      8 -> "hero-sparkles"          # Costume
+      9 -> "hero-puzzle-piece"      # Schematic
+      10 -> "hero-cog-6-tooth"      # Tool
+      11 -> "hero-book-open"        # Amp
+      12 -> "hero-book-open"        # Amp
+      13 -> "hero-cube"             # Rune
+      14 -> "hero-swatch"           # Dye
+      15 -> "hero-photo"            # Decor
+      16 -> "hero-wrench-screwdriver" # FABkit
+      _ -> "hero-cube-transparent"  # Other
+    end
+  end
+
+  # Quality ID to background class
+  defp item_quality_bg(item) do
+    case Map.get(item, :itemQualityId, 2) do
+      1 -> "bg-gray-500/20"
+      2 -> ""
+      3 -> "bg-green-500/20"
+      4 -> "bg-blue-500/20"
+      5 -> "bg-purple-500/20"
+      6 -> "bg-orange-500/20"
+      7 -> "bg-pink-500/20"
+      _ -> ""
+    end
+  end
+
   # Item family ID to name
   defp item_family_name(item) do
-    case Map.get(item, :family_id, 0) do
+    case Map.get(item, :item2FamilyId, 0) do
       1 -> "Armor"
       2 -> "Weapon"
       3 -> "Bag"
@@ -302,18 +339,18 @@ defmodule BezgelorPortalWeb.Admin.ItemsLive do
       14 -> "Dye"
       15 -> "Decor"
       16 -> "FABkit"
-      _ -> "Other (#{Map.get(item, :family_id, 0)})"
+      _ -> "Other (#{Map.get(item, :item2FamilyId, 0)})"
     end
   end
 
   # Bind flags to name
   defp bind_type_name(item) do
-    case Map.get(item, :bind_flags, 0) do
+    case Map.get(item, :bindFlags, 0) do
       0 -> "None"
       1 -> "Bind on Equip"
       2 -> "Bind on Pickup"
       8 -> "Bind on Use"
-      _ -> "Other (#{Map.get(item, :bind_flags, 0)})"
+      _ -> "Other (#{Map.get(item, :bindFlags, 0)})"
     end
   end
 end
