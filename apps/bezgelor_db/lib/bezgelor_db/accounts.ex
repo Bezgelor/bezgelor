@@ -966,4 +966,82 @@ defmodule BezgelorDb.Accounts do
     |> Ecto.Changeset.change(%{deleted_at: nil})
     |> Repo.update()
   end
+
+  @doc """
+  List all suspensions with optional filtering.
+
+  ## Options
+
+  - `:active_only` - Only return currently active suspensions (default: false)
+  - `:limit` - Maximum number of results
+  - `:offset` - Offset for pagination
+  - `:search` - Search by account email
+
+  ## Returns
+
+  List of suspensions with preloaded account.
+  """
+  @spec list_suspensions(keyword()) :: [AccountSuspension.t()]
+  def list_suspensions(opts \\ []) do
+    active_only = Keyword.get(opts, :active_only, false)
+    limit = Keyword.get(opts, :limit, 50)
+    offset = Keyword.get(opts, :offset, 0)
+    search = Keyword.get(opts, :search)
+
+    query =
+      from(s in AccountSuspension,
+        join: a in assoc(s, :account),
+        preload: [account: a],
+        order_by: [desc: s.start_time],
+        limit: ^limit,
+        offset: ^offset
+      )
+
+    query =
+      if active_only do
+        now = DateTime.utc_now()
+        from(s in query, where: is_nil(s.end_time) or s.end_time > ^now)
+      else
+        query
+      end
+
+    query =
+      if search && search != "" do
+        search_term = "%#{search}%"
+        from([s, a] in query, where: ilike(a.email, ^search_term))
+      else
+        query
+      end
+
+    Repo.all(query)
+  end
+
+  @doc """
+  Count all suspensions with optional filtering.
+  """
+  @spec count_suspensions(keyword()) :: non_neg_integer()
+  def count_suspensions(opts \\ []) do
+    active_only = Keyword.get(opts, :active_only, false)
+    search = Keyword.get(opts, :search)
+
+    query = from(s in AccountSuspension, join: a in assoc(s, :account))
+
+    query =
+      if active_only do
+        now = DateTime.utc_now()
+        from(s in query, where: is_nil(s.end_time) or s.end_time > ^now)
+      else
+        query
+      end
+
+    query =
+      if search && search != "" do
+        search_term = "%#{search}%"
+        from([s, a] in query, where: ilike(a.email, ^search_term))
+      else
+        query
+      end
+
+    Repo.aggregate(query, :count)
+  end
 end
