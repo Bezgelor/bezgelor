@@ -53,6 +53,7 @@ defmodule BezgelorData.Store do
   use GenServer
 
   require Logger
+  import Bitwise
 
   alias BezgelorData.Compiler
 
@@ -191,9 +192,16 @@ defmodule BezgelorData.Store do
   """
   @spec get(atom(), non_neg_integer()) :: {:ok, map()} | :error
   def get(table, id) do
-    case :ets.lookup(table_name(table), id) do
-      [{^id, data}] -> {:ok, data}
-      [] -> :error
+    ets_table = table_name(table)
+    case :ets.info(ets_table) do
+      :undefined ->
+        :error
+
+      _ ->
+        case :ets.lookup(ets_table, id) do
+          [{^id, data}] -> {:ok, data}
+          [] -> :error
+        end
     end
   end
 
@@ -1786,12 +1794,59 @@ defmodule BezgelorData.Store do
   end
 
   defp get_item_type_id(item) do
-    Map.get(item, "type_id") || Map.get(item, :type_id) || 0
+    # Field is item2TypeId in the JSON data (loaded with atom keys)
+    Map.get(item, :item2TypeId) || Map.get(item, "item2TypeId") || 0
   end
 
   defp get_slot_id(item_type) do
     Map.get(item_type, "itemSlotId") || Map.get(item_type, :itemSlotId) || 0
   end
+
+  @doc """
+  Get the EquippedItem slot index for an item.
+
+  Uses the item's `equippedSlotFlags` bitmask to determine which equipped slot
+  the item goes into. The lowest set bit determines the primary slot.
+
+  ## Parameters
+
+  - `item_id` - The item ID
+
+  ## Returns
+
+  The EquippedItem slot index (0=Chest, 1=Legs, 2=Head, etc.) or nil if not equippable.
+  """
+  @spec get_item_equipped_slot(non_neg_integer()) :: non_neg_integer() | nil
+  def get_item_equipped_slot(item_id) do
+    case get(:items, item_id) do
+      {:ok, item} ->
+        flags = Map.get(item, "equippedSlotFlags") || Map.get(item, :equippedSlotFlags) || 0
+        if flags > 0 do
+          # Find the lowest set bit (primary equipped slot)
+          find_lowest_bit(flags)
+        else
+          nil
+        end
+
+      _ ->
+        nil
+    end
+  end
+
+  # Find the position of the lowest set bit in a flags value
+  defp find_lowest_bit(flags) when flags > 0 do
+    do_find_lowest_bit(flags, 0)
+  end
+  defp find_lowest_bit(_), do: nil
+
+  defp do_find_lowest_bit(flags, position) when position < 32 do
+    if band(flags, 1) == 1 do
+      position
+    else
+      do_find_lowest_bit(bsr(flags, 1), position + 1)
+    end
+  end
+  defp do_find_lowest_bit(_, _), do: nil
 
   @doc """
   Get default gear visuals for a character class.
@@ -1875,36 +1930,89 @@ defmodule BezgelorData.Store do
   """
   @spec get_item_display_id(non_neg_integer(), non_neg_integer() | nil) :: non_neg_integer()
   def get_item_display_id(item_id, power_level \\ nil) do
+    require Logger
+
     case get(:items, item_id) do
       {:ok, item} ->
-        item_source_id = get_item_field(item, :item_source_id) || 0
-        display_id = get_item_field(item, :display_id) || 0
-        item_power_level = power_level || get_item_field(item, :power_level) || 0
-        type_id = get_item_field(item, :type_id) || 0
+        # Field names are camelCase from JSON (loaded with atom keys)
+        item_source_id = Map.get(item, :itemSourceId) || 0
+        display_id = Map.get(item, :itemDisplayId) || 0
+        item_power_level = power_level || Map.get(item, :powerLevel) || 0
+        type_id = Map.get(item, :item2TypeId) || 0
+
+        Logger.info("get_item_display_id(#{item_id}): source=#{item_source_id}, display=#{display_id}, type=#{type_id}, level=#{item_power_level}")
 
         if item_source_id > 0 do
           # Look up from ItemDisplaySourceEntry by source_id and level
-          resolve_display_from_source(item_source_id, type_id, item_power_level, display_id)
+          result = resolve_display_from_source(item_source_id, type_id, item_power_level, display_id)
+          Logger.info("get_item_display_id(#{item_id}): resolved to #{result}")
+          result
         else
           # Use direct display_id
           display_id
         end
 
       :error ->
+        Logger.warning("get_item_display_id(#{item_id}): item not found!")
         0
     end
   end
 
+  @doc """
+  Get the display ID and visual slot for an item.
+
+  Returns {display_id, visual_slot} where visual_slot comes from Item2Type.itemSlotId.
+  This is used for building ItemVisual structs for entity creation.
+  """
+  @spec get_item_visual_info(non_neg_integer(), non_neg_integer() | nil) :: {non_neg_integer(), non_neg_integer()}
+  def get_item_visual_info(item_id, power_level \\ nil) do
+    require Logger
+
+    case get(:items, item_id) do
+      {:ok, item} ->
+        # Get display_id (handles ItemDisplaySourceEntry lookup)
+        display_id = get_item_display_id(item_id, power_level)
+
+        # Get visual slot from Item2Type.itemSlotId
+        type_id = Map.get(item, :item2TypeId) || 0
+        visual_slot = get_item_slot_id(type_id)
+
+        Logger.info("get_item_visual_info(#{item_id}): type=#{type_id}, visual_slot=#{visual_slot}, display_id=#{display_id}")
+        {display_id, visual_slot}
+
+      :error ->
+        Logger.warning("get_item_visual_info(#{item_id}): item not found!")
+        {0, 0}
+    end
+  end
+
+  # Get the visual slot ID (ItemSlot) from Item2Type
+  defp get_item_slot_id(type_id) when type_id > 0 do
+    case get(:item_types, type_id) do
+      {:ok, item_type} ->
+        Map.get(item_type, :itemSlotId) || 0
+
+      :error ->
+        0
+    end
+  end
+
+  defp get_item_slot_id(_), do: 0
+
   # Resolve display_id from ItemDisplaySourceEntry table
   defp resolve_display_from_source(source_id, type_id, power_level, fallback_display_id) do
+    require Logger
+
     # Get all entries for this source_id
     entries = get_display_source_entries(source_id)
+    Logger.info("resolve_display: source=#{source_id} has #{length(entries)} entries")
 
-    # Filter by type_id
+    # Filter by type_id (camelCase keys from JSON)
     matching_entries = Enum.filter(entries, fn entry ->
-      entry_type_id = Map.get(entry, :Item2TypeId) || Map.get(entry, "Item2TypeId") || 0
+      entry_type_id = Map.get(entry, :item2TypeId) || 0
       entry_type_id == type_id
     end)
+    Logger.info("resolve_display: #{length(matching_entries)} entries match type_id=#{type_id}")
 
     case matching_entries do
       [] ->
@@ -1913,7 +2021,7 @@ defmodule BezgelorData.Store do
 
       [single] ->
         # Single entry, use its display_id
-        Map.get(single, :ItemDisplayId) || Map.get(single, "ItemDisplayId") || fallback_display_id
+        Map.get(single, :itemDisplayId) || fallback_display_id
 
       multiple when is_list(multiple) ->
         # Multiple entries - check if we have an explicit display_id first
@@ -1922,13 +2030,13 @@ defmodule BezgelorData.Store do
         else
           # Find entry matching level range
           level_match = Enum.find(multiple, fn entry ->
-            min_level = Map.get(entry, :ItemMinLevel) || Map.get(entry, "ItemMinLevel") || 0
-            max_level = Map.get(entry, :ItemMaxLevel) || Map.get(entry, "ItemMaxLevel") || 999
+            min_level = Map.get(entry, :itemMinLevel) || 0
+            max_level = Map.get(entry, :itemMaxLevel) || 999
             power_level >= min_level and power_level <= max_level
           end)
 
           if level_match do
-            Map.get(level_match, :ItemDisplayId) || Map.get(level_match, "ItemDisplayId") || fallback_display_id
+            Map.get(level_match, :itemDisplayId) || fallback_display_id
           else
             fallback_display_id
           end
@@ -1938,7 +2046,15 @@ defmodule BezgelorData.Store do
 
   # Get display source entries for a source_id (uses index)
   defp get_display_source_entries(source_id) do
-    case :ets.lookup(index_table_name(:display_sources_by_source_id), source_id) do
+    require Logger
+    index_name = index_table_name(:display_sources_by_source_id)
+    table_size = :ets.info(index_name, :size)
+
+    if table_size == 0 do
+      Logger.warning("get_display_source_entries: INDEX IS EMPTY! Table: #{index_name}")
+    end
+
+    case :ets.lookup(index_name, source_id) do
       [{^source_id, entries}] -> entries
       [] -> []
     end
@@ -3079,6 +3195,14 @@ defmodule BezgelorData.Store do
     case load_json_raw(json_path) do
       {:ok, data} ->
         items = Map.get(data, :itemdisplaysourceentry, [])
+        Logger.info("ItemDisplaySourceEntry: loaded #{length(items)} entries from JSON")
+
+        # Sample first entry to check field names
+        if length(items) > 0 do
+          first = hd(items)
+          Logger.info("ItemDisplaySourceEntry: first entry keys: #{inspect(Map.keys(first) |> Enum.take(5))}")
+          Logger.info("ItemDisplaySourceEntry: first entry itemSourceId=#{inspect(Map.get(first, :itemSourceId))}")
+        end
 
         # Bulk insert with ID normalization
         tuples =
@@ -3095,28 +3219,41 @@ defmodule BezgelorData.Store do
         # Build the source_id index for efficient lookup
         build_display_source_index(items)
 
-        Logger.debug("Loaded #{length(tuples)} item display source entries")
+        # Check index after building
+        index_size = :ets.info(index_name, :size)
+        Logger.info("ItemDisplaySourceEntry: built index with #{index_size} source_ids")
 
-      {:error, _reason} ->
+      {:error, reason} ->
         # ItemDisplaySourceEntry.json is optional - many items don't use it
-        Logger.debug("ItemDisplaySourceEntry.json not found (optional - items will use direct display_id)")
+        Logger.warning("ItemDisplaySourceEntry.json load failed: #{inspect(reason)}")
     end
   end
 
   # Build the display_sources_by_source_id index for efficient lookup
   defp build_display_source_index(items) do
+    require Logger
     index_name = index_table_name(:display_sources_by_source_id)
 
-    # Group by ItemSourceId and bulk insert
+    # Group by itemSourceId (camelCase - JSON loaded with atom keys)
     tuples =
       items
       |> Enum.group_by(fn item ->
-        Map.get(item, :ItemSourceId) || Map.get(item, "ItemSourceId") || 0
+        Map.get(item, :itemSourceId) || 0
       end)
       |> Enum.filter(fn {source_id, _} -> source_id > 0 end)
       |> Enum.map(fn {source_id, entries} -> {source_id, entries} end)
 
+    # Log if source 76 was found
+    source_76 = Enum.find(tuples, fn {sid, _} -> sid == 76 end)
+    if source_76 do
+      {_, entries} = source_76
+      Logger.info("build_display_source_index: source 76 has #{length(entries)} entries")
+    else
+      Logger.warning("build_display_source_index: source 76 NOT FOUND in index!")
+    end
+
     :ets.insert(index_name, tuples)
+    Logger.info("build_display_source_index: inserted #{length(tuples)} source_ids into #{index_name}")
   end
 
   # Load ItemDisplay data for model paths and textures
@@ -3691,9 +3828,11 @@ defmodule BezgelorData.Store do
   defp build_all_indexes do
     Logger.debug("Building secondary indexes...")
 
-    # Clear all index tables EXCEPT customizations_by_race_sex
-    # (which is built during load_character_customizations)
-    for table <- @index_tables, table != :customizations_by_race_sex do
+    # Clear all index tables EXCEPT those built during load functions:
+    # - customizations_by_race_sex (built during load_character_customizations)
+    # - display_sources_by_source_id (built during load_item_display_sources)
+    skip_tables = [:customizations_by_race_sex, :display_sources_by_source_id]
+    for table <- @index_tables, table not in skip_tables do
       :ets.delete_all_objects(index_table_name(table))
     end
 
