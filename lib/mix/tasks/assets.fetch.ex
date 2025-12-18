@@ -11,6 +11,7 @@ defmodule Mix.Tasks.Assets.Fetch do
       mix assets.fetch              # Fetch all assets
       mix assets.fetch --models     # Fetch only 3D models
       mix assets.fetch --textures   # Fetch only textures
+      mix assets.fetch --local      # Deploy from local portal_assets/ directory
       mix assets.fetch --dry-run    # Show what would be fetched
 
   ## Configuration
@@ -57,39 +58,63 @@ defmodule Mix.Tasks.Assets.Fetch do
 
   @models_dest "apps/bezgelor_portal/priv/static/models/characters"
   @textures_dest "apps/bezgelor_portal/priv/static/textures"
+  @local_assets_dir "portal_assets"
 
   @impl Mix.Task
   def run(args) do
     {opts, _, _} =
       OptionParser.parse(args,
-        switches: [models: :boolean, textures: :boolean, dry_run: :boolean],
-        aliases: [n: :dry_run]
+        switches: [models: :boolean, textures: :boolean, dry_run: :boolean, local: :boolean],
+        aliases: [n: :dry_run, l: :local]
       )
-
-    assets_url = System.get_env("BEZGELOR_ASSETS_URL")
-
-    if is_nil(assets_url) do
-      Mix.shell().error("""
-      BEZGELOR_ASSETS_URL environment variable not set.
-
-      Set it to your private storage location:
-        export BEZGELOR_ASSETS_URL="s3://my-bucket/bezgelor-assets"
-        export BEZGELOR_ASSETS_URL="https://my-server.com/assets"
-        export BEZGELOR_ASSETS_URL="/path/to/local/assets"
-
-      See docs/asset-extraction.md for how to create these assets.
-      """)
-
-      exit({:shutdown, 1})
-    end
 
     fetch_models = opts[:models] || (!opts[:models] && !opts[:textures])
     fetch_textures = opts[:textures] || (!opts[:models] && !opts[:textures])
     dry_run = opts[:dry_run] || false
+    use_local = opts[:local] || false
 
     if dry_run do
       Mix.shell().info("Dry run mode - no files will be downloaded")
     end
+
+    assets_url =
+      if use_local do
+        if File.dir?(@local_assets_dir) do
+          Mix.shell().info("Using local assets from #{@local_assets_dir}/")
+          @local_assets_dir
+        else
+          Mix.shell().error("""
+          Local assets directory not found: #{@local_assets_dir}/
+
+          Extract assets using the tools in tools/m3_extractor/ and place them in:
+            #{@local_assets_dir}/models/characters/
+            #{@local_assets_dir}/textures/characters/
+          """)
+
+          exit({:shutdown, 1})
+        end
+      else
+        url = System.get_env("BEZGELOR_ASSETS_URL")
+
+        if is_nil(url) do
+          Mix.shell().error("""
+          BEZGELOR_ASSETS_URL environment variable not set.
+
+          Set it to your private storage location:
+            export BEZGELOR_ASSETS_URL="s3://my-bucket/bezgelor-assets"
+            export BEZGELOR_ASSETS_URL="https://my-server.com/assets"
+            export BEZGELOR_ASSETS_URL="/path/to/local/assets"
+
+          Or use --local to deploy from the local portal_assets/ directory.
+
+          See docs/asset-extraction.md for how to create these assets.
+          """)
+
+          exit({:shutdown, 1})
+        end
+
+        url
+      end
 
     if fetch_models do
       fetch_assets(assets_url, "models/characters", @models_dest, dry_run)
