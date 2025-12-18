@@ -139,7 +139,6 @@ defmodule BezgelorProtocol.Handler.MoveItemHandler do
     packet = %ServerItemMove{
       item_guid: item.id,
       location: item.container_type,
-      bag_index: item.bag_index,
       slot: item.slot
     }
 
@@ -183,7 +182,8 @@ defmodule BezgelorProtocol.Handler.MoveItemHandler do
   end
 
   defp broadcast_visual_update(state) do
-    character_id = state.session_data[:character].id
+    character = state.session_data[:character]
+    character_id = character.id
     entity_guid = state.session_data[:entity_guid]
     zone_id = state.session_data[:zone_id]
 
@@ -195,22 +195,47 @@ defmodule BezgelorProtocol.Handler.MoveItemHandler do
     recipient_guids = get_nearby_players(zone_id, entity_guid)
 
     if recipient_guids != [] do
-      CombatBroadcaster.broadcast_item_visual_update(entity_guid, visuals, recipient_guids)
+      CombatBroadcaster.broadcast_item_visual_update(entity_guid, character, visuals, recipient_guids)
     end
 
     state
   end
 
-  defp build_visuals(equipped_items) do
-    Enum.map(equipped_items, fn item ->
-      display_id = Store.get_item_display_id(item.item_id) || 0
+  # Map from our internal EquippedItem slot to client ItemSlot
+  # Internal slots are 0-based, client expects ItemSlot enum values
+  @equipped_to_item_slot %{
+    0 => 1,    # Chest -> ArmorChest
+    1 => 2,    # Legs -> ArmorLegs
+    2 => 3,    # Head -> ArmorHead
+    3 => 4,    # Shoulder -> ArmorShoulder
+    4 => 5,    # Feet -> ArmorFeet
+    5 => 6,    # Hands -> ArmorHands
+    6 => 7,    # WeaponTool -> WeaponTool
+    15 => 43,  # Shields -> ArmorShields
+    16 => 20   # WeaponPrimary -> WeaponPrimary
+  }
 
-      %{
-        slot: item.slot,
-        display_id: display_id,
-        colour_set: 0,
-        dye_data: 0
-      }
+  # Visible equipment slots (internal EquippedItem numbers)
+  @visible_equipment_slots [0, 1, 2, 3, 4, 5, 16]
+
+  defp build_visuals(equipped_items) do
+    # Build map of currently equipped items by slot
+    equipped_by_slot = Map.new(equipped_items, fn item -> {item.slot, item} end)
+
+    # For each visible equipment slot, send either the item's display_id or 0 (empty)
+    Enum.map(@visible_equipment_slots, fn internal_slot ->
+      # Convert internal slot to client ItemSlot
+      item_slot = Map.get(@equipped_to_item_slot, internal_slot, internal_slot)
+
+      case Map.get(equipped_by_slot, internal_slot) do
+        nil ->
+          # Empty slot - send display_id=0 to clear the visual
+          %{slot: item_slot, display_id: 0, colour_set: 0, dye_data: 0}
+
+        item ->
+          display_id = Store.get_item_display_id(item.item_id) || 0
+          %{slot: item_slot, display_id: display_id, colour_set: 0, dye_data: 0}
+      end
     end)
   end
 
