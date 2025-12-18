@@ -28,6 +28,12 @@ erl_crash.dump
 # Non-redistributable game assets (extract via tools/, fetch via mix assets.fetch)
 apps/bezgelor_portal/priv/static/models/characters/*.glb
 apps/bezgelor_portal/priv/static/textures/
+portal_assets/
+
+# M3 extractor test data (proprietary game files)
+tools/m3_extractor/test_data/
+tools/m3_extractor/tests/fixtures/
+tools/m3_extractor/tests/output/
 
 # Python cache
 __pycache__/
