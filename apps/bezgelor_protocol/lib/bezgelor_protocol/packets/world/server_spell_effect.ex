@@ -83,12 +83,12 @@ defmodule BezgelorProtocol.Packets.World.ServerSpellEffect do
 
     writer =
       writer
-      |> PacketWriter.write_uint64(packet.caster_guid)
-      |> PacketWriter.write_uint64(packet.target_guid)
-      |> PacketWriter.write_uint32(packet.spell_id)
-      |> PacketWriter.write_byte(effect_type_int)
-      |> PacketWriter.write_bytes(amount_bytes)
-      |> PacketWriter.write_byte(flags_int)
+      |> PacketWriter.write_u64(packet.caster_guid)
+      |> PacketWriter.write_u64(packet.target_guid)
+      |> PacketWriter.write_u32(packet.spell_id)
+      |> PacketWriter.write_u8(effect_type_int)
+      |> PacketWriter.write_bytes_bits(amount_bytes)
+      |> PacketWriter.write_u8(flags_int)
 
     {:ok, writer}
   end

@@ -157,14 +157,14 @@ defmodule BezgelorProtocol.Packets.World.ServerRealmList do
   @spec write(t(), PacketWriter.t()) :: {:ok, PacketWriter.t()}
   def write(%__MODULE__{} = packet, writer) do
     # Unused (uint64)
-    writer = PacketWriter.write_uint64_bits(writer, packet.unused)
+    writer = PacketWriter.write_u64(writer, packet.unused)
 
     # Realm count and realms
-    writer = PacketWriter.write_uint32_bits(writer, length(packet.realms))
+    writer = PacketWriter.write_u32(writer, length(packet.realms))
     writer = Enum.reduce(packet.realms, writer, &write_realm_info/2)
 
     # Message count and messages
-    writer = PacketWriter.write_uint32_bits(writer, length(packet.messages))
+    writer = PacketWriter.write_u32(writer, length(packet.messages))
     writer = Enum.reduce(packet.messages, writer, &write_server_message/2)
 
     # Flush remaining bits
@@ -178,16 +178,16 @@ defmodule BezgelorProtocol.Packets.World.ServerRealmList do
     account_data = realm.account_realm_data || %AccountRealmData{realm_id: realm.realm_id}
 
     # RealmId (uint32)
-    writer = PacketWriter.write_uint32_bits(writer, realm.realm_id)
+    writer = PacketWriter.write_u32(writer, realm.realm_id)
 
     # RealmName (wide string)
     writer = PacketWriter.write_wide_string(writer, realm.realm_name || "")
 
     # NoteStringId (uint32)
-    writer = PacketWriter.write_uint32_bits(writer, realm.note_string_id)
+    writer = PacketWriter.write_u32(writer, realm.note_string_id)
 
     # Flags (uint32)
-    writer = PacketWriter.write_uint32_bits(writer, realm.flags)
+    writer = PacketWriter.write_u32(writer, realm.flags)
 
     # Type (2 bits), Status (3 bits), Population (3 bits)
     writer = PacketWriter.write_bits(writer, realm.type, 2)
@@ -195,7 +195,7 @@ defmodule BezgelorProtocol.Packets.World.ServerRealmList do
     writer = PacketWriter.write_bits(writer, realm.population, 3)
 
     # Unused1 (uint32)
-    writer = PacketWriter.write_uint32_bits(writer, realm.unused1)
+    writer = PacketWriter.write_u32(writer, realm.unused1)
 
     # Unused2 (16 bytes = 128 bits) - use write_bytes_bits to maintain bit stream
     # Ensure we write exactly 16 bytes
@@ -220,19 +220,19 @@ defmodule BezgelorProtocol.Packets.World.ServerRealmList do
     writer = PacketWriter.write_bits(writer, data.realm_id, 14)
 
     # CharacterCount (uint32)
-    writer = PacketWriter.write_uint32_bits(writer, data.character_count)
+    writer = PacketWriter.write_u32(writer, data.character_count)
 
     # LastPlayedCharacter (wide string)
     writer = PacketWriter.write_wide_string(writer, data.last_played_character || "")
 
     # LastPlayedTime (uint64)
-    PacketWriter.write_uint64_bits(writer, data.last_played_time)
+    PacketWriter.write_u64(writer, data.last_played_time)
   end
 
   # Write a ServerMessage entry
   defp write_server_message(message, writer) do
     # Index (uint32)
-    writer = PacketWriter.write_uint32_bits(writer, message.index)
+    writer = PacketWriter.write_u32(writer, message.index)
 
     # Message count (8 bits)
     writer = PacketWriter.write_bits(writer, length(message.messages), 8)

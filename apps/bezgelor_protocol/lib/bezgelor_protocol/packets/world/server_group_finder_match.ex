@@ -31,23 +31,23 @@ defmodule BezgelorProtocol.Packets.World.ServerGroupFinderMatch do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint64(packet.group_id)
-      |> PacketWriter.write_uint32(packet.instance_id)
-      |> PacketWriter.write_byte(instance_type_to_int(packet.instance_type))
-      |> PacketWriter.write_byte(difficulty_to_int(packet.difficulty))
-      |> PacketWriter.write_byte(packet.timeout_seconds)
-      |> PacketWriter.write_byte(length(packet.members))
+      |> PacketWriter.write_u64(packet.group_id)
+      |> PacketWriter.write_u32(packet.instance_id)
+      |> PacketWriter.write_u8(instance_type_to_int(packet.instance_type))
+      |> PacketWriter.write_u8(difficulty_to_int(packet.difficulty))
+      |> PacketWriter.write_u8(packet.timeout_seconds)
+      |> PacketWriter.write_u8(length(packet.members))
 
     writer =
       Enum.reduce(packet.members, writer, fn member, w ->
         name_bytes = member.name || ""
 
         w
-        |> PacketWriter.write_uint64(member.character_id)
-        |> PacketWriter.write_byte(byte_size(name_bytes))
+        |> PacketWriter.write_u64(member.character_id)
+        |> PacketWriter.write_u8(byte_size(name_bytes))
         |> PacketWriter.write_wide_string(name_bytes)
-        |> PacketWriter.write_byte(role_to_int(member.role))
-        |> PacketWriter.write_byte(ready_to_int(member.ready))
+        |> PacketWriter.write_u8(role_to_int(member.role))
+        |> PacketWriter.write_u8(ready_to_int(member.ready))
       end)
 
     {:ok, writer}

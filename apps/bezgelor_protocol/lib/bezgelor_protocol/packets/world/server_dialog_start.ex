@@ -37,8 +37,8 @@ defmodule BezgelorProtocol.Packets.World.ServerDialogStart do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint32(packet.dialog_unit_id)
-      |> PacketWriter.write_byte(if(packet.unused, do: 1, else: 0))
+      |> PacketWriter.write_u32(packet.dialog_unit_id)
+      |> PacketWriter.write_u8(if(packet.unused, do: 1, else: 0))
 
     {:ok, writer}
   end

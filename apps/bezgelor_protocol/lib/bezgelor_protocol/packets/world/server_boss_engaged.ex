@@ -35,14 +35,14 @@ defmodule BezgelorProtocol.Packets.World.ServerBossEngaged do
 
     writer =
       writer
-      |> PacketWriter.write_uint32(packet.boss_id)
-      |> PacketWriter.write_uint64(packet.boss_guid)
-      |> PacketWriter.write_byte(byte_size(name_bytes))
+      |> PacketWriter.write_u32(packet.boss_id)
+      |> PacketWriter.write_u64(packet.boss_guid)
+      |> PacketWriter.write_u8(byte_size(name_bytes))
       |> PacketWriter.write_wide_string(name_bytes)
-      |> PacketWriter.write_uint64(packet.health_current)
-      |> PacketWriter.write_uint64(packet.health_max)
-      |> PacketWriter.write_byte(packet.phase)
-      |> PacketWriter.write_uint32(packet.enrage_timer)
+      |> PacketWriter.write_u64(packet.health_current)
+      |> PacketWriter.write_u64(packet.health_max)
+      |> PacketWriter.write_u8(packet.phase)
+      |> PacketWriter.write_u32(packet.enrage_timer)
 
     {:ok, writer}
   end

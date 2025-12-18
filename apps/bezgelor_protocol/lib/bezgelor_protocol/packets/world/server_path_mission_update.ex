@@ -27,8 +27,8 @@ defmodule BezgelorProtocol.Packets.World.ServerPathMissionUpdate do
 
     writer =
       writer
-      |> PacketWriter.write_uint32(packet.mission_id)
-      |> PacketWriter.write_uint16(length(progress_list))
+      |> PacketWriter.write_u32(packet.mission_id)
+      |> PacketWriter.write_u16(length(progress_list))
 
     writer = write_progress_entries(writer, progress_list)
 
@@ -41,9 +41,9 @@ defmodule BezgelorProtocol.Packets.World.ServerPathMissionUpdate do
     key_str = to_string(key)
 
     writer
-    |> PacketWriter.write_byte(byte_size(key_str))
-    |> PacketWriter.write_bytes(key_str)
-    |> PacketWriter.write_int32(value)
+    |> PacketWriter.write_u8(byte_size(key_str))
+    |> PacketWriter.write_bytes_bits(key_str)
+    |> PacketWriter.write_i32(value)
     |> write_progress_entries(rest)
   end
 end

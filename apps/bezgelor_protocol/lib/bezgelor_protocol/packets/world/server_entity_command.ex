@@ -131,8 +131,8 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCommand do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint32(packet.guid)
-      |> PacketWriter.write_uint32(packet.time)
+      |> PacketWriter.write_u32(packet.guid)
+      |> PacketWriter.write_u32(packet.time)
       |> PacketWriter.write_bits(bool_to_bit(packet.time_reset), 1)
       |> PacketWriter.write_bits(bool_to_bit(packet.server_controlled), 1)
       |> PacketWriter.write_bits(length(packet.commands), 5)
@@ -163,14 +163,14 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCommand do
     |> PacketWriter.write_packed_float(Map.get(cmd, :speed, 4.0))
     |> PacketWriter.write_bits(spline_type_to_int(Map.get(cmd, :spline_type, :linear)), 2)
     |> PacketWriter.write_bits(spline_mode_to_int(Map.get(cmd, :spline_mode, :one_shot)), 4)
-    |> PacketWriter.write_uint32_bits(Map.get(cmd, :offset, 0))
+    |> PacketWriter.write_u32(Map.get(cmd, :offset, 0))
     |> PacketWriter.write_bits(bool_to_bit(Map.get(cmd, :blend, true)), 1)
   end
 
   defp write_command(%{type: :set_state} = cmd, writer) do
     writer
     |> PacketWriter.write_bits(@cmd_set_state, 5)
-    |> PacketWriter.write_uint32_bits(Map.get(cmd, :state, 0))
+    |> PacketWriter.write_u32(Map.get(cmd, :state, 0))
   end
 
   defp write_command(%{type: :set_rotation} = cmd, writer) do

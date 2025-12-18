@@ -24,14 +24,14 @@ defmodule BezgelorProtocol.Packets.World.ServerMythicAffixInfo do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_byte(packet.keystone_level)
-      |> PacketWriter.write_byte(length(packet.affixes))
+      |> PacketWriter.write_u8(packet.keystone_level)
+      |> PacketWriter.write_u8(length(packet.affixes))
 
     writer =
       Enum.reduce(packet.affixes, writer, fn affix, w ->
         w
-        |> PacketWriter.write_uint32(affix.affix_id)
-        |> PacketWriter.write_byte(affix.tier)
+        |> PacketWriter.write_u32(affix.affix_id)
+        |> PacketWriter.write_u8(affix.tier)
       end)
 
     {:ok, writer}

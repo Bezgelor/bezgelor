@@ -42,8 +42,8 @@ defmodule BezgelorProtocol.Packets.World.ServerItemMove do
 
     writer =
       writer
-      |> PacketWriter.write_uint64(packet.item_guid)
-      |> PacketWriter.write_uint64(drag_drop)
+      |> PacketWriter.write_u64(packet.item_guid)
+      |> PacketWriter.write_u64(drag_drop)
 
     {:ok, writer}
   end

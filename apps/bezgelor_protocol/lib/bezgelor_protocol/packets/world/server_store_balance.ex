@@ -26,8 +26,8 @@ defmodule BezgelorProtocol.Packets.World.ServerStoreBalance do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint32(packet.premium_currency)
-      |> PacketWriter.write_uint32(packet.bonus_currency)
+      |> PacketWriter.write_u32(packet.premium_currency)
+      |> PacketWriter.write_u32(packet.bonus_currency)
 
     {:ok, writer}
   end

@@ -168,46 +168,51 @@ defmodule BezgelorWorld.Handler.BattlegroundHandler do
 
   defp build_queue_joined_packet(battleground_id, estimated_wait) do
     PacketWriter.new()
-    |> PacketWriter.write_uint16(0x0B81)  # Server opcode for queue joined
-    |> PacketWriter.write_uint32(battleground_id)
-    |> PacketWriter.write_uint32(estimated_wait)
-    |> PacketWriter.write_byte(1)  # Success
+    |> PacketWriter.write_u16(0x0B81)  # Server opcode for queue joined
+    |> PacketWriter.write_u32(battleground_id)
+    |> PacketWriter.write_u32(estimated_wait)
+    |> PacketWriter.write_u8(1)  # Success
+    |> PacketWriter.flush_bits()
     |> PacketWriter.to_binary()
   end
 
   defp build_queue_left_packet do
     PacketWriter.new()
-    |> PacketWriter.write_uint16(0x0B82)  # Server opcode for queue left
-    |> PacketWriter.write_byte(1)  # Success
+    |> PacketWriter.write_u16(0x0B82)  # Server opcode for queue left
+    |> PacketWriter.write_u8(1)  # Success
+    |> PacketWriter.flush_bits()
     |> PacketWriter.to_binary()
   end
 
   defp build_queue_status_packet(status) do
     PacketWriter.new()
-    |> PacketWriter.write_uint16(0x0B83)  # Server opcode for queue status
-    |> PacketWriter.write_uint32(status.battleground_id)
-    |> PacketWriter.write_uint32(status.wait_time_seconds)
-    |> PacketWriter.write_uint32(status.estimated_wait)
-    |> PacketWriter.write_uint32(status.position)
-    |> PacketWriter.write_byte(faction_to_int(status.faction))
+    |> PacketWriter.write_u16(0x0B83)  # Server opcode for queue status
+    |> PacketWriter.write_u32(status.battleground_id)
+    |> PacketWriter.write_u32(status.wait_time_seconds)
+    |> PacketWriter.write_u32(status.estimated_wait)
+    |> PacketWriter.write_u32(status.position)
+    |> PacketWriter.write_u8(faction_to_int(status.faction))
+    |> PacketWriter.flush_bits()
     |> PacketWriter.to_binary()
   end
 
   defp build_not_in_queue_packet do
     PacketWriter.new()
-    |> PacketWriter.write_uint16(0x0B83)  # Server opcode for queue status
-    |> PacketWriter.write_uint32(0)  # No battleground
-    |> PacketWriter.write_uint32(0)  # No wait time
-    |> PacketWriter.write_uint32(0)  # No estimated wait
-    |> PacketWriter.write_uint32(0)  # No position
-    |> PacketWriter.write_byte(0)  # No faction
+    |> PacketWriter.write_u16(0x0B83)  # Server opcode for queue status
+    |> PacketWriter.write_u32(0)  # No battleground
+    |> PacketWriter.write_u32(0)  # No wait time
+    |> PacketWriter.write_u32(0)  # No estimated wait
+    |> PacketWriter.write_u32(0)  # No position
+    |> PacketWriter.write_u8(0)  # No faction
+    |> PacketWriter.flush_bits()
     |> PacketWriter.to_binary()
   end
 
   defp build_ready_confirmed_packet do
     PacketWriter.new()
-    |> PacketWriter.write_uint16(0x0B84)  # Server opcode for ready confirmed
-    |> PacketWriter.write_byte(1)  # Success
+    |> PacketWriter.write_u16(0x0B84)  # Server opcode for ready confirmed
+    |> PacketWriter.write_u8(1)  # Success
+    |> PacketWriter.flush_bits()
     |> PacketWriter.to_binary()
   end
 
@@ -222,8 +227,9 @@ defmodule BezgelorWorld.Handler.BattlegroundHandler do
       end
 
     PacketWriter.new()
-    |> PacketWriter.write_uint16(0x0B85)  # Server opcode for queue error
-    |> PacketWriter.write_byte(error_code)
+    |> PacketWriter.write_u16(0x0B85)  # Server opcode for queue error
+    |> PacketWriter.write_u8(error_code)
+    |> PacketWriter.flush_bits()
     |> PacketWriter.to_binary()
   end
 
@@ -235,10 +241,11 @@ defmodule BezgelorWorld.Handler.BattlegroundHandler do
 
         if objective do
           PacketWriter.new()
-          |> PacketWriter.write_uint16(0x0B86)  # Server opcode for objective update
-          |> PacketWriter.write_uint32(objective_id)
-          |> PacketWriter.write_byte(owner_to_int(objective.owner))
-          |> PacketWriter.write_float32(objective.progress)
+          |> PacketWriter.write_u16(0x0B86)  # Server opcode for objective update
+          |> PacketWriter.write_u32(objective_id)
+          |> PacketWriter.write_u8(owner_to_int(objective.owner))
+          |> PacketWriter.write_f32(objective.progress)
+          |> PacketWriter.flush_bits()
           |> PacketWriter.to_binary()
         else
           <<>>

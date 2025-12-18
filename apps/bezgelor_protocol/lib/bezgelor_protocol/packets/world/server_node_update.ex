@@ -26,9 +26,9 @@ defmodule BezgelorProtocol.Packets.World.ServerNodeUpdate do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint64(packet.node_guid)
-      |> PacketWriter.write_byte(if(packet.is_available, do: 1, else: 0))
-      |> PacketWriter.write_uint64(packet.tapped_by || 0)
+      |> PacketWriter.write_u64(packet.node_guid)
+      |> PacketWriter.write_u8(if(packet.is_available, do: 1, else: 0))
+      |> PacketWriter.write_u64(packet.tapped_by || 0)
 
     {:ok, writer}
   end

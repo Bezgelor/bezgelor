@@ -22,14 +22,14 @@ defmodule BezgelorProtocol.Packets.World.ServerWorldBossPhase do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint32(packet.boss_id)
-      |> PacketWriter.write_byte(packet.phase)
-      |> PacketWriter.write_byte(packet.health_percent)
-      |> PacketWriter.write_byte(length(packet.abilities))
+      |> PacketWriter.write_u32(packet.boss_id)
+      |> PacketWriter.write_u8(packet.phase)
+      |> PacketWriter.write_u8(packet.health_percent)
+      |> PacketWriter.write_u8(length(packet.abilities))
 
     writer =
       Enum.reduce(packet.abilities, writer, fn ability_id, w ->
-        PacketWriter.write_uint32(w, ability_id)
+        PacketWriter.write_u32(w, ability_id)
       end)
 
     {:ok, writer}

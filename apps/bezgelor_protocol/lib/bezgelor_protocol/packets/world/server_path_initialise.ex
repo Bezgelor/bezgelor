@@ -51,7 +51,7 @@ defmodule BezgelorProtocol.Packets.World.ServerPathInitialise do
     writer = PacketWriter.flush_bits(writer)
 
     # Time since last activate (float32)
-    writer = PacketWriter.write_float32(writer, packet.time_since_last_activate)
+    writer = PacketWriter.write_f32(writer, packet.time_since_last_activate)
 
     {:ok, writer}
   end

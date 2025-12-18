@@ -88,37 +88,37 @@ defmodule BezgelorProtocol.Packets.World.ServerItemAdd do
     writer =
       writer
       # Item guid (unique instance ID)
-      |> PacketWriter.write_uint64(guid)
+      |> PacketWriter.write_u64(guid)
       # Unknown0 (always 0)
-      |> PacketWriter.write_uint64(0)
+      |> PacketWriter.write_u64(0)
       # Item ID (18 bits, write as padded uint32)
       |> PacketWriter.write_bits(packet.item_id, 18)
       # Location (9-bit enum)
       |> PacketWriter.write_bits(location_to_int(packet.location), 9)
       # Bag index (uint32)
-      |> PacketWriter.write_uint32(packet.bag_index || 0)
+      |> PacketWriter.write_u32(packet.bag_index || 0)
       # Stack count
-      |> PacketWriter.write_uint32(packet.stack_count || 1)
+      |> PacketWriter.write_u32(packet.stack_count || 1)
       # Charges
-      |> PacketWriter.write_uint32(packet.charges || 0)
+      |> PacketWriter.write_u32(packet.charges || 0)
       # Random circuit data
-      |> PacketWriter.write_uint64(packet.random_circuit_data || 0)
+      |> PacketWriter.write_u64(packet.random_circuit_data || 0)
       # Random glyph data
-      |> PacketWriter.write_uint32(packet.random_glyph_data || 0)
+      |> PacketWriter.write_u32(packet.random_glyph_data || 0)
       # Threshold data
-      |> PacketWriter.write_uint64(packet.threshold_data || 0)
+      |> PacketWriter.write_u64(packet.threshold_data || 0)
       # Durability (float, 0.0 to 1.0)
-      |> PacketWriter.write_float32(normalize_durability(packet.durability))
+      |> PacketWriter.write_f32(normalize_durability(packet.durability))
       # Unknown44
-      |> PacketWriter.write_uint32(0)
+      |> PacketWriter.write_u32(0)
       # Unknown48
-      |> PacketWriter.write_byte(0)
+      |> PacketWriter.write_u8(0)
       # Dye data
-      |> PacketWriter.write_uint32(packet.dye_data || 0)
+      |> PacketWriter.write_u32(packet.dye_data || 0)
       # Dynamic flags
-      |> PacketWriter.write_uint32(packet.dynamic_flags || 0)
+      |> PacketWriter.write_u32(packet.dynamic_flags || 0)
       # Expiration time left
-      |> PacketWriter.write_uint32(packet.expiration_time_left || 0)
+      |> PacketWriter.write_u32(packet.expiration_time_left || 0)
 
     # Unknown58 array (2 elements, each with 3-bit + uint32 + uint32)
     writer =
@@ -132,18 +132,18 @@ defmodule BezgelorProtocol.Packets.World.ServerItemAdd do
     # Microchips (3-bit count + uint32[])
     microchips = packet.microchips || []
     writer = PacketWriter.write_bits(writer, length(microchips), 3)
-    writer = Enum.reduce(microchips, writer, &PacketWriter.write_uint32(&2, &1))
+    writer = Enum.reduce(microchips, writer, &PacketWriter.write_u32(&2, &1))
 
     # Glyphs (4-bit count + uint32[])
     glyphs = packet.glyphs || []
     writer = PacketWriter.write_bits(writer, length(glyphs), 4)
-    writer = Enum.reduce(glyphs, writer, &PacketWriter.write_uint32(&2, &1))
+    writer = Enum.reduce(glyphs, writer, &PacketWriter.write_u32(&2, &1))
 
     # Unknown88 (6-bit count + {14-bit, uint64}[])
     writer = PacketWriter.write_bits(writer, 0, 6)
 
     # Effective item level
-    writer = PacketWriter.write_uint32(writer, packet.effective_item_level || 0)
+    writer = PacketWriter.write_u32(writer, packet.effective_item_level || 0)
 
     # ItemUpdateReason (6 bits)
     writer = PacketWriter.write_bits(writer, reason_to_int(packet.reason), 6)
@@ -155,8 +155,8 @@ defmodule BezgelorProtocol.Packets.World.ServerItemAdd do
   defp write_unknown58_entry(writer) do
     writer
     |> PacketWriter.write_bits(0, 3)
-    |> PacketWriter.write_uint32(0)
-    |> PacketWriter.write_uint32(0)
+    |> PacketWriter.write_u32(0)
+    |> PacketWriter.write_u32(0)
   end
 
   # Generate a unique item guid from location and slot

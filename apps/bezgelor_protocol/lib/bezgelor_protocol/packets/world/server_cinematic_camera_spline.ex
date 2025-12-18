@@ -44,10 +44,10 @@ defmodule BezgelorProtocol.Packets.World.ServerCinematicCameraSpline do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint32(packet.delay)
-      |> PacketWriter.write_uint32(packet.spline)
-      |> PacketWriter.write_uint32(packet.spline_mode)
-      |> PacketWriter.write_float32(packet.speed)
+      |> PacketWriter.write_u32(packet.delay)
+      |> PacketWriter.write_u32(packet.spline)
+      |> PacketWriter.write_u32(packet.spline_mode)
+      |> PacketWriter.write_f32(packet.speed)
       |> PacketWriter.write_bits(bool_to_int(packet.target), 1)
       |> PacketWriter.write_bits(bool_to_int(packet.use_rotation), 1)
 

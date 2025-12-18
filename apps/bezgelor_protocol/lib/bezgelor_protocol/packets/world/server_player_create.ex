@@ -99,7 +99,7 @@ defmodule BezgelorProtocol.Packets.World.ServerPlayerCreate do
     writer =
       writer
       # Inventory count and items
-      |> PacketWriter.write_uint32(length(packet.inventory))
+      |> PacketWriter.write_u32(length(packet.inventory))
       |> write_inventory_items(packet.inventory)
       # Money[16] - 16 uint64 currencies (all zero)
       |> write_money()
@@ -139,7 +139,7 @@ defmodule BezgelorProtocol.Packets.World.ServerPlayerCreate do
       # Tradeskill materials[512] - all zeros
       |> write_tradeskill_materials()
       # Gear score (float)
-      |> PacketWriter.write_float32_bits(packet.gear_score)
+      |> PacketWriter.write_f32(packet.gear_score)
       # Is PvP server (bool)
       |> PacketWriter.write_bits(if(packet.is_pvp_server, do: 1, else: 0), 1)
       # Matching eligibility flags
@@ -207,37 +207,37 @@ defmodule BezgelorProtocol.Packets.World.ServerPlayerCreate do
 
     writer
     # Item guid (uint64)
-    |> PacketWriter.write_uint64(guid)
+    |> PacketWriter.write_u64(guid)
     # Unknown0 (uint64)
-    |> PacketWriter.write_uint64(0)
+    |> PacketWriter.write_u64(0)
     # Item ID (18 bits)
     |> PacketWriter.write_bits(item[:item_id] || 0, 18)
     # Location (9 bits)
     |> PacketWriter.write_bits(location_to_int(item[:container_type]), 9)
     # Bag index (uint32) - for equipped items, this is the slot number
-    |> PacketWriter.write_uint32(item[:slot] || 0)
+    |> PacketWriter.write_u32(item[:slot] || 0)
     # Stack count (uint32)
-    |> PacketWriter.write_uint32(item[:quantity] || 1)
+    |> PacketWriter.write_u32(item[:quantity] || 1)
     # Charges (uint32)
-    |> PacketWriter.write_uint32(item[:charges] || 0)
+    |> PacketWriter.write_u32(item[:charges] || 0)
     # Random circuit data (uint64)
-    |> PacketWriter.write_uint64(0)
+    |> PacketWriter.write_u64(0)
     # Random glyph data (uint32)
-    |> PacketWriter.write_uint32(0)
+    |> PacketWriter.write_u32(0)
     # Threshold data (uint64)
-    |> PacketWriter.write_uint64(0)
+    |> PacketWriter.write_u64(0)
     # Durability (float32)
-    |> PacketWriter.write_float32(normalize_durability(item[:durability]))
+    |> PacketWriter.write_f32(normalize_durability(item[:durability]))
     # Unknown44 (uint32)
-    |> PacketWriter.write_uint32(0)
+    |> PacketWriter.write_u32(0)
     # Unknown48 (uint8)
-    |> PacketWriter.write_byte(0)
+    |> PacketWriter.write_u8(0)
     # Dye data (uint32)
-    |> PacketWriter.write_uint32(0)
+    |> PacketWriter.write_u32(0)
     # Dynamic flags (uint32)
-    |> PacketWriter.write_uint32(0)
+    |> PacketWriter.write_u32(0)
     # Expiration time left (uint32)
-    |> PacketWriter.write_uint32(0)
+    |> PacketWriter.write_u32(0)
     # Unknown58 array (2 elements, each 3-bit + uint32 + uint32)
     |> write_unknown58_entry()
     |> write_unknown58_entry()
@@ -250,7 +250,7 @@ defmodule BezgelorProtocol.Packets.World.ServerPlayerCreate do
     # Unknown88 count (6 bits) + array
     |> PacketWriter.write_bits(0, 6)
     # Effective item level (uint32)
-    |> PacketWriter.write_uint32(0)
+    |> PacketWriter.write_u32(0)
     # ItemUpdateReason (6 bits)
     |> PacketWriter.write_bits(@reason_no_reason, 6)
   end
@@ -259,8 +259,8 @@ defmodule BezgelorProtocol.Packets.World.ServerPlayerCreate do
   defp write_unknown58_entry(writer) do
     writer
     |> PacketWriter.write_bits(0, 3)
-    |> PacketWriter.write_uint32(0)
-    |> PacketWriter.write_uint32(0)
+    |> PacketWriter.write_u32(0)
+    |> PacketWriter.write_u32(0)
   end
 
   # Convert durability (0-100) to float 0.0-1.0

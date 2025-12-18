@@ -36,15 +36,15 @@ defmodule BezgelorProtocol.Packets.World.ServerMythicPlusComplete do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_byte(if packet.success, do: 1, else: 0)
-      |> PacketWriter.write_byte(if packet.in_time, do: 1, else: 0)
-      |> PacketWriter.write_uint32(packet.completion_time)
-      |> PacketWriter.write_uint32(packet.time_limit)
-      |> PacketWriter.write_byte(packet.deaths)
-      |> PacketWriter.write_byte(packet.time_bonus)
-      |> PacketWriter.write_uint32(packet.score)
-      |> PacketWriter.write_byte(packet.new_key_level)
-      |> PacketWriter.write_uint32(packet.new_key_dungeon)
+      |> PacketWriter.write_u8(if packet.success, do: 1, else: 0)
+      |> PacketWriter.write_u8(if packet.in_time, do: 1, else: 0)
+      |> PacketWriter.write_u32(packet.completion_time)
+      |> PacketWriter.write_u32(packet.time_limit)
+      |> PacketWriter.write_u8(packet.deaths)
+      |> PacketWriter.write_u8(packet.time_bonus)
+      |> PacketWriter.write_u32(packet.score)
+      |> PacketWriter.write_u8(packet.new_key_level)
+      |> PacketWriter.write_u32(packet.new_key_dungeon)
 
     {:ok, writer}
   end

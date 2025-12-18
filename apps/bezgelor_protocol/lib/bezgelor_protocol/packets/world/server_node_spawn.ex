@@ -32,12 +32,12 @@ defmodule BezgelorProtocol.Packets.World.ServerNodeSpawn do
 
     writer =
       writer
-      |> PacketWriter.write_uint64(packet.node_guid)
-      |> PacketWriter.write_uint32(packet.node_type_id)
-      |> PacketWriter.write_float32(x)
-      |> PacketWriter.write_float32(y)
-      |> PacketWriter.write_float32(z)
-      |> PacketWriter.write_byte(if(packet.is_available, do: 1, else: 0))
+      |> PacketWriter.write_u64(packet.node_guid)
+      |> PacketWriter.write_u32(packet.node_type_id)
+      |> PacketWriter.write_f32(x)
+      |> PacketWriter.write_f32(y)
+      |> PacketWriter.write_f32(z)
+      |> PacketWriter.write_u8(if(packet.is_available, do: 1, else: 0))
 
     {:ok, writer}
   end

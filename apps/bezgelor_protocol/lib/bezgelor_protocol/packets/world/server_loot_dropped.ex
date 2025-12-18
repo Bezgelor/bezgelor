@@ -33,17 +33,17 @@ defmodule BezgelorProtocol.Packets.World.ServerLootDropped do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint64(packet.loot_id)
-      |> PacketWriter.write_uint64(packet.source_guid)
-      |> PacketWriter.write_uint32(packet.item_id)
-      |> PacketWriter.write_byte(quality_to_int(packet.quality))
-      |> PacketWriter.write_byte(loot_method_to_int(packet.loot_method))
-      |> PacketWriter.write_byte(packet.roll_timeout)
-      |> PacketWriter.write_byte(length(packet.eligible_ids))
+      |> PacketWriter.write_u64(packet.loot_id)
+      |> PacketWriter.write_u64(packet.source_guid)
+      |> PacketWriter.write_u32(packet.item_id)
+      |> PacketWriter.write_u8(quality_to_int(packet.quality))
+      |> PacketWriter.write_u8(loot_method_to_int(packet.loot_method))
+      |> PacketWriter.write_u8(packet.roll_timeout)
+      |> PacketWriter.write_u8(length(packet.eligible_ids))
 
     writer =
       Enum.reduce(packet.eligible_ids, writer, fn char_id, w ->
-        PacketWriter.write_uint64(w, char_id)
+        PacketWriter.write_u64(w, char_id)
       end)
 
     {:ok, writer}

@@ -75,14 +75,14 @@ defmodule BezgelorProtocol.Packets.World.ServerArenaTeamRoster do
 
     writer =
       writer
-      |> PacketWriter.write_uint32(packet.team_id)
+      |> PacketWriter.write_u32(packet.team_id)
       |> PacketWriter.write_wide_string(packet.team_name)
-      |> PacketWriter.write_byte(bracket_byte)
-      |> PacketWriter.write_uint16(packet.rating)
-      |> PacketWriter.write_uint16(packet.season_high)
-      |> PacketWriter.write_uint16(packet.games_played)
-      |> PacketWriter.write_uint16(packet.games_won)
-      |> PacketWriter.write_byte(length(packet.members))
+      |> PacketWriter.write_u8(bracket_byte)
+      |> PacketWriter.write_u16(packet.rating)
+      |> PacketWriter.write_u16(packet.season_high)
+      |> PacketWriter.write_u16(packet.games_played)
+      |> PacketWriter.write_u16(packet.games_won)
+      |> PacketWriter.write_u8(length(packet.members))
 
     # Write members
     writer =
@@ -91,13 +91,13 @@ defmodule BezgelorProtocol.Packets.World.ServerArenaTeamRoster do
         online_byte = if member.online, do: 1, else: 0
 
         w
-        |> PacketWriter.write_uint64(member.character_id)
+        |> PacketWriter.write_u64(member.character_id)
         |> PacketWriter.write_wide_string(member.character_name)
-        |> PacketWriter.write_byte(role_byte)
-        |> PacketWriter.write_uint16(member.personal_rating)
-        |> PacketWriter.write_uint16(member.games_played)
-        |> PacketWriter.write_uint16(member.games_won)
-        |> PacketWriter.write_byte(online_byte)
+        |> PacketWriter.write_u8(role_byte)
+        |> PacketWriter.write_u16(member.personal_rating)
+        |> PacketWriter.write_u16(member.games_played)
+        |> PacketWriter.write_u16(member.games_won)
+        |> PacketWriter.write_u8(online_byte)
       end)
 
     {:ok, writer}

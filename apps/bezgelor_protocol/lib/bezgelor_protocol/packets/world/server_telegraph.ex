@@ -93,13 +93,13 @@ defmodule BezgelorProtocol.Packets.World.ServerTelegraph do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint64(packet.caster_guid)
-      |> PacketWriter.write_uint32(packet.spell_id || 0)
-      |> PacketWriter.write_byte(shape_to_int(packet.shape))
+      |> PacketWriter.write_u64(packet.caster_guid)
+      |> PacketWriter.write_u32(packet.spell_id || 0)
+      |> PacketWriter.write_u8(shape_to_int(packet.shape))
       |> write_position(packet.position)
-      |> PacketWriter.write_float32(packet.rotation || 0.0)
-      |> PacketWriter.write_uint32(packet.duration)
-      |> PacketWriter.write_byte(color_to_int(packet.color))
+      |> PacketWriter.write_f32(packet.rotation || 0.0)
+      |> PacketWriter.write_u32(packet.duration)
+      |> PacketWriter.write_u8(color_to_int(packet.color))
       |> write_shape_params(packet.shape, packet.params)
 
     {:ok, writer}
@@ -223,31 +223,31 @@ defmodule BezgelorProtocol.Packets.World.ServerTelegraph do
 
   defp write_position(writer, {x, y, z}) do
     writer
-    |> PacketWriter.write_float32(x)
-    |> PacketWriter.write_float32(y)
-    |> PacketWriter.write_float32(z)
+    |> PacketWriter.write_f32(x)
+    |> PacketWriter.write_f32(y)
+    |> PacketWriter.write_f32(z)
   end
 
   defp write_shape_params(writer, :circle, %{radius: radius}) do
-    PacketWriter.write_float32(writer, radius)
+    PacketWriter.write_f32(writer, radius)
   end
 
   defp write_shape_params(writer, :cone, %{angle: angle, length: length}) do
     writer
-    |> PacketWriter.write_float32(angle)
-    |> PacketWriter.write_float32(length)
+    |> PacketWriter.write_f32(angle)
+    |> PacketWriter.write_f32(length)
   end
 
   defp write_shape_params(writer, :rectangle, %{width: width, length: length}) do
     writer
-    |> PacketWriter.write_float32(width)
-    |> PacketWriter.write_float32(length)
+    |> PacketWriter.write_f32(width)
+    |> PacketWriter.write_f32(length)
   end
 
   defp write_shape_params(writer, :donut, %{inner_radius: inner, outer_radius: outer}) do
     writer
-    |> PacketWriter.write_float32(inner)
-    |> PacketWriter.write_float32(outer)
+    |> PacketWriter.write_f32(inner)
+    |> PacketWriter.write_f32(outer)
   end
 
   defp shape_to_int(:circle), do: @shape_circle

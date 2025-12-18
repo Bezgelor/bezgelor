@@ -66,11 +66,11 @@ defmodule BezgelorProtocol.Packets.World.ServerPromoCodeResult do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_byte(result_to_byte(packet.result))
-      |> PacketWriter.write_byte(code_type_to_byte(packet.code_type))
-      |> PacketWriter.write_uint32(packet.granted_item_id || 0)
-      |> PacketWriter.write_uint32(packet.granted_currency || 0)
-      |> PacketWriter.write_byte(currency_to_byte(packet.currency_type))
+      |> PacketWriter.write_u8(result_to_byte(packet.result))
+      |> PacketWriter.write_u8(code_type_to_byte(packet.code_type))
+      |> PacketWriter.write_u32(packet.granted_item_id || 0)
+      |> PacketWriter.write_u32(packet.granted_currency || 0)
+      |> PacketWriter.write_u8(currency_to_byte(packet.currency_type))
 
     {:ok, writer}
   end

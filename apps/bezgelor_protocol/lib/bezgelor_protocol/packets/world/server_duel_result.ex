@@ -49,11 +49,11 @@ defmodule BezgelorProtocol.Packets.World.ServerDuelResult do
 
     writer =
       writer
-      |> PacketWriter.write_uint64(packet.winner_guid)
+      |> PacketWriter.write_u64(packet.winner_guid)
       |> PacketWriter.write_wide_string(packet.winner_name)
-      |> PacketWriter.write_uint64(packet.loser_guid)
+      |> PacketWriter.write_u64(packet.loser_guid)
       |> PacketWriter.write_wide_string(packet.loser_name)
-      |> PacketWriter.write_byte(reason_byte)
+      |> PacketWriter.write_u8(reason_byte)
 
     {:ok, writer}
   end

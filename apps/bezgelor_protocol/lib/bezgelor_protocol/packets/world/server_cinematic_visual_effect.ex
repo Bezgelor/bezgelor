@@ -56,19 +56,19 @@ defmodule BezgelorProtocol.Packets.World.ServerCinematicVisualEffect do
 
     writer =
       writer
-      |> PacketWriter.write_uint32(packet.delay)
-      |> PacketWriter.write_uint32(packet.visual_handle)
+      |> PacketWriter.write_u32(packet.delay)
+      |> PacketWriter.write_u32(packet.visual_handle)
       |> PacketWriter.write_bits(packet.visual_effect_id, 17)
-      |> PacketWriter.write_uint32(packet.unit_id)
+      |> PacketWriter.write_u32(packet.unit_id)
       # Position
-      |> PacketWriter.write_float32(pos.x)
-      |> PacketWriter.write_float32(pos.y)
-      |> PacketWriter.write_float32(pos.z)
+      |> PacketWriter.write_f32(pos.x)
+      |> PacketWriter.write_f32(pos.y)
+      |> PacketWriter.write_f32(pos.z)
       # Rotation quaternion
-      |> PacketWriter.write_float32(pos.rx)
-      |> PacketWriter.write_float32(pos.ry)
-      |> PacketWriter.write_float32(pos.rz)
-      |> PacketWriter.write_float32(pos.rw)
+      |> PacketWriter.write_f32(pos.rx)
+      |> PacketWriter.write_f32(pos.ry)
+      |> PacketWriter.write_f32(pos.rz)
+      |> PacketWriter.write_f32(pos.rw)
       |> PacketWriter.write_bits(bool_to_int(packet.remove_on_camera_end), 1)
 
     {:ok, writer}

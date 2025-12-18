@@ -21,11 +21,11 @@ defmodule BezgelorProtocol.Packets.World.ServerIgnoreList do
 
   @impl true
   def write(%__MODULE__{ignores: ignores}, writer) do
-    writer = PacketWriter.write_uint32(writer, length(ignores))
+    writer = PacketWriter.write_u32(writer, length(ignores))
 
     writer = Enum.reduce(ignores, writer, fn ignore, w ->
       w
-      |> PacketWriter.write_uint64(ignore.character_id)
+      |> PacketWriter.write_u64(ignore.character_id)
       |> PacketWriter.write_wide_string(ignore.name)
     end)
 

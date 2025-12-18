@@ -123,8 +123,8 @@ defmodule BezgelorProtocol.Handler.EntityCommandHandler do
             # Build server packet
             writer =
               PacketWriter.new()
-              |> PacketWriter.write_uint32(entity_guid)
-              |> PacketWriter.write_uint32(time)
+              |> PacketWriter.write_u32(entity_guid)
+              |> PacketWriter.write_u32(time)
               |> PacketWriter.write_bits(0, 1)  # time_reset = false
               |> PacketWriter.write_bits(0, 1)  # server_controlled = false
               |> PacketWriter.write_bits(command_count, 5)

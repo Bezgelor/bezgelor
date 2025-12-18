@@ -286,8 +286,7 @@ defmodule BezgelorProtocol.Connection do
     # Build inner packet: opcode (16 bits) + payload
     inner = PacketWriter.new()
     |> PacketWriter.write_bits(opcode_int, 16)
-    |> PacketWriter.write_bytes(payload)
-    |> PacketWriter.flush_bits()
+    |> PacketWriter.write_bytes_flush(payload)
     |> PacketWriter.to_binary()
 
     # Encrypt the inner packet
@@ -296,7 +295,7 @@ defmodule BezgelorProtocol.Connection do
         # Build ServerRealmEncrypted payload: size (data length + 4) + encrypted data
         encrypted_payload = PacketWriter.new()
         |> PacketWriter.write_bits(byte_size(encrypted) + 4, 32)
-        |> PacketWriter.write_bytes(encrypted)
+        |> PacketWriter.write_bytes_flush(encrypted)
         |> PacketWriter.flush_bits()
         |> PacketWriter.to_binary()
 
@@ -330,8 +329,7 @@ defmodule BezgelorProtocol.Connection do
     # Build inner packet: opcode (16 bits) + payload
     inner = PacketWriter.new()
     |> PacketWriter.write_bits(opcode_int, 16)
-    |> PacketWriter.write_bytes(payload)
-    |> PacketWriter.flush_bits()
+    |> PacketWriter.write_bytes_flush(payload)
     |> PacketWriter.to_binary()
 
     # Encrypt the inner packet
@@ -341,7 +339,7 @@ defmodule BezgelorProtocol.Connection do
         # The +4 accounts for the size field itself
         encrypted_payload = PacketWriter.new()
         |> PacketWriter.write_bits(byte_size(encrypted) + 4, 32)
-        |> PacketWriter.write_bytes(encrypted)
+        |> PacketWriter.write_bytes_flush(encrypted)
         |> PacketWriter.flush_bits()
         |> PacketWriter.to_binary()
 

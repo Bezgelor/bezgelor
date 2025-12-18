@@ -37,11 +37,11 @@ defmodule BezgelorProtocol.Packets.World.ServerHousingFabkitUpdate do
 
     writer =
       writer
-      |> PacketWriter.write_uint32(packet.plot_id)
-      |> PacketWriter.write_byte(action_byte)
-      |> PacketWriter.write_uint32(packet.fabkit_db_id)
-      |> PacketWriter.write_byte(packet.socket_index)
-      |> PacketWriter.write_uint32(packet.fabkit_id || 0)
+      |> PacketWriter.write_u32(packet.plot_id)
+      |> PacketWriter.write_u8(action_byte)
+      |> PacketWriter.write_u32(packet.fabkit_db_id)
+      |> PacketWriter.write_u8(packet.socket_index)
+      |> PacketWriter.write_u32(packet.fabkit_id || 0)
 
     {:ok, writer}
   end

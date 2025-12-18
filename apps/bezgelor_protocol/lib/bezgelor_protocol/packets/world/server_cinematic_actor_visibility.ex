@@ -38,8 +38,8 @@ defmodule BezgelorProtocol.Packets.World.ServerCinematicActorVisibility do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint32(packet.delay)
-      |> PacketWriter.write_uint32(packet.unit_id)
+      |> PacketWriter.write_u32(packet.delay)
+      |> PacketWriter.write_u32(packet.unit_id)
       |> PacketWriter.write_bits(bool_to_int(packet.hide), 1)
       |> PacketWriter.write_bits(bool_to_int(packet.unknown0), 1)
 

@@ -33,7 +33,7 @@ defmodule BezgelorProtocol.Packets.World.ServerStoreCategories do
 
     writer =
       writer
-      |> PacketWriter.write_uint32(length(categories))
+      |> PacketWriter.write_u32(length(categories))
       # No categories to write
       |> PacketWriter.write_bits(packet.real_currency, 4)
       |> PacketWriter.flush_bits()

@@ -20,9 +20,9 @@ defmodule BezgelorProtocol.Packets.World.ServerItemRemove do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_byte(container_type_to_int(packet.container_type))
-      |> PacketWriter.write_byte(packet.bag_index)
-      |> PacketWriter.write_uint16(packet.slot)
+      |> PacketWriter.write_u8(container_type_to_int(packet.container_type))
+      |> PacketWriter.write_u8(packet.bag_index)
+      |> PacketWriter.write_u16(packet.slot)
 
     {:ok, writer}
   end

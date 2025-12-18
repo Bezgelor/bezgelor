@@ -36,9 +36,9 @@ defmodule BezgelorProtocol.Packets.World.ServerBuffRemove do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint64(packet.target_guid)
-      |> PacketWriter.write_uint32(packet.buff_id)
-      |> PacketWriter.write_byte(packet.reason)
+      |> PacketWriter.write_u64(packet.target_guid)
+      |> PacketWriter.write_u32(packet.buff_id)
+      |> PacketWriter.write_u8(packet.reason)
 
     {:ok, writer}
   end

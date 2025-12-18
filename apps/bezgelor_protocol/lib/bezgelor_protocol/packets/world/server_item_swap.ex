@@ -64,16 +64,16 @@ defmodule BezgelorProtocol.Packets.World.ServerItemSwap do
 
     writer =
       writer
-      |> PacketWriter.write_uint64(packet.item1_guid)
-      |> PacketWriter.write_uint64(drag_drop1)
+      |> PacketWriter.write_u64(packet.item1_guid)
+      |> PacketWriter.write_u64(drag_drop1)
 
     # Write second item (displaced from destination)
     drag_drop2 = encode_drag_drop(packet.item2_location, packet.item2_bag_index, packet.item2_slot)
 
     writer =
       writer
-      |> PacketWriter.write_uint64(packet.item2_guid)
-      |> PacketWriter.write_uint64(drag_drop2)
+      |> PacketWriter.write_u64(packet.item2_guid)
+      |> PacketWriter.write_u64(drag_drop2)
 
     {:ok, writer}
   end

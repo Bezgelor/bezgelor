@@ -31,16 +31,16 @@ defmodule BezgelorProtocol.Packets.World.ServerBossPhase do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint64(packet.boss_guid)
-      |> PacketWriter.write_byte(packet.old_phase)
-      |> PacketWriter.write_byte(packet.new_phase)
-      |> PacketWriter.write_byte(packet.health_percent)
-      |> PacketWriter.write_byte(transition_to_int(packet.transition_type))
-      |> PacketWriter.write_byte(length(packet.active_mechanics))
+      |> PacketWriter.write_u64(packet.boss_guid)
+      |> PacketWriter.write_u8(packet.old_phase)
+      |> PacketWriter.write_u8(packet.new_phase)
+      |> PacketWriter.write_u8(packet.health_percent)
+      |> PacketWriter.write_u8(transition_to_int(packet.transition_type))
+      |> PacketWriter.write_u8(length(packet.active_mechanics))
 
     writer =
       Enum.reduce(packet.active_mechanics, writer, fn mechanic_id, w ->
-        PacketWriter.write_uint32(w, mechanic_id)
+        PacketWriter.write_u32(w, mechanic_id)
       end)
 
     {:ok, writer}

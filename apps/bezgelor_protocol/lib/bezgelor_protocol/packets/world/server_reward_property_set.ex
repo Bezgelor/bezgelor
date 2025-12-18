@@ -99,7 +99,7 @@ defmodule BezgelorProtocol.Packets.World.ServerRewardPropertySet do
       case prop.type do
         @additive_scalar ->
           # Float value
-          PacketWriter.write_float32_bits(writer, prop.value)
+          PacketWriter.write_f32(writer, prop.value)
 
         @discrete ->
           # Uint32 value
@@ -107,7 +107,7 @@ defmodule BezgelorProtocol.Packets.World.ServerRewardPropertySet do
 
         @multiplicative_scalar ->
           # Float value
-          PacketWriter.write_float32_bits(writer, prop.value)
+          PacketWriter.write_f32(writer, prop.value)
 
         _ ->
           # Default to discrete

@@ -38,8 +38,8 @@ defmodule BezgelorProtocol.Packets.World.ServerHousingFabkitList do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint32(packet.plot_id)
-      |> PacketWriter.write_byte(length(packet.fabkits))
+      |> PacketWriter.write_u32(packet.plot_id)
+      |> PacketWriter.write_u8(length(packet.fabkits))
 
     writer = Enum.reduce(packet.fabkits, writer, &write_fabkit_entry/2)
 
@@ -48,9 +48,9 @@ defmodule BezgelorProtocol.Packets.World.ServerHousingFabkitList do
 
   defp write_fabkit_entry(entry, writer) do
     writer
-    |> PacketWriter.write_uint32(entry.id)
-    |> PacketWriter.write_byte(entry.socket_index)
-    |> PacketWriter.write_uint32(entry.fabkit_id)
+    |> PacketWriter.write_u32(entry.id)
+    |> PacketWriter.write_u8(entry.socket_index)
+    |> PacketWriter.write_u32(entry.fabkit_id)
   end
 
   @doc "Create from plot ID and list of HousingFabkit structs."

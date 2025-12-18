@@ -291,7 +291,7 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
 
   defp write_bones(writer, [bone | rest]) do
     writer
-    |> PacketWriter.write_float32_bits(bone)
+    |> PacketWriter.write_f32(bone)
     |> write_bones(rest)
   end
 
@@ -317,7 +317,7 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
 
   defp write_stat_value(writer, 1, value) do
     # Float type - write as float32
-    PacketWriter.write_float32_bits(writer, value / 1.0)
+    PacketWriter.write_f32(writer, value / 1.0)
   end
 
   # Write properties array - each property is {property_id, base_value, value}
@@ -329,9 +329,9 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
     # Property enum (8 bits)
     |> PacketWriter.write_bits(property_id, 8)
     # BaseValue (float32)
-    |> PacketWriter.write_float32_bits(base_value / 1.0)
+    |> PacketWriter.write_f32(base_value / 1.0)
     # Value (float32)
-    |> PacketWriter.write_float32_bits(value / 1.0)
+    |> PacketWriter.write_f32(value / 1.0)
     |> write_properties(rest)
   end
 

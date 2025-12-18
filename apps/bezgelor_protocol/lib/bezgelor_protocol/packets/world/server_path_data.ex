@@ -39,17 +39,17 @@ defmodule BezgelorProtocol.Packets.World.ServerPathData do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_byte(packet.path_type)
-      |> PacketWriter.write_byte(packet.path_level)
-      |> PacketWriter.write_uint32(packet.path_xp)
-      |> PacketWriter.write_byte(length(packet.unlocked_abilities))
+      |> PacketWriter.write_u8(packet.path_type)
+      |> PacketWriter.write_u8(packet.path_level)
+      |> PacketWriter.write_u32(packet.path_xp)
+      |> PacketWriter.write_u8(length(packet.unlocked_abilities))
 
     writer =
       Enum.reduce(packet.unlocked_abilities, writer, fn ability_id, w ->
-        PacketWriter.write_uint32(w, ability_id)
+        PacketWriter.write_u32(w, ability_id)
       end)
 
-    writer = PacketWriter.write_uint16(writer, length(packet.missions))
+    writer = PacketWriter.write_u16(writer, length(packet.missions))
 
     writer =
       Enum.reduce(packet.missions, writer, fn mission, w ->
@@ -63,9 +63,9 @@ defmodule BezgelorProtocol.Packets.World.ServerPathData do
         progress_list = Map.to_list(mission.progress || %{})
 
         w
-        |> PacketWriter.write_uint32(mission.mission_id)
-        |> PacketWriter.write_byte(state_byte)
-        |> PacketWriter.write_uint16(length(progress_list))
+        |> PacketWriter.write_u32(mission.mission_id)
+        |> PacketWriter.write_u8(state_byte)
+        |> PacketWriter.write_u16(length(progress_list))
         |> write_progress_entries(progress_list)
       end)
 
@@ -78,9 +78,9 @@ defmodule BezgelorProtocol.Packets.World.ServerPathData do
     key_str = to_string(key)
 
     writer
-    |> PacketWriter.write_byte(byte_size(key_str))
-    |> PacketWriter.write_bytes(key_str)
-    |> PacketWriter.write_int32(value)
+    |> PacketWriter.write_u8(byte_size(key_str))
+    |> PacketWriter.write_bytes_bits(key_str)
+    |> PacketWriter.write_i32(value)
     |> write_progress_entries(rest)
   end
 end

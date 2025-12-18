@@ -26,16 +26,16 @@ defmodule BezgelorProtocol.Packets.World.ServerFriendList do
 
   @impl true
   def write(%__MODULE__{friends: friends}, writer) do
-    writer = PacketWriter.write_uint32(writer, length(friends))
+    writer = PacketWriter.write_u32(writer, length(friends))
 
     writer = Enum.reduce(friends, writer, fn friend, w ->
       w
-      |> PacketWriter.write_uint64(friend.character_id)
+      |> PacketWriter.write_u64(friend.character_id)
       |> PacketWriter.write_wide_string(friend.name)
-      |> PacketWriter.write_byte(friend.level)
-      |> PacketWriter.write_byte(friend.class)
-      |> PacketWriter.write_byte(if(friend.online, do: 1, else: 0))
-      |> PacketWriter.write_uint32(friend.zone_id || 0)
+      |> PacketWriter.write_u8(friend.level)
+      |> PacketWriter.write_u8(friend.class)
+      |> PacketWriter.write_u8(if(friend.online, do: 1, else: 0))
+      |> PacketWriter.write_u32(friend.zone_id || 0)
       |> PacketWriter.write_wide_string(friend.note || "")
     end)
 

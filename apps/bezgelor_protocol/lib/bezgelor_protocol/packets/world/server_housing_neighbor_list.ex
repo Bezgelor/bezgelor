@@ -39,8 +39,8 @@ defmodule BezgelorProtocol.Packets.World.ServerHousingNeighborList do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint32(packet.plot_id)
-      |> PacketWriter.write_uint16(length(packet.neighbors))
+      |> PacketWriter.write_u32(packet.plot_id)
+      |> PacketWriter.write_u16(length(packet.neighbors))
 
     writer = Enum.reduce(packet.neighbors, writer, &write_neighbor_entry/2)
 
@@ -53,10 +53,10 @@ defmodule BezgelorProtocol.Packets.World.ServerHousingNeighborList do
     name_bytes = :binary.bin_to_list(name)
 
     writer
-    |> PacketWriter.write_uint64(entry.character_id)
-    |> PacketWriter.write_byte(roommate_byte)
-    |> PacketWriter.write_uint16(length(name_bytes))
-    |> PacketWriter.write_bytes(name)
+    |> PacketWriter.write_u64(entry.character_id)
+    |> PacketWriter.write_u8(roommate_byte)
+    |> PacketWriter.write_u16(length(name_bytes))
+    |> PacketWriter.write_bytes_bits(name)
   end
 
   @doc "Create from plot ID and list of HousingNeighbor structs with preloaded character."

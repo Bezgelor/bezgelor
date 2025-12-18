@@ -186,26 +186,26 @@ defmodule BezgelorProtocol.Packets.World.ServerCharacterList do
   @spec write(t(), PacketWriter.t()) :: {:ok, PacketWriter.t()}
   def write(%__MODULE__{} = packet, writer) do
     # Server time (uint64) - use bits for continuous stream
-    writer = PacketWriter.write_uint64_bits(writer, packet.server_time)
+    writer = PacketWriter.write_u64(writer, packet.server_time)
 
     # Character count and characters
-    writer = PacketWriter.write_uint32_bits(writer, length(packet.characters))
+    writer = PacketWriter.write_u32(writer, length(packet.characters))
     writer = Enum.reduce(packet.characters, writer, &write_character/2)
 
     # Enabled character creation IDs
-    writer = PacketWriter.write_uint32_bits(writer, length(packet.enabled_character_creation_ids))
+    writer = PacketWriter.write_u32(writer, length(packet.enabled_character_creation_ids))
 
     writer =
       Enum.reduce(packet.enabled_character_creation_ids, writer, fn id, w ->
-        PacketWriter.write_uint32_bits(w, id)
+        PacketWriter.write_u32(w, id)
       end)
 
     # Disabled character creation IDs
-    writer = PacketWriter.write_uint32_bits(writer, length(packet.disabled_character_creation_ids))
+    writer = PacketWriter.write_u32(writer, length(packet.disabled_character_creation_ids))
 
     writer =
       Enum.reduce(packet.disabled_character_creation_ids, writer, fn id, w ->
-        PacketWriter.write_uint32_bits(w, id)
+        PacketWriter.write_u32(w, id)
       end)
 
     # Realm ID (14 bits)
@@ -238,7 +238,7 @@ defmodule BezgelorProtocol.Packets.World.ServerCharacterList do
   # All writes use bit-stream functions to maintain continuous bit stream
   defp write_character(char, writer) do
     # ID (uint64) - use bits version to maintain continuous stream
-    writer = PacketWriter.write_uint64_bits(writer, char.id)
+    writer = PacketWriter.write_u64(writer, char.id)
 
     # Name (wide string)
     writer = PacketWriter.write_wide_string(writer, char.name || "")
@@ -270,11 +270,11 @@ defmodule BezgelorProtocol.Packets.World.ServerCharacterList do
     # Position (3 floats) + Yaw + Pitch
     # Use write_float32_bits to maintain continuous bit stream
     {x, y, z} = char.position || {0.0, 0.0, 0.0}
-    writer = PacketWriter.write_float32_bits(writer, x)
-    writer = PacketWriter.write_float32_bits(writer, y)
-    writer = PacketWriter.write_float32_bits(writer, z)
-    writer = PacketWriter.write_float32_bits(writer, char.yaw || 0.0)
-    writer = PacketWriter.write_float32_bits(writer, char.pitch || 0.0)
+    writer = PacketWriter.write_f32(writer, x)
+    writer = PacketWriter.write_f32(writer, y)
+    writer = PacketWriter.write_f32(writer, z)
+    writer = PacketWriter.write_f32(writer, char.yaw || 0.0)
+    writer = PacketWriter.write_f32(writer, char.pitch || 0.0)
 
     # Path (3 bits), IsLocked (1 bit), RequiresRename (1 bit)
     writer = PacketWriter.write_bits(writer, char.path || 0, 3)
@@ -306,12 +306,12 @@ defmodule BezgelorProtocol.Packets.World.ServerCharacterList do
 
     writer =
       Enum.reduce(bones, writer, fn bone, w ->
-        PacketWriter.write_float32_bits(w, bone)
+        PacketWriter.write_f32(w, bone)
       end)
 
     # Last logged out days (float32)
     # Use write_float32_bits to maintain continuous bit stream
-    PacketWriter.write_float32_bits(writer, char.last_logged_out_days || 0.0)
+    PacketWriter.write_f32(writer, char.last_logged_out_days || 0.0)
   end
 
   # Write ItemVisual (bit-packed)

@@ -39,8 +39,8 @@ defmodule BezgelorProtocol.Packets.ServerAuthAccepted do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_bytes(packet.server_proof_m2)
-      |> PacketWriter.write_bytes(packet.game_token)
+      |> PacketWriter.write_bytes_bits(packet.server_proof_m2)
+      |> PacketWriter.write_bytes_bits(packet.game_token)
 
     {:ok, writer}
   end

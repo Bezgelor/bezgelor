@@ -35,12 +35,12 @@ defmodule BezgelorProtocol.Packets.World.ServerEventWave do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint32(packet.instance_id)
-      |> PacketWriter.write_byte(packet.wave_number)
-      |> PacketWriter.write_byte(packet.total_waves)
-      |> PacketWriter.write_byte(wave_type_to_int(packet.wave_type))
-      |> PacketWriter.write_uint16(packet.spawn_count)
-      |> PacketWriter.write_uint32(packet.time_until_next)
+      |> PacketWriter.write_u32(packet.instance_id)
+      |> PacketWriter.write_u8(packet.wave_number)
+      |> PacketWriter.write_u8(packet.total_waves)
+      |> PacketWriter.write_u8(wave_type_to_int(packet.wave_type))
+      |> PacketWriter.write_u16(packet.spawn_count)
+      |> PacketWriter.write_u32(packet.time_until_next)
 
     {:ok, writer}
   end

@@ -30,20 +30,20 @@ defmodule BezgelorProtocol.Packets.World.ServerEventComplete do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint32(packet.instance_id)
-      |> PacketWriter.write_uint32(packet.event_id)
-      |> PacketWriter.write_byte(if(packet.success, do: 1, else: 0))
-      |> PacketWriter.write_byte(tier_to_int(packet.reward_tier))
-      |> PacketWriter.write_uint32(packet.contribution)
-      |> PacketWriter.write_uint32(packet.reward_xp)
-      |> PacketWriter.write_uint32(packet.reward_gold)
-      |> PacketWriter.write_byte(length(packet.rewards))
+      |> PacketWriter.write_u32(packet.instance_id)
+      |> PacketWriter.write_u32(packet.event_id)
+      |> PacketWriter.write_u8(if(packet.success, do: 1, else: 0))
+      |> PacketWriter.write_u8(tier_to_int(packet.reward_tier))
+      |> PacketWriter.write_u32(packet.contribution)
+      |> PacketWriter.write_u32(packet.reward_xp)
+      |> PacketWriter.write_u32(packet.reward_gold)
+      |> PacketWriter.write_u8(length(packet.rewards))
 
     writer =
       Enum.reduce(packet.rewards, writer, fn reward, w ->
         w
-        |> PacketWriter.write_uint32(reward.item_id)
-        |> PacketWriter.write_uint16(reward.quantity)
+        |> PacketWriter.write_u32(reward.item_id)
+        |> PacketWriter.write_u16(reward.quantity)
       end)
 
     {:ok, writer}

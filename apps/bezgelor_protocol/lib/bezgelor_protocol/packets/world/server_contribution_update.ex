@@ -20,9 +20,9 @@ defmodule BezgelorProtocol.Packets.World.ServerContributionUpdate do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint32(packet.instance_id)
-      |> PacketWriter.write_uint32(packet.contribution)
-      |> PacketWriter.write_byte(tier_to_int(packet.reward_tier))
+      |> PacketWriter.write_u32(packet.instance_id)
+      |> PacketWriter.write_u32(packet.contribution)
+      |> PacketWriter.write_u8(tier_to_int(packet.reward_tier))
 
     {:ok, writer}
   end

@@ -42,18 +42,18 @@ defmodule BezgelorProtocol.Packets.World.ServerGroupFinderStatus do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_byte(status_to_int(packet.status))
-      |> PacketWriter.write_byte(instance_type_to_int(packet.instance_type))
-      |> PacketWriter.write_byte(difficulty_to_int(packet.difficulty))
-      |> PacketWriter.write_byte(role_to_int(packet.role))
-      |> PacketWriter.write_uint32(packet.wait_time_sec)
-      |> PacketWriter.write_uint32(packet.queue_position)
-      |> PacketWriter.write_byte(packet.tanks_found)
-      |> PacketWriter.write_byte(packet.tanks_needed)
-      |> PacketWriter.write_byte(packet.healers_found)
-      |> PacketWriter.write_byte(packet.healers_needed)
-      |> PacketWriter.write_byte(packet.dps_found)
-      |> PacketWriter.write_byte(packet.dps_needed)
+      |> PacketWriter.write_u8(status_to_int(packet.status))
+      |> PacketWriter.write_u8(instance_type_to_int(packet.instance_type))
+      |> PacketWriter.write_u8(difficulty_to_int(packet.difficulty))
+      |> PacketWriter.write_u8(role_to_int(packet.role))
+      |> PacketWriter.write_u32(packet.wait_time_sec)
+      |> PacketWriter.write_u32(packet.queue_position)
+      |> PacketWriter.write_u8(packet.tanks_found)
+      |> PacketWriter.write_u8(packet.tanks_needed)
+      |> PacketWriter.write_u8(packet.healers_found)
+      |> PacketWriter.write_u8(packet.healers_needed)
+      |> PacketWriter.write_u8(packet.dps_found)
+      |> PacketWriter.write_u8(packet.dps_needed)
 
     {:ok, writer}
   end

@@ -92,9 +92,9 @@ defmodule BezgelorProtocol.Packets.World.ServerCastResult do
 
     writer =
       writer
-      |> PacketWriter.write_byte(result_int)
-      |> PacketWriter.write_byte(reason_int)
-      |> PacketWriter.write_uint32(packet.spell_id)
+      |> PacketWriter.write_u8(result_int)
+      |> PacketWriter.write_u8(reason_int)
+      |> PacketWriter.write_u32(packet.spell_id)
 
     {:ok, writer}
   end

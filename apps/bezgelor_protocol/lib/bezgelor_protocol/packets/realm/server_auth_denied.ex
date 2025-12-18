@@ -73,9 +73,9 @@ defmodule BezgelorProtocol.Packets.Realm.ServerAuthDenied do
 
     writer =
       writer
-      |> PacketWriter.write_uint32(result_code)
-      |> PacketWriter.write_uint32(packet.error_value)
-      |> PacketWriter.write_float32(packet.suspended_days)
+      |> PacketWriter.write_u32(result_code)
+      |> PacketWriter.write_u32(packet.error_value)
+      |> PacketWriter.write_f32(packet.suspended_days)
 
     {:ok, writer}
   end

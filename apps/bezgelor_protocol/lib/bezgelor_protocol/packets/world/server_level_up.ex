@@ -40,11 +40,11 @@ defmodule BezgelorProtocol.Packets.World.ServerLevelUp do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint64(packet.entity_guid)
-      |> PacketWriter.write_uint32(packet.new_level)
-      |> PacketWriter.write_uint32(packet.max_health)
-      |> PacketWriter.write_uint32(packet.current_xp)
-      |> PacketWriter.write_uint32(packet.xp_to_level)
+      |> PacketWriter.write_u64(packet.entity_guid)
+      |> PacketWriter.write_u32(packet.new_level)
+      |> PacketWriter.write_u32(packet.max_health)
+      |> PacketWriter.write_u32(packet.current_xp)
+      |> PacketWriter.write_u32(packet.xp_to_level)
 
     {:ok, writer}
   end

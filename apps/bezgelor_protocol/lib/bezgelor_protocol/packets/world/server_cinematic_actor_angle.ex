@@ -35,9 +35,9 @@ defmodule BezgelorProtocol.Packets.World.ServerCinematicActorAngle do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint32(packet.delay)
-      |> PacketWriter.write_uint32(packet.unit_id)
-      |> PacketWriter.write_float32(packet.angle)
+      |> PacketWriter.write_u32(packet.delay)
+      |> PacketWriter.write_u32(packet.unit_id)
+      |> PacketWriter.write_f32(packet.angle)
 
     {:ok, writer}
   end

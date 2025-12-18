@@ -23,11 +23,11 @@ defmodule BezgelorProtocol.Packets.World.ServerGroupFinderResult do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_byte(result_to_int(packet.result))
+      |> PacketWriter.write_u8(result_to_int(packet.result))
 
     case packet.result do
       :error ->
-        writer = PacketWriter.write_byte(writer, error_code_to_int(packet.error_code))
+        writer = PacketWriter.write_u8(writer, error_code_to_int(packet.error_code))
         {:ok, writer}
 
       _ ->
@@ -35,12 +35,12 @@ defmodule BezgelorProtocol.Packets.World.ServerGroupFinderResult do
 
         writer =
           writer
-          |> PacketWriter.write_uint64(packet.group_id || 0)
-          |> PacketWriter.write_uint32(packet.instance_id || 0)
-          |> PacketWriter.write_uint32(packet.zone_id)
-          |> PacketWriter.write_float32(x)
-          |> PacketWriter.write_float32(y)
-          |> PacketWriter.write_float32(z)
+          |> PacketWriter.write_u64(packet.group_id || 0)
+          |> PacketWriter.write_u32(packet.instance_id || 0)
+          |> PacketWriter.write_u32(packet.zone_id)
+          |> PacketWriter.write_f32(x)
+          |> PacketWriter.write_f32(y)
+          |> PacketWriter.write_f32(z)
 
         {:ok, writer}
     end

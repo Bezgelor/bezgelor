@@ -22,16 +22,16 @@ defmodule BezgelorProtocol.Packets.World.ServerGroupFinderUpdate do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_byte(update_type_to_int(packet.update_type))
+      |> PacketWriter.write_u8(update_type_to_int(packet.update_type))
 
     writer =
       case packet.update_type do
         :status ->
           writer
-          |> PacketWriter.write_byte(instance_type_to_int(packet.instance_type))
-          |> PacketWriter.write_byte(difficulty_to_int(packet.difficulty))
-          |> PacketWriter.write_uint16(packet.queue_position)
-          |> PacketWriter.write_uint32(packet.estimated_wait)
+          |> PacketWriter.write_u8(instance_type_to_int(packet.instance_type))
+          |> PacketWriter.write_u8(difficulty_to_int(packet.difficulty))
+          |> PacketWriter.write_u16(packet.queue_position)
+          |> PacketWriter.write_u32(packet.estimated_wait)
 
         _ ->
           writer
