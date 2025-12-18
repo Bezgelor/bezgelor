@@ -29,6 +29,7 @@ defmodule BezgelorWorld.Instance.BossEncounter do
   alias BezgelorProtocol.PacketWriter
 
   require Logger
+  import Bitwise
 
   @ability_tick_interval 100  # Check abilities every 100ms
 
@@ -921,7 +922,7 @@ defmodule BezgelorWorld.Instance.BossEncounter do
                 velocity_y: vy,
                 velocity_z: vz,
                 movement_flags: 0x10,  # Forced movement flag
-                timestamp: System.monotonic_time(:millisecond) |> rem(0xFFFFFFFF)
+                timestamp: System.system_time(:millisecond) |> band(0xFFFFFFFF)
               }
 
               writer = PacketWriter.new()

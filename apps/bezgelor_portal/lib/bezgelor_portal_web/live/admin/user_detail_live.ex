@@ -26,7 +26,9 @@ defmodule BezgelorPortalWeb.Admin.UserDetailLive do
       {:ok, user} ->
         {:ok,
          assign(socket,
-           page_title: "User: #{user.email}",
+           page_title: user.email,
+           parent_path: ~p"/admin/users",
+           parent_label: "Users",
            user: user,
            characters: Characters.list_characters(user.id),
            roles: Authorization.list_roles(),
@@ -54,25 +56,29 @@ defmodule BezgelorPortalWeb.Admin.UserDetailLive do
     <div class="space-y-6">
       <!-- Header -->
       <div class="flex items-center justify-between">
-        <div>
-          <.link navigate={~p"/admin/users"} class="text-sm text-base-content/70 hover:text-primary flex items-center gap-1">
-            <.icon name="hero-arrow-left" class="size-4" />
-            Back to Users
-          </.link>
-          <h1 class="text-2xl font-bold mt-2">{@user.email}</h1>
-          <p class="text-base-content/70">Account ID: {@user.id}</p>
-        </div>
-        <div class="flex gap-2">
+        <div class="flex items-center gap-3">
+          <h1 class="text-2xl font-bold">{@user.email}</h1>
+          <%= if @user.email_verified_at do %>
+            <span class="badge badge-success gap-1">
+              <.icon name="hero-check-badge-micro" class="size-3" />
+              Verified
+            </span>
+          <% end %>
           <.status_badges user={@user} active_suspension={@active_suspension} />
         </div>
       </div>
 
-      <!-- Account Info Card -->
+      <!-- Account Info and Roles/Actions -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Account Info Card (Left) -->
         <div class="card bg-base-100 shadow">
           <div class="card-body">
             <h2 class="card-title">Account Information</h2>
             <div class="grid grid-cols-2 gap-4 mt-4">
+              <div>
+                <span class="text-sm text-base-content/50">Account ID</span>
+                <p class="font-medium font-mono">{@user.id}</p>
+              </div>
               <div>
                 <span class="text-sm text-base-content/50">Registered</span>
                 <p class="font-medium">{format_datetime(@user.inserted_at)}</p>
@@ -111,78 +117,101 @@ defmodule BezgelorPortalWeb.Admin.UserDetailLive do
           </div>
         </div>
 
-        <!-- Actions Card -->
-        <div class="card bg-base-100 shadow">
-          <div class="card-body">
-            <h2 class="card-title">Actions</h2>
-            <div class="flex flex-wrap gap-2 mt-4">
-              <button
-                :if={"users.reset_password" in @permissions}
-                type="button"
-                class="btn btn-outline btn-sm"
-                phx-click="reset_password"
-                data-confirm="Are you sure you want to reset this user's password? They will receive an email with a reset link."
-              >
-                <.icon name="hero-key" class="size-4" />
-                Reset Password
-              </button>
+        <!-- Roles and Actions (Right) -->
+        <div class="space-y-6">
+          <!-- Roles Card -->
+          <div class="card bg-base-100 shadow">
+            <div class="card-body">
+              <div class="flex items-center justify-between">
+                <h2 class="card-title">Roles</h2>
+                <button
+                  :if={"admin.manage_roles" in @permissions}
+                  type="button"
+                  class="btn btn-ghost btn-sm"
+                  phx-click="show_role_modal"
+                >
+                  <.icon name="hero-pencil" class="size-4" />
+                  Edit
+                </button>
+              </div>
+              <div class="mt-2">
+                <%= if Enum.empty?(@user_roles) do %>
+                  <p class="text-base-content/50 text-sm">No roles assigned</p>
+                <% else %>
+                  <div class="flex flex-wrap gap-2">
+                    <span :for={role <- @user_roles} class="badge badge-lg badge-primary gap-1">
+                      <.icon name="hero-shield-check-micro" class="size-3" />
+                      {role.name}
+                    </span>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+          </div>
 
-              <%= if @active_suspension do %>
+          <!-- Actions Card -->
+          <div class="card bg-base-100 shadow">
+            <div class="card-body">
+              <h2 class="card-title">Actions</h2>
+              <div class="flex flex-col gap-2 mt-2">
                 <button
-                  :if={"users.unban" in @permissions}
+                  :if={"users.reset_password" in @permissions}
                   type="button"
-                  class="btn btn-success btn-sm"
-                  phx-click="unban"
-                  data-confirm="Are you sure you want to remove the ban/suspension from this account?"
+                  class="btn btn-outline btn-sm justify-start"
+                  phx-click="reset_password"
+                  data-confirm="Are you sure you want to reset this user's password? They will receive an email with a reset link."
                 >
-                  <.icon name="hero-check-circle" class="size-4" />
-                  Remove Ban
+                  <.icon name="hero-key" class="size-4" />
+                  Reset Password
                 </button>
-              <% else %>
-                <button
-                  :if={"users.ban" in @permissions}
-                  type="button"
-                  class="btn btn-error btn-sm"
-                  phx-click="show_ban_modal"
-                >
-                  <.icon name="hero-no-symbol" class="size-4" />
-                  Ban/Suspend
-                </button>
-              <% end %>
 
-              <button
-                :if={"admin.manage_roles" in @permissions}
-                type="button"
-                class="btn btn-outline btn-sm"
-                phx-click="show_role_modal"
-              >
-                <.icon name="hero-shield-check" class="size-4" />
-                Manage Roles
-              </button>
+                <%= if @active_suspension do %>
+                  <button
+                    :if={"users.unban" in @permissions}
+                    type="button"
+                    class="btn btn-success btn-sm justify-start"
+                    phx-click="unban"
+                    data-confirm="Are you sure you want to remove the ban/suspension from this account?"
+                  >
+                    <.icon name="hero-check-circle" class="size-4" />
+                    Remove Ban
+                  </button>
+                <% else %>
+                  <button
+                    :if={"users.ban" in @permissions}
+                    type="button"
+                    class="btn btn-error btn-sm justify-start"
+                    phx-click="show_ban_modal"
+                  >
+                    <.icon name="hero-no-symbol" class="size-4" />
+                    Ban/Suspend
+                  </button>
+                <% end %>
 
-              <%= if @user.deleted_at do %>
-                <button
-                  :if={"users.restore" in @permissions}
-                  type="button"
-                  class="btn btn-warning btn-sm"
-                  phx-click="restore_account"
-                  data-confirm="Are you sure you want to restore this deleted account?"
-                >
-                  <.icon name="hero-arrow-uturn-left" class="size-4" />
-                  Restore Account
-                </button>
-              <% else %>
-                <button
-                  :if={"users.delete" in @permissions}
-                  type="button"
-                  class="btn btn-error btn-outline btn-sm"
-                  phx-click="delete_account"
-                  data-confirm="Are you sure you want to delete this account? This is a soft delete and can be restored."
-                >
-                  <.icon name="hero-trash" class="size-4" />
-                  Delete Account
-                </button>
-              <% end %>
+                <%= if @user.deleted_at do %>
+                  <button
+                    :if={"users.restore" in @permissions}
+                    type="button"
+                    class="btn btn-warning btn-sm justify-start"
+                    phx-click="restore_account"
+                    data-confirm="Are you sure you want to restore this deleted account?"
+                  >
+                    <.icon name="hero-arrow-uturn-left" class="size-4" />
+                    Restore Account
+                  </button>
+                <% else %>
+                  <button
+                    :if={"users.delete" in @permissions}
+                    type="button"
+                    class="btn btn-error btn-outline btn-sm justify-start"
+                    phx-click="delete_account"
+                    data-confirm="Are you sure you want to delete this account? This is a soft delete and can be restored."
+                  >
+                    <.icon name="hero-trash" class="size-4" />
+                    Delete Account
+                  </button>
+                <% end %>
+              </div>
             </div>
           </div>
         </div>
@@ -200,23 +229,6 @@ defmodule BezgelorPortalWeb.Admin.UserDetailLive do
               <strong>Until:</strong> {format_datetime(@active_suspension.end_time)}
             </p>
           </div>
-        </div>
-      </div>
-
-      <!-- Roles Card -->
-      <div class="card bg-base-100 shadow">
-        <div class="card-body">
-          <h2 class="card-title">Roles</h2>
-          <%= if Enum.empty?(@user_roles) do %>
-            <p class="text-base-content/50">No roles assigned</p>
-          <% else %>
-            <div class="flex flex-wrap gap-2 mt-2">
-              <span :for={role <- @user_roles} class="badge badge-lg badge-primary gap-1">
-                <.icon name="hero-shield-check-micro" class="size-3" />
-                {role.name}
-              </span>
-            </div>
-          <% end %>
         </div>
       </div>
 
@@ -372,9 +384,7 @@ defmodule BezgelorPortalWeb.Admin.UserDetailLive do
           <span class="badge badge-warning badge-lg">Suspended</span>
         <% end %>
       <% end %>
-      <%= if @user.email_verified_at do %>
-        <span class="badge badge-success badge-lg">Verified</span>
-      <% else %>
+      <%= if !@user.email_verified_at do %>
         <span class="badge badge-warning badge-lg">Unverified</span>
       <% end %>
     </div>

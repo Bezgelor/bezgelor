@@ -207,6 +207,16 @@ defmodule BezgelorProtocol.Connection do
     {:noreply, state}
   end
 
+  # Handle packets sent as {opcode, payload} from broadcasters (CombatBroadcaster, etc.)
+  def handle_info({:send_packet, opcode, payload}, state) when is_atom(opcode) and is_binary(payload) do
+    state = if state.connection_type == :world do
+      do_send_encrypted_world_packet(state, opcode, payload)
+    else
+      do_send_packet(state, opcode, payload)
+    end
+    {:noreply, state}
+  end
+
   # Public API
 
   @doc "Send a packet to the client."

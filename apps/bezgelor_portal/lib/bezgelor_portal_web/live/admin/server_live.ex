@@ -584,9 +584,13 @@ defmodule BezgelorPortalWeb.Admin.ServerLive do
 
   defp get_zone_name(nil), do: "Unknown"
   defp get_zone_name(zone_id) do
-    case BezgelorData.Store.get(:world_location, zone_id) do
-      :error -> "Zone #{zone_id}"
-      {:ok, data} -> Map.get(data, :name) || Map.get(data, "name") || "Zone #{zone_id}"
+    try do
+      case BezgelorData.Store.get(:world_location, zone_id) do
+        :error -> "Zone #{zone_id}"
+        {:ok, data} -> Map.get(data, :name) || Map.get(data, "name") || "Zone #{zone_id}"
+      end
+    rescue
+      ArgumentError -> "Zone #{zone_id}"
     end
   end
 

@@ -478,6 +478,8 @@ defmodule BezgelorDb.Characters do
   # Faction IDs (matches NexusForever Faction enum)
   # See: NexusForever/Source/NexusForever.Game.Static/Reputation/Faction.cs
   # 166 = Dominion, 167 = Exile
+  # Note: Race 1 (Human/Cassian) can be either faction - same model, different lore names
+  defp valid_race_faction_atom?(:human, _faction), do: true  # Human model used by both factions
   defp valid_race_faction_atom?(race, 166) when race in @dominion_races, do: true
   defp valid_race_faction_atom?(race, 167) when race in @exile_races, do: true
   defp valid_race_faction_atom?(_, _), do: false

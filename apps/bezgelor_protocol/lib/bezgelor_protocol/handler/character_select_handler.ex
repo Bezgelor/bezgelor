@@ -122,6 +122,7 @@ defmodule BezgelorProtocol.Handler.CharacterSelectHandler do
             charges: 0
           }
         end)
+
         player_create_data = encode_packet(ServerPlayerCreate.from_character(character, inventory_maps))
 
         # Store character info in session for WorldEntryHandler

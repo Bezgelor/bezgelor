@@ -9,7 +9,7 @@ defmodule BezgelorPortalWeb.Admin.CharactersLive do
   alias BezgelorDb.Characters
   alias BezgelorPortal.GameData
 
-  @per_page 25
+  @per_page 50
 
   @impl true
   def mount(_params, _session, socket) do
@@ -94,46 +94,56 @@ defmodule BezgelorPortalWeb.Admin.CharactersLive do
           <table class="table">
             <thead>
               <tr>
-                <th>Character</th>
+                <th>Name</th>
                 <th>Level</th>
                 <th>Class</th>
                 <th>Race</th>
                 <th>Owner</th>
                 <th>Last Online</th>
                 <th>Status</th>
-                <th>Actions</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
               <%= if Enum.empty?(@characters) do %>
                 <tr>
                   <td colspan="8" class="text-center py-8 text-base-content/50">
-                    <%= if @search_query == "" do %>
-                      Enter a character name to search
-                    <% else %>
-                      No characters found matching your search
-                    <% end %>
+                    No characters found
                   </td>
                 </tr>
               <% else %>
                 <tr :for={char <- @characters} class="hover">
-                  <td class="font-semibold">{char.name}</td>
-                  <td>{char.level}</td>
-                  <td>
+                  <td
+                    class="font-semibold cursor-pointer"
+                    phx-click="view_character"
+                    phx-value-id={char.id}
+                  >
+                    {char.name}
+                  </td>
+                  <td class="cursor-pointer" phx-click="view_character" phx-value-id={char.id}>
+                    {char.level}
+                  </td>
+                  <td class="cursor-pointer" phx-click="view_character" phx-value-id={char.id}>
                     <span style={"color: #{GameData.class_color(char.class)}"}>
                       {GameData.class_name(char.class)}
                     </span>
                   </td>
-                  <td>{GameData.race_name(char.race)}</td>
+                  <td class="cursor-pointer" phx-click="view_character" phx-value-id={char.id}>
+                    {GameData.race_name(char.race)}
+                  </td>
                   <td>
                     <.link navigate={~p"/admin/users/#{char.account_id}"} class="link link-primary">
                       {char.account_email}
                     </.link>
                   </td>
-                  <td class="text-sm text-base-content/70">
+                  <td
+                    class="text-sm text-base-content/70 cursor-pointer"
+                    phx-click="view_character"
+                    phx-value-id={char.id}
+                  >
                     {format_relative_time(char.last_online)}
                   </td>
-                  <td>
+                  <td class="cursor-pointer" phx-click="view_character" phx-value-id={char.id}>
                     <%= if char.deleted_at do %>
                       <span class="badge badge-error">Deleted</span>
                     <% else %>
@@ -141,10 +151,7 @@ defmodule BezgelorPortalWeb.Admin.CharactersLive do
                     <% end %>
                   </td>
                   <td>
-                    <.link navigate={~p"/admin/characters/#{char.id}"} class="btn btn-ghost btn-sm">
-                      <.icon name="hero-eye" class="size-4" />
-                      View
-                    </.link>
+                    <.icon name="hero-chevron-right" class="size-4 text-base-content/50" />
                   </td>
                 </tr>
               <% end %>
@@ -183,23 +190,26 @@ defmodule BezgelorPortalWeb.Admin.CharactersLive do
     {:noreply, push_patch(socket, to: ~p"/admin/characters?#{pagination_params(query, include_deleted, 1)}")}
   end
 
+  @impl true
+  def handle_event("view_character", %{"id" => id}, socket) do
+    {:noreply, push_navigate(socket, to: ~p"/admin/characters/#{id}")}
+  end
+
   defp perform_search(socket) do
     %{search_query: query, include_deleted: include_deleted, page: page} = socket.assigns
     offset = (page - 1) * @per_page
 
-    if query == "" do
-      assign(socket, characters: [], has_more: false)
-    else
-      characters = Characters.search_characters(
-        search: query,
-        include_deleted: include_deleted,
-        limit: @per_page + 1,
-        offset: offset
-      )
+    opts = [
+      include_deleted: include_deleted,
+      limit: @per_page + 1,
+      offset: offset
+    ]
 
-      {characters, has_more} = maybe_pop_extra(characters, @per_page)
-      assign(socket, characters: characters, has_more: has_more)
-    end
+    opts = if query != "", do: Keyword.put(opts, :search, query), else: opts
+
+    characters = Characters.search_characters(opts)
+    {characters, has_more} = maybe_pop_extra(characters, @per_page)
+    assign(socket, characters: characters, has_more: has_more)
   end
 
   defp maybe_pop_extra(list, limit) when length(list) > limit do

@@ -35,14 +35,39 @@ export class CharacterViewer {
     this.mixer = null;
     this.clock = new THREE.Clock();
     this.animationId = null;
+    this.disposed = false;
+    this.initFailed = false;
 
     this._init();
+  }
+
+  /**
+   * Check if WebGL is available in the browser.
+   * @returns {boolean} True if WebGL is available
+   */
+  static isWebGLAvailable() {
+    try {
+      const canvas = document.createElement("canvas");
+      return !!(
+        window.WebGLRenderingContext &&
+        (canvas.getContext("webgl") || canvas.getContext("experimental-webgl"))
+      );
+    } catch (e) {
+      return false;
+    }
   }
 
   /**
    * Initialize the Three.js scene, camera, renderer, and controls.
    */
   _init() {
+    // Check WebGL availability first
+    if (!CharacterViewer.isWebGLAvailable()) {
+      console.warn("[CharacterViewer] WebGL not available");
+      this.initFailed = true;
+      return;
+    }
+
     // Scene
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(this.options.backgroundColor);
@@ -56,8 +81,24 @@ export class CharacterViewer {
     );
     this.camera.position.set(0, 1.5, 3);
 
-    // Renderer
-    this.renderer = new THREE.WebGLRenderer({ antialias: true });
+    // Renderer - wrap in try-catch for WebGL context failures
+    try {
+      this.renderer = new THREE.WebGLRenderer({ antialias: true });
+    } catch (error) {
+      console.warn("[CharacterViewer] Failed to create WebGL renderer:", error.message);
+      this.initFailed = true;
+      return;
+    }
+
+    // Check if context was actually created
+    if (!this.renderer.getContext()) {
+      console.warn("[CharacterViewer] WebGL context is null");
+      this.initFailed = true;
+      this.renderer.dispose();
+      this.renderer = null;
+      return;
+    }
+
     this.renderer.setSize(this.options.width, this.options.height);
     this.renderer.setPixelRatio(window.devicePixelRatio);
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -89,16 +130,42 @@ export class CharacterViewer {
   }
 
   /**
-   * Load a glTF/GLB model from URL.
+   * Load a glTF/GLB model from URL with timeout.
    *
    * @param {string} url - URL to the glTF/GLB file
+   * @param {number} timeout - Timeout in ms (default: 10000)
    * @returns {Promise<boolean>} - True if load succeeded
    */
-  async loadModel(url) {
+  async loadModel(url, timeout = 10000) {
+    // Don't load if already disposed
+    if (this.disposed) {
+      console.log("[CharacterViewer.loadModel] Already disposed, skipping");
+      return false;
+    }
+
+    console.log("[CharacterViewer.loadModel] Starting load:", url);
     const loader = new GLTFLoader();
 
+    // Create a promise that rejects after timeout
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Model load timeout')), timeout);
+    });
+
     try {
-      const gltf = await loader.loadAsync(url);
+      // Race between load and timeout
+      console.log("[CharacterViewer.loadModel] Fetching...");
+      const gltf = await Promise.race([
+        loader.loadAsync(url),
+        timeoutPromise
+      ]);
+
+      console.log("[CharacterViewer.loadModel] GLTF loaded:", gltf);
+
+      // Check again after async load in case disposed during load
+      if (this.disposed) {
+        console.log("[CharacterViewer.loadModel] Disposed during load");
+        return false;
+      }
 
       // Remove old model
       if (this.model) {
@@ -233,6 +300,8 @@ export class CharacterViewer {
    * Clean up and dispose resources.
    */
   dispose() {
+    this.disposed = true;
+
     if (this.animationId) {
       cancelAnimationFrame(this.animationId);
       this.animationId = null;

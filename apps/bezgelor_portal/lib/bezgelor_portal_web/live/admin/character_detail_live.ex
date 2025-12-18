@@ -28,7 +28,9 @@ defmodule BezgelorPortalWeb.Admin.CharacterDetailLive do
         {:ok,
          socket
          |> assign(
-           page_title: "Character: #{character.name}",
+           page_title: character.name,
+           parent_path: ~p"/admin/characters",
+           parent_label: "Characters",
            character: character,
            permissions: permission_keys,
            active_tab: :overview,
@@ -64,27 +66,21 @@ defmodule BezgelorPortalWeb.Admin.CharacterDetailLive do
       <!-- Header -->
       <div class="flex items-center justify-between">
         <div>
-          <.link navigate={~p"/admin/characters"} class="text-sm text-base-content/70 hover:text-primary flex items-center gap-1">
-            <.icon name="hero-arrow-left" class="size-4" />
-            Back to Characters
-          </.link>
-          <h1 class="text-2xl font-bold mt-2 flex items-center gap-3">
+          <h1 class="text-2xl font-bold flex items-center gap-3">
             {@character.name}
             <span class="badge badge-lg" style={"background-color: #{GameData.class_color(@character.class)}; color: white"}>
               {GameData.class_name(@character.class)}
             </span>
+            <.faction_badge race_id={@character.race} />
           </h1>
           <p class="text-base-content/70">
             Level {@character.level} {GameData.race_name(@character.race)} •
             Owner: <.link navigate={~p"/admin/users/#{@character.account_id}"} class="link link-primary">{@character.account.email}</.link>
           </p>
         </div>
-        <div class="flex gap-2">
-          <%= if @character.deleted_at do %>
-            <span class="badge badge-error badge-lg">Deleted</span>
-          <% end %>
-          <.faction_badge race_id={@character.race} />
-        </div>
+        <%= if @character.deleted_at do %>
+          <span class="badge badge-error badge-lg">Deleted</span>
+        <% end %>
       </div>
 
       <!-- Actions Card -->
@@ -740,7 +736,7 @@ defmodule BezgelorPortalWeb.Admin.CharacterDetailLive do
         {:noreply,
          socket
          |> put_flash(:info, "Character renamed to #{new_name}")
-         |> assign(character: updated, show_rename_modal: false, page_title: "Character: #{new_name}")}
+         |> assign(character: updated, show_rename_modal: false, page_title: new_name)}
 
       {:error, :name_taken} ->
         {:noreply, put_flash(socket, :error, "Name is already taken")}

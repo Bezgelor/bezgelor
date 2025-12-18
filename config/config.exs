@@ -14,10 +14,6 @@ config :bezgelor_portal,
 config :bezgelor_portal, BezgelorPortal.Mailer,
   adapter: Swoosh.Adapters.Local
 
-# Hammer rate limiting
-config :hammer,
-  backend: {Hammer.Backend.ETS, [expiry_ms: 60_000 * 60, cleanup_interval_ms: 60_000 * 10]}
-
 # Cloak vault for encrypting sensitive data (TOTP secrets)
 # Generate a key with: :crypto.strong_rand_bytes(32) |> Base.encode64()
 config :bezgelor_portal, BezgelorPortal.Vault,
@@ -25,7 +21,7 @@ config :bezgelor_portal, BezgelorPortal.Vault,
     default: {
       Cloak.Ciphers.AES.GCM,
       tag: "AES.GCM.V1",
-      key: Base.decode64!(System.get_env("CLOAK_KEY", "dGVzdF9rZXlfMzJfYnl0ZXNfbG9uZ19mb3JfYWVzXw=="))
+      key: Base.decode64!(System.get_env("CLOAK_KEY", "dGVzdF9rZXlfMzJfYnl0ZXNfbG9uZ19mb3JfYWVzISE="))
     }
   ]
 

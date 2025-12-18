@@ -13,28 +13,40 @@ defmodule BezgelorPortalWeb.Admin.EventsLive do
   alias BezgelorDb.{PublicEvents, Authorization}
   alias BezgelorWorld.Portal
 
+  @refresh_interval 30
+
   @impl true
   def mount(_params, _session, socket) do
     if connected?(socket) do
-      # Refresh every 30 seconds
-      :timer.send_interval(30_000, self(), :refresh)
+      # Tick every second for countdown
+      :timer.send_interval(1_000, self(), :tick)
     end
 
     {:ok,
      socket
      |> assign(
-       page_title: "Event Management",
+       page_title: "Event Manager",
        active_tab: :events,
        show_schedule_modal: false,
-       schedule_form: %{"event_id" => "", "zone_id" => "", "trigger_type" => "interval", "interval_hours" => "4"}
+       schedule_form: %{"event_id" => "", "zone_id" => "", "trigger_type" => "interval", "interval_hours" => "4"},
+       countdown: @refresh_interval
      )
      |> load_data(),
      layout: {BezgelorPortalWeb.Layouts, :admin}}
   end
 
   @impl true
-  def handle_info(:refresh, socket) do
-    {:noreply, load_data(socket)}
+  def handle_info(:tick, socket) do
+    countdown = socket.assigns.countdown - 1
+
+    if countdown <= 0 do
+      {:noreply,
+       socket
+       |> assign(countdown: @refresh_interval)
+       |> load_data()}
+    else
+      {:noreply, assign(socket, countdown: countdown)}
+    end
   end
 
   @impl true
@@ -43,11 +55,15 @@ defmodule BezgelorPortalWeb.Admin.EventsLive do
     <div class="space-y-6">
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-2xl font-bold">Event Management</h1>
+          <h1 class="text-2xl font-bold">Event Manager</h1>
           <p class="text-base-content/70">Manage public events and world bosses</p>
         </div>
-        <div class="text-sm text-base-content/70">
-          Auto-refreshes every 30s
+        <div class="flex items-center gap-2 text-sm text-base-content/70">
+          <span>Refreshing in</span>
+          <span class="countdown font-mono">
+            <span style={"--value:#{@countdown}"}></span>
+          </span>
+          <span>s</span>
         </div>
       </div>
 
@@ -195,11 +211,11 @@ defmodule BezgelorPortalWeb.Admin.EventsLive do
                     <td class="font-mono">{boss.boss_id}</td>
                     <td>{boss.zone_id}</td>
                     <td>
-                      <.boss_status_badge status={boss.status} />
+                      <.boss_status_badge status={boss.state} />
                     </td>
                     <td>
-                      <%= if boss.window_start && boss.window_end do %>
-                        {format_datetime(boss.window_start)} - {format_datetime(boss.window_end)}
+                      <%= if boss.spawn_window_start && boss.spawn_window_end do %>
+                        {format_datetime(boss.spawn_window_start)} - {format_datetime(boss.spawn_window_end)}
                       <% else %>
                         <span class="text-base-content/50">Not set</span>
                       <% end %>
@@ -210,7 +226,7 @@ defmodule BezgelorPortalWeb.Admin.EventsLive do
                     <td>
                       <div class="flex gap-1">
                         <button
-                          :if={"events.control" in @permissions && boss.status == :waiting}
+                          :if={"events.control" in @permissions && boss.state == :waiting}
                           type="button"
                           class="btn btn-primary btn-xs"
                           phx-click="spawn_boss"
@@ -220,7 +236,7 @@ defmodule BezgelorPortalWeb.Admin.EventsLive do
                           Spawn
                         </button>
                         <button
-                          :if={"events.control" in @permissions && boss.status in [:spawned, :engaged]}
+                          :if={"events.control" in @permissions && boss.state in [:spawned, :engaged]}
                           type="button"
                           class="btn btn-error btn-xs"
                           phx-click="kill_boss"
@@ -553,7 +569,7 @@ defmodule BezgelorPortalWeb.Admin.EventsLive do
     alias BezgelorDb.Repo
 
     WorldBossSpawn
-    |> where([b], b.status in [:spawned, :engaged])
+    |> where([b], b.state in [:spawned, :engaged])
     |> Repo.all()
   end
 

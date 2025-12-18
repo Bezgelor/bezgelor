@@ -67,6 +67,8 @@ defmodule BezgelorPortalWeb.Layouts do
   attr :current_account, :map, default: nil, doc: "the currently logged-in account"
   attr :permissions, :list, default: [], doc: "list of permission keys the user has"
   attr :page_title, :string, default: nil, doc: "the current page title for breadcrumb"
+  attr :parent_path, :string, default: nil, doc: "optional parent breadcrumb path"
+  attr :parent_label, :string, default: nil, doc: "optional parent breadcrumb label"
   attr :inner_content, :any, default: nil, doc: "content when used as a layout"
   slot :inner_block, doc: "content when used as a component"
 
@@ -83,7 +85,8 @@ defmodule BezgelorPortalWeb.Layouts do
           <div class="mx-auto max-w-7xl">
             <nav :if={@page_title} class="breadcrumbs text-sm mb-4">
               <ul>
-                <li><a href="/admin">Admin</a></li>
+                <li><.link navigate={~p"/admin"}>Admin</.link></li>
+                <li :if={@parent_path && @parent_label}><.link navigate={@parent_path}>{@parent_label}</.link></li>
                 <li>{@page_title}</li>
               </ul>
             </nav>
@@ -110,7 +113,7 @@ defmodule BezgelorPortalWeb.Layouts do
 
   def navbar(assigns) do
     ~H"""
-    <header class="navbar bg-base-100 shadow-sm px-4 sm:px-6 lg:px-8 relative z-40">
+    <header class="navbar bg-base-100 shadow-sm px-4 sm:px-6 lg:px-8 relative z-40 items-center">
       <!-- Left: Logo - overlaps into body -->
       <div class="flex-1">
         <a href="/" class="logo-overlap">
@@ -138,8 +141,8 @@ defmodule BezgelorPortalWeb.Layouts do
       </div>
 
       <!-- Right: Account & Theme -->
-      <div class="flex-1 flex justify-end">
-        <ul class="flex items-center space-x-1">
+      <div class="flex-1 flex justify-end items-center h-full">
+        <ul class="flex items-center space-x-1 h-full">
           <%= if @current_account do %>
             <li class="dropdown dropdown-end">
               <div tabindex="0" role="button" class="btn btn-ghost">
@@ -188,8 +191,8 @@ defmodule BezgelorPortalWeb.Layouts do
       |> assign(:dev_routes_enabled, dev_routes_enabled)
 
     ~H"""
-    <aside class="w-64 bg-base-100 border-r border-base-300 hidden lg:block">
-      <nav class="p-4 space-y-2">
+    <aside class="w-52 bg-base-100 border-r border-base-300 hidden lg:block sticky top-0 h-screen overflow-y-auto pt-8">
+      <nav class="p-2 space-y-1">
         <.sidebar_section
           title="Users"
           icon="hero-users"
@@ -205,8 +208,8 @@ defmodule BezgelorPortalWeb.Layouts do
           icon="hero-user-group"
           permission_set={@permission_set}
           links={[
-            %{href: "/admin/characters", label: "Character Search", permission: "characters.view"},
-            %{href: "/admin/characters/items", label: "Item Management", permission: "characters.modify_items"}
+            %{href: "/admin/characters", label: "Character Management", permission: "characters.view"},
+            %{href: "/admin/items", label: "Item Management", permission: "characters.view"}
           ]}
         />
 
@@ -215,8 +218,7 @@ defmodule BezgelorPortalWeb.Layouts do
           icon="hero-currency-dollar"
           permission_set={@permission_set}
           links={[
-            %{href: "/admin/economy", label: "Economy Overview", permission: "economy.view_stats"},
-            %{href: "/admin/economy/transactions", label: "Transactions", permission: "economy.view_transactions"}
+            %{href: "/admin/economy", label: "Economy Overview", permission: "economy.view_stats"}
           ]}
         />
 
@@ -225,7 +227,7 @@ defmodule BezgelorPortalWeb.Layouts do
           icon="hero-calendar"
           permission_set={@permission_set}
           links={[
-            %{href: "/admin/events", label: "Event Management", permission: "events.manage"},
+            %{href: "/admin/events", label: "Event Manager", permission: "events.manage"},
             %{href: "/admin/events/broadcast", label: "Broadcast Message", permission: "events.broadcast_message"}
           ]}
         />
@@ -246,35 +248,30 @@ defmodule BezgelorPortalWeb.Layouts do
           permission_set={@permission_set}
           links={[
             %{href: "/admin/roles", label: "Role Management", permission: "admin.manage_roles"},
-            %{href: "/admin/audit", label: "Audit Log", permission: "admin.view_audit_log"}
+            %{href: "/admin/audit-log", label: "Audit Log", permission: "admin.view_audit_log"}
           ]}
         />
 
         <!-- Dev Tools (only in development) -->
-        <div :if={@dev_routes_enabled} class="collapse collapse-arrow bg-warning/10 rounded-lg border border-warning/30">
-          <input type="checkbox" checked />
-          <div class="collapse-title font-medium flex items-center gap-2 py-2 min-h-0 text-warning">
-            <.icon name="hero-wrench-screwdriver" class="size-5" />
+        <div :if={@dev_routes_enabled} class="mb-2">
+          <div class="text-xs font-semibold text-warning uppercase tracking-wider px-2 py-1 flex items-center gap-1.5">
+            <.icon name="hero-wrench-screwdriver" class="size-3.5" />
             Dev Tools
           </div>
-          <div class="collapse-content px-0">
-            <ul class="menu menu-sm">
-              <li>
-                <a href="/dev/tracing" target="_blank" class="flex items-center gap-2">
-                  <.icon name="hero-chart-bar" class="size-4" />
-                  Orion Tracing
-                  <.icon name="hero-arrow-top-right-on-square" class="size-3 opacity-50" />
-                </a>
-              </li>
-              <li>
-                <a href="/dev/mailbox" target="_blank" class="flex items-center gap-2">
-                  <.icon name="hero-envelope" class="size-4" />
-                  Email Preview
-                  <.icon name="hero-arrow-top-right-on-square" class="size-3 opacity-50" />
-                </a>
-              </li>
-            </ul>
-          </div>
+          <ul class="menu menu-xs">
+            <li>
+              <a href="/dev/tracing" target="_blank" class="flex items-center gap-1.5">
+                Orion Tracing
+                <.icon name="hero-arrow-top-right-on-square" class="size-3 opacity-50" />
+              </a>
+            </li>
+            <li>
+              <a href="/dev/mailbox" target="_blank" class="flex items-center gap-1.5">
+                Email Preview
+                <.icon name="hero-arrow-top-right-on-square" class="size-3 opacity-50" />
+              </a>
+            </li>
+          </ul>
         </div>
       </nav>
     </aside>
@@ -295,19 +292,16 @@ defmodule BezgelorPortalWeb.Layouts do
     assigns = assign(assigns, :visible_links, visible_links)
 
     ~H"""
-    <div :if={length(@visible_links) > 0} class="collapse collapse-arrow bg-base-200/50 rounded-lg">
-      <input type="checkbox" checked />
-      <div class="collapse-title font-medium flex items-center gap-2 py-2 min-h-0">
-        <.icon name={@icon} class="size-5" />
+    <div :if={length(@visible_links) > 0} class="mb-2">
+      <div class="text-xs font-semibold text-base-content/50 uppercase tracking-wider px-2 py-1 flex items-center gap-1.5">
+        <.icon name={@icon} class="size-3.5" />
         {@title}
       </div>
-      <div class="collapse-content px-0">
-        <ul class="menu menu-sm">
-          <li :for={link <- @visible_links}>
-            <a href={link.href}>{link.label}</a>
-          </li>
-        </ul>
-      </div>
+      <ul class="menu menu-xs">
+        <li :for={link <- @visible_links}>
+          <.link navigate={link.href}>{link.label}</.link>
+        </li>
+      </ul>
     </div>
     """
   end

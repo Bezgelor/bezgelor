@@ -4,7 +4,10 @@ defmodule BezgelorProtocol.Packets.World.ServerItemMove do
 
   ## Wire Format (ItemDragDrop)
   item_guid : uint64 - item GUID
-  drag_drop : uint64 - encoded (location << 8 | bag_index), slot in high bits
+  drag_drop : uint64 - encoded as (location << 8) | slot
+
+  From NexusForever: ItemLocationToDragDropData returns (location << 8 | slot)
+  where slot is the BagIndex for the destination.
   """
 
   @behaviour BezgelorProtocol.Packet.Writable
@@ -12,13 +15,13 @@ defmodule BezgelorProtocol.Packets.World.ServerItemMove do
   alias BezgelorProtocol.PacketWriter
 
   import Bitwise
+  require Logger
 
-  defstruct [:item_guid, :location, :bag_index, :slot]
+  defstruct [:item_guid, :location, :slot]
 
   @type t :: %__MODULE__{
           item_guid: non_neg_integer(),
           location: :equipped | :bag | :bank | :trade,
-          bag_index: non_neg_integer(),
           slot: non_neg_integer()
         }
 
@@ -26,19 +29,23 @@ defmodule BezgelorProtocol.Packets.World.ServerItemMove do
   def opcode, do: :server_item_move
 
   @doc "Create a new ServerItemMove packet."
-  @spec new(non_neg_integer(), atom(), non_neg_integer(), non_neg_integer()) :: t()
-  def new(item_guid, location, bag_index, slot) do
+  @spec new(non_neg_integer(), atom(), non_neg_integer()) :: t()
+  def new(item_guid, location, slot) do
     %__MODULE__{
       item_guid: item_guid,
       location: location,
-      bag_index: bag_index,
       slot: slot
     }
   end
 
   @impl true
   def write(%__MODULE__{} = packet, writer) do
-    drag_drop = encode_drag_drop(packet.location, packet.bag_index, packet.slot)
+    drag_drop = encode_drag_drop(packet.location, packet.slot)
+
+    Logger.debug(
+      "ServerItemMove: guid=#{packet.item_guid} location=#{packet.location} " <>
+        "slot=#{packet.slot} drag_drop=0x#{Integer.to_string(drag_drop, 16)}"
+    )
 
     writer =
       writer
@@ -48,11 +55,11 @@ defmodule BezgelorProtocol.Packets.World.ServerItemMove do
     {:ok, writer}
   end
 
-  # Encode location, bag_index, and slot into drag_drop format
-  # Format: location in bits 0-7, bag_index in bits 8-15, slot in bits 16+
-  defp encode_drag_drop(location, bag_index, slot) do
+  # Encode location and slot into drag_drop format
+  # Format: (location << 8) | slot - matching NexusForever's ItemLocationToDragDropData
+  defp encode_drag_drop(location, slot) do
     location_int = location_to_int(location)
-    location_int ||| (bag_index <<< 8) ||| (slot <<< 16)
+    (location_int <<< 8) ||| slot
   end
 
   defp location_to_int(:equipped), do: 0

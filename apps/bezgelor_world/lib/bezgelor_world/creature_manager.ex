@@ -27,6 +27,7 @@ defmodule BezgelorWorld.CreatureManager do
   """
 
   use GenServer
+  import Bitwise
 
   require Logger
 
@@ -1078,7 +1079,7 @@ defmodule BezgelorWorld.CreatureManager do
 
     packet = %ServerEntityCommand{
       guid: creature_guid,
-      time: System.monotonic_time(:millisecond) |> rem(0xFFFFFFFF),
+      time: System.system_time(:millisecond) |> band(0xFFFFFFFF),
       time_reset: false,
       server_controlled: true,
       commands: [state_command, move_defaults, rotation_defaults, path_command]

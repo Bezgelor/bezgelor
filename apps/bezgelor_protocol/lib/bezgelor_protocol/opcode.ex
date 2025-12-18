@@ -243,11 +243,15 @@ defmodule BezgelorProtocol.Opcode do
   @server_quest_list 0x035F   # ServerQuestInit in NexusForever
 
   # Item/Inventory opcodes
+  @server_generic_error 0x0106
   @server_item_add 0x0111
   @server_item_delete 0x0148
   @server_item_move 0x0569
   @server_item_swap 0x0568
   @server_item_stack_count_update 0x017F
+  @server_item_visual_update 0x0933
+  @server_entity_visual_update 0x0905
+  @client_item_move 0x0182
 
   # Cinematic opcodes
   @server_cinematic_complete 0x0210
@@ -458,11 +462,15 @@ defmodule BezgelorProtocol.Opcode do
     server_quest_offer: @server_quest_offer,
     server_quest_list: @server_quest_list,
     # Items/Inventory
+    server_generic_error: @server_generic_error,
     server_item_add: @server_item_add,
     server_item_delete: @server_item_delete,
     server_item_move: @server_item_move,
     server_item_swap: @server_item_swap,
     server_item_stack_count_update: @server_item_stack_count_update,
+    server_item_visual_update: @server_item_visual_update,
+    server_entity_visual_update: @server_entity_visual_update,
+    client_item_move: @client_item_move,
     # Cinematics
     server_cinematic_complete: @server_cinematic_complete,
     server_cinematic_actor_attach: @server_cinematic_actor_attach,
@@ -658,11 +666,15 @@ defmodule BezgelorProtocol.Opcode do
     server_quest_offer: "ServerQuestOffer",
     server_quest_list: "ServerQuestList",
     # Items/Inventory
+    server_generic_error: "ServerGenericError",
     server_item_add: "ServerItemAdd",
     server_item_delete: "ServerItemDelete",
     server_item_move: "ServerItemMove",
     server_item_swap: "ServerItemSwap",
     server_item_stack_count_update: "ServerItemStackCountUpdate",
+    server_item_visual_update: "ServerItemVisualUpdate",
+    server_entity_visual_update: "ServerEntityVisualUpdate",
+    client_item_move: "ClientItemMove",
     # Cinematics
     server_cinematic_complete: "ServerCinematicComplete",
     server_cinematic_actor_attach: "ServerCinematicActorAttach",

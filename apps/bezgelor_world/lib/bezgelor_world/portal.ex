@@ -117,6 +117,22 @@ defmodule BezgelorWorld.Portal do
   end
 
   @doc """
+  Broadcast a message to all online players with a type indicator.
+  Types: :info, :warning, :alert
+  """
+  @spec broadcast_message(String.t(), atom()) :: :ok
+  def broadcast_message(message, type \\ :info) do
+    sessions = WorldManager.list_sessions()
+
+    Enum.each(sessions, fn {_account_id, session} ->
+      send(session.connection_pid, {:broadcast_message, message, type})
+    end)
+
+    Logger.info("Admin broadcast (#{type}): #{message}")
+    :ok
+  end
+
+  @doc """
   Broadcast to players in a specific zone.
   """
   @spec broadcast_to_zone(non_neg_integer(), String.t()) :: :ok

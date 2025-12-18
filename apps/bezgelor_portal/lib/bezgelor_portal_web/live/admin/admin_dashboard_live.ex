@@ -30,7 +30,7 @@ defmodule BezgelorPortalWeb.Admin.AdminDashboardLive do
 
     {:ok,
      assign(socket,
-       page_title: "Admin Dashboard",
+       page_title: nil,
        permissions: permission_keys,
        stats: stats,
        recent_actions: recent_actions
@@ -44,7 +44,6 @@ defmodule BezgelorPortalWeb.Admin.AdminDashboardLive do
     <div class="space-y-6">
       <div>
         <h1 class="text-3xl font-bold">Admin Dashboard</h1>
-        <p class="text-base-content/70 mt-1">Welcome to the administration panel</p>
       </div>
 
       <!-- Stats Cards -->
@@ -101,8 +100,8 @@ defmodule BezgelorPortalWeb.Admin.AdminDashboardLive do
 
             <.admin_card
               :if={"characters.view" in @permissions}
-              title="Character Search"
-              description="Find and modify characters"
+              title="Character Management"
+              description="View and manage characters"
               href="/admin/characters"
               icon="hero-user-group"
             />
@@ -119,7 +118,7 @@ defmodule BezgelorPortalWeb.Admin.AdminDashboardLive do
               :if={"admin.view_audit_log" in @permissions}
               title="Audit Log"
               description="View admin action history"
-              href="/admin/audit"
+              href="/admin/audit-log"
               icon="hero-document-text"
             />
 
@@ -147,7 +146,7 @@ defmodule BezgelorPortalWeb.Admin.AdminDashboardLive do
             <h2 class="text-xl font-semibold">Recent Activity</h2>
             <.link
               :if={"admin.view_audit_log" in @permissions}
-              href="/admin/audit"
+              href="/admin/audit-log"
               class="text-sm link link-primary"
             >
               View all
