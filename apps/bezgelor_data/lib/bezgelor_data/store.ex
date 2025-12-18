@@ -1930,30 +1930,20 @@ defmodule BezgelorData.Store do
   """
   @spec get_item_display_id(non_neg_integer(), non_neg_integer() | nil) :: non_neg_integer()
   def get_item_display_id(item_id, power_level \\ nil) do
-    require Logger
-
     case get(:items, item_id) do
       {:ok, item} ->
-        # Field names are camelCase from JSON (loaded with atom keys)
         item_source_id = Map.get(item, :itemSourceId) || 0
         display_id = Map.get(item, :itemDisplayId) || 0
         item_power_level = power_level || Map.get(item, :powerLevel) || 0
         type_id = Map.get(item, :item2TypeId) || 0
 
-        Logger.info("get_item_display_id(#{item_id}): source=#{item_source_id}, display=#{display_id}, type=#{type_id}, level=#{item_power_level}")
-
         if item_source_id > 0 do
-          # Look up from ItemDisplaySourceEntry by source_id and level
-          result = resolve_display_from_source(item_source_id, type_id, item_power_level, display_id)
-          Logger.info("get_item_display_id(#{item_id}): resolved to #{result}")
-          result
+          resolve_display_from_source(item_source_id, type_id, item_power_level, display_id)
         else
-          # Use direct display_id
           display_id
         end
 
       :error ->
-        Logger.warning("get_item_display_id(#{item_id}): item not found!")
         0
     end
   end
@@ -1966,22 +1956,14 @@ defmodule BezgelorData.Store do
   """
   @spec get_item_visual_info(non_neg_integer(), non_neg_integer() | nil) :: {non_neg_integer(), non_neg_integer()}
   def get_item_visual_info(item_id, power_level \\ nil) do
-    require Logger
-
     case get(:items, item_id) do
       {:ok, item} ->
-        # Get display_id (handles ItemDisplaySourceEntry lookup)
         display_id = get_item_display_id(item_id, power_level)
-
-        # Get visual slot from Item2Type.itemSlotId
         type_id = Map.get(item, :item2TypeId) || 0
         visual_slot = get_item_slot_id(type_id)
-
-        Logger.info("get_item_visual_info(#{item_id}): type=#{type_id}, visual_slot=#{visual_slot}, display_id=#{display_id}")
         {display_id, visual_slot}
 
       :error ->
-        Logger.warning("get_item_visual_info(#{item_id}): item not found!")
         {0, 0}
     end
   end
@@ -2001,18 +1983,12 @@ defmodule BezgelorData.Store do
 
   # Resolve display_id from ItemDisplaySourceEntry table
   defp resolve_display_from_source(source_id, type_id, power_level, fallback_display_id) do
-    require Logger
-
-    # Get all entries for this source_id
     entries = get_display_source_entries(source_id)
-    Logger.info("resolve_display: source=#{source_id} has #{length(entries)} entries")
 
-    # Filter by type_id (camelCase keys from JSON)
     matching_entries = Enum.filter(entries, fn entry ->
       entry_type_id = Map.get(entry, :item2TypeId) || 0
       entry_type_id == type_id
     end)
-    Logger.info("resolve_display: #{length(matching_entries)} entries match type_id=#{type_id}")
 
     case matching_entries do
       [] ->
@@ -3195,16 +3171,7 @@ defmodule BezgelorData.Store do
     case load_json_raw(json_path) do
       {:ok, data} ->
         items = Map.get(data, :itemdisplaysourceentry, [])
-        Logger.info("ItemDisplaySourceEntry: loaded #{length(items)} entries from JSON")
 
-        # Sample first entry to check field names
-        if length(items) > 0 do
-          first = hd(items)
-          Logger.info("ItemDisplaySourceEntry: first entry keys: #{inspect(Map.keys(first) |> Enum.take(5))}")
-          Logger.info("ItemDisplaySourceEntry: first entry itemSourceId=#{inspect(Map.get(first, :itemSourceId))}")
-        end
-
-        # Bulk insert with ID normalization
         tuples =
           items
           |> Enum.filter(fn item -> Map.has_key?(item, :ID) end)
@@ -3215,45 +3182,24 @@ defmodule BezgelorData.Store do
           end)
 
         :ets.insert(table_name, tuples)
-
-        # Build the source_id index for efficient lookup
         build_display_source_index(items)
+        Logger.debug("Loaded #{length(tuples)} item display source entries")
 
-        # Check index after building
-        index_size = :ets.info(index_name, :size)
-        Logger.info("ItemDisplaySourceEntry: built index with #{index_size} source_ids")
-
-      {:error, reason} ->
-        # ItemDisplaySourceEntry.json is optional - many items don't use it
-        Logger.warning("ItemDisplaySourceEntry.json load failed: #{inspect(reason)}")
+      {:error, _reason} ->
+        Logger.debug("ItemDisplaySourceEntry.json not found (optional)")
     end
   end
 
   # Build the display_sources_by_source_id index for efficient lookup
   defp build_display_source_index(items) do
-    require Logger
     index_name = index_table_name(:display_sources_by_source_id)
 
-    # Group by itemSourceId (camelCase - JSON loaded with atom keys)
     tuples =
       items
-      |> Enum.group_by(fn item ->
-        Map.get(item, :itemSourceId) || 0
-      end)
+      |> Enum.group_by(fn item -> Map.get(item, :itemSourceId) || 0 end)
       |> Enum.filter(fn {source_id, _} -> source_id > 0 end)
-      |> Enum.map(fn {source_id, entries} -> {source_id, entries} end)
-
-    # Log if source 76 was found
-    source_76 = Enum.find(tuples, fn {sid, _} -> sid == 76 end)
-    if source_76 do
-      {_, entries} = source_76
-      Logger.info("build_display_source_index: source 76 has #{length(entries)} entries")
-    else
-      Logger.warning("build_display_source_index: source 76 NOT FOUND in index!")
-    end
 
     :ets.insert(index_name, tuples)
-    Logger.info("build_display_source_index: inserted #{length(tuples)} source_ids into #{index_name}")
   end
 
   # Load ItemDisplay data for model paths and textures
@@ -3313,16 +3259,16 @@ defmodule BezgelorData.Store do
 
     # Try loading from pre-enriched ETF cache first
     enriched_etf_path = Path.join(compiled_directory(), "creature_spawns_enriched.etf")
-    Logger.info("Creature spawns: checking ETF at #{enriched_etf_path}, exists? #{File.exists?(enriched_etf_path)}")
+    Logger.debug("Creature spawns: checking ETF at #{enriched_etf_path}, exists? #{File.exists?(enriched_etf_path)}")
     is_fresh = enriched_etf_cache_fresh?(enriched_etf_path)
-    Logger.info("Creature spawns: enriched ETF fresh? #{is_fresh}")
+    Logger.debug("Creature spawns: enriched ETF fresh? #{is_fresh}")
 
     if is_fresh do
       result = load_creature_spawns_from_etf(enriched_etf_path, table_name)
-      Logger.info("Loaded creature spawns from enriched ETF cache: #{result}")
+      Logger.debug("Loaded creature spawns from enriched ETF cache: #{result}")
       result
     else
-      Logger.info("Enriched ETF not fresh, loading from JSON and will re-enrich")
+      Logger.debug("Enriched ETF not fresh, loading from JSON and will re-enrich")
       load_creature_spawns_from_json(table_name)
     end
   end
@@ -3481,13 +3427,13 @@ defmodule BezgelorData.Store do
 
     # Skip if ETF cache is fresh (data was already loaded enriched)
     is_fresh = enriched_etf_cache_fresh?(enriched_etf_path)
-    Logger.info("Spawn enrichment: ETF fresh? #{is_fresh}")
+    Logger.debug("Spawn enrichment: ETF fresh? #{is_fresh}")
 
     if is_fresh do
-      Logger.info("Spawn enrichment: skipping (using cached data)")
+      Logger.debug("Spawn enrichment: skipping (using cached data)")
       :skipped
     else
-      Logger.info("Spawn enrichment: running enrichment process")
+      Logger.debug("Spawn enrichment: running enrichment process")
       do_enrich_creature_spawns_with_splines(enriched_etf_path)
     end
   end
@@ -3559,7 +3505,7 @@ defmodule BezgelorData.Store do
     # Save enriched data to ETF cache for fast subsequent loads
     save_enriched_spawns_to_etf(etf_path, enriched_zones)
 
-    Logger.info("Enriched #{total_enriched} creature spawns with patrol paths (cached)")
+    Logger.debug("Enriched creature spawns with patrol paths (cached)")
   end
 
   # Save enriched creature spawn data to ETF cache
@@ -3815,7 +3761,7 @@ defmodule BezgelorData.Store do
 
         total = Map.get(data, :total_count, 0)
         worlds = map_size(by_world)
-        Logger.info("Loaded #{total} entity spline mappings across #{worlds} worlds")
+        Logger.debug("Loaded entity spline mappings across #{worlds} worlds")
 
       {:error, reason} ->
         Logger.warning("No entity spline data found: #{inspect(reason)}")

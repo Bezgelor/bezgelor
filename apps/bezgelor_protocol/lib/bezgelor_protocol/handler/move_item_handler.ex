@@ -96,7 +96,7 @@ defmodule BezgelorProtocol.Handler.MoveItemHandler do
            packet.dst_slot
          ) do
       {:ok, updated_item} ->
-        Logger.info("Item moved: #{source_item.item_id} to #{packet.dst_container}/#{packet.dst_bag_index}/#{packet.dst_slot}")
+        Logger.debug("Item moved: #{source_item.item_id} to #{packet.dst_container}/#{packet.dst_bag_index}/#{packet.dst_slot}")
 
         # Send move confirmation
         state = send_item_move(updated_item, state)
@@ -119,7 +119,7 @@ defmodule BezgelorProtocol.Handler.MoveItemHandler do
   defp handle_swap(source_item, dest_item, packet, state) do
     case Inventory.swap_items(source_item, dest_item) do
       {:ok, {updated_source, updated_dest}} ->
-        Logger.info("Items swapped: #{source_item.item_id} <-> #{dest_item.item_id}")
+        Logger.debug("Items swapped: #{source_item.item_id} <-> #{dest_item.item_id}")
 
         # Send swap confirmation
         state = send_item_swap(updated_source, updated_dest, state)

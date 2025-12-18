@@ -45,9 +45,7 @@ defmodule BezgelorProtocol.Handler.ItemMoveHandler do
     from_location = ClientItemMove.location_to_atom(packet.from_location)
     to_location = ClientItemMove.location_to_atom(packet.to_location)
 
-    Logger.info(
-      "ItemMove: from #{from_location}:#{packet.from_bag_index} to #{to_location}:#{packet.to_bag_index}"
-    )
+    Logger.debug("ItemMove: #{from_location}:#{packet.from_bag_index} -> #{to_location}:#{packet.to_bag_index}")
 
     # For equipped items, bag_index is always 0 and the slot is encoded in from_bag_index
     # For bag items, bag_index is the bag number (0-3) and we need to find the item
@@ -70,7 +68,7 @@ defmodule BezgelorProtocol.Handler.ItemMoveHandler do
             # Simple move
             case Inventory.move_item(item, to_location, to_bag, to_slot) do
               {:ok, updated_item} ->
-                Logger.info("Moved item #{item.item_id} to #{updated_item.container_type}:#{updated_item.bag_index}:#{updated_item.slot}")
+                Logger.debug("Moved item #{item.item_id} to #{updated_item.container_type}:#{updated_item.bag_index}:#{updated_item.slot}")
 
                 # Broadcast visual update if equipment changed
                 if from_location == :equipped or to_location == :equipped do
@@ -95,7 +93,7 @@ defmodule BezgelorProtocol.Handler.ItemMoveHandler do
             # Swap items
             case Inventory.swap_items(item, dest_item) do
               {:ok, {updated1, _updated2}} ->
-                Logger.info("Swapped items #{item.item_id} <-> #{dest_item.item_id}")
+                Logger.debug("Swapped items #{item.item_id} <-> #{dest_item.item_id}")
 
                 # Broadcast visual update if equipment changed
                 if from_location == :equipped or to_location == :equipped do

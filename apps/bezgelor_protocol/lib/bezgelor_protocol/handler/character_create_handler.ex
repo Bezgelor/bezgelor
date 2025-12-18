@@ -47,16 +47,10 @@ defmodule BezgelorProtocol.Handler.CharacterCreateHandler do
 
   @impl true
   def handle(payload, state) do
-    Logger.info("CharacterCreateHandler.handle called (v2), payload size: #{byte_size(payload)}")
     reader = PacketReader.new(payload)
-    Logger.info("CharacterCreateHandler: calling ClientCharacterCreate.read")
 
-    result = ClientCharacterCreate.read(reader)
-    Logger.info("CharacterCreateHandler: read result type: #{elem(result, 0)}")
-
-    case result do
+    case ClientCharacterCreate.read(reader) do
       {:ok, packet, _reader} ->
-        Logger.info("CharacterCreateHandler: packet parsed, name=#{inspect(packet.name)}, creation_id=#{packet.character_creation_id}")
         create_character(packet, state)
 
       {:error, reason} ->
@@ -68,7 +62,6 @@ defmodule BezgelorProtocol.Handler.CharacterCreateHandler do
 
   defp create_character(packet, state) do
     account_id = state.session_data[:account_id]
-    Logger.info("create_character: account_id=#{inspect(account_id)}, name=#{inspect(packet.name)}")
 
     cond do
       is_nil(account_id) ->
@@ -77,7 +70,7 @@ defmodule BezgelorProtocol.Handler.CharacterCreateHandler do
         {:reply_world_encrypted, :server_character_create, encode_packet(response), state}
 
       not valid_name?(packet.name) ->
-        Logger.warning("Invalid character name rejected: #{inspect(packet.name)}")
+        Logger.debug("Invalid character name rejected: #{inspect(packet.name)}")
         response = ServerCharacterCreate.failure(:invalid_name)
         {:reply_world_encrypted, :server_character_create, encode_packet(response), state}
 
@@ -87,7 +80,6 @@ defmodule BezgelorProtocol.Handler.CharacterCreateHandler do
         {:reply_world_encrypted, :server_character_create, encode_packet(response), state}
 
       true ->
-        Logger.info("Validation passed, calling do_create")
         do_create(account_id, packet, state)
     end
   end
@@ -130,14 +122,8 @@ defmodule BezgelorProtocol.Handler.CharacterCreateHandler do
   defp valid_bone_value?(_), do: false
 
   defp do_create(account_id, packet, state) do
-    Logger.info("do_create: looking up creation template #{packet.character_creation_id}")
-    # Look up the character creation template
     case Store.get_character_creation(packet.character_creation_id) do
       {:ok, creation_entry} ->
-        # Keys are atoms from JSON loading
-        race = Map.get(creation_entry, :raceId)
-        class = Map.get(creation_entry, :classId)
-        Logger.info("do_create: found creation template, race=#{inspect(race)}, class=#{inspect(class)}, keys=#{inspect(Map.keys(creation_entry) |> Enum.take(5))}")
         create_from_template(account_id, packet, creation_entry, state)
 
       :error ->
@@ -195,10 +181,7 @@ defmodule BezgelorProtocol.Handler.CharacterCreateHandler do
     visuals = compute_visuals(race, sex, packet.labels, packet.values)
     customization_attrs = Map.put(customization_attrs, :visuals, visuals)
 
-    Logger.info("create_from_template: calling Characters.create_character for account #{account_id}")
-    Logger.info("create_from_template: character_attrs=#{inspect(character_attrs)}")
     result = Characters.create_character(account_id, character_attrs, customization_attrs)
-    Logger.info("create_from_template: Characters.create_character returned: #{inspect(result)}")
 
     case result do
       {:ok, character} ->
@@ -257,13 +240,10 @@ defmodule BezgelorProtocol.Handler.CharacterCreateHandler do
     # CharacterCreation has itemId0 through itemId015
     item_keys = for i <- 0..15, do: item_key(i)
 
-    item_ids = item_keys
-    |> Enum.map(fn key -> {key, get_item_id(creation_entry, key)} end)
-    |> Enum.filter(fn {_key, id} -> id > 0 end)
-
-    Logger.info("Starting gear for character #{character_id}: #{inspect(item_ids)}")
-
-    Enum.each(item_ids, fn {_key, item_id} -> add_equipped_item(character_id, item_id) end)
+    item_keys
+    |> Enum.map(fn key -> get_item_id(creation_entry, key) end)
+    |> Enum.filter(&(&1 > 0))
+    |> Enum.each(fn item_id -> add_equipped_item(character_id, item_id) end)
   end
 
   # Generate the key for itemId fields (itemId0, itemId01, itemId02, etc.)
@@ -296,24 +276,18 @@ defmodule BezgelorProtocol.Handler.CharacterCreateHandler do
 
   # Add a single item to the character's equipped container
   defp add_equipped_item(character_id, item_id) do
-    Logger.info("add_equipped_item called: character=#{character_id}, item=#{item_id}")
     item_slot = Store.get_item_slot(item_id)
-    Logger.info("  Store.get_item_slot(#{item_id}) returned: #{inspect(item_slot)}")
 
-    # Get ItemSlot from Item2Type, then convert to EquippedItem
     case item_slot do
       nil ->
-        Logger.info("  Item #{item_id} has no slot (nil), skipping")
+        Logger.debug("Item #{item_id} has no slot, skipping")
 
       item_slot when item_slot > 0 ->
-        # Convert ItemSlot to EquippedItem
         case Map.get(@item_slot_to_equipped, item_slot) do
           nil ->
             Logger.debug("Item #{item_id} has unmapped ItemSlot #{item_slot}, skipping")
 
           equipped_slot ->
-            Logger.info("Item #{item_id}: ItemSlot #{item_slot} -> EquippedItem #{equipped_slot}")
-
             attrs = %{
               character_id: character_id,
               item_id: item_id,
@@ -328,10 +302,10 @@ defmodule BezgelorProtocol.Handler.CharacterCreateHandler do
 
             case BezgelorDb.Repo.insert(BezgelorDb.Schema.InventoryItem.changeset(%BezgelorDb.Schema.InventoryItem{}, attrs)) do
               {:ok, _item} ->
-                Logger.info("  Added item #{item_id} to EquippedItem slot #{equipped_slot}")
+                :ok
 
               {:error, changeset} ->
-                Logger.warning("  Failed to add item #{item_id}: #{inspect(changeset.errors)}")
+                Logger.warning("Failed to add starting item #{item_id}: #{inspect(changeset.errors)}")
             end
         end
 

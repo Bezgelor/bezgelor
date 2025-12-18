@@ -123,32 +123,6 @@ defmodule BezgelorProtocol.Handler.CharacterSelectHandler do
           }
         end)
 
-        # Debug: Log inventory items being sent
-        equipped_items = Enum.filter(inventory_maps, &(&1.container_type == :equipped))
-        Logger.info("Sending #{length(inventory_maps)} inventory items (#{length(equipped_items)} equipped)")
-        for item <- equipped_items do
-          # Show the EquippedItem slot name
-          slot_name = case item.slot do
-            0 -> "Chest"
-            1 -> "Legs"
-            2 -> "Head"
-            3 -> "Shoulder"
-            4 -> "Feet"
-            5 -> "Hands"
-            6 -> "WeaponTool"
-            7 -> "WeaponAttachment"
-            8 -> "System"
-            9 -> "Augment"
-            10 -> "Implant"
-            11 -> "Gadget"
-            15 -> "Shields"
-            16 -> "WeaponPrimary"
-            17 -> "Bag0"
-            other -> "Unknown(#{other})"
-          end
-          Logger.info("  Equipped: item_id=#{item.item_id}, slot=#{item.slot} (#{slot_name})")
-        end
-
         player_create_data = encode_packet(ServerPlayerCreate.from_character(character, inventory_maps))
 
         # Store character info in session for WorldEntryHandler

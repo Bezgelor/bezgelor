@@ -592,29 +592,20 @@ defmodule BezgelorWorld.CombatBroadcaster do
 
   # Get body appearance visuals from character
   defp get_body_visuals(character) do
-    require Logger
+    case character do
+      %{appearance: %{visuals: visuals}} when is_list(visuals) ->
+        Enum.map(visuals, fn v ->
+          %{
+            slot: v[:slot] || v["slot"] || 0,
+            display_id: v[:display_id] || v["display_id"] || 0,
+            colour_set: v[:colour_set] || v["colour_set"] || 0,
+            dye_data: v[:dye_data] || v["dye_data"] || 0
+          }
+        end)
 
-    result =
-      case character do
-        %{appearance: %{visuals: visuals}} when is_list(visuals) ->
-          # Convert to standard format with colour_set and dye_data
-          Enum.map(visuals, fn v ->
-            %{
-              slot: v[:slot] || v["slot"] || 0,
-              display_id: v[:display_id] || v["display_id"] || 0,
-              colour_set: v[:colour_set] || v["colour_set"] || 0,
-              dye_data: v[:dye_data] || v["dye_data"] || 0
-            }
-          end)
-
-        _ ->
-          []
-      end
-
-    Logger.info("Body visuals count: #{length(result)}")
-    for v <- result, do: Logger.info("  Body slot=#{v.slot} display_id=#{v.display_id}")
-
-    result
+      _ ->
+        []
+    end
   end
 
   # Merge body and equipment visuals, equipment takes precedence
