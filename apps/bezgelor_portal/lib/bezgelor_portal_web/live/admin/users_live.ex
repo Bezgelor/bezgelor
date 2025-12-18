@@ -9,7 +9,7 @@ defmodule BezgelorPortalWeb.Admin.UsersLive do
   alias BezgelorDb.Accounts
   alias BezgelorPortal.GameData
 
-  @per_page 25
+  @per_page 50
 
   @impl true
   def mount(_params, _session, socket) do
@@ -116,7 +116,7 @@ defmodule BezgelorPortalWeb.Admin.UsersLive do
               <th>Characters</th>
               <th>Status</th>
               <th>Registered</th>
-              <th>Actions</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
@@ -131,7 +131,12 @@ defmodule BezgelorPortalWeb.Admin.UsersLive do
                 </td>
               </tr>
             <% else %>
-              <tr :for={user <- @users} class="hover">
+              <tr
+              :for={user <- @users}
+              class="hover cursor-pointer"
+              phx-click="view_user"
+              phx-value-id={user.id}
+            >
                 <td class="font-mono text-sm">{user.id}</td>
                 <td>
                   <div class="flex items-center gap-2">
@@ -155,10 +160,7 @@ defmodule BezgelorPortalWeb.Admin.UsersLive do
                   {format_date(user.inserted_at)}
                 </td>
                 <td>
-                  <.link navigate={~p"/admin/users/#{user.id}"} class="btn btn-ghost btn-sm">
-                    <.icon name="hero-eye" class="size-4" />
-                    View
-                  </.link>
+                  <.icon name="hero-chevron-right" class="size-4 text-base-content/50" />
                 </td>
               </tr>
             <% end %>
@@ -253,13 +255,24 @@ defmodule BezgelorPortalWeb.Admin.UsersLive do
     {:noreply, push_patch(socket, to: ~p"/admin/users?#{pagination_params(type, query, 1)}")}
   end
 
+  @impl true
+  def handle_event("view_user", %{"id" => id}, socket) do
+    {:noreply, push_navigate(socket, to: ~p"/admin/users/#{id}")}
+  end
+
   defp perform_search(socket) do
     %{search_type: type, search_query: query, page: page} = socket.assigns
     offset = (page - 1) * @per_page
 
     case {type, query} do
       {_, ""} ->
-        assign(socket, users: [], character_results: [], has_more: false)
+        # Show all users when no search query
+        users = Accounts.list_accounts_with_character_counts(
+          limit: @per_page + 1,
+          offset: offset
+        )
+        {users, has_more} = maybe_pop_extra(users, @per_page)
+        assign(socket, users: users, character_results: [], has_more: has_more)
 
       {"id", id_string} ->
         case Integer.parse(id_string) do
