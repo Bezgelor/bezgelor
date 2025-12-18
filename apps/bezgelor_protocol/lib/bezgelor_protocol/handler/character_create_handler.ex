@@ -256,23 +256,7 @@ defmodule BezgelorProtocol.Handler.CharacterCreateHandler do
     Map.get(entry, String.to_atom(key), 0)
   end
 
-  # ItemSlot (from Item2Type.itemSlotId) to EquippedItem (network protocol) mapping
-  @item_slot_to_equipped %{
-    1 => 0,    # ArmorChest -> Chest
-    2 => 1,    # ArmorLegs -> Legs
-    3 => 2,    # ArmorHead -> Head
-    4 => 3,    # ArmorShoulder -> Shoulder
-    5 => 4,    # ArmorFeet -> Feet
-    6 => 5,    # ArmorHands -> Hands
-    7 => 6,    # WeaponTool -> WeaponTool
-    20 => 16,  # WeaponPrimary -> WeaponPrimary
-    43 => 15,  # ArmorShields -> Shields
-    46 => 11,  # ArmorGadget -> Gadget
-    57 => 7,   # ArmorWeaponAttachment -> WeaponAttachment
-    58 => 8,   # ArmorSystem -> System
-    59 => 9,   # ArmorAugment -> Augment
-    60 => 10   # ArmorImplant -> Implant
-  }
+  alias BezgelorProtocol.ItemSlots
 
   # Add a single item to the character's equipped container
   defp add_equipped_item(character_id, item_id) do
@@ -283,7 +267,7 @@ defmodule BezgelorProtocol.Handler.CharacterCreateHandler do
         Logger.debug("Item #{item_id} has no slot, skipping")
 
       item_slot when item_slot > 0 ->
-        case Map.get(@item_slot_to_equipped, item_slot) do
+        case ItemSlots.item_slot_to_equipped(item_slot) do
           nil ->
             Logger.debug("Item #{item_id} has unmapped ItemSlot #{item_slot}, skipping")
 

@@ -1794,12 +1794,12 @@ defmodule BezgelorData.Store do
   end
 
   defp get_item_type_id(item) do
-    # Field is item2TypeId in the JSON data (loaded with atom keys)
-    Map.get(item, :item2TypeId) || Map.get(item, "item2TypeId") || 0
+    # Field is item2TypeId in the JSON data (loaded with keys: :atoms)
+    Map.get(item, :item2TypeId, 0)
   end
 
   defp get_slot_id(item_type) do
-    Map.get(item_type, "itemSlotId") || Map.get(item_type, :itemSlotId) || 0
+    Map.get(item_type, :itemSlotId, 0)
   end
 
   @doc """
@@ -1820,7 +1820,7 @@ defmodule BezgelorData.Store do
   def get_item_equipped_slot(item_id) do
     case get(:items, item_id) do
       {:ok, item} ->
-        flags = Map.get(item, "equippedSlotFlags") || Map.get(item, :equippedSlotFlags) || 0
+        flags = Map.get(item, :equippedSlotFlags, 0)
         if flags > 0 do
           # Find the lowest set bit (primary equipped slot)
           find_lowest_bit(flags)
@@ -1869,8 +1869,8 @@ defmodule BezgelorData.Store do
 
     armor_set =
       Enum.find(armor_sets, fn set ->
-        set_class = Map.get(set, "classId") || Map.get(set, :classId) || 0
-        gear_set = Map.get(set, "creationGearSetEnum") || Map.get(set, :creationGearSetEnum) || 0
+        set_class = Map.get(set, :classId, 0)
+        gear_set = Map.get(set, :creationGearSetEnum, 0)
         set_class == class_id && gear_set == 0
       end)
 
@@ -1884,18 +1884,18 @@ defmodule BezgelorData.Store do
       # ItemDisplayId05 = ArmorFeet (slot 5)
       # ItemDisplayId06 = ArmorHands (slot 6)
       slot_mapping = [
-        {"itemDisplayId00", 20},  # WeaponPrimary
-        {"itemDisplayId01", 1},   # ArmorChest
-        {"itemDisplayId02", 2},   # ArmorLegs
-        {"itemDisplayId03", 3},   # ArmorHead
-        {"itemDisplayId04", 4},   # ArmorShoulder
-        {"itemDisplayId05", 5},   # ArmorFeet
-        {"itemDisplayId06", 6}    # ArmorHands
+        {:itemDisplayId00, 20},  # WeaponPrimary
+        {:itemDisplayId01, 1},   # ArmorChest
+        {:itemDisplayId02, 2},   # ArmorLegs
+        {:itemDisplayId03, 3},   # ArmorHead
+        {:itemDisplayId04, 4},   # ArmorShoulder
+        {:itemDisplayId05, 5},   # ArmorFeet
+        {:itemDisplayId06, 6}    # ArmorHands
       ]
 
       slot_mapping
       |> Enum.map(fn {key, slot} ->
-        display_id = Map.get(armor_set, key) || Map.get(armor_set, String.to_atom(key)) || 0
+        display_id = Map.get(armor_set, key, 0)
         if display_id > 0, do: %{slot: slot, display_id: display_id}, else: nil
       end)
       |> Enum.reject(&is_nil/1)
@@ -3496,7 +3496,7 @@ defmodule BezgelorData.Store do
       end)
 
     # Update ETS with enriched data
-    total_enriched =
+    _total_enriched =
       Enum.reduce(enriched_zones, 0, fn {world_id, zone_data, count}, acc ->
         :ets.insert(creature_table, {world_id, zone_data})
         acc + count
@@ -3759,7 +3759,7 @@ defmodule BezgelorData.Store do
           :ets.insert(table_name, {world_id, entities})
         end
 
-        total = Map.get(data, :total_count, 0)
+        _total = Map.get(data, :total_count, 0)
         worlds = map_size(by_world)
         Logger.debug("Loaded entity spline mappings across #{worlds} worlds")
 

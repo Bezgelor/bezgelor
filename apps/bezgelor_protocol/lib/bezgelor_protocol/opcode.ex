@@ -243,6 +243,7 @@ defmodule BezgelorProtocol.Opcode do
   @server_quest_list 0x035F   # ServerQuestInit in NexusForever
 
   # Item/Inventory opcodes
+  @server_generic_error 0x0106
   @server_item_add 0x0111
   @server_item_delete 0x0148
   @server_item_move 0x0569
@@ -461,6 +462,7 @@ defmodule BezgelorProtocol.Opcode do
     server_quest_offer: @server_quest_offer,
     server_quest_list: @server_quest_list,
     # Items/Inventory
+    server_generic_error: @server_generic_error,
     server_item_add: @server_item_add,
     server_item_delete: @server_item_delete,
     server_item_move: @server_item_move,
@@ -664,6 +666,7 @@ defmodule BezgelorProtocol.Opcode do
     server_quest_offer: "ServerQuestOffer",
     server_quest_list: "ServerQuestList",
     # Items/Inventory
+    server_generic_error: "ServerGenericError",
     server_item_add: "ServerItemAdd",
     server_item_delete: "ServerItemDelete",
     server_item_move: "ServerItemMove",

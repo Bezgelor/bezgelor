@@ -229,7 +229,7 @@ defmodule BezgelorProtocol.Packets.World.ServerPlayerCreate do
     # Generate guid from item ID or use database ID
     guid = item[:id] || generate_item_guid(item)
 
-    Logger.info(
+    Logger.debug(
       "WriteItem: guid=#{guid} item_id=#{item[:item_id]} location=#{item[:container_type]} slot=#{item[:slot]}"
     )
 

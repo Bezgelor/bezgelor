@@ -399,26 +399,12 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
   end
 
   # Build cinematic packets if a cinematic should play on zone entry
+  # NOTE: Cinematics are currently disabled in CinematicManager (see its moduledoc).
+  # When re-enabled, restore the {:play, packets} handling here.
   defp build_cinematic_packets(session_data, zone_id) do
-    case CinematicManager.on_zone_enter(session_data, zone_id) do
-      {:play, packets} ->
-        Logger.info("Playing zone entry cinematic with #{length(packets)} packets")
-        encode_cinematic_packets(packets)
-
-      :none ->
-        []
-    end
-  end
-
-  # Encode a list of cinematic packet structs to binary format
-  defp encode_cinematic_packets(packets) do
-    Enum.map(packets, fn packet ->
-      opcode = packet.__struct__.opcode()
-      writer = PacketWriter.new()
-      {:ok, writer} = packet.__struct__.write(packet, writer)
-      data = PacketWriter.to_binary(writer)
-      {opcode, data}
-    end)
+    # Returns :none while cinematics are disabled
+    _ = CinematicManager.on_zone_enter(session_data, zone_id)
+    []
   end
 
   # Convert session quests to format expected by ServerQuestList packet

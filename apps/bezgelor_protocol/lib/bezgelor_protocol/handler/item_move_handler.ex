@@ -8,8 +8,8 @@ defmodule BezgelorProtocol.Handler.ItemMoveHandler do
   @behaviour BezgelorProtocol.Handler
   @compile {:no_warn_undefined, [BezgelorWorld.CombatBroadcaster]}
 
-  alias BezgelorProtocol.Packets.World.{ClientItemMove, ServerItemMove}
-  alias BezgelorProtocol.{PacketReader, PacketWriter}
+  alias BezgelorProtocol.Packets.World.{ClientItemMove, ServerGenericError, ServerItemMove}
+  alias BezgelorProtocol.{ItemSlots, PacketReader, PacketWriter}
   alias BezgelorDb.Inventory
   alias BezgelorData.Store
   alias BezgelorWorld.CombatBroadcaster
@@ -57,7 +57,7 @@ defmodule BezgelorProtocol.Handler.ItemMoveHandler do
     case Inventory.get_item_at(character_id, from_location, from_bag, from_slot) do
       nil ->
         Logger.warning("Item not found at #{from_location}:#{from_bag}:#{from_slot}")
-        {:ok, state}
+        send_error(ServerGenericError.item_unknown_item(), state)
 
       item ->
         # Check if destination has an item (swap case)
@@ -86,7 +86,8 @@ defmodule BezgelorProtocol.Handler.ItemMoveHandler do
 
               {:error, reason} ->
                 Logger.warning("Failed to move item: #{inspect(reason)}")
-                {:ok, state}
+                error_code = error_to_code(reason)
+                send_error(error_code, state)
             end
 
           _existing ->
@@ -111,24 +112,45 @@ defmodule BezgelorProtocol.Handler.ItemMoveHandler do
 
               {:error, reason} ->
                 Logger.warning("Failed to swap items: #{inspect(reason)}")
-                {:ok, state}
+                error_code = error_to_code(reason)
+                send_error(error_code, state)
             end
         end
     end
   end
 
-  # For equipped items, the bag_index contains the EquippedItem slot directly
-  # For inventory, bag_index is the actual bag index (0-3), and we assume slot 0 for now
-  # TODO: Handle proper slot decoding for bags
+  # Map error reasons to GenericError codes
+  defp error_to_code(:slot_occupied), do: ServerGenericError.slot_occupied()
+  defp error_to_code(:inventory_full), do: ServerGenericError.item_inventory_full()
+  defp error_to_code(:item_not_found), do: ServerGenericError.item_unknown_item()
+  defp error_to_code(:not_valid_for_slot), do: ServerGenericError.item_not_valid_for_slot()
+  defp error_to_code(_), do: ServerGenericError.item_not_valid_for_slot()
+
+  defp send_error(error_code, state) do
+    error_packet = %ServerGenericError{error: error_code}
+    {:reply_world_encrypted, :server_generic_error, encode_error_packet(error_packet), state}
+  end
+
+  defp encode_error_packet(%ServerGenericError{} = packet) do
+    writer = PacketWriter.new()
+    {:ok, writer} = ServerGenericError.write(packet, writer)
+    PacketWriter.to_binary(writer)
+  end
+
+  # WildStar uses flat inventory addressing where BagIndex is a direct slot number.
+  # For equipped items: BagIndex = equipment slot (0-29 per EquippedItem enum)
+  # For inventory/bank: BagIndex = flat slot index within that location
+  #
+  # Bezgelor stores items with (bag_index, slot) where bag_index differentiates
+  # physical bags. Currently all items use bag_index=0 (single backpack model).
+  # If multi-bag support is added, this function would need to query bag sizes
+  # and calculate the appropriate (bag_index, slot) from the flat index.
   defp decode_location(:equipped, bag_index) do
-    # bag_index IS the equipped slot
     {0, bag_index}
   end
 
   defp decode_location(_location, bag_index) do
-    # For bags, bag_index contains both bag and slot info
-    # Format appears to be: slot in low bits, bag in high bits
-    # Needs investigation - for now assume single bag
+    # Flat slot index maps directly with bag_index=0 for single-bag model
     {0, bag_index}
   end
 
@@ -153,31 +175,14 @@ defmodule BezgelorProtocol.Handler.ItemMoveHandler do
     end
   end
 
-  # Map from our internal EquippedItem slot to client ItemSlot
-  # Internal slots are 0-based, client expects ItemSlot enum values
-  @equipped_to_item_slot %{
-    0 => 1,    # Chest -> ArmorChest
-    1 => 2,    # Legs -> ArmorLegs
-    2 => 3,    # Head -> ArmorHead
-    3 => 4,    # Shoulder -> ArmorShoulder
-    4 => 5,    # Feet -> ArmorFeet
-    5 => 6,    # Hands -> ArmorHands
-    6 => 7,    # WeaponTool -> WeaponTool
-    15 => 43,  # Shields -> ArmorShields
-    16 => 20   # WeaponPrimary -> WeaponPrimary
-  }
-
-  # Visible equipment slots (internal EquippedItem numbers)
-  @visible_equipment_slots [0, 1, 2, 3, 4, 5, 16]
-
   defp build_visuals(equipped_items) do
     # Build map of currently equipped items by slot
     equipped_by_slot = Map.new(equipped_items, fn item -> {item.slot, item} end)
 
     # For each visible equipment slot, send either the item's display_id or 0 (empty)
-    Enum.map(@visible_equipment_slots, fn internal_slot ->
+    Enum.map(ItemSlots.visible_equipment_slots(), fn internal_slot ->
       # Convert internal slot to client ItemSlot
-      item_slot = Map.get(@equipped_to_item_slot, internal_slot, internal_slot)
+      item_slot = ItemSlots.equipped_to_item_slot(internal_slot)
 
       case Map.get(equipped_by_slot, internal_slot) do
         nil ->

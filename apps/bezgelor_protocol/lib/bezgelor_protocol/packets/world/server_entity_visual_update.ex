@@ -57,17 +57,6 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityVisualUpdate do
 
   @impl true
   def write(%__MODULE__{} = packet, writer) do
-    require Logger
-
-    Logger.info(
-      "ServerEntityVisualUpdate: unit_id=#{packet.unit_id} race=#{packet.race} sex=#{packet.sex} " <>
-        "visuals_count=#{length(packet.visuals)}"
-    )
-
-    for visual <- packet.visuals do
-      Logger.info("  Visual: slot=#{visual.slot} display_id=#{visual.display_id}")
-    end
-
     # NexusForever writes all fields as continuous bits (no flush between fields)
     writer =
       writer

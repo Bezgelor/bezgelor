@@ -42,7 +42,7 @@ defmodule BezgelorProtocol.Packets.World.ServerItemMove do
   def write(%__MODULE__{} = packet, writer) do
     drag_drop = encode_drag_drop(packet.location, packet.slot)
 
-    Logger.info(
+    Logger.debug(
       "ServerItemMove: guid=#{packet.item_guid} location=#{packet.location} " <>
         "slot=#{packet.slot} drag_drop=0x#{Integer.to_string(drag_drop, 16)}"
     )

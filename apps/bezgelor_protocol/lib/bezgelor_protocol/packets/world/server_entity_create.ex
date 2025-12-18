@@ -656,7 +656,7 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
 
     # Get all equipped items for this character
     equipped_items = Inventory.get_items(character_id, :equipped)
-    Logger.info("get_gear_visuals: #{length(equipped_items)} equipped items for character #{character_id}")
+    Logger.debug("get_gear_visuals: #{length(equipped_items)} equipped items for character #{character_id}")
 
     # Try to get display_ids from inventory items using ItemDisplaySourceEntry lookup
     # Visual slot comes from Item2Type.itemSlotId, NOT from inventory slot
@@ -665,7 +665,7 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
       |> Enum.map(fn item ->
         # Get both display_id and visual_slot from item data
         {display_id, visual_slot} = BezgelorData.Store.get_item_visual_info(item.item_id)
-        Logger.info("  Item #{item.item_id} inv_slot=#{item.slot} -> visual_slot=#{visual_slot}: display_id=#{display_id}")
+        Logger.debug("  Item #{item.item_id} inv_slot=#{item.slot} -> visual_slot=#{visual_slot}: display_id=#{display_id}")
 
         if display_id > 0 and visual_slot > 0 do
           {visual_slot, display_id, 0, 0}
@@ -675,14 +675,14 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
       end)
       |> Enum.reject(&is_nil/1)
 
-    Logger.info("get_gear_visuals: #{length(gear_from_inventory)} items with display_ids")
+    Logger.debug("get_gear_visuals: #{length(gear_from_inventory)} items with display_ids")
 
     # If we have gear with display_ids, use that; otherwise fall back to class defaults
     if Enum.any?(gear_from_inventory) do
       gear_from_inventory
     else
       # Get default gear visuals based on class
-      Logger.info("get_gear_visuals: falling back to class #{class_id} defaults")
+      Logger.debug("get_gear_visuals: falling back to class #{class_id} defaults")
       BezgelorData.Store.get_class_gear_visuals(class_id)
       |> Enum.map(fn %{slot: slot, display_id: display_id} ->
         {slot, display_id, 0, 0}
