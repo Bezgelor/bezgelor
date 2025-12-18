@@ -14,6 +14,7 @@ defmodule BezgelorPortalWeb.Admin.CharacterDetailLive do
   """
   use BezgelorPortalWeb, :live_view
 
+  alias BezgelorData
   alias BezgelorDb.{Characters, Inventory, Authorization}
   alias BezgelorPortal.GameData
 
@@ -324,16 +325,16 @@ defmodule BezgelorPortalWeb.Admin.CharacterDetailLive do
             <table class="table table-sm">
               <thead>
                 <tr>
-                  <th>Slot</th>
-                  <th>Item ID</th>
+                  <th>Slot (ID)</th>
+                  <th>Name (ID)</th>
                   <th>Stack</th>
                   <th :if={@can_modify_items}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 <tr :for={item <- @equipped_items}>
-                  <td>{item.slot}</td>
-                  <td class="font-mono">{item.item_id}</td>
+                  <td>{slot_name(item.slot)} <span class="text-base-content/50">({item.slot})</span></td>
+                  <td>{item_name(item.item_id)} <span class="text-base-content/50">({item.item_id})</span></td>
                   <td>{item.quantity}</td>
                   <td :if={@can_modify_items}>
                     <button
@@ -364,7 +365,7 @@ defmodule BezgelorPortalWeb.Admin.CharacterDetailLive do
                 <tr>
                   <th>Bag</th>
                   <th>Slot</th>
-                  <th>Item ID</th>
+                  <th>Name (ID)</th>
                   <th>Stack</th>
                   <th :if={@can_modify_items}>Actions</th>
                 </tr>
@@ -373,7 +374,7 @@ defmodule BezgelorPortalWeb.Admin.CharacterDetailLive do
                 <tr :for={item <- @inventory_items}>
                   <td>{item.container_type}</td>
                   <td>{item.bag_index}</td>
-                  <td class="font-mono">{item.item_id}</td>
+                  <td>{item_name(item.item_id)} <span class="text-base-content/50">({item.item_id})</span></td>
                   <td>{item.quantity}</td>
                   <td :if={@can_modify_items}>
                     <button
@@ -971,4 +972,24 @@ defmodule BezgelorPortalWeb.Admin.CharacterDetailLive do
       _ -> map
     end
   end
+
+  defp item_name(item_id) do
+    case BezgelorData.get_item_with_name(item_id) do
+      {:ok, %{name: name}} when name != "" -> name
+      _ -> "Unknown Item"
+    end
+  end
+
+  defp slot_name(0), do: "Head"
+  defp slot_name(1), do: "Shoulders"
+  defp slot_name(2), do: "Chest"
+  defp slot_name(3), do: "Hands"
+  defp slot_name(4), do: "Legs"
+  defp slot_name(5), do: "Feet"
+  defp slot_name(6), do: "Main Hand"
+  defp slot_name(7), do: "Off Hand"
+  defp slot_name(8), do: "Support"
+  defp slot_name(9), do: "Gadget"
+  defp slot_name(10), do: "Implant"
+  defp slot_name(_), do: "Unknown"
 end

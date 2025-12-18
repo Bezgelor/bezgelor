@@ -338,8 +338,8 @@ defmodule BezgelorData do
   @spec get_item_with_name(non_neg_integer()) :: {:ok, map()} | :error
   def get_item_with_name(id) do
     with {:ok, item} <- get_item(id) do
-      name = text_or_nil(item.name_text_id) || ""
-      tooltip = text_or_nil(item.tooltip_text_id) || ""
+      name = text_or_nil(item[:localizedTextIdName] || item[:name_text_id]) || ""
+      tooltip = text_or_nil(item[:localizedTextIdTooltip] || item[:tooltip_text_id]) || ""
       {:ok, item |> Map.put(:name, name) |> Map.put(:tooltip, tooltip)}
     end
   end
