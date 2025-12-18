@@ -24,9 +24,9 @@ defmodule BezgelorPortal.LogBuffer do
       _ ->
         @table
         |> :ets.tab2list()
-        |> Enum.sort_by(fn {ts, _} -> ts end, {:desc, DateTime})
+        |> Enum.sort_by(fn {{timestamp, _counter}, _} -> timestamp end, {:desc, DateTime})
         |> Enum.take(limit)
-        |> Enum.map(fn {_ts, entry} -> entry end)
+        |> Enum.map(fn {_key, entry} -> entry end)
     end
   end
 
@@ -95,7 +95,7 @@ defmodule BezgelorPortal.LogBuffer do
       to_delete = size - @max_entries
       @table
       |> :ets.tab2list()
-      |> Enum.sort_by(fn {ts, _} -> ts end, {:asc, DateTime})
+      |> Enum.sort_by(fn {{timestamp, _counter}, _} -> timestamp end, {:asc, DateTime})
       |> Enum.take(to_delete)
       |> Enum.each(fn {key, _} -> :ets.delete(@table, key) end)
     end
