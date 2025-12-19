@@ -520,4 +520,109 @@ defmodule BezgelorWorld.Portal do
       all_time: current
     }
   end
+
+  # ============================================================================
+  # Server Configuration
+  # ============================================================================
+
+  alias BezgelorWorld.ServerConfig
+
+  @doc """
+  Get all config sections with their schemas and current values.
+  """
+  @spec get_all_settings() :: map()
+  def get_all_settings do
+    ServerConfig.list_sections()
+  end
+
+  @doc """
+  Get a specific config section.
+  """
+  @spec get_settings(atom()) :: map() | nil
+  def get_settings(section) do
+    ServerConfig.get_section(section)
+  end
+
+  @doc """
+  Update a setting in a config section.
+  Returns the old value on success for audit logging.
+  """
+  @spec update_setting(atom(), atom(), term()) :: {:ok, term()} | {:error, term()}
+  def update_setting(section, key, new_value) do
+    # Get old value for audit logging
+    old_value =
+      case ServerConfig.get_setting(section, key) do
+        {:ok, val} -> val
+        _ -> nil
+      end
+
+    case ServerConfig.update_setting(section, key, new_value) do
+      :ok ->
+        Logger.info("Admin updated setting #{section}.#{key}: #{inspect(old_value)} -> #{inspect(new_value)}")
+        {:ok, old_value}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  # ============================================================================
+  # Server Restart
+  # ============================================================================
+
+  @doc """
+  Restart the world server with a configurable countdown delay.
+  Broadcasts warnings to players before disconnecting them.
+
+  ## Parameters
+  - delay_seconds: Countdown before restart (default 5)
+
+  ## Returns
+  - {:ok, %{players_affected: count, delay: seconds}} on success
+  - {:error, :not_running} if world server is not running
+  """
+  @spec restart_world_server(non_neg_integer()) :: {:ok, map()} | {:error, :not_running}
+  def restart_world_server(delay_seconds \\ 5) do
+    unless world_server_running?() do
+      {:error, :not_running}
+    else
+      player_count = online_player_count()
+
+      # Spawn async task so we can return immediately to the caller
+      Task.start(fn ->
+        # 1. Countdown warning
+        broadcast_system_message("Server restarting in #{delay_seconds} seconds...")
+        Logger.warning("World server restart initiated with #{delay_seconds}s delay, #{player_count} players online")
+
+        # 2. Wait the configured delay
+        Process.sleep(delay_seconds * 1_000)
+
+        # 3. Final warning immediately before stop
+        broadcast_system_message("Server restarting now. Please reconnect shortly.")
+        Process.sleep(500)
+
+        # 4. Stop and restart the world server
+        Logger.warning("Stopping :bezgelor_world application...")
+        Application.stop(:bezgelor_world)
+
+        Logger.info("Restarting :bezgelor_world application...")
+        Application.ensure_all_started(:bezgelor_world)
+
+        Logger.info("World server restart complete")
+      end)
+
+      {:ok, %{players_affected: player_count, delay: delay_seconds}}
+    end
+  end
+
+  @doc """
+  Check if the world server is running.
+  """
+  @spec world_server_running?() :: boolean()
+  def world_server_running? do
+    case Process.whereis(BezgelorWorld.WorldManager) do
+      nil -> false
+      _pid -> true
+    end
+  end
 end

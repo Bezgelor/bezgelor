@@ -27,6 +27,9 @@ defmodule BezgelorWorld.Application do
 
   @impl true
   def start(_type, _args) do
+    # Load persisted server configuration before anything else
+    BezgelorWorld.ServerConfig.load_from_file()
+
     # Register world handlers with packet registry before starting supervision tree
     # This breaks the compile-time dependency from protocol to world layer
     BezgelorWorld.HandlerRegistration.register_all()

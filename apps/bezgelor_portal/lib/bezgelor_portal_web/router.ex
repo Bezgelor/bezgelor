@@ -120,6 +120,7 @@ defmodule BezgelorPortalWeb.Router do
       # Server Operations
       live "/server", ServerLive, :index
       live "/server/logs", LogsLive, :index
+      live "/settings", SettingsLive, :index
 
       # Analytics
       live "/analytics", AnalyticsLive, :index

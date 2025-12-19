@@ -63,6 +63,7 @@ permissions = [
   %{key: "server.reload_data", category: "server", description: "Hot-reload game data from ETS"},
   %{key: "server.kick_players", category: "server", description: "Force disconnect players"},
   %{key: "server.view_logs", category: "server", description: "View recent errors/warnings"},
+  %{key: "server.settings", category: "server", description: "Modify server configuration and restart world server"},
 
   # Administration
   %{key: "admin.manage_roles", category: "administration", description: "Create/edit/delete roles"},
