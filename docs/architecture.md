@@ -13,7 +13,8 @@ A comprehensive guide to the Bezgelor server architecture for engineers unfamili
 7. [Packet Flow](#packet-flow)
 8. [Data Architecture](#data-architecture)
 9. [Player Session Lifecycle](#player-session-lifecycle)
-10. [Key Design Patterns](#key-design-patterns)
+10. [Web Portal Architecture](#web-portal-architecture)
+11. [Key Design Patterns](#key-design-patterns)
 
 ---
 
@@ -35,13 +36,13 @@ Elixir processes are **lightweight, isolated units of execution** - think gorout
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                      BEAM VM                            │
-│  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐       │
-│  │Process 1│ │Process 2│ │Process 3│ │Process N│  ...  │
-│  │  ~2KB   │ │  ~2KB   │ │  ~2KB   │ │  ~2KB   │       │
-│  │ mailbox │ │ mailbox │ │ mailbox │ │ mailbox │       │
-│  └─────────┘ └─────────┘ └─────────┘ └─────────┘       │
-│        ↑           ↑           ↑           ↑           │
-│        └───────────┴───────────┴───────────┘           │
+│  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐        │
+│  │Process 1│ │Process 2│ │Process 3│ │Process N│  ...   │
+│  │  ~2KB   │ │  ~2KB   │ │  ~2KB   │ │  ~2KB   │        │
+│  │ mailbox │ │ mailbox │ │ mailbox │ │ mailbox │        │
+│  └─────────┘ └─────────┘ └─────────┘ └─────────┘        │
+│        ↑           ↑           ↑           ↑            │
+│        └───────────┴───────────┴───────────┘            │
 │                  Message Passing                        │
 └─────────────────────────────────────────────────────────┘
 ```
@@ -792,37 +793,364 @@ The protocol layer needs to dispatch to world handlers, but the world layer depe
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│ CONNECTION PROCESS STATE                                             │
+│ CONNECTION PROCESS STATE                                            │
 ├─────────────────────────────────────────────────────────────────────┤
-│                                                                      │
-│  %Connection{                                                        │
-│    socket: #Port<0.1234>,          # TCP socket                      │
-│    transport: :ranch_tcp,          # Transport module                │
-│    connection_type: :world,        # :auth | :realm | :world         │
-│    buffer: <<...>>,                # Incomplete packet data          │
-│    encryption: %PacketCrypt{...},  # Encryption state                │
-│    state: :authenticated,          # Connection state                │
-│                                                                      │
-│    session_data: %{                # Player session                  │
-│      account_id: 12345,                                              │
-│      character_id: 67890,                                            │
-│      character_name: "PlayerOne",                                    │
+│                                                                     │
+│  %Connection{                                                       │
+│    socket: #Port<0.1234>,          # TCP socket                     │
+│    transport: :ranch_tcp,          # Transport module               │
+│    connection_type: :world,        # :auth | :realm | :world        │
+│    buffer: <<...>>,                # Incomplete packet data         │
+│    encryption: %PacketCrypt{...},  # Encryption state               │
+│    state: :authenticated,          # Connection state               │
+│                                                                     │
+│    session_data: %{                # Player session                 │
+│      account_id: 12345,                                             │
+│      character_id: 67890,                                           │
+│      character_name: "PlayerOne",                                   │
 │      entity_guid: 0x2000_0000_0001_0935,                            │
-│      entity: %Entity{...},         # Current entity state            │
-│      in_world: true,                                                 │
-│      zone_id: 426,                 # Current zone                    │
-│      instance_id: 1,                                                 │
-│      in_combat: false,                                               │
-│                                                                      │
-│      # Quest system                                                  │
+│      entity: %Entity{...},         # Current entity state           │
+│      in_world: true,                                                │
+│      zone_id: 426,                 # Current zone                   │
+│      instance_id: 1,                                                │
+│      in_combat: false,                                              │
+│                                                                     │
+│      # Quest system                                                 │
 │      active_quests: %{quest_id => progress},                        │
 │      completed_quest_ids: MapSet<[...]>,                            │
-│      quest_dirty: false,           # Needs persistence               │
-│                                                                      │
-│      # Achievement tracking                                          │
+│      quest_dirty: false,           # Needs persistence              │
+│                                                                     │
+│      # Achievement tracking                                         │
 │      achievement_handler: #PID<0.456.0>                             │
-│    }                                                                 │
-│  }                                                                   │
+│    }                                                                │
+│  }                                                                  │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Web Portal Architecture
+
+The **bezgelor_portal** application provides a web interface for players and administrators, separate from the game client flow.
+
+### Overview
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                         Web Browser                                  │
+└───────────────────────────────┬─────────────────────────────────────┘
+                                │ HTTP/WebSocket
+                                ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                    bezgelor_portal (Port 4000)                       │
+│                                                                      │
+│  ┌─────────────────────────────────────────────────────────────┐    │
+│  │                     Phoenix LiveView                         │    │
+│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │    │
+│  │  │   Public    │  │    User     │  │       Admin         │  │    │
+│  │  │   Pages     │  │  Dashboard  │  │       Panel         │  │    │
+│  │  │             │  │             │  │                     │  │    │
+│  │  │ - Home      │  │ - Characters│  │ - User Management   │  │    │
+│  │  │ - Features  │  │ - Settings  │  │ - Character Admin   │  │    │
+│  │  │ - Download  │  │ - TOTP      │  │ - Server Settings   │  │    │
+│  │  │ - Login     │  │             │  │ - Audit Logs        │  │    │
+│  │  │ - Register  │  │             │  │ - Economy/Events    │  │    │
+│  │  └─────────────┘  └─────────────┘  └─────────────────────┘  │    │
+│  └─────────────────────────────────────────────────────────────┘    │
+│                                │                                     │
+│                                ▼                                     │
+│  ┌─────────────────────────────────────────────────────────────┐    │
+│  │                    BezgelorWorld.Portal                      │    │
+│  │                   (World Server Bridge)                      │    │
+│  └─────────────────────────────────────────────────────────────┘    │
+│                                │                                     │
+└────────────────────────────────┼────────────────────────────────────┘
+                                 │ GenServer calls
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                    bezgelor_world (Port 24000)                       │
+│                                                                      │
+│  WorldManager, CreatureManager, Zone.Instance, BuffManager, etc.    │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Authentication Flow
+
+Portal authentication is separate from game client SRP6 authentication:
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│ PORTAL LOGIN FLOW                                                    │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│   Browser                          Portal                            │
+│      │                               │                               │
+│      │  GET /login                   │                               │
+│      │ ────────────────────────────► │                               │
+│      │                               │                               │
+│      │  LoginLive (LiveView)         │                               │
+│      │ ◄──────────────────────────── │                               │
+│      │                               │                               │
+│      │  Submit email/password        │                               │
+│      │ ────────────────────────────► │                               │
+│      │                               │ Accounts.authenticate()       │
+│      │                               │ └── Argon2 password verify    │
+│      │                               │                               │
+│      │  (If TOTP enabled)            │                               │
+│      │  Redirect to /auth/totp-verify│                               │
+│      │ ◄──────────────────────────── │                               │
+│      │                               │                               │
+│      │  Submit TOTP code             │                               │
+│      │ ────────────────────────────► │                               │
+│      │                               │ NimbleTOTP.valid?()           │
+│      │                               │                               │
+│      │  Set session cookie           │                               │
+│      │  Redirect to /dashboard       │                               │
+│      │ ◄──────────────────────────── │                               │
+│      │                               │                               │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### LiveView Architecture
+
+Portal uses Phoenix LiveView for real-time, stateful UI without JavaScript:
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│ LIVEVIEW STRUCTURE                                                   │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│   Router (router.ex)                                                 │
+│   │                                                                  │
+│   ├── live_session :auth (layout: :auth)                            │
+│   │   ├── /login         → LoginLive                                │
+│   │   ├── /register      → RegisterLive                             │
+│   │   └── /auth/totp-verify → TotpVerifyLive                        │
+│   │                                                                  │
+│   ├── live_session :authenticated (on_mount: require_auth)          │
+│   │   ├── /dashboard     → DashboardLive                            │
+│   │   ├── /characters    → CharactersLive                           │
+│   │   ├── /characters/:id → CharacterDetailLive                     │
+│   │   └── /settings      → SettingsLive                             │
+│   │                                                                  │
+│   └── live_session :admin (on_mount: require_admin)                 │
+│       ├── /admin         → AdminDashboardLive                       │
+│       ├── /admin/users   → Admin.UsersLive                          │
+│       ├── /admin/characters → Admin.CharactersLive                  │
+│       ├── /admin/settings → Admin.SettingsLive                      │
+│       ├── /admin/roles   → Admin.RolesLive                          │
+│       └── /admin/audit-log → Admin.AuditLogLive                     │
+│                                                                      │
+│   Layouts (layouts.ex)                                               │
+│   │                                                                  │
+│   ├── :gaming  → Public pages (animated background, gaming style)   │
+│   ├── :auth    → Login/register pages (minimal, centered card)      │
+│   ├── :app     → Authenticated user pages (navbar, footer)          │
+│   └── :admin   → Admin panel (navbar + sidebar navigation)          │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Role-Based Access Control (RBAC)
+
+The admin panel uses a permission-based authorization system:
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│ RBAC HIERARCHY                                                       │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│   Account                                                            │
+│      │                                                               │
+│      │ has many                                                      │
+│      ▼                                                               │
+│   AccountRole (join table)                                           │
+│      │                                                               │
+│      │ belongs to                                                    │
+│      ▼                                                               │
+│   Role (e.g., "Game Master", "Moderator", "Admin")                  │
+│      │                                                               │
+│      │ has many                                                      │
+│      ▼                                                               │
+│   RolePermission (join table)                                        │
+│      │                                                               │
+│      │ belongs to                                                    │
+│      ▼                                                               │
+│   Permission (e.g., "users.view", "characters.modify_items")        │
+│                                                                      │
+├─────────────────────────────────────────────────────────────────────┤
+│ PERMISSION CATEGORIES                                                │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│   user_management      │ users.view, users.ban, users.reset_password│
+│   character_management │ characters.view, characters.modify_items   │
+│   economy              │ economy.grant_currency, economy.view_stats │
+│   events               │ events.manage, events.broadcast_message    │
+│   server               │ server.settings, server.view_logs          │
+│   administration       │ admin.manage_roles, admin.view_audit_log   │
+│                                                                      │
+├─────────────────────────────────────────────────────────────────────┤
+│ AUTHORIZATION CHECK                                                  │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│   # In LiveView mount                                                │
+│   def mount(_params, _session, socket) do                           │
+│     account = socket.assigns.current_account                        │
+│     permissions = Authorization.list_permissions(account)           │
+│                                                                      │
+│     unless "users.view" in permissions do                           │
+│       {:ok, redirect(socket, to: "/admin")}                         │
+│     else                                                             │
+│       {:ok, assign(socket, permissions: permissions)}               │
+│     end                                                              │
+│   end                                                                │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Portal ↔ World Server Bridge
+
+The `BezgelorWorld.Portal` module bridges the portal with the running world server:
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│ PORTAL MODULE API                                                    │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│   BezgelorWorld.Portal                                               │
+│   │                                                                  │
+│   ├── Player Management                                              │
+│   │   ├── list_online_players()     → [%{account_id, char_name}]    │
+│   │   ├── online_player_count()     → integer                       │
+│   │   ├── kick_player(account_id)   → :ok | {:error, :not_online}   │
+│   │   └── players_by_zone()         → %{zone_id => count}           │
+│   │                                                                  │
+│   ├── Zone Management                                                │
+│   │   ├── list_active_zones()       → [%{zone_id, player_count}]    │
+│   │   └── get_zone_info(zone_id)    → %{name, players, creatures}   │
+│   │                                                                  │
+│   ├── Broadcasting                                                   │
+│   │   └── broadcast_system_message(text) → :ok                      │
+│   │                                                                  │
+│   ├── Server Configuration                                           │
+│   │   ├── get_all_settings()        → %{section => settings}        │
+│   │   ├── update_setting(s, k, v)   → :ok | {:error, reason}        │
+│   │   └── restart_world_server(delay) → {:ok, %{players_affected}}  │
+│   │                                                                  │
+│   └── Server Status                                                  │
+│       └── world_server_running?()   → boolean                       │
+│                                                                      │
+├─────────────────────────────────────────────────────────────────────┤
+│ HOW IT WORKS                                                         │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│   Portal LiveView         Portal Module           WorldManager       │
+│        │                       │                       │             │
+│        │  Admin clicks         │                       │             │
+│        │  "Kick Player"        │                       │             │
+│        │ ─────────────────────►│                       │             │
+│        │                       │                       │             │
+│        │           Portal.kick_player(account_id)      │             │
+│        │                       │ ─────────────────────►│             │
+│        │                       │                       │             │
+│        │                       │  get_session()        │             │
+│        │                       │  send(pid, disconnect)│             │
+│        │                       │                       │             │
+│        │                       │  :ok                  │             │
+│        │                       │ ◄─────────────────────│             │
+│        │                       │                       │             │
+│        │  {:noreply, socket    │                       │             │
+│        │   |> put_flash(:info)}│                       │             │
+│        │ ◄─────────────────────│                       │             │
+│        │                       │                       │             │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Audit Logging
+
+All admin actions are logged for accountability:
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│ AUDIT LOG FLOW                                                       │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│   Admin Action                                                       │
+│        │                                                             │
+│        ▼                                                             │
+│   Authorization.log_action(                                          │
+│     admin_account,                                                   │
+│     "users.ban",              # action                               │
+│     "account",                # resource_type                        │
+│     target_account_id,        # resource_id                          │
+│     %{reason: "...", duration: 24}  # metadata                       │
+│   )                                                                  │
+│        │                                                             │
+│        ▼                                                             │
+│   ┌─────────────────────────────────────────────────────────────┐   │
+│   │ admin_audit_log table                                        │   │
+│   │                                                              │   │
+│   │ id │ admin_id │ action     │ resource │ metadata │ timestamp│   │
+│   │ ───┼──────────┼────────────┼──────────┼──────────┼──────────│   │
+│   │ 1  │ 5        │ users.ban  │ account:7│ {reason} │ 2025-... │   │
+│   │ 2  │ 5        │ server.set │ config   │ {key,val}│ 2025-... │   │
+│   └─────────────────────────────────────────────────────────────┘   │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Server Configuration System
+
+Runtime-configurable settings with persistence:
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│ SERVER CONFIG ARCHITECTURE                                           │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│   Admin UI (SettingsLive)                                            │
+│        │                                                             │
+│        │  update_setting(:gameplay, :unlock_all_specs, true)        │
+│        ▼                                                             │
+│   BezgelorWorld.Portal                                               │
+│        │                                                             │
+│        ▼                                                             │
+│   BezgelorWorld.ServerConfig                                         │
+│        │                                                             │
+│        ├── validate_setting(module, key, value)                     │
+│        │   └── Check type, constraints from schema                  │
+│        │                                                             │
+│        ├── apply_setting(section, key, value)                       │
+│        │   └── Application.put_env(:bezgelor_world, :gameplay, ...) │
+│        │                                                             │
+│        └── persist_config()                                          │
+│            └── Write to priv/config/server_config.json              │
+│                                                                      │
+├─────────────────────────────────────────────────────────────────────┤
+│ CONFIG MODULE PATTERN                                                │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│   # Each config section defines a schema                             │
+│   defmodule BezgelorWorld.GameplayConfig do                         │
+│     def schema do                                                    │
+│       %{                                                             │
+│         unlock_all_specs: %{                                         │
+│           type: :boolean,                                            │
+│           description: "Unlock all 4 specs for new characters",     │
+│           impact: :new_characters_only,                              │
+│           default: true                                              │
+│         },                                                           │
+│         default_tier_points: %{                                      │
+│           type: :integer,                                            │
+│           description: "Starting tier points",                       │
+│           impact: :new_characters_only,                              │
+│           constraints: %{min: 0, max: 42},                          │
+│           default: 42                                                │
+│         }                                                            │
+│       }                                                              │
+│     end                                                              │
+│   end                                                                │
 │                                                                      │
 └─────────────────────────────────────────────────────────────────────┘
 ```
@@ -899,15 +1227,15 @@ Zone.Instance.add_entity({426, 1}, entity)
 
 Bezgelor's architecture leverages Elixir/OTP's strengths:
 
-| Challenge | Solution |
-|-----------|----------|
+| Challenge               | Solution                            |
+|-------------------------|-------------------------------------|
 | Many concurrent players | Process per connection |
-| Crash isolation | Supervision trees |
-| Shared game state | Message passing, no locks |
+| Crash isolation         | Supervision trees |
+| Shared game state.      | Message passing, no locks |
 | Fast static data access | ETS tables |
 | Player session tracking | Central registry (WorldManager) |
-| Zone management | Process per zone instance |
-| Circular dependencies | Runtime handler registration |
-| Code organization | Umbrella apps with clear boundaries |
+| Zone management         | Process per zone instance |
+| Circular dependencies   | Runtime handler registration |
+| Code organization       | Umbrella apps with clear boundaries |
 
 The result is a highly concurrent, fault-tolerant server that can handle thousands of players while remaining maintainable and debuggable.
