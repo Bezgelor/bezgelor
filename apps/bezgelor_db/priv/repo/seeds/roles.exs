@@ -80,7 +80,8 @@ roles_config = [
       # PvP
       "pvp.view_stats",
       # Server
-      "server.view_logs"
+      "server.view_logs",
+      "server.settings"
     ]
   },
   %{
