@@ -178,23 +178,39 @@ defmodule BezgelorWorld.ServerConfig do
   end
 
   defp apply_config(config) do
+    # Get valid section names as strings
+    valid_sections = Map.keys(@sections) |> Enum.map(&Atom.to_string/1) |> MapSet.new()
+
     Enum.each(config, fn {section_name, settings} ->
-      section_atom = String.to_existing_atom(section_name)
-      app_key = section_app_key(section_atom)
+      if MapSet.member?(valid_sections, section_name) do
+        section_atom = String.to_existing_atom(section_name)
+        module = Map.get(@sections, section_atom)
+        schema = module.schema()
+        valid_keys = Map.keys(schema) |> Enum.map(&Atom.to_string/1) |> MapSet.new()
+        app_key = section_app_key(section_atom)
 
-      keyword_settings =
-        Enum.map(settings, fn {key, value} ->
-          key_atom = String.to_existing_atom(key)
-          {key_atom, value}
-        end)
+        # Only apply settings that exist in the schema
+        keyword_settings =
+          settings
+          |> Enum.filter(fn {key, _value} ->
+            if MapSet.member?(valid_keys, key) do
+              true
+            else
+              Logger.warning("ServerConfig: Ignoring unknown setting '#{section_name}.#{key}'")
+              false
+            end
+          end)
+          |> Enum.map(fn {key, value} ->
+            {String.to_existing_atom(key), value}
+          end)
 
-      current = Application.get_env(:bezgelor_world, app_key, [])
-      merged = Keyword.merge(current, keyword_settings)
-      Application.put_env(:bezgelor_world, app_key, merged)
+        current = Application.get_env(:bezgelor_world, app_key, [])
+        merged = Keyword.merge(current, keyword_settings)
+        Application.put_env(:bezgelor_world, app_key, merged)
+      else
+        Logger.warning("ServerConfig: Ignoring unknown section '#{section_name}'")
+      end
     end)
-  rescue
-    ArgumentError ->
-      Logger.warning("ServerConfig: Failed to apply config - invalid atom in config file")
   end
 
   defp persist_config do
