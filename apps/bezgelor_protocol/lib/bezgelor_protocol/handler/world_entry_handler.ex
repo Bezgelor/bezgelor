@@ -33,21 +33,13 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
   @dialyzer {:nowarn_function, build_cinematic_packets: 2}
 
   alias BezgelorProtocol.Packets.World.{
-    ServerAbilityBook,
-    ServerAbilityPoints,
-    ServerAmpList,
-    ServerActionSet,
-    ServerCooldownList,
     ServerEntityCreate,
-    ServerItemAdd,
     ServerPlayerEnteredWorld,
     ServerQuestList
   }
 
   alias BezgelorProtocol.PacketWriter
   alias BezgelorCore.Entity
-  alias BezgelorDb.{ActionSets, Inventory}
-  alias BezgelorWorld.Abilities
   alias BezgelorWorld.Handler.AchievementHandler
   alias BezgelorWorld.Quest.QuestCache
   alias BezgelorWorld.TriggerManager
@@ -197,7 +189,7 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
       "Sending #{length(creature_packets)} creature entity packets to player at #{inspect(spawn.position)}"
     )
 
-    ability_packets = build_ability_packets(character)
+    ability_packets = BezgelorProtocol.AbilityPackets.build(character)
 
     # Base packets always sent
     base_packets = [
@@ -209,10 +201,10 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
     # Note: Inventory already sent via ServerPlayerCreate in CharacterSelectHandler
     final_packets =
       base_packets ++
-        ability_packets ++
         creature_packets ++
         cinematic_packets ++
-        [{:server_player_entered_world, entered_world_data}]
+        [{:server_player_entered_world, entered_world_data}] ++
+        ability_packets
 
     {:reply_multi_world_encrypted, final_packets, state}
   end
@@ -305,105 +297,6 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
 
     Logger.info("Zone entry packets: #{inspect(stats)}")
     packets
-  end
-
-  defp build_ability_packets(character) do
-    class_id = character.class || 1
-    active_spec = character.active_spec || 0
-    ability_points = Abilities.max_tier_points()
-
-    spellbook_abilities = Abilities.get_class_spellbook_abilities(class_id)
-    action_set_abilities = Abilities.get_class_action_set_abilities(class_id)
-    ActionSets.ensure_default_shortcuts(character.id, action_set_abilities, active_spec)
-    shortcuts = ActionSets.list_shortcuts(character.id)
-    shortcuts_by_spec = ActionSets.group_by_spec(shortcuts)
-    spell_shortcuts_by_spec = ActionSets.spell_index_by_spec(shortcuts)
-
-    ability_items =
-      Inventory.ensure_ability_items(character.id, spellbook_abilities)
-      |> Enum.map(fn item ->
-        %ServerItemAdd{
-          guid: item.id,
-          item_id: item.item_id,
-          location: :ability,
-          bag_index: item.bag_index,
-          stack_count: item.quantity,
-          durability: item.durability
-        }
-      end)
-
-    ability_book_data =
-      encode_packet(
-        %ServerAbilityBook{
-          spells:
-            Abilities.build_ability_book_for_specs(spellbook_abilities, spell_shortcuts_by_spec)
-        },
-        ServerAbilityBook
-      )
-
-    ability_points_data =
-      encode_packet(
-        %ServerAbilityPoints{
-          ability_points: ability_points,
-          total_ability_points: ability_points
-        },
-        ServerAbilityPoints
-      )
-
-    action_set_actions = Abilities.build_action_set_from_shortcuts(shortcuts_by_spec)
-
-    action_set_packets =
-      for spec_index <- 0..3 do
-        actions = Map.get(action_set_actions, spec_index, [])
-
-        action_set_data =
-          encode_packet(
-            %ServerActionSet{
-              spec_index: spec_index,
-              unlocked: true,
-              result: :ok,
-              actions: actions
-            },
-            ServerActionSet
-          )
-
-        {:server_action_set, action_set_data}
-      end
-
-    amp_list_packets =
-      for spec_index <- 0..3 do
-        amp_list_data =
-          encode_packet(
-            %ServerAmpList{
-              spec_index: spec_index,
-              amps: []
-            },
-            ServerAmpList
-          )
-
-        {:server_amp_list, amp_list_data}
-      end
-
-    ability_item_packets =
-      Enum.map(ability_items, &{:server_item_add, encode_packet(&1, ServerItemAdd)})
-
-    cooldown_list_data =
-      encode_packet(
-        %ServerCooldownList{cooldowns: []},
-        ServerCooldownList
-      )
-
-    ability_item_packets ++
-      [{:server_ability_book, ability_book_data}, {:server_ability_points, ability_points_data}] ++
-      action_set_packets ++
-      amp_list_packets ++
-      [{:server_cooldown_list, cooldown_list_data}]
-  end
-
-  defp encode_packet(packet, module) do
-    writer = PacketWriter.new()
-    {:ok, writer} = module.write(packet, writer)
-    PacketWriter.to_binary(writer)
   end
 
   # Build patrol movement packet for a creature that should start patrolling
