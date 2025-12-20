@@ -30,7 +30,11 @@ and the fixes that align with NexusForever behavior.
    - Action set shortcuts and ability book entries use Spell4Base IDs.
    - If you use Spell4 IDs, icons and tiers will not resolve.
 
-6. Ability items exist in the database
+6. Ability book spec entries match NexusForever (class abilities only)
+   - SpellType 5 spells should be emitted for every spec index.
+   - Non-class spells should only emit spec_index=0 entries.
+
+7. Ability items exist in the database
    - Ability items live in `inventory_items` with `container_type = :ability` and `slot = 0`.
    - If persistent data is mismatched, update `bag_index` to match slots.
 

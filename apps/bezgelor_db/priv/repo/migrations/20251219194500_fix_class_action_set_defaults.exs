@@ -6,19 +6,39 @@ defmodule BezgelorDb.Repo.Migrations.FixClassActionSetDefaults do
     DELETE FROM character_action_set_shortcuts AS shortcuts
     USING characters
     WHERE shortcuts.character_id = characters.id
-      AND characters.class IN (1, 2, 3, 4, 5)
+      AND characters.class IN (1, 2, 3, 4, 5, 7)
       AND shortcuts.spec_index = 0
       AND shortcuts.shortcut_type = 4
-      AND shortcuts.slot IN (0, 1, 2, 3)
-      AND shortcuts.object_id IN (398, 18309, 24727, 20763, 960, 19102, 26531, 16322, 2656, 23148)
+      AND shortcuts.slot = 3
+      AND shortcuts.object_id IN (398, 24727, 26531, 2656, 435, 55543, 40510, 960, 55533, 55198, 55665)
     """)
 
     execute("""
+    WITH defaults AS (
+      SELECT 1 AS class_id, 0 AS slot, 32078 AS spell_id UNION ALL
+      SELECT 1, 1, 58524 UNION ALL
+      SELECT 1, 2, 58591 UNION ALL
+      SELECT 2, 0, 42276 UNION ALL
+      SELECT 2, 1, 41276 UNION ALL
+      SELECT 2, 2, 41438 UNION ALL
+      SELECT 3, 0, 32893 UNION ALL
+      SELECT 3, 1, 32809 UNION ALL
+      SELECT 3, 2, 32812 UNION ALL
+      SELECT 4, 0, 58832 UNION ALL
+      SELECT 4, 1, 29874 UNION ALL
+      SELECT 4, 2, 42352 UNION ALL
+      SELECT 5, 0, 38765 UNION ALL
+      SELECT 5, 1, 38779 UNION ALL
+      SELECT 5, 2, 38791 UNION ALL
+      SELECT 7, 0, 43468 UNION ALL
+      SELECT 7, 1, 34718 UNION ALL
+      SELECT 7, 2, 34355
+    )
     INSERT INTO character_action_set_shortcuts
       (character_id, spec_index, slot, shortcut_type, object_id, spell_id, tier, inserted_at, updated_at)
-    SELECT id, 0, 0, 4, 18309, 18309, 1, NOW(), NOW()
+    SELECT characters.id, 0, defaults.slot, 4, defaults.spell_id, defaults.spell_id, 1, NOW(), NOW()
     FROM characters
-    WHERE class = 1
+    JOIN defaults ON defaults.class_id = characters.class
     ON CONFLICT (character_id, spec_index, slot)
     DO UPDATE SET
       shortcut_type = EXCLUDED.shortcut_type,
@@ -29,107 +49,56 @@ defmodule BezgelorDb.Repo.Migrations.FixClassActionSetDefaults do
     """)
 
     execute("""
-    INSERT INTO character_action_set_shortcuts
-      (character_id, spec_index, slot, shortcut_type, object_id, spell_id, tier, inserted_at, updated_at)
-    SELECT id, 0, 0, 4, 20763, 20763, 1, NOW(), NOW()
+    WITH inventory_defaults AS (
+      SELECT 1 AS class_id, 0 AS bag_index, 32078 AS spell_id UNION ALL
+      SELECT 1, 1, 58524 UNION ALL
+      SELECT 1, 2, 58591 UNION ALL
+      SELECT 1, 3, 55543 UNION ALL
+      SELECT 2, 0, 42276 UNION ALL
+      SELECT 2, 1, 41276 UNION ALL
+      SELECT 2, 2, 41438 UNION ALL
+      SELECT 2, 3, 40510 UNION ALL
+      SELECT 3, 0, 32893 UNION ALL
+      SELECT 3, 1, 32809 UNION ALL
+      SELECT 3, 2, 32812 UNION ALL
+      SELECT 3, 3, 960 UNION ALL
+      SELECT 4, 0, 58832 UNION ALL
+      SELECT 4, 1, 29874 UNION ALL
+      SELECT 4, 2, 42352 UNION ALL
+      SELECT 4, 3, 55533 UNION ALL
+      SELECT 5, 0, 38765 UNION ALL
+      SELECT 5, 1, 38779 UNION ALL
+      SELECT 5, 2, 38791 UNION ALL
+      SELECT 5, 3, 55198 UNION ALL
+      SELECT 7, 0, 43468 UNION ALL
+      SELECT 7, 1, 34718 UNION ALL
+      SELECT 7, 2, 34355 UNION ALL
+      SELECT 7, 3, 55665
+    )
+    INSERT INTO inventory_items
+      (character_id, item_id, container_type, bag_index, slot, quantity, max_stack, durability, max_durability,
+       inserted_at, updated_at)
+    SELECT characters.id,
+           inventory_defaults.spell_id,
+           'ability',
+           inventory_defaults.bag_index,
+           0,
+           1,
+           1,
+           100,
+           100,
+           NOW(),
+           NOW()
     FROM characters
-    WHERE class = 2
-    ON CONFLICT (character_id, spec_index, slot)
+    JOIN inventory_defaults ON inventory_defaults.class_id = characters.class
+    ON CONFLICT (character_id, container_type, bag_index, slot)
     DO UPDATE SET
-      shortcut_type = EXCLUDED.shortcut_type,
-      object_id = EXCLUDED.object_id,
-      spell_id = EXCLUDED.spell_id,
-      tier = EXCLUDED.tier,
+      item_id = EXCLUDED.item_id,
+      quantity = EXCLUDED.quantity,
+      max_stack = EXCLUDED.max_stack,
+      durability = EXCLUDED.durability,
+      max_durability = EXCLUDED.max_durability,
       updated_at = EXCLUDED.updated_at
-    """)
-
-    execute("""
-    INSERT INTO character_action_set_shortcuts
-      (character_id, spec_index, slot, shortcut_type, object_id, spell_id, tier, inserted_at, updated_at)
-    SELECT id, 0, 0, 4, 19102, 19102, 1, NOW(), NOW()
-    FROM characters
-    WHERE class = 3
-    ON CONFLICT (character_id, spec_index, slot)
-    DO UPDATE SET
-      shortcut_type = EXCLUDED.shortcut_type,
-      object_id = EXCLUDED.object_id,
-      spell_id = EXCLUDED.spell_id,
-      tier = EXCLUDED.tier,
-      updated_at = EXCLUDED.updated_at
-    """)
-
-    execute("""
-    INSERT INTO character_action_set_shortcuts
-      (character_id, spec_index, slot, shortcut_type, object_id, spell_id, tier, inserted_at, updated_at)
-    SELECT id, 0, 0, 4, 16322, 16322, 1, NOW(), NOW()
-    FROM characters
-    WHERE class = 4
-    ON CONFLICT (character_id, spec_index, slot)
-    DO UPDATE SET
-      shortcut_type = EXCLUDED.shortcut_type,
-      object_id = EXCLUDED.object_id,
-      spell_id = EXCLUDED.spell_id,
-      tier = EXCLUDED.tier,
-      updated_at = EXCLUDED.updated_at
-    """)
-
-    execute("""
-    INSERT INTO character_action_set_shortcuts
-      (character_id, spec_index, slot, shortcut_type, object_id, spell_id, tier, inserted_at, updated_at)
-    SELECT id, 0, 0, 4, 23148, 23148, 1, NOW(), NOW()
-    FROM characters
-    WHERE class = 5
-    ON CONFLICT (character_id, spec_index, slot)
-    DO UPDATE SET
-      shortcut_type = EXCLUDED.shortcut_type,
-      object_id = EXCLUDED.object_id,
-      spell_id = EXCLUDED.spell_id,
-      tier = EXCLUDED.tier,
-      updated_at = EXCLUDED.updated_at
-    """)
-
-    execute("""
-    UPDATE inventory_items AS items
-    SET bag_index = CASE items.item_id
-      WHEN 18309 THEN 1000
-      WHEN 20763 THEN 1000
-      WHEN 19102 THEN 1000
-      WHEN 16322 THEN 1000
-      WHEN 23148 THEN 1000
-      WHEN 398 THEN 1003
-      WHEN 24727 THEN 1003
-      WHEN 960 THEN 1003
-      WHEN 26531 THEN 1003
-      WHEN 2656 THEN 1003
-    END
-    FROM characters
-    WHERE items.character_id = characters.id
-      AND characters.class IN (1, 2, 3, 4, 5)
-      AND items.container_type = 'ability'
-      AND items.slot = 0
-      AND items.item_id IN (18309, 20763, 19102, 16322, 23148, 398, 24727, 960, 26531, 2656)
-    """)
-
-    execute("""
-    UPDATE inventory_items AS items
-    SET bag_index = CASE items.item_id
-      WHEN 18309 THEN 0
-      WHEN 20763 THEN 0
-      WHEN 19102 THEN 0
-      WHEN 16322 THEN 0
-      WHEN 23148 THEN 0
-      WHEN 398 THEN 3
-      WHEN 24727 THEN 3
-      WHEN 960 THEN 3
-      WHEN 26531 THEN 3
-      WHEN 2656 THEN 3
-    END
-    FROM characters
-    WHERE items.character_id = characters.id
-      AND characters.class IN (1, 2, 3, 4, 5)
-      AND items.container_type = 'ability'
-      AND items.slot = 0
-      AND items.bag_index IN (1000, 1003)
     """)
   end
 end

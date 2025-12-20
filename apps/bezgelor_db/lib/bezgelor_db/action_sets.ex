@@ -119,6 +119,14 @@ defmodule BezgelorDb.ActionSets do
   @spec ensure_default_shortcuts(integer(), [map()], non_neg_integer()) ::
           [CharacterActionSetShortcut.t()]
   def ensure_default_shortcuts(character_id, abilities, spec_index \\ 0) do
+    ensure_default_shortcuts(character_id, abilities, spec_index, [])
+  end
+
+  @spec ensure_default_shortcuts(integer(), [map()], non_neg_integer(), keyword()) ::
+          [CharacterActionSetShortcut.t()]
+  def ensure_default_shortcuts(character_id, abilities, spec_index, opts) do
+    force = Keyword.get(opts, :force, false)
+
     existing =
       character_id
       |> list_shortcuts(spec_index)
@@ -135,16 +143,8 @@ defmodule BezgelorDb.ActionSets do
         tier: ability.tier || 1
       }
 
-      case Map.get(existing, ability.slot) do
-        nil ->
-          %CharacterActionSetShortcut{}
-          |> CharacterActionSetShortcut.changeset(attrs)
-          |> Repo.insert(
-            on_conflict: :nothing,
-            conflict_target: [:character_id, :spec_index, :slot]
-          )
-
-        shortcut when shortcut.shortcut_type == 0 or shortcut.object_id == 0 ->
+      cond do
+        force ->
           %CharacterActionSetShortcut{}
           |> CharacterActionSetShortcut.changeset(attrs)
           |> Repo.insert(
@@ -159,7 +159,31 @@ defmodule BezgelorDb.ActionSets do
             conflict_target: [:character_id, :spec_index, :slot]
           )
 
-        _ ->
+        Map.get(existing, ability.slot) == nil ->
+          %CharacterActionSetShortcut{}
+          |> CharacterActionSetShortcut.changeset(attrs)
+          |> Repo.insert(
+            on_conflict: :nothing,
+            conflict_target: [:character_id, :spec_index, :slot]
+          )
+
+        Map.get(existing, ability.slot).shortcut_type == 0 or
+            Map.get(existing, ability.slot).object_id == 0 ->
+          %CharacterActionSetShortcut{}
+          |> CharacterActionSetShortcut.changeset(attrs)
+          |> Repo.insert(
+            on_conflict: [
+              set: [
+                shortcut_type: attrs.shortcut_type,
+                object_id: attrs.object_id,
+                spell_id: attrs.spell_id,
+                tier: attrs.tier
+              ]
+            ],
+            conflict_target: [:character_id, :spec_index, :slot]
+          )
+
+        true ->
           :ok
       end
     end)

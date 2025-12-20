@@ -199,6 +199,73 @@ defmodule BezgelorData do
   end
 
   @doc """
+  Get a class entry by ID.
+  """
+  @spec get_class_entry(non_neg_integer()) :: {:ok, map()} | :error
+  def get_class_entry(class_id) do
+    Store.get(:class_entries, class_id)
+  end
+
+  @doc """
+  List all class entries.
+  """
+  @spec list_class_entries() :: [map()]
+  def list_class_entries do
+    Store.list(:class_entries)
+  end
+
+  @doc """
+  Get a Spell4 entry by ID.
+  """
+  @spec get_spell4_entry(non_neg_integer()) :: {:ok, map()} | :error
+  def get_spell4_entry(spell4_id) do
+    Store.get(:spell4_entries, spell4_id)
+  end
+
+  @doc """
+  List all Spell4 entries.
+  """
+  @spec list_spell4_entries() :: [map()]
+  def list_spell4_entries do
+    Store.list(:spell4_entries)
+  end
+
+  @doc """
+  Get a Spell4Base entry by ID.
+  """
+  @spec get_spell4_base_entry(non_neg_integer()) :: {:ok, map()} | :error
+  def get_spell4_base_entry(base_id) do
+    Store.get(:spell4_bases, base_id)
+  end
+
+  @doc """
+  List all Spell4Base entries.
+  """
+  @spec list_spell4_base_entries() :: [map()]
+  def list_spell4_base_entries do
+    Store.list(:spell4_bases)
+  end
+
+  @doc """
+  List all SpellLevel entries.
+  """
+  @spec list_spell_levels() :: [map()]
+  def list_spell_levels do
+    Store.list(:spell_levels)
+  end
+
+  @doc """
+  List SpellLevel entries by class and level.
+  """
+  @spec spell_levels_for_class_level(non_neg_integer(), non_neg_integer()) :: [map()]
+  def spell_levels_for_class_level(class_id, level) do
+    list_spell_levels()
+    |> Enum.filter(fn entry ->
+      entry.classId == class_id and entry.characterLevel == level
+    end)
+  end
+
+  @doc """
   Find spells by base spell ID.
   """
   @spec spells_by_base(non_neg_integer()) :: [map()]

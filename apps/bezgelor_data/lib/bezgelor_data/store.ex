@@ -64,6 +64,10 @@ defmodule BezgelorData.Store do
     :spells,
     :items,
     :item_types,
+    :class_entries,
+    :spell4_entries,
+    :spell4_bases,
+    :spell_levels,
     :creation_armor_sets,
     :texts,
     :house_types,
@@ -1803,6 +1807,33 @@ defmodule BezgelorData.Store do
       fn -> load_table(:zones, "zones.json", "zones") end,
       fn -> load_spells_split() end,
       fn -> load_items_split() end,
+      fn -> load_client_table(:class_entries, "Class.json", "class") end,
+      fn ->
+        load_client_table_parts(
+          :spell4_entries,
+          [
+            "Spell4_part1.json",
+            "Spell4_part2.json",
+            "Spell4_part3.json",
+            "Spell4_part4.json",
+            "Spell4_part5.json",
+            "Spell4_part6.json",
+            "Spell4_part7.json"
+          ],
+          "spell4"
+        )
+      end,
+      fn ->
+        load_client_table_parts(
+          :spell4_bases,
+          [
+            "Spell4Base_part1.json",
+            "Spell4Base_part2.json"
+          ],
+          "spell4base"
+        )
+      end,
+      fn -> load_client_table(:spell_levels, "SpellLevel.json", "spelllevel") end,
       fn -> load_client_table(:item_types, "Item2Type.json", "item2type") end,
       fn ->
         load_client_table(
@@ -2034,6 +2065,36 @@ defmodule BezgelorData.Store do
       {:error, reason} ->
         Logger.warning("Failed to load #{key} from #{json_file}: #{inspect(reason)}")
     end
+  end
+
+  defp load_client_table_parts(table, json_files, key) do
+    table_name = table_name(table)
+
+    :ets.delete_all_objects(table_name)
+
+    Enum.each(json_files, fn json_file ->
+      json_path = Path.join(data_directory(), json_file)
+
+      case load_json_raw(json_path) do
+        {:ok, data} ->
+          items = Map.get(data, String.to_atom(key), [])
+
+          tuples =
+            items
+            |> Enum.filter(fn item -> Map.has_key?(item, :ID) end)
+            |> Enum.map(fn item ->
+              id = Map.get(item, :ID)
+              normalized = item |> Map.put(:id, id) |> Map.delete(:ID)
+              {id, normalized}
+            end)
+
+          :ets.insert(table_name, tuples)
+          Logger.debug("Loaded #{length(tuples)} #{key} from #{json_file}")
+
+        {:error, reason} ->
+          Logger.warning("Failed to load #{key} from #{json_file}: #{inspect(reason)}")
+      end
+    end)
   end
 
   # Load client table that needs a foreign key index (e.g., quest_rewards by quest_id)

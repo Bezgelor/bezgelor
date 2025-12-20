@@ -199,7 +199,11 @@ defmodule BezgelorProtocol.Handler.CharacterCreateHandler do
           add_starting_gear(character.id, creation_entry)
           spellbook_abilities = BezgelorWorld.Abilities.get_class_spellbook_abilities(class)
           action_set_abilities = BezgelorWorld.Abilities.get_class_action_set_abilities(class)
-          BezgelorDb.ActionSets.ensure_default_shortcuts(character.id, action_set_abilities, 0)
+
+          BezgelorDb.ActionSets.ensure_default_shortcuts(character.id, action_set_abilities, 0,
+            force: true
+          )
+
           Inventory.ensure_ability_items(character.id, spellbook_abilities)
         rescue
           e ->

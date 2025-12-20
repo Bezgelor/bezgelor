@@ -37,6 +37,11 @@ defmodule BezgelorWorld.Handler.ActionSetHandler do
   defp handle_action_set_changes(packet, state) do
     character_id = state.session_data[:character_id]
 
+    Logger.info(
+      "ActionSetChanges: character_id=#{character_id} spec=#{packet.action_set_index} " <>
+        "actions=#{inspect(packet.actions)} tiers=#{inspect(packet.action_tiers)} amps=#{inspect(packet.amps)}"
+    )
+
     updated_shortcuts =
       ActionSets.apply_action_set_changes(
         character_id,
@@ -44,6 +49,10 @@ defmodule BezgelorWorld.Handler.ActionSetHandler do
         packet.actions,
         packet.action_tiers
       )
+
+    Logger.info(
+      "ActionSetChanges result: spec=#{packet.action_set_index} shortcuts=#{inspect(updated_shortcuts)}"
+    )
 
     actions =
       updated_shortcuts
