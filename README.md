@@ -107,6 +107,22 @@ mix run --no-halt
 iex --sname bezgelor -S mix phx.server
 ```
 
+### Mix Tasks
+
+```bash
+# Generate boss encounter scripts from JSON data
+mix dungeon.generate stormtalon_lair.json --boss stormtalon --force
+
+# Create a character (admin helper)
+mix bezgelor.create_character ACCOUNT_ID RACE_ID CLASS_ID --auto-name --sex 1
+
+# Refresh default action set shortcuts for a character
+mix bezgelor.refresh_action_set_defaults CHARACTER_ID --all-specs
+
+# Delete all characters (soft delete by default, hard delete with --hard)
+mix bezgelor.delete_all_characters --confirm --hard
+```
+
 ### Database Management
 
 ```bash
