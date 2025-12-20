@@ -37,7 +37,6 @@ defmodule BezgelorPortalWeb.Admin.TestingToolsLive do
       sex = parse_int_default(params["sex"], 0)
       creation_start = parse_int_default(params["creation_start"], 4)
       path_id = parse_int_default(params["path"], 0)
-      faction_id = parse_optional_int(params["faction_id"])
       name_prefix = string_or_default(params["name_prefix"], "Test")
       auto_name = truthy?(params["auto_name"])
       name = if auto_name, do: :auto, else: blank_to_nil(params["name"])
@@ -48,7 +47,6 @@ defmodule BezgelorPortalWeb.Admin.TestingToolsLive do
         |> put_opt(:creation_start, creation_start)
         |> put_opt(:path, path_id)
         |> put_opt(:name_prefix, name_prefix)
-        |> put_opt(:faction_id, faction_id)
         |> maybe_put_name(auto_name)
 
       case Portal.create_character(account_id, name, race_id, class_id, opts) do
@@ -176,11 +174,6 @@ defmodule BezgelorPortalWeb.Admin.TestingToolsLive do
                 options={@class_options}
               />
               <.input field={@create_form[:sex]} type="select" label="Sex" options={@sex_options} />
-              <.input
-                field={@create_form[:faction_id]}
-                type="number"
-                label="Faction ID (optional)"
-              />
               <.input
                 field={@create_form[:creation_start]}
                 type="select"
@@ -323,7 +316,6 @@ defmodule BezgelorPortalWeb.Admin.TestingToolsLive do
         "race_id" => "",
         "class_id" => "",
         "sex" => "0",
-        "faction_id" => "",
         "creation_start" => "4",
         "path" => "0"
       },
@@ -397,16 +389,6 @@ defmodule BezgelorPortalWeb.Admin.TestingToolsLive do
     case Integer.parse(to_string(value)) do
       {int, ""} -> int
       _ -> default
-    end
-  end
-
-  defp parse_optional_int(nil), do: nil
-  defp parse_optional_int(""), do: nil
-
-  defp parse_optional_int(value) do
-    case Integer.parse(to_string(value)) do
-      {int, ""} -> int
-      _ -> nil
     end
   end
 
