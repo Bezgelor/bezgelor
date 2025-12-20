@@ -132,6 +132,7 @@ defmodule BezgelorProtocol.PacketRegistry do
       client_unknown_0x00DE: Handler.Unknown0x00DEHandler,
       client_unknown_0x00FB: Handler.Unknown0x00FBHandler,
       client_unknown_0x0635: Handler.Unknown0x0635Handler,
+      client_unknown_0x00E3: Handler.Unknown0x00E3Handler,
       client_p2p_trading_cancel: Handler.P2PTradingCancelHandler
     }
   end

@@ -113,6 +113,8 @@ defmodule BezgelorProtocol.Opcode do
   @client_unknown_0x00FB 0x00FB
   # 0x0635: Unknown, labeled Server0635 in NexusForever but sent by client
   @client_unknown_0x0635 0x0635
+  # 0x00E3: Unknown, between datacube volume update and resurrect request
+  @client_unknown_0x00E3 0x00E3
   # 0x018F: ClientP2PTradingCancelTrade - player canceling a trade
   @client_p2p_trading_cancel 0x018F
   # ServerChangeWorld in NexusForever
@@ -371,6 +373,7 @@ defmodule BezgelorProtocol.Opcode do
     client_unknown_0x00DE: @client_unknown_0x00DE,
     client_unknown_0x00FB: @client_unknown_0x00FB,
     client_unknown_0x0635: @client_unknown_0x0635,
+    client_unknown_0x00E3: @client_unknown_0x00E3,
     client_p2p_trading_cancel: @client_p2p_trading_cancel,
     server_world_enter: @server_world_enter,
     server_instance_settings: @server_instance_settings,
