@@ -182,12 +182,10 @@ defmodule BezgelorPortalWeb.TotpSetupLive do
 
       <div class="flex gap-3">
         <button type="button" class="btn btn-outline" phx-click="copy_codes">
-          <.icon name="hero-clipboard-document" class="size-4 mr-2" />
-          Copy Codes
+          <.icon name="hero-clipboard-document" class="size-4 mr-2" /> Copy Codes
         </button>
         <button type="button" class="btn btn-outline" phx-click="download_codes">
-          <.icon name="hero-arrow-down-tray" class="size-4 mr-2" />
-          Download
+          <.icon name="hero-arrow-down-tray" class="size-4 mr-2" /> Download
         </button>
         <div class="flex-1"></div>
         <.link href={~p"/settings"} class="btn btn-primary">
@@ -234,7 +232,10 @@ defmodule BezgelorPortalWeb.TotpSetupLive do
             {:noreply, assign(socket, step: :backup_codes)}
 
           {:error, _changeset} ->
-            {:noreply, assign(socket, error: "Failed to enable two-factor authentication. Please try again.")}
+            {:noreply,
+             assign(socket,
+               error: "Failed to enable two-factor authentication. Please try again."
+             )}
         end
 
       {:error, :invalid_code} ->
@@ -269,9 +270,10 @@ defmodule BezgelorPortalWeb.TotpSetupLive do
     any remaining old codes).
     """
 
-    {:noreply, push_event(socket, "download_file", %{
-      filename: "bezgelor-backup-codes.txt",
-      content: content
-    })}
+    {:noreply,
+     push_event(socket, "download_file", %{
+       filename: "bezgelor-backup-codes.txt",
+       content: content
+     })}
   end
 end

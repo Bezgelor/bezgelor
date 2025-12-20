@@ -31,16 +31,16 @@ defmodule BezgelorDb.Schema.MythicRun do
   @max_group_size 5
 
   schema "mythic_runs" do
-    field :instance_definition_id, :integer
-    field :level, :integer
-    field :affixes, {:array, :string}
-    field :duration_seconds, :integer
-    field :timed, :boolean
-    field :completed_at, :utc_datetime
-    field :member_ids, {:array, :integer}
-    field :member_names, {:array, :string}
-    field :member_classes, {:array, :string}
-    field :season, :integer, default: 1
+    field(:instance_definition_id, :integer)
+    field(:level, :integer)
+    field(:affixes, {:array, :string})
+    field(:duration_seconds, :integer)
+    field(:timed, :boolean)
+    field(:completed_at, :utc_datetime)
+    field(:member_ids, {:array, :integer})
+    field(:member_names, {:array, :string})
+    field(:member_classes, {:array, :string})
+    field(:season, :integer, default: 1)
 
     timestamps()
   end
@@ -106,6 +106,7 @@ defmodule BezgelorDb.Schema.MythicRun do
   def formatted_duration(%__MODULE__{duration_seconds: seconds}) do
     minutes = div(seconds, 60)
     secs = rem(seconds, 60)
+
     "#{String.pad_leading(to_string(minutes), 2, "0")}:#{String.pad_leading(to_string(secs), 2, "0")}"
   end
 

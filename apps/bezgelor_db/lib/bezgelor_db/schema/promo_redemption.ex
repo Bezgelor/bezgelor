@@ -9,11 +9,11 @@ defmodule BezgelorDb.Schema.PromoRedemption do
   @type t :: %__MODULE__{}
 
   schema "promo_redemptions" do
-    belongs_to :promo_code, BezgelorDb.Schema.PromoCode
-    belongs_to :account, BezgelorDb.Schema.Account
-    belongs_to :purchase, BezgelorDb.Schema.StorePurchase
+    belongs_to(:promo_code, BezgelorDb.Schema.PromoCode)
+    belongs_to(:account, BezgelorDb.Schema.Account)
+    belongs_to(:purchase, BezgelorDb.Schema.StorePurchase)
 
-    field :redeemed_at, :utc_datetime
+    field(:redeemed_at, :utc_datetime)
 
     timestamps(type: :utc_datetime)
   end

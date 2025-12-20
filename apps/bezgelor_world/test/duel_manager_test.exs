@@ -152,7 +152,8 @@ defmodule BezgelorWorld.DuelManagerTest do
           test_position()
         )
 
-      assert {:ok, :declined} = DuelManager.respond_to_duel(ctx.target_guid, ctx.challenger_guid, false)
+      assert {:ok, :declined} =
+               DuelManager.respond_to_duel(ctx.target_guid, ctx.challenger_guid, false)
 
       # Target should now be able to receive new requests
       new_challenger = unique_guid(3000)
@@ -311,7 +312,8 @@ defmodule BezgelorWorld.DuelManagerTest do
       DuelManager.respond_to_duel(ctx.target_guid, ctx.challenger_guid, true)
       Process.sleep(5500)
 
-      assert {:ok, :continue} = DuelManager.report_damage(ctx.challenger_guid, ctx.target_guid, 1000)
+      assert {:ok, :continue} =
+               DuelManager.report_damage(ctx.challenger_guid, ctx.target_guid, 1000)
     end
 
     test "ends duel when health reaches zero", ctx do
@@ -327,14 +329,17 @@ defmodule BezgelorWorld.DuelManagerTest do
       DuelManager.respond_to_duel(ctx.target_guid, ctx.challenger_guid, true)
       Process.sleep(5500)
 
-      assert {:ok, :ended, duel} = DuelManager.report_damage(ctx.challenger_guid, ctx.target_guid, 0)
+      assert {:ok, :ended, duel} =
+               DuelManager.report_damage(ctx.challenger_guid, ctx.target_guid, 0)
+
       assert duel.winner_guid == ctx.challenger_guid
       assert duel.loser_guid == ctx.target_guid
       assert duel.end_reason == :defeat
     end
 
     test "returns error when not in duel", ctx do
-      assert {:error, :not_in_duel} = DuelManager.report_damage(ctx.challenger_guid, ctx.target_guid, 0)
+      assert {:error, :not_in_duel} =
+               DuelManager.report_damage(ctx.challenger_guid, ctx.target_guid, 0)
     end
   end
 

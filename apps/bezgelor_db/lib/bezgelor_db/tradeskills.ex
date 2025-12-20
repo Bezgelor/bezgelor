@@ -47,9 +47,10 @@ defmodule BezgelorDb.Tradeskills do
   @spec get_active_professions(integer(), :crafting | :gathering) :: [CharacterTradeskill.t()]
   def get_active_professions(character_id, profession_type) do
     from(t in CharacterTradeskill,
-      where: t.character_id == ^character_id and
-             t.profession_type == ^profession_type and
-             t.is_active == true
+      where:
+        t.character_id == ^character_id and
+          t.profession_type == ^profession_type and
+          t.is_active == true
     )
     |> Repo.all()
   end
@@ -67,6 +68,7 @@ defmodule BezgelorDb.Tradeskills do
           old
           |> CharacterTradeskill.deactivate_changeset()
           |> Repo.update!()
+
         :error ->
           :ok
       end
@@ -98,8 +100,9 @@ defmodule BezgelorDb.Tradeskills do
   @spec get_profession(integer(), integer()) :: {:ok, CharacterTradeskill.t()} | :error
   def get_profession(character_id, profession_id) do
     query =
-      from t in CharacterTradeskill,
+      from(t in CharacterTradeskill,
         where: t.character_id == ^character_id and t.profession_id == ^profession_id
+      )
 
     case Repo.one(query) do
       nil -> :error
@@ -125,7 +128,10 @@ defmodule BezgelorDb.Tradeskills do
 
         result =
           tradeskill
-          |> CharacterTradeskill.progress_changeset(%{skill_level: new_level, skill_xp: remaining_xp})
+          |> CharacterTradeskill.progress_changeset(%{
+            skill_level: new_level,
+            skill_xp: remaining_xp
+          })
           |> Repo.update()
 
         case result do
@@ -140,7 +146,8 @@ defmodule BezgelorDb.Tradeskills do
 
   # Simplified level calculation - would use static data in real impl
   defp calculate_level(current_level, total_xp) do
-    xp_per_level = 1000  # Simplified; real values from static data
+    # Simplified; real values from static data
+    xp_per_level = 1000
     max_level = 50
 
     levels_to_add = div(total_xp, xp_per_level)
@@ -191,10 +198,12 @@ defmodule BezgelorDb.Tradeskills do
   @spec is_discovered?(integer(), integer(), integer()) :: boolean()
   def is_discovered?(character_id, schematic_id, variant_id \\ 0) do
     query =
-      from d in SchematicDiscovery,
-        where: d.character_id == ^character_id and
-               d.schematic_id == ^schematic_id and
-               d.variant_id == ^variant_id
+      from(d in SchematicDiscovery,
+        where:
+          d.character_id == ^character_id and
+            d.schematic_id == ^schematic_id and
+            d.variant_id == ^variant_id
+      )
 
     Repo.exists?(query)
   end
@@ -255,10 +264,12 @@ defmodule BezgelorDb.Tradeskills do
   @spec get_talent(integer(), integer(), integer()) :: {:ok, TradeskillTalent.t()} | :error
   def get_talent(character_id, profession_id, talent_id) do
     query =
-      from t in TradeskillTalent,
-        where: t.character_id == ^character_id and
-               t.profession_id == ^profession_id and
-               t.talent_id == ^talent_id
+      from(t in TradeskillTalent,
+        where:
+          t.character_id == ^character_id and
+            t.profession_id == ^profession_id and
+            t.talent_id == ^talent_id
+      )
 
     case Repo.one(query) do
       nil -> :error
@@ -311,9 +322,10 @@ defmodule BezgelorDb.Tradeskills do
     now = DateTime.utc_now()
 
     from(w in WorkOrder,
-      where: w.character_id == ^character_id and
-             w.status == :active and
-             w.expires_at > ^now
+      where:
+        w.character_id == ^character_id and
+          w.status == :active and
+          w.expires_at > ^now
     )
     |> Repo.all()
   end

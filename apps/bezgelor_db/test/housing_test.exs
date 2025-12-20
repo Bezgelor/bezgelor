@@ -20,7 +20,12 @@ defmodule BezgelorDb.HousingTest do
     {:ok, character} =
       Characters.create_character(account.id, %{
         name: "HomeOwner#{System.unique_integer([:positive])}",
-        sex: 0, race: 0, class: 0, faction_id: 166, world_id: 1, world_zone_id: 1
+        sex: 0,
+        race: 0,
+        class: 0,
+        faction_id: 166,
+        world_id: 1,
+        world_zone_id: 1
       })
 
     {:ok, account: account, character: character}
@@ -48,7 +53,7 @@ defmodule BezgelorDb.HousingTest do
     end
 
     test "get_plot returns error for nonexistent", %{character: _character} do
-      assert :error = Housing.get_plot(999999)
+      assert :error = Housing.get_plot(999_999)
     end
 
     test "upgrade_house changes house type", %{character: character} do
@@ -59,7 +64,10 @@ defmodule BezgelorDb.HousingTest do
 
     test "update_plot_theme changes theme settings", %{character: character} do
       {:ok, _} = Housing.create_plot(character.id)
-      assert {:ok, plot} = Housing.update_plot_theme(character.id, %{sky_id: 5, plot_name: "My Palace"})
+
+      assert {:ok, plot} =
+               Housing.update_plot_theme(character.id, %{sky_id: 5, plot_name: "My Palace"})
+
       assert plot.sky_id == 5
       assert plot.plot_name == "My Palace"
     end
@@ -78,7 +86,12 @@ defmodule BezgelorDb.HousingTest do
       {:ok, neighbor_char} =
         Characters.create_character(account.id, %{
           name: "Neighbor#{System.unique_integer([:positive])}",
-          sex: 0, race: 0, class: 0, faction_id: 166, world_id: 1, world_zone_id: 1
+          sex: 0,
+          race: 0,
+          class: 0,
+          faction_id: 166,
+          world_id: 1,
+          world_zone_id: 1
         })
 
       {:ok, plot: plot, neighbor: neighbor_char}
@@ -108,11 +121,20 @@ defmodule BezgelorDb.HousingTest do
       assert n.is_roommate == false
     end
 
-    test "list_neighbors returns all neighbors", %{plot: plot, neighbor: neighbor, account: account} do
+    test "list_neighbors returns all neighbors", %{
+      plot: plot,
+      neighbor: neighbor,
+      account: account
+    } do
       {:ok, neighbor2} =
         Characters.create_character(account.id, %{
           name: "Neighbor2#{System.unique_integer([:positive])}",
-          sex: 0, race: 0, class: 0, faction_id: 166, world_id: 1, world_zone_id: 1
+          sex: 0,
+          race: 0,
+          class: 0,
+          faction_id: 166,
+          world_id: 1,
+          world_zone_id: 1
         })
 
       {:ok, _} = Housing.add_neighbor(plot.id, neighbor.id)
@@ -122,7 +144,11 @@ defmodule BezgelorDb.HousingTest do
       assert length(neighbors) == 2
     end
 
-    test "can_visit? checks permission correctly", %{plot: plot, neighbor: neighbor, character: owner} do
+    test "can_visit? checks permission correctly", %{
+      plot: plot,
+      neighbor: neighbor,
+      character: owner
+    } do
       # Owner can always visit
       assert Housing.can_visit?(plot.id, owner.id)
 
@@ -140,7 +166,11 @@ defmodule BezgelorDb.HousingTest do
       assert Housing.can_visit?(plot.id, neighbor.id)
     end
 
-    test "can_decorate? checks roommate permission", %{plot: plot, neighbor: neighbor, character: owner} do
+    test "can_decorate? checks roommate permission", %{
+      plot: plot,
+      neighbor: neighbor,
+      character: owner
+    } do
       # Owner can always decorate
       assert Housing.can_decorate?(plot.id, owner.id)
 
@@ -161,11 +191,15 @@ defmodule BezgelorDb.HousingTest do
     end
 
     test "place_decor adds item to plot", %{plot: plot} do
-      assert {:ok, decor} = Housing.place_decor(plot.id, %{
-        decor_id: 1001,
-        pos_x: 10.5, pos_y: 0.0, pos_z: 5.0,
-        is_exterior: true
-      })
+      assert {:ok, decor} =
+               Housing.place_decor(plot.id, %{
+                 decor_id: 1001,
+                 pos_x: 10.5,
+                 pos_y: 0.0,
+                 pos_z: 5.0,
+                 is_exterior: true
+               })
+
       assert decor.plot_id == plot.id
       assert decor.decor_id == 1001
       assert decor.pos_x == 10.5
@@ -174,10 +208,15 @@ defmodule BezgelorDb.HousingTest do
     test "move_decor updates position and rotation", %{plot: plot} do
       {:ok, decor} = Housing.place_decor(plot.id, %{decor_id: 1001})
 
-      assert {:ok, moved} = Housing.move_decor(decor.id, %{
-        pos_x: 20.0, pos_y: 5.0, pos_z: 10.0,
-        rot_yaw: 90.0, scale: 1.5
-      })
+      assert {:ok, moved} =
+               Housing.move_decor(decor.id, %{
+                 pos_x: 20.0,
+                 pos_y: 5.0,
+                 pos_z: 10.0,
+                 rot_yaw: 90.0,
+                 scale: 1.5
+               })
+
       assert moved.pos_x == 20.0
       assert moved.rot_yaw == 90.0
       assert moved.scale == 1.5
@@ -223,10 +262,12 @@ defmodule BezgelorDb.HousingTest do
     end
 
     test "install_fabkit adds to socket", %{plot: plot} do
-      assert {:ok, fabkit} = Housing.install_fabkit(plot.id, %{
-        socket_index: 0,
-        fabkit_id: 2001
-      })
+      assert {:ok, fabkit} =
+               Housing.install_fabkit(plot.id, %{
+                 socket_index: 0,
+                 fabkit_id: 2001
+               })
+
       assert fabkit.plot_id == plot.id
       assert fabkit.socket_index == 0
       assert fabkit.fabkit_id == 2001
@@ -251,10 +292,12 @@ defmodule BezgelorDb.HousingTest do
     test "update_fabkit_state modifies state map", %{plot: plot} do
       {:ok, fabkit} = Housing.install_fabkit(plot.id, %{socket_index: 0, fabkit_id: 2001})
 
-      assert {:ok, updated} = Housing.update_fabkit_state(fabkit.id, %{
-        "last_harvest" => DateTime.utc_now() |> DateTime.to_iso8601(),
-        "harvest_count" => 5
-      })
+      assert {:ok, updated} =
+               Housing.update_fabkit_state(fabkit.id, %{
+                 "last_harvest" => DateTime.utc_now() |> DateTime.to_iso8601(),
+                 "harvest_count" => 5
+               })
+
       assert updated.state["harvest_count"] == 5
     end
 

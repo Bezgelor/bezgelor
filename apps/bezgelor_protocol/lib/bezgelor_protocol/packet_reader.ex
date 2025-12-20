@@ -234,7 +234,12 @@ defmodule BezgelorProtocol.PacketReader do
           if new_bit_pos == 8 do
             %{new_reader | bit_pos: 0, bit_value: 0}
           else
-            %{new_reader | bit_pos: new_bit_pos, bit_value: new_bit_value, byte_pos: new_reader.byte_pos - 1}
+            %{
+              new_reader
+              | bit_pos: new_bit_pos,
+                bit_value: new_bit_value,
+                byte_pos: new_reader.byte_pos - 1
+            }
           end
 
         read_bits_acc(updated_reader, remaining - bits_to_read, new_value, shift + bits_to_read)
@@ -244,7 +249,12 @@ defmodule BezgelorProtocol.PacketReader do
     end
   end
 
-  defp read_bits_acc(%__MODULE__{bit_pos: bit_pos, bit_value: bit_value, byte_pos: byte_pos} = reader, remaining, value, shift) do
+  defp read_bits_acc(
+         %__MODULE__{bit_pos: bit_pos, bit_value: bit_value, byte_pos: byte_pos} = reader,
+         remaining,
+         value,
+         shift
+       ) do
     bits_available = 8 - bit_pos
     bits_to_read = min(remaining, bits_available)
     mask = (1 <<< bits_to_read) - 1

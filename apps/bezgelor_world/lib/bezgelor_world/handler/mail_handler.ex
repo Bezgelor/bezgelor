@@ -17,6 +17,7 @@ defmodule BezgelorWorld.Handler.MailHandler do
 
   alias BezgelorProtocol.PacketReader
   alias BezgelorProtocol.PacketWriter
+
   alias BezgelorProtocol.Packets.World.{
     ClientMailSend,
     ClientMailGetInbox,
@@ -29,6 +30,7 @@ defmodule BezgelorWorld.Handler.MailHandler do
     ServerMailResult,
     ServerMailNotification
   }
+
   alias BezgelorDb.{Mail, Characters}
   alias BezgelorWorld.WorldManager
 

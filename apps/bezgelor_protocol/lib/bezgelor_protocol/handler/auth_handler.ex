@@ -88,6 +88,7 @@ defmodule BezgelorProtocol.Handler.AuthHandler do
 
   # Validate the client build version
   defp validate_build(@expected_build), do: :ok
+
   defp validate_build(build) do
     Logger.warning("Build version mismatch: expected #{@expected_build}, got #{build}")
     {:error, :version_mismatch}
@@ -100,7 +101,6 @@ defmodule BezgelorProtocol.Handler.AuthHandler do
          {:ok, server_proof_m2, session_key} <- verify_srp6(account, packet),
          {:ok, game_token} <- generate_game_token(account),
          {:ok, _account} <- store_session_key(account, session_key) do
-
       response = %ServerAuthAccepted{
         server_proof_m2: server_proof_m2,
         game_token: game_token
@@ -214,7 +214,8 @@ defmodule BezgelorProtocol.Handler.AuthHandler do
   defp denial_params(:invalid_credentials), do: {:invalid_token, 0, 0.0}
   defp denial_params(:database_error), do: {:database_error, 0, 0.0}
   defp denial_params(:account_banned), do: {:account_banned, 0, 0.0}
-  defp denial_params(:rate_limited), do: {:unknown, 0, 0.0}  # No specific code for rate limiting
+  # No specific code for rate limiting
+  defp denial_params(:rate_limited), do: {:unknown, 0, 0.0}
   defp denial_params({:account_suspended, days}), do: {:account_suspended, 0, days / 1.0}
   defp denial_params(_unknown), do: {:unknown, 0, 0.0}
 

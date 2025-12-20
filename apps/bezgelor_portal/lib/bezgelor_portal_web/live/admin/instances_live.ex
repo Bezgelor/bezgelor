@@ -34,8 +34,7 @@ defmodule BezgelorPortalWeb.Admin.InstancesLive do
        show_close_modal: false,
        show_lockout_reset_modal: false,
        selected_lockout: nil
-     ),
-     layout: {BezgelorPortalWeb.Layouts, :admin}}
+     ), layout: {BezgelorPortalWeb.Layouts, :admin}}
   end
 
   @impl true
@@ -46,32 +45,29 @@ defmodule BezgelorPortalWeb.Admin.InstancesLive do
       <div class="flex items-center justify-between">
         <h1 class="text-2xl font-bold">Instance Management</h1>
         <div class="flex items-center gap-2 text-sm text-base-content/70">
-          <span class="loading loading-spinner loading-xs"></span>
-          Auto-refresh every 10s
+          <span class="loading loading-spinner loading-xs"></span> Auto-refresh every 10s
         </div>
       </div>
-
-      <!-- Tabs -->
+      
+    <!-- Tabs -->
       <div class="tabs tabs-boxed">
         <button
           class={"tab #{if @active_tab == :instances, do: "tab-active"}"}
           phx-click="switch_tab"
           phx-value-tab="instances"
         >
-          <.icon name="hero-building-office-2" class="size-4 mr-2" />
-          Active Instances
+          <.icon name="hero-building-office-2" class="size-4 mr-2" /> Active Instances
         </button>
         <button
           class={"tab #{if @active_tab == :lockouts, do: "tab-active"}"}
           phx-click="switch_tab"
           phx-value-tab="lockouts"
         >
-          <.icon name="hero-clock" class="size-4 mr-2" />
-          Lockout Management
+          <.icon name="hero-clock" class="size-4 mr-2" /> Lockout Management
         </button>
       </div>
-
-      <!-- Active Instances Tab -->
+      
+    <!-- Active Instances Tab -->
       <div :if={@active_tab == :instances} class="space-y-4">
         <!-- Instance Stats -->
         <div class="stats shadow w-full">
@@ -99,8 +95,8 @@ defmodule BezgelorPortalWeb.Admin.InstancesLive do
             </div>
           </div>
         </div>
-
-        <!-- Instances Table -->
+        
+    <!-- Instances Table -->
         <div class="card bg-base-100 shadow">
           <div class="card-body">
             <h2 class="card-title">Active Instances</h2>
@@ -146,8 +142,11 @@ defmodule BezgelorPortalWeb.Admin.InstancesLive do
                             class="progress progress-primary w-20"
                             value={instance.bosses_killed}
                             max={instance.total_bosses}
-                          ></progress>
-                          <span class="text-sm">{instance.bosses_killed}/{instance.total_bosses}</span>
+                          >
+                          </progress>
+                          <span class="text-sm">
+                            {instance.bosses_killed}/{instance.total_bosses}
+                          </span>
                         </div>
                       </td>
                       <td>
@@ -178,8 +177,8 @@ defmodule BezgelorPortalWeb.Admin.InstancesLive do
             </div>
           </div>
         </div>
-
-        <!-- Instance Detail -->
+        
+    <!-- Instance Detail -->
         <div :if={@selected_instance} class="card bg-base-100 shadow">
           <div class="card-body">
             <div class="flex items-center justify-between">
@@ -216,8 +215,8 @@ defmodule BezgelorPortalWeb.Admin.InstancesLive do
                   </div>
                 </dl>
               </div>
-
-              <!-- Boss Status -->
+              
+    <!-- Boss Status -->
               <div>
                 <h3 class="font-semibold mb-2">Boss Status</h3>
                 <div class="space-y-2">
@@ -232,8 +231,8 @@ defmodule BezgelorPortalWeb.Admin.InstancesLive do
                 </div>
               </div>
             </div>
-
-            <!-- Players -->
+            
+    <!-- Players -->
             <div class="mt-6">
               <h3 class="font-semibold mb-2">Players ({length(@selected_instance.players)})</h3>
               <div class="overflow-x-auto">
@@ -265,8 +264,7 @@ defmodule BezgelorPortalWeb.Admin.InstancesLive do
                             phx-value-character={player.id}
                             phx-value-instance={@selected_instance.id}
                           >
-                            <.icon name="hero-arrow-right-on-rectangle" class="size-4" />
-                            Teleport Out
+                            <.icon name="hero-arrow-right-on-rectangle" class="size-4" /> Teleport Out
                           </button>
                         </td>
                       </tr>
@@ -275,31 +273,29 @@ defmodule BezgelorPortalWeb.Admin.InstancesLive do
                 </table>
               </div>
             </div>
-
-            <!-- Actions -->
+            
+    <!-- Actions -->
             <div class="mt-6 flex gap-2">
               <button
                 class="btn btn-error"
                 phx-click="confirm_close"
                 phx-value-id={@selected_instance.id}
               >
-                <.icon name="hero-x-circle" class="size-4" />
-                Force Close Instance
+                <.icon name="hero-x-circle" class="size-4" /> Force Close Instance
               </button>
               <button
                 class="btn btn-warning"
                 phx-click="teleport_all_out"
                 phx-value-id={@selected_instance.id}
               >
-                <.icon name="hero-arrow-right-on-rectangle" class="size-4" />
-                Teleport All Out
+                <.icon name="hero-arrow-right-on-rectangle" class="size-4" /> Teleport All Out
               </button>
             </div>
           </div>
         </div>
       </div>
-
-      <!-- Lockouts Tab -->
+      
+    <!-- Lockouts Tab -->
       <div :if={@active_tab == :lockouts} class="space-y-4">
         <!-- Search -->
         <div class="card bg-base-100 shadow">
@@ -314,14 +310,13 @@ defmodule BezgelorPortalWeb.Admin.InstancesLive do
                 class="input input-bordered flex-1"
               />
               <button type="submit" class="btn btn-primary">
-                <.icon name="hero-magnifying-glass" class="size-4" />
-                Search
+                <.icon name="hero-magnifying-glass" class="size-4" /> Search
               </button>
             </form>
           </div>
         </div>
-
-        <!-- Results -->
+        
+    <!-- Results -->
         <div :if={@lockout_results != []} class="card bg-base-100 shadow">
           <div class="card-body">
             <div class="flex items-center justify-between mb-4">
@@ -331,8 +326,7 @@ defmodule BezgelorPortalWeb.Admin.InstancesLive do
                 phx-click="reset_all_lockouts"
                 phx-value-character={List.first(@lockout_results).character_id}
               >
-                <.icon name="hero-arrow-path" class="size-4" />
-                Reset All
+                <.icon name="hero-arrow-path" class="size-4" /> Reset All
               </button>
             </div>
 
@@ -369,7 +363,8 @@ defmodule BezgelorPortalWeb.Admin.InstancesLive do
                             class="progress progress-primary w-20"
                             value={lockout.bosses_killed}
                             max={lockout.total_bosses}
-                          ></progress>
+                          >
+                          </progress>
                           <span class="text-sm">{lockout.bosses_killed}/{lockout.total_bosses}</span>
                         </div>
                       </td>
@@ -384,8 +379,7 @@ defmodule BezgelorPortalWeb.Admin.InstancesLive do
                           phx-click="confirm_reset_lockout"
                           phx-value-id={lockout.id}
                         >
-                          <.icon name="hero-arrow-path" class="size-4" />
-                          Reset
+                          <.icon name="hero-arrow-path" class="size-4" /> Reset
                         </button>
                       </td>
                     </tr>
@@ -401,8 +395,8 @@ defmodule BezgelorPortalWeb.Admin.InstancesLive do
           <span>No lockouts found for "{@lockout_search}"</span>
         </div>
       </div>
-
-      <!-- Close Instance Modal -->
+      
+    <!-- Close Instance Modal -->
       <dialog :if={@show_close_modal} class="modal modal-open">
         <div class="modal-box">
           <h3 class="text-lg font-bold">Force Close Instance</h3>
@@ -413,8 +407,7 @@ defmodule BezgelorPortalWeb.Admin.InstancesLive do
           <div class="modal-action">
             <button class="btn" phx-click="cancel_close">Cancel</button>
             <button class="btn btn-error" phx-click="close_instance">
-              <.icon name="hero-x-circle" class="size-4" />
-              Force Close
+              <.icon name="hero-x-circle" class="size-4" /> Force Close
             </button>
           </div>
         </div>
@@ -422,8 +415,8 @@ defmodule BezgelorPortalWeb.Admin.InstancesLive do
           <button phx-click="cancel_close">close</button>
         </form>
       </dialog>
-
-      <!-- Reset Lockout Modal -->
+      
+    <!-- Reset Lockout Modal -->
       <dialog :if={@show_lockout_reset_modal} class="modal modal-open">
         <div class="modal-box">
           <h3 class="text-lg font-bold">Reset Lockout</h3>
@@ -434,8 +427,7 @@ defmodule BezgelorPortalWeb.Admin.InstancesLive do
           <div class="modal-action">
             <button class="btn" phx-click="cancel_reset">Cancel</button>
             <button class="btn btn-warning" phx-click="reset_lockout">
-              <.icon name="hero-arrow-path" class="size-4" />
-              Reset Lockout
+              <.icon name="hero-arrow-path" class="size-4" /> Reset Lockout
             </button>
           </div>
         </div>
@@ -500,14 +492,25 @@ defmodule BezgelorPortalWeb.Admin.InstancesLive do
   end
 
   @impl true
-  def handle_event("teleport_out", %{"character" => char_id_str, "instance" => _instance_id}, socket) do
+  def handle_event(
+        "teleport_out",
+        %{"character" => char_id_str, "instance" => _instance_id},
+        socket
+      ) do
     admin = socket.assigns.current_account
 
     case Integer.parse(char_id_str) do
       {character_id, ""} ->
         case Portal.teleport_player_out(character_id) do
           :ok ->
-            Authorization.log_action(admin, "instance.teleport_player", "character", character_id, %{})
+            Authorization.log_action(
+              admin,
+              "instance.teleport_player",
+              "character",
+              character_id,
+              %{}
+            )
+
             {:noreply,
              socket
              |> put_flash(:info, "Player teleported out of instance")
@@ -532,6 +535,7 @@ defmodule BezgelorPortalWeb.Admin.InstancesLive do
           instance_id: instance_id,
           player_count: count
         })
+
         {:noreply,
          socket
          |> put_flash(:info, "Teleported #{count} players out of instance")
@@ -669,6 +673,7 @@ defmodule BezgelorPortalWeb.Admin.InstancesLive do
   end
 
   defp get_instance_name(nil), do: "Unknown Instance"
+
   defp get_instance_name(zone_id) do
     case BezgelorData.Store.get(:world_location, zone_id) do
       :error -> "Instance #{zone_id}"

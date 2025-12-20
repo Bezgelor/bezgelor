@@ -58,7 +58,13 @@ defmodule BezgelorProtocol.Packets.World.ServerDuelCountdown do
   @doc """
   Create a duel countdown notification.
   """
-  @spec new(non_neg_integer(), String.t(), non_neg_integer(), {float(), float(), float()}, float()) ::
+  @spec new(
+          non_neg_integer(),
+          String.t(),
+          non_neg_integer(),
+          {float(), float(), float()},
+          float()
+        ) ::
           t()
   def new(opponent_guid, opponent_name, countdown_seconds, center, radius) do
     %__MODULE__{

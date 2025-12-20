@@ -37,7 +37,8 @@ defmodule BezgelorAuth.Sts.SessionTest do
 
       assert authenticated.state == :authenticated
       # Game token should be in GUID format
-      assert authenticated.game_token =~ ~r/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
+      assert authenticated.game_token =~
+               ~r/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
     end
   end
 

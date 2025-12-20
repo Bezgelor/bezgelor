@@ -170,11 +170,12 @@ defmodule BezgelorWorld.Handler.QuestHandlerTest do
         completed_quest_ids: MapSet.new()
       }
 
-      {updated_session, packets} = SessionQuestManager.process_game_event(
-        session_data,
-        :kill,
-        %{creature_id: 456}
-      )
+      {updated_session, packets} =
+        SessionQuestManager.process_game_event(
+          session_data,
+          :kill,
+          %{creature_id: 456}
+        )
 
       updated_quest = updated_session[:active_quests][100]
       objective = Enum.find(updated_quest.objectives, &(&1.index == 0))
@@ -199,11 +200,13 @@ defmodule BezgelorWorld.Handler.QuestHandlerTest do
         completed_quest_ids: MapSet.new()
       }
 
-      {updated_session, packets} = SessionQuestManager.process_game_event(
-        session_data,
-        :kill,
-        %{creature_id: 789}  # Different creature
-      )
+      {updated_session, packets} =
+        SessionQuestManager.process_game_event(
+          session_data,
+          :kill,
+          # Different creature
+          %{creature_id: 789}
+        )
 
       updated_quest = updated_session[:active_quests][100]
       objective = Enum.find(updated_quest.objectives, &(&1.index == 0))
@@ -227,11 +230,12 @@ defmodule BezgelorWorld.Handler.QuestHandlerTest do
         completed_quest_ids: MapSet.new()
       }
 
-      {updated_session, packets} = SessionQuestManager.process_game_event(
-        session_data,
-        :loot,
-        %{item_id: 1001}
-      )
+      {updated_session, packets} =
+        SessionQuestManager.process_game_event(
+          session_data,
+          :loot,
+          %{item_id: 1001}
+        )
 
       updated_quest = updated_session[:active_quests][200]
       objective = Enum.find(updated_quest.objectives, &(&1.index == 0))
@@ -256,11 +260,12 @@ defmodule BezgelorWorld.Handler.QuestHandlerTest do
       }
 
       # Final kill to complete the objective
-      {updated_session, _packets} = SessionQuestManager.process_game_event(
-        session_data,
-        :kill,
-        %{creature_id: 456}
-      )
+      {updated_session, _packets} =
+        SessionQuestManager.process_game_event(
+          session_data,
+          :kill,
+          %{creature_id: 456}
+        )
 
       updated_quest = updated_session[:active_quests][300]
       objective = Enum.find(updated_quest.objectives, &(&1.index == 0))

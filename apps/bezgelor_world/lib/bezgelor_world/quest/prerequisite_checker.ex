@@ -142,8 +142,11 @@ defmodule BezgelorWorld.Quest.PrerequisiteChecker do
       @prereq_type_faction ->
         # object is faction ID, value is required standing
         case Reputation.get_standing(character.id, object) do
-          nil -> {:error, :faction_standing_too_low}
-          standing -> if standing >= value, do: {:ok, true}, else: {:error, :faction_standing_too_low}
+          nil ->
+            {:error, :faction_standing_too_low}
+
+          standing ->
+            if standing >= value, do: {:ok, true}, else: {:error, :faction_standing_too_low}
         end
 
       _unknown ->

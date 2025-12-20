@@ -14,7 +14,9 @@ defmodule BezgelorCore.ActiveEffectTest do
   describe "apply/4" do
     test "adds buff to state with expiration time" do
       state = ActiveEffect.new()
-      buff = BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 100, duration: 10_000})
+
+      buff =
+        BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 100, duration: 10_000})
 
       state = ActiveEffect.apply(state, buff, 12345, 1000)
 
@@ -26,8 +28,12 @@ defmodule BezgelorCore.ActiveEffectTest do
 
     test "replaces existing buff with same id" do
       state = ActiveEffect.new()
-      buff1 = BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 100, duration: 5_000})
-      buff2 = BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 150, duration: 10_000})
+
+      buff1 =
+        BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 100, duration: 5_000})
+
+      buff2 =
+        BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 150, duration: 10_000})
 
       state = ActiveEffect.apply(state, buff1, 12345, 1000)
       state = ActiveEffect.apply(state, buff2, 12345, 2000)
@@ -40,7 +46,9 @@ defmodule BezgelorCore.ActiveEffectTest do
   describe "remove/2" do
     test "removes buff from state" do
       state = ActiveEffect.new()
-      buff = BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 100, duration: 10_000})
+
+      buff =
+        BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 100, duration: 10_000})
 
       state = ActiveEffect.apply(state, buff, 12345, 1000)
       state = ActiveEffect.remove(state, 1)
@@ -59,7 +67,9 @@ defmodule BezgelorCore.ActiveEffectTest do
   describe "active?/3" do
     test "returns true if buff exists and not expired" do
       state = ActiveEffect.new()
-      buff = BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 100, duration: 10_000})
+
+      buff =
+        BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 100, duration: 10_000})
 
       state = ActiveEffect.apply(state, buff, 12345, 1000)
 
@@ -68,7 +78,9 @@ defmodule BezgelorCore.ActiveEffectTest do
 
     test "returns false if buff expired" do
       state = ActiveEffect.new()
-      buff = BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 100, duration: 10_000})
+
+      buff =
+        BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 100, duration: 10_000})
 
       state = ActiveEffect.apply(state, buff, 12345, 1000)
 
@@ -84,7 +96,9 @@ defmodule BezgelorCore.ActiveEffectTest do
   describe "remaining/3" do
     test "returns remaining duration" do
       state = ActiveEffect.new()
-      buff = BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 100, duration: 10_000})
+
+      buff =
+        BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 100, duration: 10_000})
 
       state = ActiveEffect.apply(state, buff, 12345, 1000)
 
@@ -93,7 +107,9 @@ defmodule BezgelorCore.ActiveEffectTest do
 
     test "returns 0 if expired" do
       state = ActiveEffect.new()
-      buff = BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 100, duration: 10_000})
+
+      buff =
+        BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 100, duration: 10_000})
 
       state = ActiveEffect.apply(state, buff, 12345, 1000)
 
@@ -109,8 +125,18 @@ defmodule BezgelorCore.ActiveEffectTest do
   describe "cleanup/2" do
     test "removes expired effects" do
       state = ActiveEffect.new()
-      buff1 = BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 100, duration: 5_000})
-      buff2 = BuffDebuff.new(%{id: 2, spell_id: 5, buff_type: :stat_modifier, amount: 50, duration: 15_000})
+
+      buff1 =
+        BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 100, duration: 5_000})
+
+      buff2 =
+        BuffDebuff.new(%{
+          id: 2,
+          spell_id: 5,
+          buff_type: :stat_modifier,
+          amount: 50,
+          duration: 15_000
+        })
 
       state = ActiveEffect.apply(state, buff1, 12345, 1000)
       state = ActiveEffect.apply(state, buff2, 12345, 1000)
@@ -124,9 +150,36 @@ defmodule BezgelorCore.ActiveEffectTest do
   describe "get_stat_modifier/3" do
     test "returns total modifier for a stat" do
       state = ActiveEffect.new()
-      buff1 = BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :stat_modifier, stat: :power, amount: 50, duration: 10_000})
-      buff2 = BuffDebuff.new(%{id: 2, spell_id: 5, buff_type: :stat_modifier, stat: :power, amount: 25, duration: 10_000})
-      buff3 = BuffDebuff.new(%{id: 3, spell_id: 6, buff_type: :stat_modifier, stat: :armor, amount: 10, duration: 10_000})
+
+      buff1 =
+        BuffDebuff.new(%{
+          id: 1,
+          spell_id: 4,
+          buff_type: :stat_modifier,
+          stat: :power,
+          amount: 50,
+          duration: 10_000
+        })
+
+      buff2 =
+        BuffDebuff.new(%{
+          id: 2,
+          spell_id: 5,
+          buff_type: :stat_modifier,
+          stat: :power,
+          amount: 25,
+          duration: 10_000
+        })
+
+      buff3 =
+        BuffDebuff.new(%{
+          id: 3,
+          spell_id: 6,
+          buff_type: :stat_modifier,
+          stat: :armor,
+          amount: 10,
+          duration: 10_000
+        })
 
       state = ActiveEffect.apply(state, buff1, 12345, 1000)
       state = ActiveEffect.apply(state, buff2, 12345, 1000)
@@ -139,8 +192,26 @@ defmodule BezgelorCore.ActiveEffectTest do
 
     test "ignores expired modifiers" do
       state = ActiveEffect.new()
-      buff1 = BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :stat_modifier, stat: :power, amount: 50, duration: 5_000})
-      buff2 = BuffDebuff.new(%{id: 2, spell_id: 5, buff_type: :stat_modifier, stat: :power, amount: 25, duration: 15_000})
+
+      buff1 =
+        BuffDebuff.new(%{
+          id: 1,
+          spell_id: 4,
+          buff_type: :stat_modifier,
+          stat: :power,
+          amount: 50,
+          duration: 5_000
+        })
+
+      buff2 =
+        BuffDebuff.new(%{
+          id: 2,
+          spell_id: 5,
+          buff_type: :stat_modifier,
+          stat: :power,
+          amount: 25,
+          duration: 15_000
+        })
 
       state = ActiveEffect.apply(state, buff1, 12345, 1000)
       state = ActiveEffect.apply(state, buff2, 12345, 1000)
@@ -152,7 +223,9 @@ defmodule BezgelorCore.ActiveEffectTest do
   describe "get_absorb_remaining/2" do
     test "returns total absorb amount" do
       state = ActiveEffect.new()
-      buff = BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 100, duration: 10_000})
+
+      buff =
+        BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 100, duration: 10_000})
 
       state = ActiveEffect.apply(state, buff, 12345, 1000)
 
@@ -168,7 +241,9 @@ defmodule BezgelorCore.ActiveEffectTest do
   describe "consume_absorb/3" do
     test "reduces absorb amount and returns remainder" do
       state = ActiveEffect.new()
-      buff = BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 100, duration: 10_000})
+
+      buff =
+        BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 100, duration: 10_000})
 
       state = ActiveEffect.apply(state, buff, 12345, 1000)
       {state, absorbed, remaining_damage} = ActiveEffect.consume_absorb(state, 30, 5000)
@@ -180,7 +255,9 @@ defmodule BezgelorCore.ActiveEffectTest do
 
     test "removes buff when fully consumed" do
       state = ActiveEffect.new()
-      buff = BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 50, duration: 10_000})
+
+      buff =
+        BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 50, duration: 10_000})
 
       state = ActiveEffect.apply(state, buff, 12345, 1000)
       {state, absorbed, remaining_damage} = ActiveEffect.consume_absorb(state, 100, 5000)
@@ -192,8 +269,12 @@ defmodule BezgelorCore.ActiveEffectTest do
 
     test "consumes from multiple absorb buffs" do
       state = ActiveEffect.new()
-      buff1 = BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 30, duration: 10_000})
-      buff2 = BuffDebuff.new(%{id: 2, spell_id: 5, buff_type: :absorb, amount: 50, duration: 10_000})
+
+      buff1 =
+        BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 30, duration: 10_000})
+
+      buff2 =
+        BuffDebuff.new(%{id: 2, spell_id: 5, buff_type: :absorb, amount: 50, duration: 10_000})
 
       state = ActiveEffect.apply(state, buff1, 12345, 1000)
       state = ActiveEffect.apply(state, buff2, 12345, 1000)
@@ -210,8 +291,18 @@ defmodule BezgelorCore.ActiveEffectTest do
   describe "list_active/2" do
     test "returns list of active effects" do
       state = ActiveEffect.new()
-      buff1 = BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 100, duration: 5_000})
-      buff2 = BuffDebuff.new(%{id: 2, spell_id: 5, buff_type: :stat_modifier, amount: 50, duration: 15_000})
+
+      buff1 =
+        BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 100, duration: 5_000})
+
+      buff2 =
+        BuffDebuff.new(%{
+          id: 2,
+          spell_id: 5,
+          buff_type: :stat_modifier,
+          amount: 50,
+          duration: 15_000
+        })
 
       state = ActiveEffect.apply(state, buff1, 12345, 1000)
       state = ActiveEffect.apply(state, buff2, 12345, 1000)

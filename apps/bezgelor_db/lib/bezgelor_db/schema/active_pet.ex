@@ -7,12 +7,12 @@ defmodule BezgelorDb.Schema.ActivePet do
   @max_level 25
 
   schema "active_pets" do
-    belongs_to :character, BezgelorDb.Schema.Character
+    belongs_to(:character, BezgelorDb.Schema.Character)
 
-    field :pet_id, :integer
-    field :level, :integer, default: 1
-    field :xp, :integer, default: 0
-    field :nickname, :string
+    field(:pet_id, :integer)
+    field(:level, :integer, default: 1)
+    field(:xp, :integer, default: 0)
+    field(:nickname, :string)
 
     timestamps(type: :utc_datetime)
   end

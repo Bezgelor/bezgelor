@@ -8,6 +8,7 @@ defmodule BezgelorProtocol.Packets.QuestPacketsTest do
 
   alias BezgelorProtocol.PacketWriter
   alias BezgelorProtocol.PacketReader
+
   alias BezgelorProtocol.Packets.World.{
     ServerQuestAdd,
     ServerQuestUpdate,
@@ -126,7 +127,8 @@ defmodule BezgelorProtocol.Packets.QuestPacketsTest do
 
       <<quest_id::little-32, state::8, index::8, current::little-16>> = binary
       assert quest_id == 5861
-      assert state == 0  # :accepted = 0
+      # :accepted = 0
+      assert state == 0
       assert index == 0
       assert current == 5
     end
@@ -144,7 +146,8 @@ defmodule BezgelorProtocol.Packets.QuestPacketsTest do
       binary = PacketWriter.to_binary(writer)
 
       <<_quest_id::little-32, state::8, index::8, current::little-16>> = binary
-      assert state == 1  # :complete = 1
+      # :complete = 1
+      assert state == 1
       assert index == 2
       assert current == 10
     end
@@ -162,7 +165,8 @@ defmodule BezgelorProtocol.Packets.QuestPacketsTest do
       binary = PacketWriter.to_binary(writer)
 
       <<_::little-32, state::8, _::binary>> = binary
-      assert state == 2  # :failed = 2
+      # :failed = 2
+      assert state == 2
     end
 
     test "handles unknown state gracefully" do
@@ -178,7 +182,8 @@ defmodule BezgelorProtocol.Packets.QuestPacketsTest do
       binary = PacketWriter.to_binary(writer)
 
       <<_::little-32, state::8, _::binary>> = binary
-      assert state == 0  # defaults to 0
+      # defaults to 0
+      assert state == 0
     end
 
     test "returns correct opcode" do
@@ -206,7 +211,8 @@ defmodule BezgelorProtocol.Packets.QuestPacketsTest do
 
       <<quest_id::little-32, reason::8>> = binary
       assert quest_id == 5861
-      assert reason == 0  # :abandoned = 0
+      # :abandoned = 0
+      assert reason == 0
     end
 
     test "writes completed quest removal" do
@@ -220,7 +226,8 @@ defmodule BezgelorProtocol.Packets.QuestPacketsTest do
       binary = PacketWriter.to_binary(writer)
 
       <<_::little-32, reason::8>> = binary
-      assert reason == 1  # :completed = 1
+      # :completed = 1
+      assert reason == 1
     end
 
     test "writes failed quest removal" do
@@ -234,7 +241,8 @@ defmodule BezgelorProtocol.Packets.QuestPacketsTest do
       binary = PacketWriter.to_binary(writer)
 
       <<_::little-32, reason::8>> = binary
-      assert reason == 2  # :failed = 2
+      # :failed = 2
+      assert reason == 2
     end
 
     test "handles nil reason" do
@@ -248,7 +256,8 @@ defmodule BezgelorProtocol.Packets.QuestPacketsTest do
       binary = PacketWriter.to_binary(writer)
 
       <<_::little-32, reason::8>> = binary
-      assert reason == 0  # defaults to 0
+      # defaults to 0
+      assert reason == 0
     end
 
     test "returns correct opcode" do
@@ -333,7 +342,8 @@ defmodule BezgelorProtocol.Packets.QuestPacketsTest do
     test "reads turn in with reward choice" do
       quest_id = 100
       npc_guid = 0x0001000000000003
-      reward_choice = 2  # Second reward option
+      # Second reward option
+      reward_choice = 2
 
       binary = <<quest_id::little-32, npc_guid::little-64, reward_choice::8>>
       reader = PacketReader.new(binary)
@@ -380,10 +390,13 @@ defmodule BezgelorProtocol.Packets.QuestPacketsTest do
 
     test "ServerQuestUpdate uses correct field sizes" do
       packet = %ServerQuestUpdate{
-        quest_id: 0xFFFFFFFF,  # max uint32
+        # max uint32
+        quest_id: 0xFFFFFFFF,
         state: :accepted,
-        objective_index: 255,  # max uint8
-        current: 0xFFFF  # max uint16
+        # max uint8
+        objective_index: 255,
+        # max uint16
+        current: 0xFFFF
       }
 
       writer = PacketWriter.new()

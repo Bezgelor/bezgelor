@@ -76,7 +76,11 @@ defmodule BezgelorWorld.Integration.CombatMovementTest do
       Process.sleep(state3.ai.chase_duration + 100)
 
       # Now target is in range
-      CreatureManager.set_target_position(creature_guid, {state3.entity.position |> elem(0) |> Kernel.+(3.0), 0.0, 0.0})
+      CreatureManager.set_target_position(
+        creature_guid,
+        {state3.entity.position |> elem(0) |> Kernel.+(3.0), 0.0, 0.0}
+      )
+
       send(CreatureManager, {:tick, 2})
       Process.sleep(100)
 
@@ -103,7 +107,8 @@ defmodule BezgelorWorld.Integration.CombatMovementTest do
 
       # Entity position should be updated to end of chase path
       {entity_x, _, _} = state.entity.position
-      assert entity_x > 0.0  # Moved from origin
+      # Moved from origin
+      assert entity_x > 0.0
     end
   end
 
@@ -163,7 +168,8 @@ defmodule BezgelorWorld.Integration.CombatMovementTest do
 
       # End position should be further from target (lower X since backing away)
       {end_x, _, _} = List.last(state.ai.chase_path)
-      assert end_x < 55.0  # Moved away from 55
+      # Moved away from 55
+      assert end_x < 55.0
     end
   end
 
@@ -194,7 +200,8 @@ defmodule BezgelorWorld.Integration.CombatMovementTest do
       # Start chase
       player_guid = 0x1000000000000001
       CreatureManager.creature_enter_combat(creature_guid, player_guid)
-      CreatureManager.set_target_position(creature_guid, {12.0, 0.0, 0.0})  # Short chase
+      # Short chase
+      CreatureManager.set_target_position(creature_guid, {12.0, 0.0, 0.0})
       Process.sleep(50)
 
       send(CreatureManager, {:tick, 1})

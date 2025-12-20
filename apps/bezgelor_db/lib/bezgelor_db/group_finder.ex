@@ -57,7 +57,9 @@ defmodule BezgelorDb.GroupFinder do
   @doc """
   Get queued players for an instance type, difficulty, and role.
   """
-  @spec get_queued_for_role(String.t(), String.t(), String.t(), integer()) :: [GroupFinderQueue.t()]
+  @spec get_queued_for_role(String.t(), String.t(), String.t(), integer()) :: [
+          GroupFinderQueue.t()
+        ]
   def get_queued_for_role(instance_type, difficulty, role, limit \\ 100) do
     from(q in GroupFinderQueue,
       where:
@@ -89,21 +91,24 @@ defmodule BezgelorDb.GroupFinder do
   def get_queue_stats(instance_type, difficulty) do
     tanks =
       from(q in GroupFinderQueue,
-        where: q.instance_type == ^instance_type and q.difficulty == ^difficulty and q.role == "tank",
+        where:
+          q.instance_type == ^instance_type and q.difficulty == ^difficulty and q.role == "tank",
         select: count(q.id)
       )
       |> Repo.one()
 
     healers =
       from(q in GroupFinderQueue,
-        where: q.instance_type == ^instance_type and q.difficulty == ^difficulty and q.role == "healer",
+        where:
+          q.instance_type == ^instance_type and q.difficulty == ^difficulty and q.role == "healer",
         select: count(q.id)
       )
       |> Repo.one()
 
     dps =
       from(q in GroupFinderQueue,
-        where: q.instance_type == ^instance_type and q.difficulty == ^difficulty and q.role == "dps",
+        where:
+          q.instance_type == ^instance_type and q.difficulty == ^difficulty and q.role == "dps",
         select: count(q.id)
       )
       |> Repo.one()
@@ -119,7 +124,8 @@ defmodule BezgelorDb.GroupFinder do
   @doc """
   Update queue wait time estimate.
   """
-  @spec update_wait_estimate(integer(), integer()) :: {:ok, GroupFinderQueue.t()} | {:error, term()}
+  @spec update_wait_estimate(integer(), integer()) ::
+          {:ok, GroupFinderQueue.t()} | {:error, term()}
   def update_wait_estimate(character_id, seconds) do
     case get_queue_entry(character_id) do
       nil ->
@@ -179,7 +185,8 @@ defmodule BezgelorDb.GroupFinder do
   @doc """
   Set player ready status.
   """
-  @spec set_ready(binary(), integer(), boolean()) :: {:ok, GroupFinderGroup.t()} | {:error, term()}
+  @spec set_ready(binary(), integer(), boolean()) ::
+          {:ok, GroupFinderGroup.t()} | {:error, term()}
   def set_ready(group_guid, character_id, ready) do
     case get_group(group_guid) do
       nil ->

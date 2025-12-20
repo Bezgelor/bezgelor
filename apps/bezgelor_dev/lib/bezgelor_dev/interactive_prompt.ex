@@ -46,13 +46,19 @@ defmodule BezgelorDev.InteractivePrompt do
     type_label = capture_type_label(event.type)
     type_color = capture_type_color(event.type)
 
-    IO.puts(color("\n═══════════════════════════════════════════════════════════════", type_color))
+    IO.puts(
+      color("\n═══════════════════════════════════════════════════════════════", type_color)
+    )
+
     IO.puts(color("  #{type_label} DETECTED", type_color))
     IO.puts(color("═══════════════════════════════════════════════════════════════", type_color))
   end
 
   defp display_packet_data(event) do
-    IO.puts("\n  #{color("Opcode:", :yellow)} #{event.opcode_hex} (#{format_opcode_decimal(event.opcode)} decimal)")
+    IO.puts(
+      "\n  #{color("Opcode:", :yellow)} #{event.opcode_hex} (#{format_opcode_decimal(event.opcode)} decimal)"
+    )
+
     IO.puts("  #{color("Size:", :yellow)} #{byte_size(event.payload)} bytes")
 
     # Display raw bytes (first 48 bytes max)
@@ -91,7 +97,10 @@ defmodule BezgelorDev.InteractivePrompt do
 
     if context.player_position do
       {x, y, z} = context.player_position
-      IO.puts("  • #{color("Position:", :yellow)} (#{Float.round(x, 1)}, #{Float.round(y, 1)}, #{Float.round(z, 1)})")
+
+      IO.puts(
+        "  • #{color("Position:", :yellow)} (#{Float.round(x, 1)}, #{Float.round(y, 1)}, #{Float.round(z, 1)})"
+      )
     end
 
     if context.player_name do
@@ -105,8 +114,12 @@ defmodule BezgelorDev.InteractivePrompt do
     IO.puts("  (Press Enter to skip)")
 
     case IO.gets("  > ") do
-      :eof -> nil
-      {:error, _} -> nil
+      :eof ->
+        nil
+
+      {:error, _} ->
+        nil
+
       input ->
         commentary = String.trim(input)
         if commentary == "", do: nil, else: commentary
@@ -115,17 +128,25 @@ defmodule BezgelorDev.InteractivePrompt do
 
   defp prompt_action_menu do
     IO.puts(color("───────────────────────────────────────────────────────────────", :white))
-    IO.puts("  [#{color("L", :blue)}]og for Analysis  [#{color("S", :yellow)}]kip  [#{color("Q", :red)}]uit dev mode")
+
+    IO.puts(
+      "  [#{color("L", :blue)}]og for Analysis  [#{color("S", :yellow)}]kip  [#{color("Q", :red)}]uit dev mode"
+    )
 
     case IO.gets("  > ") do
-      :eof -> :skip
-      {:error, _} -> :skip
+      :eof ->
+        :skip
+
+      {:error, _} ->
+        :skip
+
       input ->
         case String.trim(input) |> String.downcase() do
           "l" -> :log
           "s" -> :skip
           "q" -> :quit
-          "" -> :log  # Default to log
+          # Default to log
+          "" -> :log
           _ -> :log
         end
     end
@@ -142,6 +163,7 @@ defmodule BezgelorDev.InteractivePrompt do
   defp capture_type_color(:handler_error), do: :magenta
 
   defp format_opcode_decimal(opcode) when is_integer(opcode), do: Integer.to_string(opcode)
+
   defp format_opcode_decimal(opcode) when is_atom(opcode) do
     try do
       Integer.to_string(BezgelorProtocol.Opcode.to_integer(opcode))
@@ -170,10 +192,12 @@ defmodule BezgelorDev.InteractivePrompt do
   end
 
   defp format_time_ago(ms) when ms < 1000, do: "#{ms}ms ago"
+
   defp format_time_ago(ms) when ms < 60_000 do
     seconds = div(ms, 1000)
     "#{seconds}s ago"
   end
+
   defp format_time_ago(ms) do
     minutes = div(ms, 60_000)
     "#{minutes}m ago"

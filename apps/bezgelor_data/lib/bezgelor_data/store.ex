@@ -199,6 +199,7 @@ defmodule BezgelorData.Store do
   @spec get(atom(), non_neg_integer()) :: {:ok, map()} | :error
   def get(table, id) do
     ets_table = table_name(table)
+
     case :ets.info(ets_table) do
       :undefined ->
         :error
@@ -282,11 +283,13 @@ defmodule BezgelorData.Store do
 
     # Use match_spec to retrieve all values, then filter in Elixir
     # This is still more efficient than tab2list as we process in batches
-    match_spec = [{
-      {:"$1", :"$2"},
-      [],
-      [:"$2"]
-    }]
+    match_spec = [
+      {
+        {:"$1", :"$2"},
+        [],
+        [:"$2"]
+      }
+    ]
 
     case :ets.select(table_name, match_spec, limit) do
       {items, continuation} ->
@@ -348,7 +351,10 @@ defmodule BezgelorData.Store do
   defdelegate get_professions_by_type(type), to: BezgelorData.Queries.Tradeskill
   defdelegate get_schematic(id), to: BezgelorData.Queries.Tradeskill
   defdelegate get_schematics_for_profession(profession_id), to: BezgelorData.Queries.Tradeskill
-  defdelegate get_available_schematics(profession_id, skill_level), to: BezgelorData.Queries.Tradeskill
+
+  defdelegate get_available_schematics(profession_id, skill_level),
+    to: BezgelorData.Queries.Tradeskill
+
   defdelegate get_talent(id), to: BezgelorData.Queries.Tradeskill
   defdelegate get_talents_for_profession(profession_id), to: BezgelorData.Queries.Tradeskill
   defdelegate get_additive(id), to: BezgelorData.Queries.Tradeskill
@@ -358,7 +364,9 @@ defmodule BezgelorData.Store do
   defdelegate get_node_types_for_level(profession_id, level), to: BezgelorData.Queries.Tradeskill
   defdelegate get_work_order_template(id), to: BezgelorData.Queries.Tradeskill
   defdelegate get_work_orders_for_profession(profession_id), to: BezgelorData.Queries.Tradeskill
-  defdelegate get_available_work_orders(profession_id, skill_level), to: BezgelorData.Queries.Tradeskill
+
+  defdelegate get_available_work_orders(profession_id, skill_level),
+    to: BezgelorData.Queries.Tradeskill
 
   # Public Events queries
 
@@ -445,7 +453,8 @@ defmodule BezgelorData.Store do
   Get tier drops from a loot table.
   """
   @spec get_tier_drops(non_neg_integer(), atom()) :: [map()]
-  def get_tier_drops(loot_table_id, tier) when tier in [:gold, :silver, :bronze, :participation] do
+  def get_tier_drops(loot_table_id, tier)
+      when tier in [:gold, :silver, :bronze, :participation] do
     case get_event_loot_table(loot_table_id) do
       {:ok, loot_table} ->
         tier_key = Atom.to_string(tier)
@@ -610,6 +619,7 @@ defmodule BezgelorData.Store do
   @spec get_spline_nodes(non_neg_integer()) :: [map()]
   def get_spline_nodes(spline_id) do
     ids = lookup_index(:spline_nodes_by_spline, spline_id)
+
     fetch_by_ids(:spline_nodes, ids)
     |> Enum.sort_by(& &1.ordinal)
   end
@@ -655,7 +665,9 @@ defmodule BezgelorData.Store do
     result =
       splines_with_start
       |> Enum.map(fn {spline_id, {sx, sy, sz}} ->
-        distance = :math.sqrt(:math.pow(px - sx, 2) + :math.pow(py - sy, 2) + :math.pow(pz - sz, 2))
+        distance =
+          :math.sqrt(:math.pow(px - sx, 2) + :math.pow(py - sy, 2) + :math.pow(pz - sz, 2))
+
         {spline_id, distance}
       end)
       |> Enum.filter(fn {_id, dist} -> dist <= max_distance end)
@@ -692,7 +704,12 @@ defmodule BezgelorData.Store do
   @doc """
   Find nearest spline using a pre-built spatial index (more efficient for batch lookups).
   """
-  @spec find_nearest_spline_indexed(map(), non_neg_integer(), {float(), float(), float()}, keyword()) ::
+  @spec find_nearest_spline_indexed(
+          map(),
+          non_neg_integer(),
+          {float(), float(), float()},
+          keyword()
+        ) ::
           {:ok, non_neg_integer(), float()} | :none
   def find_nearest_spline_indexed(spatial_index, world_id, {px, py, pz}, opts \\ []) do
     max_distance = Keyword.get(opts, :max_distance, 5.0)
@@ -867,7 +884,9 @@ defmodule BezgelorData.Store do
   defdelegate get_path_episode(id), to: BezgelorData.Queries.Achievements
   defdelegate get_path_reward(id), to: BezgelorData.Queries.Achievements
   defdelegate get_path_episodes_for_zone(world_id, zone_id), to: BezgelorData.Queries.Achievements
-  defdelegate get_zone_path_missions(world_id, zone_id, path_type), to: BezgelorData.Queries.Achievements
+
+  defdelegate get_zone_path_missions(world_id, zone_id, path_type),
+    to: BezgelorData.Queries.Achievements
 
   # Challenge queries - delegated to Queries.Achievements module
   defdelegate get_challenge(id), to: BezgelorData.Queries.Achievements
@@ -947,7 +966,9 @@ defmodule BezgelorData.Store do
   @spec get_creature_loot_override(non_neg_integer()) :: map() | nil
   def get_creature_loot_override(creature_id) do
     case :ets.lookup(table_name(:creature_loot_rules), {:override, creature_id}) do
-      [{{:override, ^creature_id}, override}] -> override
+      [{{:override, ^creature_id}, override}] ->
+        override
+
       _ ->
         # Try alternate key format
         case :ets.match(table_name(:creature_loot_rules), {:override, creature_id, :"$1"}) do
@@ -1033,7 +1054,9 @@ defmodule BezgelorData.Store do
 
   List of `%{slot: slot_id, display_id: display_id}` maps.
   """
-  @spec get_item_visuals(non_neg_integer(), non_neg_integer(), [{non_neg_integer(), non_neg_integer()}]) :: [map()]
+  @spec get_item_visuals(non_neg_integer(), non_neg_integer(), [
+          {non_neg_integer(), non_neg_integer()}
+        ]) :: [map()]
   def get_item_visuals(race, sex, customizations) do
     # Get all customization entries for this race/sex combo
     # Race 0 entries are defaults that apply to all races
@@ -1049,8 +1072,8 @@ defmodule BezgelorData.Store do
     all_entries
     |> Enum.filter(fn entry ->
       # Entry is enabled (flags = 2)
+      # And matches at least one customization
       entry.flags == 2 &&
-        # And matches at least one customization
         matches_customization?(entry, custom_map)
     end)
     |> Enum.map(fn entry ->
@@ -1137,6 +1160,7 @@ defmodule BezgelorData.Store do
     case get(:items, item_id) do
       {:ok, item} ->
         flags = Map.get(item, :equippedSlotFlags, 0)
+
         if flags > 0 do
           # Find the lowest set bit (primary equipped slot)
           find_lowest_bit(flags)
@@ -1153,6 +1177,7 @@ defmodule BezgelorData.Store do
   defp find_lowest_bit(flags) when flags > 0 do
     do_find_lowest_bit(flags, 0)
   end
+
   defp find_lowest_bit(_), do: nil
 
   defp do_find_lowest_bit(flags, position) when position < 32 do
@@ -1162,6 +1187,7 @@ defmodule BezgelorData.Store do
       do_find_lowest_bit(bsr(flags, 1), position + 1)
     end
   end
+
   defp do_find_lowest_bit(_, _), do: nil
 
   @doc """
@@ -1200,13 +1226,20 @@ defmodule BezgelorData.Store do
       # ItemDisplayId05 = ArmorFeet (slot 5)
       # ItemDisplayId06 = ArmorHands (slot 6)
       slot_mapping = [
-        {:itemDisplayId00, 20},  # WeaponPrimary
-        {:itemDisplayId01, 1},   # ArmorChest
-        {:itemDisplayId02, 2},   # ArmorLegs
-        {:itemDisplayId03, 3},   # ArmorHead
-        {:itemDisplayId04, 4},   # ArmorShoulder
-        {:itemDisplayId05, 5},   # ArmorFeet
-        {:itemDisplayId06, 6}    # ArmorHands
+        # WeaponPrimary
+        {:itemDisplayId00, 20},
+        # ArmorChest
+        {:itemDisplayId01, 1},
+        # ArmorLegs
+        {:itemDisplayId02, 2},
+        # ArmorHead
+        {:itemDisplayId03, 3},
+        # ArmorShoulder
+        {:itemDisplayId04, 4},
+        # ArmorFeet
+        {:itemDisplayId05, 5},
+        # ArmorHands
+        {:itemDisplayId06, 6}
       ]
 
       slot_mapping
@@ -1270,7 +1303,8 @@ defmodule BezgelorData.Store do
   Returns {display_id, visual_slot} where visual_slot comes from Item2Type.itemSlotId.
   This is used for building ItemVisual structs for entity creation.
   """
-  @spec get_item_visual_info(non_neg_integer(), non_neg_integer() | nil) :: {non_neg_integer(), non_neg_integer()}
+  @spec get_item_visual_info(non_neg_integer(), non_neg_integer() | nil) ::
+          {non_neg_integer(), non_neg_integer()}
   def get_item_visual_info(item_id, power_level \\ nil) do
     case get(:items, item_id) do
       {:ok, item} ->
@@ -1301,10 +1335,11 @@ defmodule BezgelorData.Store do
   defp resolve_display_from_source(source_id, type_id, power_level, fallback_display_id) do
     entries = get_display_source_entries(source_id)
 
-    matching_entries = Enum.filter(entries, fn entry ->
-      entry_type_id = Map.get(entry, :item2TypeId) || 0
-      entry_type_id == type_id
-    end)
+    matching_entries =
+      Enum.filter(entries, fn entry ->
+        entry_type_id = Map.get(entry, :item2TypeId) || 0
+        entry_type_id == type_id
+      end)
 
     case matching_entries do
       [] ->
@@ -1321,11 +1356,12 @@ defmodule BezgelorData.Store do
           fallback_display_id
         else
           # Find entry matching level range
-          level_match = Enum.find(multiple, fn entry ->
-            min_level = Map.get(entry, :itemMinLevel) || 0
-            max_level = Map.get(entry, :itemMaxLevel) || 999
-            power_level >= min_level and power_level <= max_level
-          end)
+          level_match =
+            Enum.find(multiple, fn entry ->
+              min_level = Map.get(entry, :itemMinLevel) || 0
+              max_level = Map.get(entry, :itemMaxLevel) || 999
+              power_level >= min_level and power_level <= max_level
+            end)
 
           if level_match do
             Map.get(level_match, :itemDisplayId) || fallback_display_id
@@ -1768,7 +1804,13 @@ defmodule BezgelorData.Store do
       fn -> load_spells_split() end,
       fn -> load_items_split() end,
       fn -> load_client_table(:item_types, "Item2Type.json", "item2type") end,
-      fn -> load_client_table(:creation_armor_sets, "CharacterCreationArmorSet.json", "charactercreationarmorset") end,
+      fn ->
+        load_client_table(
+          :creation_armor_sets,
+          "CharacterCreationArmorSet.json",
+          "charactercreationarmorset"
+        )
+      end,
       fn -> load_table(:texts, "texts.json", "texts") end,
       fn -> load_table(:house_types, "house_types.json", "house_types") end,
       fn -> load_table(:housing_decor, "housing_decor.json", "decor") end,
@@ -1780,11 +1822,15 @@ defmodule BezgelorData.Store do
       fn -> load_table(:tradeskill_talents, "tradeskill_talents.json", "talents") end,
       fn -> load_table(:tradeskill_additives, "tradeskill_additives.json", "additives") end,
       fn -> load_table(:tradeskill_nodes, "tradeskill_nodes.json", "node_types") end,
-      fn -> load_table(:tradeskill_work_orders, "tradeskill_work_orders.json", "work_order_templates") end,
+      fn ->
+        load_table(:tradeskill_work_orders, "tradeskill_work_orders.json", "work_order_templates")
+      end,
       # Public events data
       fn -> load_table(:public_events, "public_events.json", "public_events") end,
       fn -> load_table(:world_bosses, "world_bosses.json", "world_bosses") end,
-      fn -> load_table_by_zone(:event_spawn_points, "event_spawn_points.json", "event_spawn_points") end,
+      fn ->
+        load_table_by_zone(:event_spawn_points, "event_spawn_points.json", "event_spawn_points")
+      end,
       fn -> load_table(:event_loot_tables, "event_loot_tables.json", "event_loot_tables") end,
       # Instance/dungeon data
       fn -> load_table(:instances, "instances.json", "instances") end,
@@ -1800,20 +1846,40 @@ defmodule BezgelorData.Store do
       # Quest data
       fn -> load_client_table(:quests, "quests.json", "quest2") end,
       fn -> load_client_table(:quest_objectives, "quest_objectives.json", "questobjective") end,
-      fn -> load_client_table_with_fk(:quest_rewards, "quest_rewards.json", "quest2reward", :quest2Id) end,
+      fn ->
+        load_client_table_with_fk(:quest_rewards, "quest_rewards.json", "quest2reward", :quest2Id)
+      end,
       fn -> load_client_table(:quest_categories, "quest_categories.json", "questcategory") end,
       fn -> load_client_table(:quest_hubs, "quest_hubs.json", "questhub") end,
       # NPC/Vendor data
       fn -> load_table(:npc_vendors, "npc_vendors.json", "npc_vendors") end,
       fn -> load_vendor_inventories() end,
-      fn -> load_client_table(:creature_affiliations, "creature_affiliations.json", "creature2affiliation") end,
+      fn ->
+        load_client_table(
+          :creature_affiliations,
+          "creature_affiliations.json",
+          "creature2affiliation"
+        )
+      end,
       # Dialogue data
       fn -> load_client_table(:gossip_entries, "gossip_entries.json", "gossipentry") end,
       fn -> load_client_table(:gossip_sets, "gossip_sets.json", "gossipset") end,
       # Achievement data
       fn -> load_client_table(:achievements, "achievements.json", "achievement") end,
-      fn -> load_client_table(:achievement_categories, "achievement_categories.json", "achievementcategory") end,
-      fn -> load_client_table(:achievement_checklists, "achievement_checklists.json", "achievementchecklist") end,
+      fn ->
+        load_client_table(
+          :achievement_categories,
+          "achievement_categories.json",
+          "achievementcategory"
+        )
+      end,
+      fn ->
+        load_client_table(
+          :achievement_checklists,
+          "achievement_checklists.json",
+          "achievementchecklist"
+        )
+      end,
       # Path data
       fn -> load_client_table(:path_missions, "path_missions.json", "pathmission") end,
       fn -> load_client_table(:path_episodes, "path_episodes.json", "pathepisode") end,
@@ -1832,7 +1898,9 @@ defmodule BezgelorData.Store do
       # Harvest node loot
       fn -> load_harvest_loot() end,
       # Character creation templates
-      fn -> load_client_table(:character_creations, "CharacterCreation.json", "charactercreation") end,
+      fn ->
+        load_client_table(:character_creations, "CharacterCreation.json", "charactercreation")
+      end,
       # Character customization
       fn -> load_character_customizations() end,
       # Item display source entries
@@ -2016,7 +2084,10 @@ defmodule BezgelorData.Store do
         :ets.insert(table_name, tuples)
 
         total_items = Enum.reduce(inventories, 0, fn inv, acc -> acc + length(inv.items) end)
-        Logger.debug("Loaded #{length(inventories)} vendor inventories (#{total_items} total items)")
+
+        Logger.debug(
+          "Loaded #{length(inventories)} vendor inventories (#{total_items} total items)"
+        )
 
       {:error, reason} ->
         Logger.warning("Failed to load vendor inventories: #{inspect(reason)}")
@@ -2107,7 +2178,8 @@ defmodule BezgelorData.Store do
     etf_content = :erlang.term_to_binary(data, [:compressed])
     File.write(etf_path, etf_content)
   rescue
-    _ -> :ok  # Silently ignore cache write failures
+    # Silently ignore cache write failures
+    _ -> :ok
   end
 
   defp load_battlegrounds do
@@ -2254,7 +2326,9 @@ defmodule BezgelorData.Store do
     # Bulk insert all at once
     :ets.insert(table_name, results)
 
-    Logger.debug("Loaded #{length(results)} full creature records from #{length(part_files)} parts (parallel)")
+    Logger.debug(
+      "Loaded #{length(results)} full creature records from #{length(part_files)} parts (parallel)"
+    )
   end
 
   defp load_items_split do
@@ -2589,7 +2663,11 @@ defmodule BezgelorData.Store do
 
     # Try loading from pre-enriched ETF cache first
     enriched_etf_path = Path.join(compiled_directory(), "creature_spawns_enriched.etf")
-    Logger.debug("Creature spawns: checking ETF at #{enriched_etf_path}, exists? #{File.exists?(enriched_etf_path)}")
+
+    Logger.debug(
+      "Creature spawns: checking ETF at #{enriched_etf_path}, exists? #{File.exists?(enriched_etf_path)}"
+    )
+
     is_fresh = enriched_etf_cache_fresh?(enriched_etf_path)
     Logger.debug("Creature spawns: enriched ETF fresh? #{is_fresh}")
 
@@ -2622,29 +2700,33 @@ defmodule BezgelorData.Store do
     spline2_path = Path.join(data_dir, "Spline2.json")
     spline2_nodes_path = Path.join(data_dir, "Spline2Node.json")
 
-    result = with {:ok, etf_stat} <- File.stat(etf_path),
-         {:ok, json_stat} <- File.stat(json_path),
-         true <- etf_stat.mtime >= json_stat.mtime,
-         # Check all optional source files
-         true <- file_not_newer?(harvest_path, etf_stat.mtime),
-         true <- file_not_newer?(entity_splines_path, etf_stat.mtime),
-         true <- file_not_newer?(spline2_path, etf_stat.mtime),
-         true <- file_not_newer?(spline2_nodes_path, etf_stat.mtime) do
-      true
-    else
-      {:error, :enoent} ->
-        Logger.debug("Enriched ETF cache check: file not found (#{etf_path})")
-        false
-      {:error, reason} ->
-        Logger.debug("Enriched ETF cache check failed: #{inspect(reason)}")
-        false
-      false ->
-        Logger.debug("Enriched ETF cache check: source file newer than ETF")
-        false
-      other ->
-        Logger.debug("Enriched ETF cache check failed: #{inspect(other)}")
-        false
-    end
+    result =
+      with {:ok, etf_stat} <- File.stat(etf_path),
+           {:ok, json_stat} <- File.stat(json_path),
+           true <- etf_stat.mtime >= json_stat.mtime,
+           # Check all optional source files
+           true <- file_not_newer?(harvest_path, etf_stat.mtime),
+           true <- file_not_newer?(entity_splines_path, etf_stat.mtime),
+           true <- file_not_newer?(spline2_path, etf_stat.mtime),
+           true <- file_not_newer?(spline2_nodes_path, etf_stat.mtime) do
+        true
+      else
+        {:error, :enoent} ->
+          Logger.debug("Enriched ETF cache check: file not found (#{etf_path})")
+          false
+
+        {:error, reason} ->
+          Logger.debug("Enriched ETF cache check failed: #{inspect(reason)}")
+          false
+
+        false ->
+          Logger.debug("Enriched ETF cache check: source file newer than ETF")
+          false
+
+        other ->
+          Logger.debug("Enriched ETF cache check failed: #{inspect(other)}")
+          false
+      end
 
     Logger.debug("Enriched ETF cache fresh? #{result}")
     result
@@ -2671,10 +2753,14 @@ defmodule BezgelorData.Store do
           end
 
           total_creatures =
-            Enum.reduce(zone_data_list, 0, fn {_wid, z}, acc -> acc + length(z.creature_spawns) end)
+            Enum.reduce(zone_data_list, 0, fn {_wid, z}, acc ->
+              acc + length(z.creature_spawns)
+            end)
 
           total_resources =
-            Enum.reduce(zone_data_list, 0, fn {_wid, z}, acc -> acc + length(z.resource_spawns) end)
+            Enum.reduce(zone_data_list, 0, fn {_wid, z}, acc ->
+              acc + length(z.resource_spawns)
+            end)
 
           total_objects =
             Enum.reduce(zone_data_list, 0, fn {_wid, z}, acc -> acc + length(z.object_spawns) end)
@@ -2687,7 +2773,7 @@ defmodule BezgelorData.Store do
 
           Logger.info(
             "Loaded #{length(zone_data_list)} zones from enriched cache " <>
-            "(#{total_creatures} creatures, #{total_enriched} enriched with patrol, #{total_resources} resources, #{total_objects} objects)"
+              "(#{total_creatures} creatures, #{total_enriched} enriched with patrol, #{total_resources} resources, #{total_objects} objects)"
           )
 
           :from_cache
@@ -2808,7 +2894,8 @@ defmodule BezgelorData.Store do
                         Map.merge(spawn, %{
                           spline_config: spline_config,
                           patrol_waypoints: patrol_data.waypoints,
-                          patrol_speed: if(spline_config.speed < 0, do: 3.0, else: spline_config.speed),
+                          patrol_speed:
+                            if(spline_config.speed < 0, do: 3.0, else: spline_config.speed),
                           patrol_mode: spline_mode_to_atom(spline_config.mode)
                         })
 
@@ -3082,7 +3169,9 @@ defmodule BezgelorData.Store do
           :ets.insert(table_name, {world_id, world_bindpoints})
         end
 
-        Logger.info("Loaded #{length(bindpoints)} bindpoint spawn locations across #{map_size(by_world)} worlds")
+        Logger.info(
+          "Loaded #{length(bindpoints)} bindpoint spawn locations across #{map_size(by_world)} worlds"
+        )
 
       {:error, reason} ->
         Logger.warning("No bindpoint spawn data found: #{inspect(reason)}")
@@ -3211,6 +3300,7 @@ defmodule BezgelorData.Store do
     # - customizations_by_race_sex (built during load_character_customizations)
     # - display_sources_by_source_id (built during load_item_display_sources)
     skip_tables = [:customizations_by_race_sex, :display_sources_by_source_id]
+
     for table <- @index_tables, table not in skip_tables do
       :ets.delete_all_objects(index_table_name(table))
     end
@@ -3242,7 +3332,9 @@ defmodule BezgelorData.Store do
       # Path indexes
       fn -> build_index(:path_missions, :path_missions_by_episode, :pathEpisodeId) end,
       fn -> build_index(:path_missions, :path_missions_by_type, :pathTypeEnum) end,
-      fn -> build_composite_index(:path_episodes, :path_episodes_by_zone, [:worldId, :worldZoneId]) end,
+      fn ->
+        build_composite_index(:path_episodes, :path_episodes_by_zone, [:worldId, :worldZoneId])
+      end,
       # Challenge indexes
       fn -> build_index(:challenges, :challenges_by_zone, :worldZoneId) end,
       # World location indexes

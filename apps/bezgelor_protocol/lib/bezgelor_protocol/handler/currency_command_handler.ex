@@ -140,11 +140,19 @@ defmodule BezgelorProtocol.Handler.CurrencyCommandHandler do
         type_name = format_currency_name(currency_type)
 
         if amount > 0 do
-          Logger.info("GM: Added #{amount} #{type_name} to character #{character_id} (now #{new_amount})")
-          {:ok, "Added #{amount} #{type_name}. New balance: #{new_amount}", currency_type, new_amount}
+          Logger.info(
+            "GM: Added #{amount} #{type_name} to character #{character_id} (now #{new_amount})"
+          )
+
+          {:ok, "Added #{amount} #{type_name}. New balance: #{new_amount}", currency_type,
+           new_amount}
         else
-          Logger.info("GM: Removed #{-amount} #{type_name} from character #{character_id} (now #{new_amount})")
-          {:ok, "Removed #{-amount} #{type_name}. New balance: #{new_amount}", currency_type, new_amount}
+          Logger.info(
+            "GM: Removed #{-amount} #{type_name} from character #{character_id} (now #{new_amount})"
+          )
+
+          {:ok, "Removed #{-amount} #{type_name}. New balance: #{new_amount}", currency_type,
+           new_amount}
         end
 
       {:error, :insufficient_funds} ->

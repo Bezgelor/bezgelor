@@ -28,9 +28,7 @@ defmodule BezgelorProtocol.Handler.OptionsHandler do
 
     with {:ok, option_type, reader} <- PacketReader.read_uint32(reader),
          {:ok, new_value, _reader} <- PacketReader.read_uint32(reader) do
-      Logger.debug(
-        "[Options] Type: #{option_type}, Value: #{new_value}"
-      )
+      Logger.debug("[Options] Type: #{option_type}, Value: #{new_value}")
 
       # Store option in session for reference
       options = get_in(state.session_data, [:options]) || %{}

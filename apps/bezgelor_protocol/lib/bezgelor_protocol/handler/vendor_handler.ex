@@ -123,7 +123,9 @@ defmodule BezgelorProtocol.Handler.VendorHandler do
               Logger.warning("Failed to spend currency: #{inspect(reason)}")
           end
         else
-          Logger.debug("Player #{character_id} cannot afford item (cost: #{total_cost}, has: #{current_gold})")
+          Logger.debug(
+            "Player #{character_id} cannot afford item (cost: #{total_cost}, has: #{current_gold})"
+          )
         end
 
         {:ok, state}

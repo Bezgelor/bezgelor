@@ -5,11 +5,11 @@ defmodule BezgelorDb.Schema.CharacterCollection do
   @type t :: %__MODULE__{}
 
   schema "character_collections" do
-    belongs_to :character, BezgelorDb.Schema.Character
+    belongs_to(:character, BezgelorDb.Schema.Character)
 
-    field :collectible_type, :string
-    field :collectible_id, :integer
-    field :unlock_source, :string
+    field(:collectible_type, :string)
+    field(:collectible_id, :integer)
+    field(:unlock_source, :string)
 
     timestamps(type: :utc_datetime)
   end

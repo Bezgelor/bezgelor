@@ -50,7 +50,8 @@ defmodule BezgelorProtocol.Packet do
 
   Returns `{:ok, size, opcode}` or `{:error, :incomplete}`.
   """
-  @spec parse_header(binary()) :: {:ok, non_neg_integer(), non_neg_integer()} | {:error, :incomplete}
+  @spec parse_header(binary()) ::
+          {:ok, non_neg_integer(), non_neg_integer()} | {:error, :incomplete}
   def parse_header(<<size::little-32, opcode::little-16>>) do
     {:ok, size, opcode}
   end

@@ -46,7 +46,10 @@ defmodule BezgelorWorld.Handler.LootHandler do
           # Send loot notification
           CombatBroadcaster.send_loot_drop(player_guid, corpse_guid, gold, items)
 
-          Logger.info("Player #{player_guid} looted corpse #{corpse_guid}: #{gold} gold, #{length(items)} items")
+          Logger.info(
+            "Player #{player_guid} looted corpse #{corpse_guid}: #{gold} gold, #{length(items)} items"
+          )
+
           {:ok, [], state}
 
         {:ok, []} ->
@@ -95,9 +98,17 @@ defmodule BezgelorWorld.Handler.LootHandler do
     instance_guid = state.session_data[:instance_guid]
 
     if character_id && instance_guid do
-      case LootManager.master_assign(instance_guid, packet.loot_id, character_id, packet.recipient_id) do
+      case LootManager.master_assign(
+             instance_guid,
+             packet.loot_id,
+             character_id,
+             packet.recipient_id
+           ) do
         :ok ->
-          Logger.info("Master loot: #{character_id} assigned loot #{packet.loot_id} to #{packet.recipient_id}")
+          Logger.info(
+            "Master loot: #{character_id} assigned loot #{packet.loot_id} to #{packet.recipient_id}"
+          )
+
           {:ok, [], state}
 
         {:error, reason} ->
@@ -151,7 +162,8 @@ defmodule BezgelorWorld.Handler.LootHandler do
 
   # Separate gold (item_id 0) from actual items
   defp separate_gold_and_items(loot_items) do
-    {gold_entries, item_entries} = Enum.split_with(loot_items, fn {item_id, _qty} -> item_id == 0 end)
+    {gold_entries, item_entries} =
+      Enum.split_with(loot_items, fn {item_id, _qty} -> item_id == 0 end)
 
     gold = Enum.reduce(gold_entries, 0, fn {_id, qty}, acc -> acc + qty end)
     items = item_entries
@@ -169,7 +181,9 @@ defmodule BezgelorWorld.Handler.LootHandler do
           Logger.debug("Added #{quantity}x item #{item_id} to character #{character_id}")
 
         {:error, reason} ->
-          Logger.warning("Failed to add item #{item_id} to character #{character_id}: #{inspect(reason)}")
+          Logger.warning(
+            "Failed to add item #{item_id} to character #{character_id}: #{inspect(reason)}"
+          )
       end
     end)
   end

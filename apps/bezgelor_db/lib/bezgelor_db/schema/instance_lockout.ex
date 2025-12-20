@@ -36,24 +36,30 @@ defmodule BezgelorDb.Schema.InstanceLockout do
   @difficulties ~w(normal veteran challenge mythic_plus)
 
   schema "instance_lockouts" do
-    belongs_to :character, Character
+    belongs_to(:character, Character)
 
-    field :instance_type, :string
-    field :instance_definition_id, :integer
-    field :difficulty, :string
-    field :instance_guid, :binary
-    field :boss_kills, {:array, :integer}, default: []
-    field :loot_received_at, :utc_datetime
-    field :loot_eligible, :boolean, default: true
-    field :completion_count, :integer, default: 0
-    field :diminishing_factor, :float, default: 1.0
-    field :extended, :boolean, default: false
-    field :expires_at, :utc_datetime
+    field(:instance_type, :string)
+    field(:instance_definition_id, :integer)
+    field(:difficulty, :string)
+    field(:instance_guid, :binary)
+    field(:boss_kills, {:array, :integer}, default: [])
+    field(:loot_received_at, :utc_datetime)
+    field(:loot_eligible, :boolean, default: true)
+    field(:completion_count, :integer, default: 0)
+    field(:diminishing_factor, :float, default: 1.0)
+    field(:extended, :boolean, default: false)
+    field(:expires_at, :utc_datetime)
 
     timestamps()
   end
 
-  @required_fields [:character_id, :instance_type, :instance_definition_id, :difficulty, :expires_at]
+  @required_fields [
+    :character_id,
+    :instance_type,
+    :instance_definition_id,
+    :difficulty,
+    :expires_at
+  ]
   @optional_fields [
     :instance_guid,
     :boss_kills,

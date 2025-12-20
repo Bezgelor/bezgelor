@@ -13,7 +13,8 @@ defmodule BezgelorCore.MovementChaseTest do
 
       # Path should end at attack range from target
       {end_x, _, _} = List.last(path)
-      assert_in_delta end_x, 15.0, 0.5  # 20 - 5 = 15
+      # 20 - 5 = 15
+      assert_in_delta end_x, 15.0, 0.5
     end
 
     test "returns empty path if already in range" do
@@ -42,7 +43,8 @@ defmodule BezgelorCore.MovementChaseTest do
   describe "ranged_position_path/4" do
     test "moves closer when too far from target" do
       current = {0.0, 0.0, 0.0}
-      target = {50.0, 0.0, 0.0}  # 50 units away
+      # 50 units away
+      target = {50.0, 0.0, 0.0}
       min_range = 15.0
       max_range = 30.0
 
@@ -55,7 +57,8 @@ defmodule BezgelorCore.MovementChaseTest do
     end
 
     test "backs away when too close to target" do
-      current = {25.0, 0.0, 0.0}  # 5 units from target
+      # 5 units from target
+      current = {25.0, 0.0, 0.0}
       target = {30.0, 0.0, 0.0}
       min_range = 15.0
       max_range = 25.0
@@ -65,11 +68,13 @@ defmodule BezgelorCore.MovementChaseTest do
       # Should move backwards to increase distance
       {end_x, _, _} = List.last(path)
       # Must be at least min_range away from target (30)
-      assert end_x <= 30.0 - 15.0  # At most 15.0
+      # At most 15.0
+      assert end_x <= 30.0 - 15.0
     end
 
     test "returns empty path when in optimal range" do
-      current = {10.0, 0.0, 0.0}  # 20 units from target
+      # 20 units from target
+      current = {10.0, 0.0, 0.0}
       target = {30.0, 0.0, 0.0}
       min_range = 15.0
       max_range = 25.0
@@ -114,7 +119,8 @@ defmodule BezgelorCore.MovementChaseTest do
 
     test "ignores Y coordinate difference" do
       current = {0.0, 0.0, 0.0}
-      target = {10.0, 100.0, 0.0}  # Large Y difference
+      # Large Y difference
+      target = {10.0, 100.0, 0.0}
 
       rotation = Movement.rotation_toward(current, target)
 

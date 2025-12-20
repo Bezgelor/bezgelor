@@ -200,7 +200,8 @@ defmodule BezgelorWorld.LootIntegrationTest do
       assert Loot.calculate_group_bonus(5) == 8
       assert Loot.calculate_group_bonus(10) == 13
       assert Loot.calculate_group_bonus(20) == 23
-      assert Loot.calculate_group_bonus(40) == 23  # Capped
+      # Capped
+      assert Loot.calculate_group_bonus(40) == 23
     end
   end
 

@@ -21,6 +21,7 @@ defmodule BezgelorWorld.Handler.CraftingHandler do
   alias BezgelorDb.Tradeskills
   alias BezgelorProtocol.PacketReader
   alias BezgelorProtocol.PacketWriter
+
   alias BezgelorProtocol.Packets.World.{
     ClientCraftStart,
     ClientCraftAddAdditive,
@@ -28,9 +29,9 @@ defmodule BezgelorWorld.Handler.CraftingHandler do
     ClientCraftCancel,
     ServerCraftSession,
     ServerCraftResult,
-    
     ServerTradeskillUpdate
   }
+
   alias BezgelorData.Store
   alias BezgelorWorld.Crafting.{CraftingSession, CoordinateSystem}
 
@@ -97,17 +98,21 @@ defmodule BezgelorWorld.Handler.CraftingHandler do
         additive = %{
           item_id: packet.item_id,
           quantity: packet.quantity,
-          vector_x: 10.0,  # Would come from static data
+          # Would come from static data
+          vector_x: 10.0,
           vector_y: 5.0
         }
 
-        session = session
+        session =
+          session
           |> CraftingSession.set_overcharge(packet.overcharge_level)
           |> CraftingSession.add_additive(additive)
 
         new_state = put_in(state, [:session_data, :crafting_session], session)
 
-        Logger.debug("Character #{character_id} added additive #{packet.item_id} (overcharge: #{packet.overcharge_level})")
+        Logger.debug(
+          "Character #{character_id} added additive #{packet.item_id} (overcharge: #{packet.overcharge_level})"
+        )
 
         response = build_session_packet(session)
         send_packet(response, :server_craft_session, new_state)
@@ -133,22 +138,24 @@ defmodule BezgelorWorld.Handler.CraftingHandler do
         character_id = state.session_data[:character_id]
 
         # Check for overcharge failure
-        result = if CoordinateSystem.overcharge_failed?(session.overcharge_level) do
-          build_failure_result()
-        else
-          # TODO: Get zones from static data for this schematic
-          zones = get_schematic_zones(session.schematic_id)
+        result =
+          if CoordinateSystem.overcharge_failed?(session.overcharge_level) do
+            build_failure_result()
+          else
+            # TODO: Get zones from static data for this schematic
+            zones = get_schematic_zones(session.schematic_id)
 
-          cursor = CraftingSession.get_cursor(session)
-          {cursor_x, cursor_y} = cursor
+            cursor = CraftingSession.get_cursor(session)
+            {cursor_x, cursor_y} = cursor
 
-          case CoordinateSystem.find_target_zone(cursor_x, cursor_y, zones) do
-            {:ok, zone} ->
-              build_success_result(session, zone, character_id)
-            :no_zone ->
-              build_failure_result()
+            case CoordinateSystem.find_target_zone(cursor_x, cursor_y, zones) do
+              {:ok, zone} ->
+                build_success_result(session, zone, character_id)
+
+              :no_zone ->
+                build_failure_result()
+            end
           end
-        end
 
         # Clear crafting session
         new_state = put_in(state, [:session_data, :crafting_session], nil)
@@ -195,9 +202,10 @@ defmodule BezgelorWorld.Handler.CraftingHandler do
   # Helpers
 
   defp build_session_packet(session) do
-    additives = Enum.map(session.additives_used, fn add ->
-      %{item_id: add.item_id, quantity: add.quantity}
-    end)
+    additives =
+      Enum.map(session.additives_used, fn add ->
+        %{item_id: add.item_id, quantity: add.quantity}
+      end)
 
     %ServerCraftSession{
       schematic_id: session.schematic_id,
@@ -214,17 +222,20 @@ defmodule BezgelorWorld.Handler.CraftingHandler do
       item_id: 0,
       quantity: 0,
       variant_id: 0,
-      xp_gained: 50,  # Partial XP for attempt
+      # Partial XP for attempt
+      xp_gained: 50,
       quality: :standard
     }
   end
 
   defp build_success_result(session, zone, character_id) do
     # TODO: Get output item from schematic + variant
-    output_item_id = 12345  # Placeholder
+    # Placeholder
+    output_item_id = 12345
 
     # Check for variant discovery
     variant_id = zone.variant_id
+
     if variant_id > 0 do
       Tradeskills.discover_schematic(character_id, session.schematic_id, variant_id)
     end
@@ -247,7 +258,8 @@ defmodule BezgelorWorld.Handler.CraftingHandler do
 
   defp award_crafting_xp(character_id, _schematic_id, xp, _state) do
     # TODO: Look up profession from schematic
-    profession_id = 1  # Placeholder
+    # Placeholder
+    profession_id = 1
 
     case Tradeskills.add_xp(character_id, profession_id, xp) do
       {:ok, tradeskill, levels_gained} when levels_gained > 0 ->
@@ -293,7 +305,15 @@ defmodule BezgelorWorld.Handler.CraftingHandler do
         [
           %{id: 1, x_min: 0, x_max: 30, y_min: 0, y_max: 30, variant_id: 0, quality: :poor},
           %{id: 2, x_min: 35, x_max: 65, y_min: 35, y_max: 65, variant_id: 0, quality: :standard},
-          %{id: 3, x_min: 70, x_max: 100, y_min: 70, y_max: 100, variant_id: 0, quality: :excellent}
+          %{
+            id: 3,
+            x_min: 70,
+            x_max: 100,
+            y_min: 70,
+            y_max: 100,
+            variant_id: 0,
+            quality: :excellent
+          }
         ]
     end
   end

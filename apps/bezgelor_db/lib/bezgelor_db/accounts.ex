@@ -100,7 +100,8 @@ defmodule BezgelorDb.Accounts do
   - `{:ok, account}` on success
   - `{:error, changeset}` on failure
   """
-  @spec update_game_token(Account.t(), String.t()) :: {:ok, Account.t()} | {:error, Ecto.Changeset.t()}
+  @spec update_game_token(Account.t(), String.t()) ::
+          {:ok, Account.t()} | {:error, Ecto.Changeset.t()}
   def update_game_token(account, token) do
     account
     |> Account.session_changeset(%{game_token: token})
@@ -123,7 +124,8 @@ defmodule BezgelorDb.Accounts do
   - `{:ok, account}` on success
   - `{:error, changeset}` on failure
   """
-  @spec update_session_key(Account.t(), String.t()) :: {:ok, Account.t()} | {:error, Ecto.Changeset.t()}
+  @spec update_session_key(Account.t(), String.t()) ::
+          {:ok, Account.t()} | {:error, Ecto.Changeset.t()}
   def update_session_key(account, key) do
     account
     |> Account.session_changeset(%{
@@ -232,8 +234,11 @@ defmodule BezgelorDb.Accounts do
       when is_binary(email) and is_binary(session_key) and is_integer(account_id) do
     # Query with all three parameters atomically
     query =
-      from a in Account,
-        where: a.email == ^String.downcase(email) and a.session_key == ^session_key and a.id == ^account_id
+      from(a in Account,
+        where:
+          a.email == ^String.downcase(email) and a.session_key == ^session_key and
+            a.id == ^account_id
+      )
 
     case Repo.one(query) do
       nil ->
@@ -326,7 +331,8 @@ defmodule BezgelorDb.Accounts do
 
       {:ok, account} = Accounts.create_account("player@example.com", "secret123")
   """
-  @spec create_account(String.t(), String.t()) :: {:ok, Account.t()} | {:error, Ecto.Changeset.t()}
+  @spec create_account(String.t(), String.t()) ::
+          {:ok, Account.t()} | {:error, Ecto.Changeset.t()}
   def create_account(email, password) do
     # Note: This function creates accounts without requiring email verification.
     # It is intended for administrative/testing use only (e.g., seeding test data).
@@ -373,7 +379,8 @@ defmodule BezgelorDb.Accounts do
       {:ok, account} = Accounts.register_account("player@example.com", "secret123")
       # account.email_verified_at is nil
   """
-  @spec register_account(String.t(), String.t()) :: {:ok, Account.t()} | {:error, Ecto.Changeset.t()}
+  @spec register_account(String.t(), String.t()) ::
+          {:ok, Account.t()} | {:error, Ecto.Changeset.t()}
   def register_account(email, password) do
     {salt, verifier} = BezgelorCrypto.Password.generate_salt_and_verifier(email, password)
 
@@ -467,7 +474,8 @@ defmodule BezgelorDb.Accounts do
         {:error, {:account_suspended, days}} -> # reject with suspension info
       end
   """
-  @spec check_suspension(Account.t()) :: :ok | {:error, :account_banned} | {:error, {:account_suspended, float()}}
+  @spec check_suspension(Account.t()) ::
+          :ok | {:error, :account_banned} | {:error, {:account_suspended, float()}}
   def check_suspension(account) do
     account = Repo.preload(account, :suspensions)
 
@@ -538,11 +546,12 @@ defmodule BezgelorDb.Accounts do
   @spec get_account_by_character_name(String.t()) :: {:ok, Account.t()} | {:error, :not_found}
   def get_account_by_character_name(character_name) when is_binary(character_name) do
     query =
-      from c in Character,
+      from(c in Character,
         where: c.name == ^character_name,
         join: a in Account,
         on: a.id == c.account_id,
         select: a
+      )
 
     case Repo.one(query) do
       nil -> {:error, :not_found}
@@ -569,9 +578,11 @@ defmodule BezgelorDb.Accounts do
 
       {:ok, account} = Accounts.update_password(account, "new_secret123")
   """
-  @spec update_password(Account.t(), String.t()) :: {:ok, Account.t()} | {:error, Ecto.Changeset.t()}
+  @spec update_password(Account.t(), String.t()) ::
+          {:ok, Account.t()} | {:error, Ecto.Changeset.t()}
   def update_password(account, new_password) do
-    {salt, verifier} = BezgelorCrypto.Password.generate_salt_and_verifier(account.email, new_password)
+    {salt, verifier} =
+      BezgelorCrypto.Password.generate_salt_and_verifier(account.email, new_password)
 
     account
     |> Ecto.Changeset.change(%{salt: salt, verifier: verifier})
@@ -602,7 +613,8 @@ defmodule BezgelorDb.Accounts do
     account
     |> Ecto.Changeset.change(%{
       email: String.downcase(new_email),
-      email_verified_at: nil  # Require re-verification
+      # Require re-verification
+      email_verified_at: nil
     })
     |> Ecto.Changeset.unique_constraint(:email)
     |> Repo.update()
@@ -934,7 +946,8 @@ defmodule BezgelorDb.Accounts do
   - `{:ok, suspension}` on success
   - `{:error, changeset}` on failure
   """
-  @spec remove_suspension(AccountSuspension.t()) :: {:ok, AccountSuspension.t()} | {:error, Ecto.Changeset.t()}
+  @spec remove_suspension(AccountSuspension.t()) ::
+          {:ok, AccountSuspension.t()} | {:error, Ecto.Changeset.t()}
   def remove_suspension(suspension) do
     Repo.delete(suspension)
   end

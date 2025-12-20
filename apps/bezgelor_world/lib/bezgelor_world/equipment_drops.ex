@@ -45,7 +45,8 @@ defmodule BezgelorWorld.EquipmentDrops do
 
   # Drop chances by tier (creature tier -> quality -> chance%)
   @tier_drop_chances %{
-    1 => %{},  # Minions don't drop equipment
+    # Minions don't drop equipment
+    1 => %{},
     2 => %{@quality_good => 1, @quality_excellent => 0.1},
     3 => %{@quality_good => 5, @quality_excellent => 1, @quality_superb => 0.1},
     4 => %{@quality_good => 10, @quality_excellent => 5, @quality_superb => 1},
@@ -109,7 +110,9 @@ defmodule BezgelorWorld.EquipmentDrops do
 
         in_level_range = item_level >= level_min and item_level <= level_max
         matches_quality = item_quality == quality
-        matches_class = class_id == nil or item.class_required == 0 or item.class_required == class_id
+
+        matches_class =
+          class_id == nil or item.class_required == 0 or item.class_required == class_id
 
         in_level_range and matches_quality and matches_class
       end)

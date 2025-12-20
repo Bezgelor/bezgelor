@@ -124,7 +124,8 @@ defmodule BezgelorCore.CreatureTemplate do
   Calculate movement duration in milliseconds for a given distance.
   """
   @spec movement_duration(t(), float()) :: non_neg_integer()
-  def movement_duration(%__MODULE__{movement_speed: speed}, distance) when is_number(speed) and speed > 0 do
+  def movement_duration(%__MODULE__{movement_speed: speed}, distance)
+      when is_number(speed) and speed > 0 do
     round(distance / speed * 1000)
   end
 

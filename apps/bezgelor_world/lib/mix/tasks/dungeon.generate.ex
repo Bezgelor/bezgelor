@@ -35,20 +35,21 @@ defmodule Mix.Tasks.Dungeon.Generate do
 
   @impl Mix.Task
   def run(args) do
-    {opts, args, _} = OptionParser.parse(args,
-      switches: [
-        boss: :string,
-        dry_run: :boolean,
-        force: :boolean,
-        output: :string
-      ],
-      aliases: [
-        b: :boss,
-        n: :dry_run,
-        f: :force,
-        o: :output
-      ]
-    )
+    {opts, args, _} =
+      OptionParser.parse(args,
+        switches: [
+          boss: :string,
+          dry_run: :boolean,
+          force: :boolean,
+          output: :string
+        ],
+        aliases: [
+          b: :boss,
+          n: :dry_run,
+          f: :force,
+          o: :output
+        ]
+      )
 
     case args do
       [] ->

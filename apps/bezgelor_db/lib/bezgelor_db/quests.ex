@@ -120,7 +120,8 @@ defmodule BezgelorDb.Quests do
   end
 
   @doc "Increment an objective's progress by amount."
-  @spec increment_objective(Quest.t(), integer(), integer()) :: {:ok, Quest.t()} | {:error, term()}
+  @spec increment_objective(Quest.t(), integer(), integer()) ::
+          {:ok, Quest.t()} | {:error, term()}
   def increment_objective(quest, objective_index, amount \\ 1) do
     objectives = get_in(quest.progress, ["objectives"]) || []
 
@@ -220,7 +221,9 @@ defmodule BezgelorDb.Quests do
   @spec repeatable_available?(integer(), integer(), DateTime.t()) :: boolean()
   def repeatable_available?(character_id, quest_id, reset_time) do
     case Repo.get_by(QuestHistory, character_id: character_id, quest_id: quest_id) do
-      nil -> true
+      nil ->
+        true
+
       history ->
         case history.last_completion do
           nil -> true

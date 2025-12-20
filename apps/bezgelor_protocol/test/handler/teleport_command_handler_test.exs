@@ -23,7 +23,9 @@ defmodule BezgelorProtocol.Handler.TeleportCommandHandlerTest do
       assert {:error, :invalid_location} = TeleportCommandHandler.handle("999999999", session)
     end
 
-    test "parses three coordinate arguments as cross-zone teleport when world differs", %{session: session} do
+    test "parses three coordinate arguments as cross-zone teleport when world differs", %{
+      session: session
+    } do
       # Change session to have world_id nil (new character state) so it becomes cross-zone
       session = put_in(session, [:session_data, :world_id], nil)
 

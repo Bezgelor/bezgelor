@@ -18,18 +18,16 @@ defmodule BezgelorProtocol.Packets.World.ServerMythicTimer do
 
   alias BezgelorProtocol.PacketWriter
 
-  defstruct [
-    elapsed_ms: 0,
-    time_limit_ms: 0,
-    plus_two_ms: 0,
-    plus_three_ms: 0,
-    trash_percent: 0,
-    trash_required: 100,
-    bosses_killed: 0,
-    bosses_total: 0,
-    deaths: 0,
-    death_penalty_ms: 0
-  ]
+  defstruct elapsed_ms: 0,
+            time_limit_ms: 0,
+            plus_two_ms: 0,
+            plus_three_ms: 0,
+            trash_percent: 0,
+            trash_required: 100,
+            bosses_killed: 0,
+            bosses_total: 0,
+            deaths: 0,
+            death_penalty_ms: 0
 
   @impl true
   def opcode, do: 0x0B31

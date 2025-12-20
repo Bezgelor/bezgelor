@@ -33,7 +33,14 @@ defmodule BezgelorWorld.Handler.SpellHandler do
 
   alias BezgelorProtocol.{PacketReader, PacketWriter}
   alias BezgelorCore.{Spell, BuffDebuff}
-  alias BezgelorWorld.{BuffManager, CombatBroadcaster, CreatureManager, DeathManager, SpellManager}
+
+  alias BezgelorWorld.{
+    BuffManager,
+    CombatBroadcaster,
+    CreatureManager,
+    DeathManager,
+    SpellManager
+  }
 
   import Bitwise
 
@@ -46,7 +53,7 @@ defmodule BezgelorWorld.Handler.SpellHandler do
     # Try to parse as cast spell first, then cancel
     case ClientCastSpell.read(reader) do
       {:ok, packet, _reader} ->
-        handle_cast_spell(packet, state)
+        handle_cast_request(packet, state)
 
       {:error, _} ->
         # Try cancel cast (always succeeds since it's empty)
@@ -55,7 +62,11 @@ defmodule BezgelorWorld.Handler.SpellHandler do
     end
   end
 
-  defp handle_cast_spell(packet, state) do
+  @doc """
+  Handle a parsed cast request packet.
+  """
+  @spec handle_cast_request(ClientCastSpell.t(), map()) :: term()
+  def handle_cast_request(packet, state) do
     unless state.session_data[:in_world] do
       Logger.warning("Spell cast received before player entered world")
       {:error, :not_in_world}
@@ -229,18 +240,22 @@ defmodule BezgelorWorld.Handler.SpellHandler do
     buff_type = (original_effect && original_effect.buff_type) || :absorb
     duration = (original_effect && original_effect.duration) || effect.duration || 10_000
 
-    buff = BuffDebuff.new(%{
-      id: spell.id,
-      spell_id: spell.id,
-      buff_type: buff_type,
-      amount: effect.amount,
-      duration: duration,
-      is_debuff: is_debuff
-    })
+    buff =
+      BuffDebuff.new(%{
+        id: spell.id,
+        spell_id: spell.id,
+        buff_type: buff_type,
+        amount: effect.amount,
+        duration: duration,
+        is_debuff: is_debuff
+      })
 
     case BuffManager.apply_buff(target_guid, buff, caster_guid) do
       {:ok, _timer_ref} ->
-        Logger.debug("Applied #{if is_debuff, do: "debuff", else: "buff"} #{spell.id} to #{target_guid}")
+        Logger.debug(
+          "Applied #{if is_debuff, do: "debuff", else: "buff"} #{spell.id} to #{target_guid}"
+        )
+
         # Broadcast buff apply to the target
         CombatBroadcaster.send_buff_apply(target_guid, caster_guid, buff)
         :ok
@@ -258,15 +273,16 @@ defmodule BezgelorWorld.Handler.SpellHandler do
     duration = (original_effect && original_effect.duration) || effect.duration || 10_000
 
     # For periodic effects, we use :periodic buff type
-    buff = BuffDebuff.new(%{
-      id: spell.id,
-      spell_id: spell.id,
-      buff_type: :periodic,
-      amount: effect.amount,
-      duration: duration,
-      tick_interval: tick_interval,
-      is_debuff: is_debuff
-    })
+    buff =
+      BuffDebuff.new(%{
+        id: spell.id,
+        spell_id: spell.id,
+        buff_type: :periodic,
+        amount: effect.amount,
+        duration: duration,
+        tick_interval: tick_interval,
+        is_debuff: is_debuff
+      })
 
     case BuffManager.apply_buff(target_guid, buff, caster_guid) do
       {:ok, _timer_ref} ->
@@ -288,16 +304,19 @@ defmodule BezgelorWorld.Handler.SpellHandler do
     case DeathManager.offer_resurrection(target_guid, caster_guid, spell.id, health_percent) do
       :ok ->
         # Get caster name for the offer packet (would normally come from session)
-        caster_name = "Player"  # TODO: Look up from WorldManager session
+        # TODO: Look up from WorldManager session
+        caster_name = "Player"
 
         # Send resurrection offer to target
-        offer_packet = ServerResurrectOffer.new(
-          caster_guid,
-          caster_name,
-          spell.id,
-          health_percent,
-          60_000  # 60 second timeout
-        )
+        offer_packet =
+          ServerResurrectOffer.new(
+            caster_guid,
+            caster_name,
+            spell.id,
+            health_percent,
+            # 60 second timeout
+            60_000
+          )
 
         # Send to target player
         send_resurrect_offer_to_target(target_guid, offer_packet)
@@ -461,7 +480,13 @@ defmodule BezgelorWorld.Handler.SpellHandler do
   defp build_effect_packet(caster_guid, target_guid, spell_id, effect) do
     case effect.type do
       :damage ->
-        ServerSpellEffect.damage(caster_guid, target_guid, spell_id, effect.amount, effect.is_crit)
+        ServerSpellEffect.damage(
+          caster_guid,
+          target_guid,
+          spell_id,
+          effect.amount,
+          effect.is_crit
+        )
 
       :heal ->
         ServerSpellEffect.heal(caster_guid, target_guid, spell_id, effect.amount, effect.is_crit)
@@ -470,7 +495,13 @@ defmodule BezgelorWorld.Handler.SpellHandler do
         ServerSpellEffect.buff(caster_guid, target_guid, spell_id, effect.amount)
 
       _ ->
-        ServerSpellEffect.damage(caster_guid, target_guid, spell_id, effect.amount, effect.is_crit)
+        ServerSpellEffect.damage(
+          caster_guid,
+          target_guid,
+          spell_id,
+          effect.amount,
+          effect.is_crit
+        )
     end
   end
 

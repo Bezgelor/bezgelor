@@ -71,11 +71,7 @@ defmodule BezgelorAuth.Sts.Session do
       {:ok, server} ->
         {:ok, public_b, server} = SRP6.server_credentials(server)
 
-        session = %{session |
-          state: :login_start,
-          account: account,
-          srp6_server: server
-        }
+        session = %{session | state: :login_start, account: account, srp6_server: server}
 
         {:ok, session, salt, public_b}
     end
@@ -96,10 +92,7 @@ defmodule BezgelorAuth.Sts.Session do
           {:ok, server} ->
             {:ok, server_proof_m2} = SRP6.server_evidence(server)
 
-            session = %{session |
-              srp6_server: server,
-              session_key: session_key
-            }
+            session = %{session | srp6_server: server, session_key: session_key}
             {:ok, session, server_proof_m2}
 
           {:error, :invalid_evidence} ->
@@ -118,11 +111,7 @@ defmodule BezgelorAuth.Sts.Session do
   def finish_login(session) do
     {guid_string, raw_hex} = generate_game_token()
 
-    session = %{session |
-      state: :authenticated,
-      game_token: guid_string,
-      game_token_raw: raw_hex
-    }
+    session = %{session | state: :authenticated, game_token: guid_string, game_token_raw: raw_hex}
 
     {:ok, session}
   end
@@ -153,10 +142,7 @@ defmodule BezgelorAuth.Sts.Session do
     require Logger
     Logger.debug("[STS] Initializing RC4 encryption with key: #{Base.encode16(key)}")
 
-    %{session |
-      client_encryption: RC4.init(key),
-      server_encryption: RC4.init(key)
-    }
+    %{session | client_encryption: RC4.init(key), server_encryption: RC4.init(key)}
   end
 
   @doc """
@@ -171,6 +157,7 @@ defmodule BezgelorAuth.Sts.Session do
   """
   @spec decrypt(t(), binary()) :: {binary(), t()}
   def decrypt(%{client_encryption: nil} = session, data), do: {data, session}
+
   def decrypt(%{client_encryption: enc} = session, data) do
     {decrypted, new_enc} = RC4.decrypt(enc, data)
     {decrypted, %{session | client_encryption: new_enc}}
@@ -182,6 +169,7 @@ defmodule BezgelorAuth.Sts.Session do
   """
   @spec encrypt(t(), binary()) :: {binary(), t()}
   def encrypt(%{server_encryption: nil} = session, data), do: {data, session}
+
   def encrypt(%{server_encryption: enc} = session, data) do
     {encrypted, new_enc} = RC4.encrypt(enc, data)
     {encrypted, %{session | server_encryption: new_enc}}
@@ -204,7 +192,9 @@ defmodule BezgelorAuth.Sts.Session do
   end
 
   defp format_as_guid(hex) do
-    <<a::binary-size(8), b::binary-size(4), c::binary-size(4), d::binary-size(4), e::binary-size(12)>> = hex
+    <<a::binary-size(8), b::binary-size(4), c::binary-size(4), d::binary-size(4),
+      e::binary-size(12)>> = hex
+
     "#{a}-#{b}-#{c}-#{d}-#{e}"
   end
 

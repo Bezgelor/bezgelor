@@ -88,7 +88,8 @@ defmodule BezgelorDb.GuildsTest do
       {:ok, membership} = Guilds.add_member(guild.id, member.id, leader.id)
 
       assert membership.guild_id == guild.id
-      assert membership.rank_index == 4  # Default lowest rank
+      # Default lowest rank
+      assert membership.rank_index == 4
     end
 
     test "add_member fails without permission", %{guild: guild, leader: leader, member: member} do
@@ -101,7 +102,12 @@ defmodule BezgelorDb.GuildsTest do
       {:ok, another} =
         Characters.create_character(account3.id, %{
           name: "Another#{System.unique_integer([:positive])}",
-          sex: 0, race: 0, class: 0, faction_id: 166, world_id: 1, world_zone_id: 1
+          sex: 0,
+          race: 0,
+          class: 0,
+          faction_id: 166,
+          world_id: 1,
+          world_zone_id: 1
         })
 
       # Initiates (rank 4) cannot invite
@@ -120,7 +126,8 @@ defmodule BezgelorDb.GuildsTest do
       # Promote member to officer
       {:ok, _} = Guilds.promote_member(guild.id, member.id, leader.id)
       {:ok, _} = Guilds.promote_member(guild.id, member.id, leader.id)
-      {:ok, _} = Guilds.promote_member(guild.id, member.id, leader.id)  # Now rank 1
+      # Now rank 1
+      {:ok, _} = Guilds.promote_member(guild.id, member.id, leader.id)
 
       {:error, :cannot_kick_leader} = Guilds.remove_member(guild.id, leader.id, member.id)
     end
@@ -153,15 +160,19 @@ defmodule BezgelorDb.GuildsTest do
     end
 
     test "cannot promote to guild master", %{guild: guild, leader: leader, member: member} do
-      {:ok, _} = Guilds.promote_member(guild.id, member.id, leader.id)  # 3
-      {:ok, _} = Guilds.promote_member(guild.id, member.id, leader.id)  # 2
-      {:ok, _} = Guilds.promote_member(guild.id, member.id, leader.id)  # 1
+      # 3
+      {:ok, _} = Guilds.promote_member(guild.id, member.id, leader.id)
+      # 2
+      {:ok, _} = Guilds.promote_member(guild.id, member.id, leader.id)
+      # 1
+      {:ok, _} = Guilds.promote_member(guild.id, member.id, leader.id)
 
       {:error, :cannot_promote_to_leader} = Guilds.promote_member(guild.id, member.id, leader.id)
     end
 
     test "demote_member raises rank index", %{guild: guild, leader: leader, member: member} do
-      {:ok, _} = Guilds.promote_member(guild.id, member.id, leader.id)  # 3
+      # 3
+      {:ok, _} = Guilds.promote_member(guild.id, member.id, leader.id)
       {:ok, demoted} = Guilds.demote_member(guild.id, member.id, leader.id)
 
       assert demoted.rank_index == 4
@@ -172,7 +183,8 @@ defmodule BezgelorDb.GuildsTest do
     end
 
     test "transfer_leadership swaps ranks", %{guild: guild, leader: leader, member: member} do
-      {:ok, _} = Guilds.promote_member(guild.id, member.id, leader.id)  # Rank 3
+      # Rank 3
+      {:ok, _} = Guilds.promote_member(guild.id, member.id, leader.id)
 
       {:ok, updated_guild} = Guilds.transfer_leadership(guild.id, member.id, leader.id)
 
@@ -274,10 +286,12 @@ defmodule BezgelorDb.GuildsTest do
       ranks = GuildRank.default_ranks()
 
       gm = Enum.find(ranks, &(&1.rank_index == 0))
-      assert gm.permissions > 0  # GM has all permissions
+      # GM has all permissions
+      assert gm.permissions > 0
 
       initiate = Enum.find(ranks, &(&1.rank_index == 4))
-      assert initiate.permissions == 0  # Initiates have no permissions
+      # Initiates have no permissions
+      assert initiate.permissions == 0
     end
   end
 end

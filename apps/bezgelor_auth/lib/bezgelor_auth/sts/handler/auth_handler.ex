@@ -20,7 +20,8 @@ defmodule BezgelorAuth.Sts.Handler.AuthHandler do
   Request body contains email.
   Response contains salt and B as base64-encoded binary.
   """
-  @spec handle_login_start(Packet.t(), Session.t()) :: {:ok, binary(), Session.t()} | {:error, integer(), String.t(), Session.t()}
+  @spec handle_login_start(Packet.t(), Session.t()) ::
+          {:ok, binary(), Session.t()} | {:error, integer(), String.t(), Session.t()}
   def handle_login_start(packet, session) do
     # Allow LoginStart from both :connected state (fresh login) and :authenticated state (re-login)
     # The WildStar client reuses the STS connection after logout, so we need to handle re-login
@@ -68,7 +69,9 @@ defmodule BezgelorAuth.Sts.Handler.AuthHandler do
 
   Client sends A and M1, we verify and return M2.
   """
-  @spec handle_key_data(Packet.t(), Session.t()) :: {:ok_init_encryption, binary(), Session.t()} | {:error, integer(), String.t(), Session.t()}
+  @spec handle_key_data(Packet.t(), Session.t()) ::
+          {:ok_init_encryption, binary(), Session.t()}
+          | {:error, integer(), String.t(), Session.t()}
   def handle_key_data(packet, session) do
     if session.state != :login_start do
       {:error, 400, "Bad Request", session}
@@ -83,7 +86,11 @@ defmodule BezgelorAuth.Sts.Handler.AuthHandler do
 
             {:error, :invalid_proof} ->
               Logger.warning("[STS] Invalid client proof M1 - SRP6 authentication failed")
-              Logger.warning("[STS] This usually means the password is wrong or the account was created with incompatible SRP6 credentials")
+
+              Logger.warning(
+                "[STS] This usually means the password is wrong or the account was created with incompatible SRP6 credentials"
+              )
+
               {:error, 401, "Invalid credentials", session}
 
             {:error, reason} ->
@@ -103,7 +110,8 @@ defmodule BezgelorAuth.Sts.Handler.AuthHandler do
 
   Complete the login process.
   """
-  @spec handle_login_finish(Packet.t(), Session.t()) :: {:ok, binary(), Session.t()} | {:error, integer(), String.t(), Session.t()}
+  @spec handle_login_finish(Packet.t(), Session.t()) ::
+          {:ok, binary(), Session.t()} | {:error, integer(), String.t(), Session.t()}
   def handle_login_finish(_packet, session) do
     case Session.finish_login(session) do
       {:ok, new_session} ->
@@ -118,7 +126,8 @@ defmodule BezgelorAuth.Sts.Handler.AuthHandler do
 
   Return a game token that the client will pass to the realm server.
   """
-  @spec handle_request_game_token(Packet.t(), Session.t()) :: {:ok, binary(), Session.t()} | {:error, integer(), String.t(), Session.t()}
+  @spec handle_request_game_token(Packet.t(), Session.t()) ::
+          {:ok, binary(), Session.t()} | {:error, integer(), String.t(), Session.t()}
   def handle_request_game_token(_packet, session) do
     if session.state != :authenticated do
       {:error, 401, "Unauthorized", session}
@@ -182,14 +191,16 @@ defmodule BezgelorAuth.Sts.Handler.AuthHandler do
       key_data =
         case Regex.run(~r/<KeyData>([^<]+)<\/KeyData>/, body) do
           [_, data] -> data
-          _ -> body  # Fallback to raw body
+          # Fallback to raw body
+          _ -> body
         end
 
       # Base64 decode the key data
       decoded = Base.decode64!(key_data)
       # Binary format: A_len (4 bytes) + A + M1_len (4 bytes) + M1
-      <<a_len::little-32, client_a::binary-size(a_len),
-        m1_len::little-32, client_m1::binary-size(m1_len), _rest::binary>> = decoded
+      <<a_len::little-32, client_a::binary-size(a_len), m1_len::little-32,
+        client_m1::binary-size(m1_len), _rest::binary>> = decoded
+
       {:ok, client_a, client_m1}
     rescue
       _ -> {:error, :invalid_format}

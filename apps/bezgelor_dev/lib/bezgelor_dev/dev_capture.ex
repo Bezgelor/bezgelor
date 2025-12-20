@@ -67,7 +67,10 @@ defmodule BezgelorDev.DevCapture do
   """
   @spec capture_unhandled_opcode(atom(), binary(), map()) :: :ok
   def capture_unhandled_opcode(opcode_atom, payload, conn_state) do
-    GenServer.cast(__MODULE__, {:capture, :unhandled_opcode, opcode_atom, payload, nil, conn_state})
+    GenServer.cast(
+      __MODULE__,
+      {:capture, :unhandled_opcode, opcode_atom, payload, nil, conn_state}
+    )
   end
 
   @doc """
@@ -75,7 +78,10 @@ defmodule BezgelorDev.DevCapture do
   """
   @spec capture_handler_error(atom(), binary(), term(), map()) :: :ok
   def capture_handler_error(opcode_atom, payload, error, conn_state) do
-    GenServer.cast(__MODULE__, {:capture, :handler_error, opcode_atom, payload, error, conn_state})
+    GenServer.cast(
+      __MODULE__,
+      {:capture, :handler_error, opcode_atom, payload, error, conn_state}
+    )
   end
 
   @doc """
@@ -153,10 +159,7 @@ defmodule BezgelorDev.DevCapture do
     {event, state} = process_capture(event, state)
 
     # Update state
-    state = %{state |
-      capture_count: state.capture_count + 1,
-      captures: [event | state.captures]
-    }
+    state = %{state | capture_count: state.capture_count + 1, captures: [event | state.captures]}
 
     {:noreply, state}
   end

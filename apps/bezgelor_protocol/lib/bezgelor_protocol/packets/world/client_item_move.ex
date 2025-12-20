@@ -46,8 +46,10 @@ defmodule BezgelorProtocol.Packets.World.ClientItemMove do
 
   @doc "Convert location integer to atom (matching Ecto enum values)."
   def location_to_atom(0), do: :equipped
-  def location_to_atom(1), do: :bag  # InventoryLocation.Inventory -> :bag in DB
+  # InventoryLocation.Inventory -> :bag in DB
+  def location_to_atom(1), do: :bag
   def location_to_atom(2), do: :bank
   def location_to_atom(4), do: :ability
-  def location_to_atom(_), do: :bag  # Default to bag
+  # Default to bag
+  def location_to_atom(_), do: :bag
 end

@@ -54,17 +54,23 @@ defmodule BezgelorDb.Schema.EventScheduleTest do
     end
 
     test "defaults enabled to true" do
-      changeset = EventSchedule.changeset(%EventSchedule{}, %{event_id: 1, zone_id: 1, trigger_type: :timer})
+      changeset =
+        EventSchedule.changeset(%EventSchedule{}, %{event_id: 1, zone_id: 1, trigger_type: :timer})
+
       assert Ecto.Changeset.get_field(changeset, :enabled) == true
     end
 
     test "defaults trigger_config to empty map" do
-      changeset = EventSchedule.changeset(%EventSchedule{}, %{event_id: 1, zone_id: 1, trigger_type: :timer})
+      changeset =
+        EventSchedule.changeset(%EventSchedule{}, %{event_id: 1, zone_id: 1, trigger_type: :timer})
+
       assert Ecto.Changeset.get_field(changeset, :trigger_config) == %{}
     end
 
     test "accepts timer trigger config" do
-      attrs = Map.put(@valid_attrs, :trigger_config, %{"interval_hours" => 4, "offset_minutes" => 15})
+      attrs =
+        Map.put(@valid_attrs, :trigger_config, %{"interval_hours" => 4, "offset_minutes" => 15})
+
       changeset = EventSchedule.changeset(%EventSchedule{}, attrs)
       assert changeset.valid?
     end
@@ -76,6 +82,7 @@ defmodule BezgelorDb.Schema.EventScheduleTest do
         trigger_type: :random_window,
         trigger_config: %{"start_hour" => 18, "end_hour" => 22, "min_gap_hours" => 4}
       }
+
       changeset = EventSchedule.changeset(%EventSchedule{}, attrs)
       assert changeset.valid?
     end
@@ -87,6 +94,7 @@ defmodule BezgelorDb.Schema.EventScheduleTest do
         trigger_type: :player_count,
         trigger_config: %{"min_players" => 10, "check_interval_ms" => 60000}
       }
+
       changeset = EventSchedule.changeset(%EventSchedule{}, attrs)
       assert changeset.valid?
     end
@@ -98,6 +106,7 @@ defmodule BezgelorDb.Schema.EventScheduleTest do
         trigger_type: :chain,
         trigger_config: %{"after_event_id" => 1002, "delay_ms" => 30000}
       }
+
       changeset = EventSchedule.changeset(%EventSchedule{}, attrs)
       assert changeset.valid?
     end

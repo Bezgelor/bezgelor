@@ -186,7 +186,9 @@ defmodule BezgelorWorld.Portal do
   @doc """
   Get player count per zone.
   """
-  @spec zone_player_counts() :: [%{zone_id: integer(), zone_name: String.t(), player_count: integer()}]
+  @spec zone_player_counts() :: [
+          %{zone_id: integer(), zone_name: String.t(), player_count: integer()}
+        ]
   def zone_player_counts do
     players_by_zone()
     |> Enum.map(fn {zone_id, count} ->
@@ -200,6 +202,7 @@ defmodule BezgelorWorld.Portal do
   end
 
   defp get_zone_name(nil), do: "Unknown"
+
   defp get_zone_name(zone_id) do
     # Try to get zone name from data store
     case BezgelorData.Store.get(:world_location, zone_id) do
@@ -307,10 +310,12 @@ defmodule BezgelorWorld.Portal do
       nil ->
         # Try zone instances
         players = get_instance_players(instance_id)
+
         if length(players) > 0 do
           Enum.each(players, fn player_id ->
             teleport_player_out(player_id)
           end)
+
           {:ok, length(players)}
         else
           {:error, :not_found}
@@ -319,9 +324,11 @@ defmodule BezgelorWorld.Portal do
       pid ->
         try do
           players = GenServer.call(pid, :get_players, 1000)
+
           Enum.each(players, fn player_id ->
             teleport_player_out(player_id)
           end)
+
           Logger.info("Admin teleported #{length(players)} players from instance #{instance_id}")
           {:ok, length(players)}
         catch
@@ -338,9 +345,13 @@ defmodule BezgelorWorld.Portal do
           {zone_id, ""} ->
             WorldManager.get_zone_sessions(zone_id)
             |> Enum.map(& &1.character_id)
-          _ -> []
+
+          _ ->
+            []
         end
-      _ -> []
+
+      _ ->
+        []
     end
   end
 
@@ -514,6 +525,7 @@ defmodule BezgelorWorld.Portal do
   def peak_players do
     # Would be tracked by a dedicated stats process
     current = online_player_count()
+
     %{
       daily: current,
       weekly: current,

@@ -14,7 +14,14 @@ defmodule BezgelorProtocol.Packets.World.ServerTradeskillUpdate do
 
   alias BezgelorProtocol.PacketWriter
 
-  defstruct [:profession_id, :profession_type, :skill_level, :skill_xp, :is_active, levels_gained: 0]
+  defstruct [
+    :profession_id,
+    :profession_type,
+    :skill_level,
+    :skill_xp,
+    :is_active,
+    levels_gained: 0
+  ]
 
   @type t :: %__MODULE__{
           profession_id: non_neg_integer(),

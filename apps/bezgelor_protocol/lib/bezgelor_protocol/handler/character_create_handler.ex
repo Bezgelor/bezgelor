@@ -20,6 +20,7 @@ defmodule BezgelorProtocol.Handler.CharacterCreateHandler do
   """
 
   @behaviour BezgelorProtocol.Handler
+  @compile {:no_warn_undefined, [BezgelorWorld.Abilities]}
 
   alias BezgelorProtocol.Packets.World.{
     ClientCharacterCreate,
@@ -75,7 +76,10 @@ defmodule BezgelorProtocol.Handler.CharacterCreateHandler do
         {:reply_world_encrypted, :server_character_create, encode_packet(response), state}
 
       not valid_customization?(packet) ->
-        Logger.warning("Invalid customization data rejected: labels=#{length(packet.labels)}, bones=#{length(packet.bones)}")
+        Logger.warning(
+          "Invalid customization data rejected: labels=#{length(packet.labels)}, bones=#{length(packet.bones)}"
+        )
+
         response = ServerCharacterCreate.failure(:server_error)
         {:reply_world_encrypted, :server_character_create, encode_packet(response), state}
 
@@ -105,12 +109,12 @@ defmodule BezgelorProtocol.Handler.CharacterCreateHandler do
     bones_count = length(packet.bones)
 
     # Labels and values must match in count
+    # Limit customization count to prevent abuse
+    # Limit bone count
+    # Validate bone values are within reasonable range
     labels_count == values_count and
-      # Limit customization count to prevent abuse
       labels_count <= @max_customization_count and
-      # Limit bone count
       bones_count <= @max_bone_count and
-      # Validate bone values are within reasonable range
       Enum.all?(packet.bones, &valid_bone_value?/1)
   end
 
@@ -185,12 +189,18 @@ defmodule BezgelorProtocol.Handler.CharacterCreateHandler do
 
     case result do
       {:ok, character} ->
-        Logger.info("Created character '#{character.name}' (ID: #{character.id}) for account #{account_id} in world #{character.world_id}")
+        Logger.info(
+          "Created character '#{character.name}' (ID: #{character.id}) for account #{account_id} in world #{character.world_id}"
+        )
 
         # Initialize inventory bags and add starting gear
         try do
           Inventory.init_bags(character.id)
           add_starting_gear(character.id, creation_entry)
+          spellbook_abilities = BezgelorWorld.Abilities.get_class_spellbook_abilities(class)
+          action_set_abilities = BezgelorWorld.Abilities.get_class_action_set_abilities(class)
+          BezgelorDb.ActionSets.ensure_default_shortcuts(character.id, action_set_abilities, 0)
+          Inventory.ensure_ability_items(character.id, spellbook_abilities)
         rescue
           e ->
             Logger.error("Failed to add starting gear: #{inspect(e)}")
@@ -284,12 +294,19 @@ defmodule BezgelorProtocol.Handler.CharacterCreateHandler do
               max_durability: 100
             }
 
-            case BezgelorDb.Repo.insert(BezgelorDb.Schema.InventoryItem.changeset(%BezgelorDb.Schema.InventoryItem{}, attrs)) do
+            case BezgelorDb.Repo.insert(
+                   BezgelorDb.Schema.InventoryItem.changeset(
+                     %BezgelorDb.Schema.InventoryItem{},
+                     attrs
+                   )
+                 ) do
               {:ok, _item} ->
                 :ok
 
               {:error, changeset} ->
-                Logger.warning("Failed to add starting item #{item_id}: #{inspect(changeset.errors)}")
+                Logger.warning(
+                  "Failed to add starting item #{item_id}: #{inspect(changeset.errors)}"
+                )
             end
         end
 

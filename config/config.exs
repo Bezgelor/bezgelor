@@ -11,8 +11,7 @@ config :bezgelor_portal,
   generators: [timestamp_type: :utc_datetime]
 
 # Swoosh mailer configuration
-config :bezgelor_portal, BezgelorPortal.Mailer,
-  adapter: Swoosh.Adapters.Local
+config :bezgelor_portal, BezgelorPortal.Mailer, adapter: Swoosh.Adapters.Local
 
 # Cloak vault for encrypting sensitive data (TOTP secrets)
 # Generate a key with: :crypto.strong_rand_bytes(32) |> Base.encode64()
@@ -21,7 +20,10 @@ config :bezgelor_portal, BezgelorPortal.Vault,
     default: {
       Cloak.Ciphers.AES.GCM,
       tag: "AES.GCM.V1",
-      key: Base.decode64!(System.get_env("CLOAK_KEY", "dGVzdF9rZXlfMzJfYnl0ZXNfbG9uZ19mb3JfYWVzISE="))
+      key:
+        Base.decode64!(
+          System.get_env("CLOAK_KEY", "dGVzdF9rZXlfMzJfYnl0ZXNfbG9uZ19mb3JfYWVzISE=")
+        )
     }
   ]
 
@@ -95,7 +97,8 @@ config :bezgelor_realm,
   # Realm info sent to clients
   realm_id: String.to_integer(System.get_env("REALM_ID", "1")),
   realm_name: System.get_env("REALM_NAME", "Bezgelor"),
-  realm_type: :pve,  # :pve or :pvp
+  # :pve or :pvp
+  realm_type: :pve,
   realm_flags: 0,
   realm_note_text_id: 0
 

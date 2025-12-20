@@ -29,9 +29,10 @@ defmodule BezgelorCore.AICombatMovementTest do
 
   describe "chasing?/1" do
     test "returns true when actively chasing" do
-      ai = AI.new({0.0, 0.0, 0.0})
-           |> AI.enter_combat(12345)
-           |> AI.start_chase([{0.0, 0.0, 0.0}, {10.0, 0.0, 0.0}], 2000)
+      ai =
+        AI.new({0.0, 0.0, 0.0})
+        |> AI.enter_combat(12345)
+        |> AI.start_chase([{0.0, 0.0, 0.0}, {10.0, 0.0, 0.0}], 2000)
 
       assert AI.chasing?(ai) == true
     end
@@ -45,10 +46,11 @@ defmodule BezgelorCore.AICombatMovementTest do
 
   describe "complete_chase/1" do
     test "clears chase state" do
-      ai = AI.new({0.0, 0.0, 0.0})
-           |> AI.enter_combat(12345)
-           |> AI.start_chase([{0.0, 0.0, 0.0}, {10.0, 0.0, 0.0}], 2000)
-           |> AI.complete_chase()
+      ai =
+        AI.new({0.0, 0.0, 0.0})
+        |> AI.enter_combat(12345)
+        |> AI.start_chase([{0.0, 0.0, 0.0}, {10.0, 0.0, 0.0}], 2000)
+        |> AI.complete_chase()
 
       assert ai.chase_path == nil
       assert ai.chase_start_time == nil
@@ -58,9 +60,10 @@ defmodule BezgelorCore.AICombatMovementTest do
 
   describe "combat_action with active chase" do
     test "returns :wait when chase is in progress" do
-      ai = AI.new({0.0, 0.0, 0.0})
-           |> AI.enter_combat(12345)
-           |> AI.start_chase([{0.0, 0.0, 0.0}, {10.0, 0.0, 0.0}], 5000)
+      ai =
+        AI.new({0.0, 0.0, 0.0})
+        |> AI.enter_combat(12345)
+        |> AI.start_chase([{0.0, 0.0, 0.0}, {10.0, 0.0, 0.0}], 5000)
 
       target_pos = {15.0, 0.0, 0.0}
       result = AI.combat_action(ai, target_pos, 5.0)
@@ -73,8 +76,10 @@ defmodule BezgelorCore.AICombatMovementTest do
     test "returns :chase when target is out of attack range" do
       ai = AI.new({0.0, 0.0, 0.0}) |> AI.enter_combat(12345)
 
-      target_pos = {20.0, 0.0, 0.0}  # 20 units away
-      attack_range = 5.0              # Melee range
+      # 20 units away
+      target_pos = {20.0, 0.0, 0.0}
+      # Melee range
+      attack_range = 5.0
 
       result = AI.combat_action(ai, target_pos, attack_range)
 
@@ -84,8 +89,10 @@ defmodule BezgelorCore.AICombatMovementTest do
     test "returns :attack when target is in attack range" do
       ai = AI.new({0.0, 0.0, 0.0}) |> AI.enter_combat(12345)
 
-      target_pos = {3.0, 0.0, 0.0}  # 3 units away
-      attack_range = 5.0             # Within melee range
+      # 3 units away
+      target_pos = {3.0, 0.0, 0.0}
+      # Within melee range
+      attack_range = 5.0
 
       result = AI.combat_action(ai, target_pos, attack_range)
 

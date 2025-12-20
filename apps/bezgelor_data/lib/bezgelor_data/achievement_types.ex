@@ -133,12 +133,12 @@ defmodule BezgelorData.AchievementTypes do
   """
   @spec uses_object_id?(non_neg_integer()) :: boolean()
   def uses_object_id?(type_id) do
-    type_id in (@kill_types -- [61, 105]) ++
-               @quest_types ++
-               @datacube_types ++
-               @housing_types ++
-               @adventure_types ++
-               [37, 42, 46, 82]
+    type_id in ((@kill_types -- [61, 105]) ++
+                  @quest_types ++
+                  @datacube_types ++
+                  @housing_types ++
+                  @adventure_types ++
+                  [37, 42, 46, 82])
   end
 
   @doc """

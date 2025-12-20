@@ -119,7 +119,8 @@ defmodule BezgelorDev.ReportGeneratorTest do
     end
 
     test "includes hex dump of payload" do
-      payload = <<0x48, 0x65, 0x6C, 0x6C, 0x6F>>  # "Hello"
+      # "Hello"
+      payload = <<0x48, 0x65, 0x6C, 0x6C, 0x6F>>
       event = sample_event(payload: payload)
       report = ReportGenerator.generate_markdown_report(event)
 
@@ -193,7 +194,12 @@ defmodule BezgelorDev.ReportGeneratorTest do
         sample_event(type: :unknown_opcode, opcode: 0x1111, opcode_hex: "0x1111"),
         sample_event(type: :unknown_opcode, opcode: 0x2222, opcode_hex: "0x2222"),
         sample_event(type: :unhandled_opcode, opcode: :known_opcode, opcode_hex: "0x3333"),
-        sample_event(type: :handler_error, opcode: :erroring_opcode, opcode_hex: "0x4444", error: :some_error)
+        sample_event(
+          type: :handler_error,
+          opcode: :erroring_opcode,
+          opcode_hex: "0x4444",
+          error: :some_error
+        )
       ]
 
       state = %{
@@ -215,7 +221,8 @@ defmodule BezgelorDev.ReportGeneratorTest do
     test "lists unique unknown opcodes" do
       captures = [
         sample_event(type: :unknown_opcode, opcode: 0x1111, opcode_hex: "0x1111"),
-        sample_event(type: :unknown_opcode, opcode: 0x1111, opcode_hex: "0x1111"),  # duplicate
+        # duplicate
+        sample_event(type: :unknown_opcode, opcode: 0x1111, opcode_hex: "0x1111"),
         sample_event(type: :unknown_opcode, opcode: 0x2222, opcode_hex: "0x2222")
       ]
 

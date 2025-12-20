@@ -22,6 +22,7 @@ defmodule BezgelorWorld.Handler.PathHandler do
   """
 
   alias BezgelorDb.Paths
+
   alias BezgelorProtocol.Packets.World.{
     ServerPathData,
     ServerPathXp,

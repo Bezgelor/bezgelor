@@ -14,15 +14,15 @@ defmodule BezgelorDb.Schema.WorkOrder do
   @type t :: %__MODULE__{}
 
   schema "work_orders" do
-    belongs_to :character, Character
+    belongs_to(:character, Character)
 
-    field :work_order_id, :integer
-    field :profession_id, :integer
-    field :quantity_required, :integer
-    field :quantity_completed, :integer, default: 0
-    field :status, Ecto.Enum, values: [:active, :completed, :expired], default: :active
-    field :expires_at, :utc_datetime
-    field :accepted_at, :utc_datetime
+    field(:work_order_id, :integer)
+    field(:profession_id, :integer)
+    field(:quantity_required, :integer)
+    field(:quantity_completed, :integer, default: 0)
+    field(:status, Ecto.Enum, values: [:active, :completed, :expired], default: :active)
+    field(:expires_at, :utc_datetime)
+    field(:accepted_at, :utc_datetime)
 
     timestamps(type: :utc_datetime)
   end

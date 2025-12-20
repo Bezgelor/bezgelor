@@ -20,6 +20,7 @@ defmodule BezgelorWorld.Handler.GatheringHandler do
   alias BezgelorDb.Tradeskills
   alias BezgelorProtocol.PacketReader
   alias BezgelorProtocol.PacketWriter
+
   alias BezgelorProtocol.Packets.World.{
     ClientGatherStart,
     ClientGatherComplete,
@@ -27,6 +28,7 @@ defmodule BezgelorWorld.Handler.GatheringHandler do
     ServerNodeUpdate,
     ServerTradeskillUpdate
   }
+
   alias BezgelorData.Store
   alias BezgelorWorld.Gathering.GatheringNode
   alias BezgelorWorld.TradeskillConfig
@@ -57,7 +59,10 @@ defmodule BezgelorWorld.Handler.GatheringHandler do
     # Get node from zone instance
     case get_node(zone_instance, packet.node_guid) do
       nil ->
-        Logger.warning("Character #{character_id} tried to gather from unknown node #{packet.node_guid}")
+        Logger.warning(
+          "Character #{character_id} tried to gather from unknown node #{packet.node_guid}"
+        )
+
         {:ok, state}
 
       %{} = node ->
@@ -151,7 +156,9 @@ defmodule BezgelorWorld.Handler.GatheringHandler do
 
     # TODO: Add loot to inventory
 
-    Logger.debug("Character #{character_id} harvested node #{node.node_id}: #{length(loot)} items, #{xp_gained} XP")
+    Logger.debug(
+      "Character #{character_id} harvested node #{node.node_id}: #{length(loot)} items, #{xp_gained} XP"
+    )
 
     # Clear pending gather and send result
     new_state = put_in(state, [:session_data, :gathering_node], nil)
@@ -200,7 +207,8 @@ defmodule BezgelorWorld.Handler.GatheringHandler do
     profession_id =
       case Store.get_node_type(node_type_id) do
         {:ok, node_type} -> node_type.profession_id
-        :error -> 101  # Fallback to Mining
+        # Fallback to Mining
+        :error -> 101
       end
 
     case Tradeskills.add_xp(character_id, profession_id, xp) do
@@ -252,6 +260,7 @@ defmodule BezgelorWorld.Handler.GatheringHandler do
 
     # Broadcast to all players in zone
     zone_instance = state.session_data[:zone_instance]
+
     if zone_instance do
       send(zone_instance, {:broadcast, :server_node_update, packet_data})
     end

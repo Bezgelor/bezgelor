@@ -46,13 +46,14 @@ defmodule BezgelorProtocol.Packets.World.ServerPlayerDeath do
   """
   @spec new(non_neg_integer(), non_neg_integer() | nil, atom() | non_neg_integer()) :: t()
   def new(player_guid, killer_guid, death_type) do
-    death_type_int = case death_type do
-      :combat -> 0
-      :fall -> 1
-      :drown -> 2
-      :environment -> 3
-      int when is_integer(int) -> int
-    end
+    death_type_int =
+      case death_type do
+        :combat -> 0
+        :fall -> 1
+        :drown -> 2
+        :environment -> 3
+        int when is_integer(int) -> int
+      end
 
     %__MODULE__{
       player_guid: player_guid,
@@ -69,9 +70,9 @@ defmodule BezgelorProtocol.Packets.World.ServerPlayerDeath do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint64(packet.player_guid)
-      |> PacketWriter.write_uint64(packet.killer_guid || 0)
-      |> PacketWriter.write_uint32(packet.death_type)
+      |> PacketWriter.write_u64(packet.player_guid)
+      |> PacketWriter.write_u64(packet.killer_guid || 0)
+      |> PacketWriter.write_u32(packet.death_type)
 
     {:ok, writer}
   end

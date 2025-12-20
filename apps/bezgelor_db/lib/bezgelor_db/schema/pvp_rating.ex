@@ -37,34 +37,47 @@ defmodule BezgelorDb.Schema.PvpRating do
   # ELO constants
   @base_rating 0
   @base_mmr 1500
-  @k_factor_new 32      # Higher K for new players (< 10 games)
-  @k_factor_normal 24   # Normal K factor
-  @k_factor_high 16     # Lower K for high-rated players (> 2000)
-  @decay_threshold 1800 # Rating above which decay applies
-  @decay_amount 15      # Rating lost per week of inactivity
-  @decay_period_days 7  # Days before decay kicks in
+  # Higher K for new players (< 10 games)
+  @k_factor_new 32
+  # Normal K factor
+  @k_factor_normal 24
+  # Lower K for high-rated players (> 2000)
+  @k_factor_high 16
+  # Rating above which decay applies
+  @decay_threshold 1800
+  # Rating lost per week of inactivity
+  @decay_amount 15
+  # Days before decay kicks in
+  @decay_period_days 7
 
   schema "pvp_ratings" do
-    belongs_to :character, Character
+    belongs_to(:character, Character)
 
-    field :bracket, :string
-    field :rating, :integer, default: @base_rating
-    field :season_high, :integer, default: @base_rating
-    field :games_played, :integer, default: 0
-    field :games_won, :integer, default: 0
-    field :win_streak, :integer, default: 0
-    field :loss_streak, :integer, default: 0
-    field :mmr, :integer, default: @base_mmr
-    field :last_game_at, :utc_datetime
-    field :last_decay_at, :utc_datetime
+    field(:bracket, :string)
+    field(:rating, :integer, default: @base_rating)
+    field(:season_high, :integer, default: @base_rating)
+    field(:games_played, :integer, default: 0)
+    field(:games_won, :integer, default: 0)
+    field(:win_streak, :integer, default: 0)
+    field(:loss_streak, :integer, default: 0)
+    field(:mmr, :integer, default: @base_mmr)
+    field(:last_game_at, :utc_datetime)
+    field(:last_decay_at, :utc_datetime)
 
     timestamps()
   end
 
   @required_fields [:character_id, :bracket]
   @optional_fields [
-    :rating, :season_high, :games_played, :games_won,
-    :win_streak, :loss_streak, :mmr, :last_game_at, :last_decay_at
+    :rating,
+    :season_high,
+    :games_played,
+    :games_won,
+    :win_streak,
+    :loss_streak,
+    :mmr,
+    :last_game_at,
+    :last_decay_at
   ]
 
   @doc """
@@ -136,6 +149,7 @@ defmodule BezgelorDb.Schema.PvpRating do
   @spec should_decay?(t()) :: boolean()
   def should_decay?(%__MODULE__{rating: rating}) when rating < @decay_threshold, do: false
   def should_decay?(%__MODULE__{last_game_at: nil}), do: false
+
   def should_decay?(%__MODULE__{last_game_at: last_game}) do
     days_inactive = DateTime.diff(DateTime.utc_now(), last_game, :day)
     days_inactive >= @decay_period_days
@@ -168,6 +182,7 @@ defmodule BezgelorDb.Schema.PvpRating do
   """
   @spec win_rate(t()) :: float()
   def win_rate(%__MODULE__{games_played: 0}), do: 0.0
+
   def win_rate(%__MODULE__{games_won: won, games_played: played}) do
     Float.round(won / played * 100, 1)
   end
@@ -204,8 +219,10 @@ defmodule BezgelorDb.Schema.PvpRating do
     # Rating only goes up from wins, down from losses (can't go negative)
     rating_change =
       cond do
-        won -> max(1, abs(mmr_change))  # Minimum +1 for a win
-        true -> min(-1, -abs(mmr_change))  # Minimum -1 for a loss
+        # Minimum +1 for a win
+        won -> max(1, abs(mmr_change))
+        # Minimum -1 for a loss
+        true -> min(-1, -abs(mmr_change))
       end
 
     new_rating = max(0, rating_record.rating + rating_change)

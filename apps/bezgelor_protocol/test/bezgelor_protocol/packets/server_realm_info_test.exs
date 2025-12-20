@@ -30,7 +30,8 @@ defmodule BezgelorProtocol.Packets.ServerRealmInfoTest do
 
       assert account_id == 12345
       assert realm_id == 1
-      assert name_len == 5  # "Nexus" length
+      # "Nexus" length
+      assert name_len == 5
 
       # Skip UTF-16LE name (5 * 2 = 10 bytes)
       <<_name::binary-size(10), after_name::binary>> = rest

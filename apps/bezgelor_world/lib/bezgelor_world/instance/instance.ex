@@ -473,11 +473,12 @@ defmodule BezgelorWorld.Instance.Instance do
           trash_required = calculate_trash_required(definition, state.difficulty)
           zone_id = Map.get(definition, "zone_id", 0)
 
-          %{state |
-            definition: definition,
-            zone_id: zone_id,
-            trash_required: trash_required,
-            state: :waiting
+          %{
+            state
+            | definition: definition,
+              zone_id: zone_id,
+              trash_required: trash_required,
+              state: :waiting
           }
 
         :error ->
@@ -532,7 +533,9 @@ defmodule BezgelorWorld.Instance.Instance do
   defp find_boss_definition(state, boss_id) do
     # First try static data
     case Store.get_instance_boss(boss_id) do
-      {:ok, boss} -> boss
+      {:ok, boss} ->
+        boss
+
       :error ->
         # Fall back to definition's boss list
         bosses = get_in(state.definition, ["bosses"]) || []
@@ -568,10 +571,7 @@ defmodule BezgelorWorld.Instance.Instance do
       end
     end)
 
-    %{state |
-      state: :completed,
-      end_time: DateTime.utc_now()
-    }
+    %{state | state: :completed, end_time: DateTime.utc_now()}
   end
 
   defp handle_wipe(state) do
@@ -596,12 +596,13 @@ defmodule BezgelorWorld.Instance.Instance do
   defp do_reset(state) do
     Logger.info("Resetting instance #{state.instance_guid}")
 
-    %{state |
-      state: :resetting,
-      defeated_bosses: MapSet.new(),
-      trash_killed: 0,
-      deaths: 0,
-      mythic_timer_start: nil
+    %{
+      state
+      | state: :resetting,
+        defeated_bosses: MapSet.new(),
+        trash_killed: 0,
+        deaths: 0,
+        mythic_timer_start: nil
     }
     |> then(fn s -> %{s | state: :waiting} end)
   end
@@ -610,6 +611,7 @@ defmodule BezgelorWorld.Instance.Instance do
     if not players_inside?(state) do
       Process.send_after(self(), :idle_timeout, @idle_timeout)
     end
+
     state
   end
 
@@ -644,7 +646,8 @@ defmodule BezgelorWorld.Instance.Instance do
     base_time =
       case state.definition do
         %{"time_limit" => limit} -> limit
-        _ -> 30 * 60 * 1000  # 30 minutes default
+        # 30 minutes default
+        _ -> 30 * 60 * 1000
       end
 
     # Scale time limit based on mythic level

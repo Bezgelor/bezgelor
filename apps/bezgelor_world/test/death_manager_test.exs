@@ -86,7 +86,8 @@ defmodule BezgelorWorld.DeathManagerTest do
 
       DeathManager.player_died(player_guid, 100, {0.0, 0.0, 0.0}, nil)
 
-      assert :ok = DeathManager.offer_resurrection(player_guid, caster_guid, spell_id, health_percent)
+      assert :ok =
+               DeathManager.offer_resurrection(player_guid, caster_guid, spell_id, health_percent)
     end
 
     test "returns error for living player" do

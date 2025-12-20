@@ -51,7 +51,10 @@ defmodule BezgelorPortalWeb.Components.CharacterViewer do
       data-gender={gender_key(@character.sex)}
       data-equipment={Jason.encode!(equipment_data(@equipment))}
     >
-      <div :if={@show_loading} class="absolute inset-0 flex items-center justify-center text-base-content/30">
+      <div
+        :if={@show_loading}
+        class="absolute inset-0 flex items-center justify-center text-base-content/30"
+      >
         <span class="loading loading-spinner loading-lg"></span>
       </div>
       <!-- Work in Progress Banner -->

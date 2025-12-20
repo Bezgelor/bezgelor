@@ -14,7 +14,7 @@ defmodule BezgelorDb.Schema.RolePermission do
 
   @primary_key false
   schema "role_permissions" do
-    belongs_to :role, BezgelorDb.Schema.Role
-    belongs_to :permission, BezgelorDb.Schema.Permission
+    belongs_to(:role, BezgelorDb.Schema.Role)
+    belongs_to(:permission, BezgelorDb.Schema.Permission)
   end
 end

@@ -24,28 +24,33 @@ defmodule BezgelorWorld.Gathering.GatheringNodeTest do
 
     test "returns false when respawning" do
       future = DateTime.add(DateTime.utc_now(), 60, :second)
+
       node = %GatheringNode{
         node_id: 1,
         node_type_id: 100,
         position: {0, 0, 0},
         respawn_at: future
       }
+
       refute GatheringNode.available?(node)
     end
 
     test "returns true when respawn time has passed" do
       past = DateTime.add(DateTime.utc_now(), -60, :second)
+
       node = %GatheringNode{
         node_id: 1,
         node_type_id: 100,
         position: {0, 0, 0},
         respawn_at: past
       }
+
       assert GatheringNode.available?(node)
     end
 
     test "returns false when tapped by another player" do
       future = DateTime.add(DateTime.utc_now(), 5, :second)
+
       node = %GatheringNode{
         node_id: 1,
         node_type_id: 100,
@@ -53,6 +58,7 @@ defmodule BezgelorWorld.Gathering.GatheringNodeTest do
         tapped_by: 123,
         tap_expires_at: future
       }
+
       refute GatheringNode.available?(node)
     end
   end
@@ -86,6 +92,7 @@ defmodule BezgelorWorld.Gathering.GatheringNodeTest do
         tapped_by: 123,
         tap_expires_at: DateTime.add(DateTime.utc_now(), 5, :second)
       }
+
       assert GatheringNode.can_harvest?(node, 123)
     end
 
@@ -97,6 +104,7 @@ defmodule BezgelorWorld.Gathering.GatheringNodeTest do
         tapped_by: 123,
         tap_expires_at: DateTime.add(DateTime.utc_now(), 5, :second)
       }
+
       refute GatheringNode.can_harvest?(node, 456)
     end
 

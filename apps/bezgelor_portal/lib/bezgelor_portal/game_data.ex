@@ -46,7 +46,8 @@ defmodule BezgelorPortal.GameData do
   Get race information by ID.
   """
   @spec get_race(integer()) :: map()
-  def get_race(id), do: Map.get(@races, id, %{name: "Unknown", faction: :unknown, icon: "unknown"})
+  def get_race(id),
+    do: Map.get(@races, id, %{name: "Unknown", faction: :unknown, icon: "unknown"})
 
   @doc """
   Get race name by ID.
@@ -76,7 +77,8 @@ defmodule BezgelorPortal.GameData do
   Get faction information by ID.
   """
   @spec get_faction(integer()) :: map()
-  def get_faction(id), do: Map.get(@factions, id, %{name: "Unknown", color: "#666", icon: "unknown"})
+  def get_faction(id),
+    do: Map.get(@factions, id, %{name: "Unknown", color: "#666", icon: "unknown"})
 
   @doc """
   Get faction name by ID.
@@ -95,7 +97,8 @@ defmodule BezgelorPortal.GameData do
     case get_race(race_id).faction do
       :exile -> 166
       :dominion -> 167
-      _ -> 166  # Default to Exile for unknown
+      # Default to Exile for unknown
+      _ -> 166
     end
   end
 

@@ -77,7 +77,8 @@ defmodule BezgelorDb.Lockouts do
   @doc """
   Create or update a lockout.
   """
-  @spec create_or_update_lockout(map()) :: {:ok, InstanceLockout.t()} | {:error, Ecto.Changeset.t()}
+  @spec create_or_update_lockout(map()) ::
+          {:ok, InstanceLockout.t()} | {:error, Ecto.Changeset.t()}
   def create_or_update_lockout(attrs) do
     case get_lockout(attrs.character_id, attrs.instance_definition_id, attrs.difficulty) do
       nil ->

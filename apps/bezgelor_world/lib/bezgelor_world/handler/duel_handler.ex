@@ -94,7 +94,13 @@ defmodule BezgelorWorld.Handler.DuelHandler do
       target_guid = packet.target_guid
       target_name = packet.target_name || "Target"
 
-      case DuelManager.request_duel(entity_guid, character_name, target_guid, target_name, position) do
+      case DuelManager.request_duel(
+             entity_guid,
+             character_name,
+             target_guid,
+             target_name,
+             position
+           ) do
         {:ok, _duel_id} ->
           Logger.info("Duel request sent: #{character_name} -> #{target_name}")
 
@@ -248,11 +254,20 @@ defmodule BezgelorWorld.Handler.DuelHandler do
 
     result_packet =
       case duel.end_reason do
-        :defeat -> ServerDuelResult.victory(duel.winner_guid, winner_name, duel.loser_guid, loser_name)
-        :flee -> ServerDuelResult.flee(duel.winner_guid, winner_name, duel.loser_guid, loser_name)
-        :forfeit -> ServerDuelResult.forfeit(duel.winner_guid, winner_name, duel.loser_guid, loser_name)
-        :timeout -> ServerDuelResult.timeout(duel.winner_guid, winner_name, duel.loser_guid, loser_name)
-        _ -> ServerDuelResult.victory(duel.winner_guid, winner_name, duel.loser_guid, loser_name)
+        :defeat ->
+          ServerDuelResult.victory(duel.winner_guid, winner_name, duel.loser_guid, loser_name)
+
+        :flee ->
+          ServerDuelResult.flee(duel.winner_guid, winner_name, duel.loser_guid, loser_name)
+
+        :forfeit ->
+          ServerDuelResult.forfeit(duel.winner_guid, winner_name, duel.loser_guid, loser_name)
+
+        :timeout ->
+          ServerDuelResult.timeout(duel.winner_guid, winner_name, duel.loser_guid, loser_name)
+
+        _ ->
+          ServerDuelResult.victory(duel.winner_guid, winner_name, duel.loser_guid, loser_name)
       end
 
     # In a real implementation, broadcast to all recipient GUIDs
@@ -269,7 +284,8 @@ defmodule BezgelorWorld.Handler.DuelHandler do
   # Private functions
 
   defp send_duel_request_to_target(challenger_guid, challenger_name, target_guid, state) do
-    request_packet = ServerDuelRequest.new(challenger_guid, challenger_name, @request_timeout_seconds)
+    request_packet =
+      ServerDuelRequest.new(challenger_guid, challenger_name, @request_timeout_seconds)
 
     writer = PacketWriter.new()
     {:ok, writer} = ServerDuelRequest.write(request_packet, writer)

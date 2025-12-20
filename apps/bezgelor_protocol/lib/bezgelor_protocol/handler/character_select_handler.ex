@@ -66,7 +66,10 @@ defmodule BezgelorProtocol.Handler.CharacterSelectHandler do
   defp do_select(account_id, character_id, state) do
     case Characters.get_character(account_id, character_id) do
       nil ->
-        Logger.warning("Character #{character_id} not found or doesn't belong to account #{account_id}")
+        Logger.warning(
+          "Character #{character_id} not found or doesn't belong to account #{account_id}"
+        )
+
         {:error, :character_not_found}
 
       character ->
@@ -90,40 +93,65 @@ defmodule BezgelorProtocol.Handler.CharacterSelectHandler do
         player_guid = character.id + 0x2000_0000
 
         # Build packets
-        world_enter_data = encode_packet(%ServerWorldEnter{} |> struct(ServerWorldEnter.from_spawn(spawn) |> Map.from_struct()))
+        world_enter_data =
+          encode_packet(
+            %ServerWorldEnter{}
+            |> struct(ServerWorldEnter.from_spawn(spawn) |> Map.from_struct())
+          )
+
         character_flags_data = encode_packet(%ServerCharacterFlagsUpdated{flags: 0})
         entity_struct = ServerEntityCreate.from_character(character, spawn)
-        Logger.debug("ServerEntityCreate struct - visible_items: #{inspect(entity_struct.visible_items)}, bones: #{length(entity_struct.bones)}")
+
+        Logger.debug(
+          "ServerEntityCreate struct - visible_items: #{inspect(entity_struct.visible_items)}, bones: #{length(entity_struct.bones)}"
+        )
+
         entity_create_data = encode_packet(entity_struct)
         Logger.debug("ServerEntityCreate packet size: #{byte_size(entity_create_data)} bytes")
         # NexusForever sends these after ServerEntityCreate for player entities
-        path_type_data = encode_packet(%ServerSetUnitPathType{unit_id: player_guid, path: character.active_path || 0})
+        path_type_data =
+          encode_packet(%ServerSetUnitPathType{
+            unit_id: player_guid,
+            path: character.active_path || 0
+          })
+
         player_changed_data = encode_packet(%ServerPlayerChanged{guid: player_guid, unknown1: 1})
         time_of_day_data = encode_packet(ServerTimeOfDay.now())
         housing_neighbors_data = encode_packet(%ServerHousingNeighbors{})
-        instance_settings_data = encode_packet(%ServerInstanceSettings{client_entity_send_update_interval: 125})
-        movement_control_data = encode_packet(%ServerMovementControl{
-          ticket: 1,
-          immediate: true,
-          unit_id: player_guid
-        })
+
+        instance_settings_data =
+          encode_packet(%ServerInstanceSettings{client_entity_send_update_interval: 125})
+
+        movement_control_data =
+          encode_packet(%ServerMovementControl{
+            ticket: 1,
+            immediate: true,
+            unit_id: player_guid
+          })
+
         path_initialise_data = encode_packet(ServerPathInitialise.from_character(character))
 
         # Load inventory items for the character
-        inventory_items = Inventory.get_items(character.id)
-        inventory_maps = Enum.map(inventory_items, fn item ->
-          %{
-            id: item.id,
-            item_id: item.item_id,
-            container_type: item.container_type,
-            slot: item.slot,
-            quantity: item.quantity,
-            durability: item.durability,
-            charges: 0
-          }
-        end)
+        inventory_items =
+          character.id
+          |> Inventory.get_items()
+          |> Enum.reject(&(&1.container_type == :ability))
 
-        player_create_data = encode_packet(ServerPlayerCreate.from_character(character, inventory_maps))
+        inventory_maps =
+          Enum.map(inventory_items, fn item ->
+            %{
+              id: item.id,
+              item_id: item.item_id,
+              container_type: item.container_type,
+              slot: item.slot,
+              quantity: item.quantity,
+              durability: item.durability,
+              charges: 0
+            }
+          end)
+
+        player_create_data =
+          encode_packet(ServerPlayerCreate.from_character(character, inventory_maps))
 
         # Store character info in session for WorldEntryHandler
         state = put_in(state.session_data[:character_id], character.id)
@@ -137,7 +165,9 @@ defmodule BezgelorProtocol.Handler.CharacterSelectHandler do
         # Set character metadata for log tracing
         Logger.metadata(char: character.name)
 
-        Logger.info("Account #{account_id} entering world with character '#{character.name}' (ID: #{character.id})")
+        Logger.info(
+          "Account #{account_id} entering world with character '#{character.name}' (ID: #{character.id})"
+        )
 
         # Register player entity with zone instance for visibility tracking
         # This enables creature AI processing for zones with players
@@ -147,6 +177,7 @@ defmodule BezgelorProtocol.Handler.CharacterSelectHandler do
           name: character.name,
           position: spawn.position
         }
+
         BezgelorWorld.Zone.Instance.add_entity({spawn.world_id, 1}, player_entity)
 
         # Send all initialization packets (order matters!)
@@ -161,19 +192,20 @@ defmodule BezgelorProtocol.Handler.CharacterSelectHandler do
         # 8. Instance settings (difficulty, etc.)
         # 9. Movement control - gives player control of their character
         # 10. Player create - full player state (inventory, currencies, etc.)
-        {:reply_multi_world_encrypted, [
-          {:server_world_enter, world_enter_data},
-          {:server_character_flags_updated, character_flags_data},
-          {:server_entity_create, entity_create_data},
-          {:server_set_unit_path_type, path_type_data},
-          {:server_player_changed, player_changed_data},
-          {:server_path_initialise, path_initialise_data},
-          {:server_time_of_day, time_of_day_data},
-          {:server_housing_neighbors, housing_neighbors_data},
-          {:server_instance_settings, instance_settings_data},
-          {:server_movement_control, movement_control_data},
-          {:server_player_create, player_create_data}
-        ], state}
+        {:reply_multi_world_encrypted,
+         [
+           {:server_world_enter, world_enter_data},
+           {:server_character_flags_updated, character_flags_data},
+           {:server_entity_create, entity_create_data},
+           {:server_set_unit_path_type, path_type_data},
+           {:server_player_changed, player_changed_data},
+           {:server_path_initialise, path_initialise_data},
+           {:server_time_of_day, time_of_day_data},
+           {:server_housing_neighbors, housing_neighbors_data},
+           {:server_instance_settings, instance_settings_data},
+           {:server_movement_control, movement_control_data},
+           {:server_player_create, player_create_data}
+         ], state}
     end
   end
 

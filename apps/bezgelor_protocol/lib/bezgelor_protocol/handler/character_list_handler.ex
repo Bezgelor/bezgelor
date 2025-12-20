@@ -97,7 +97,10 @@ defmodule BezgelorProtocol.Handler.CharacterListHandler do
         |> Enum.map(fn char -> {char.id, get_gear_visuals(char.id, char.class)} end)
         |> Map.new()
 
-      character_list = ServerCharacterList.from_characters(characters, remaining_slots, %{gear: gear_by_character})
+      character_list =
+        ServerCharacterList.from_characters(characters, remaining_slots, %{
+          gear: gear_by_character
+        })
 
       # Send all packets as encrypted world packets
       responses = [

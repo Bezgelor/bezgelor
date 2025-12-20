@@ -73,35 +73,58 @@ defmodule BezgelorWorld.Path.SessionPathManager do
   # ============================================================================
 
   # Soldier mission types (pathTypeEnum=0)
-  @type_holdout 0           # 98 missions - Defend against waves
-  @type_assassination 4     # 71 missions - Kill specific target
-  @type_swat 5              # 33 missions - Clear area of enemies
-  @type_demolition 6        # 26 missions - Destroy objects
-  @type_rescue 7            # 51 missions - Save/escort NPCs
+  # 98 missions - Defend against waves
+  @type_holdout 0
+  # 71 missions - Kill specific target
+  @type_assassination 4
+  # 33 missions - Clear area of enemies
+  @type_swat 5
+  # 26 missions - Destroy objects
+  @type_demolition 6
+  # 51 missions - Save/escort NPCs
+  @type_rescue 7
 
   # Settler mission types (pathTypeEnum=1)
-  @type_infrastructure 19   # 68 missions - Build/repair structures
-  @type_civil_service 21    # 42 missions - Help NPCs
-  @type_cache 25            # 47 missions - Find hidden caches
-  @type_project 26          # 44 missions - Major building projects
-  @type_depot 27            # 45 missions - Place buff depots
+  # 68 missions - Build/repair structures
+  @type_infrastructure 19
+  # 42 missions - Help NPCs
+  @type_civil_service 21
+  # 47 missions - Find hidden caches
+  @type_cache 25
+  # 44 missions - Major building projects
+  @type_project 26
+  # 45 missions - Place buff depots
+  @type_depot 27
 
   # Scientist mission types (pathTypeEnum=2)
-  @type_scan 2              # 163 missions - Scan creatures/objects
-  @type_datacube 14         # 57 missions - Find lore datacubes
-  @type_field_study 20      # 9 missions - Observe creature behavior
-  @type_specimen 22         # 13 missions - Collect specimens
-  @type_biology 23          # 16 missions - Analyze creatures
-  @type_archaeology 24      # 17 missions - Discover artifacts
+  # 163 missions - Scan creatures/objects
+  @type_scan 2
+  # 57 missions - Find lore datacubes
+  @type_datacube 14
+  # 9 missions - Observe creature behavior
+  @type_field_study 20
+  # 13 missions - Collect specimens
+  @type_specimen 22
+  # 16 missions - Analyze creatures
+  @type_biology 23
+  # 17 missions - Discover artifacts
+  @type_archaeology 24
 
   # Explorer mission types (pathTypeEnum=3)
-  @type_cartography 3       # 23 missions - Map unexplored areas
-  @type_surveillance 12     # 36 missions - Observe/photograph
-  @type_operations 13       # 56 missions - Complete objectives
-  @type_vista 15            # 82 missions - Reach locations (jumping puzzles)
-  @type_tracking 16         # 20 missions - Follow trails
-  @type_scavenger_hunt 17   # 22 missions - Find hidden items
-  @type_stake_claim 18      # 25 missions - Claim territory
+  # 23 missions - Map unexplored areas
+  @type_cartography 3
+  # 36 missions - Observe/photograph
+  @type_surveillance 12
+  # 56 missions - Complete objectives
+  @type_operations 13
+  # 82 missions - Reach locations (jumping puzzles)
+  @type_vista 15
+  # 20 missions - Follow trails
+  @type_tracking 16
+  # 22 missions - Find hidden items
+  @type_scavenger_hunt 17
+  # 25 missions - Claim territory
+  @type_stake_claim 18
 
   # Path type constants (used for documentation, suppress unused warning)
   # Soldier=0, Settler=1, Scientist=2, Explorer=3
@@ -120,8 +143,11 @@ defmodule BezgelorWorld.Path.SessionPathManager do
     active_missions = session_data[:active_path_missions] || %{}
 
     {updated_missions, packets} =
-      Enum.reduce(active_missions, {%{}, []}, fn {mission_id, mission}, {missions_acc, packets_acc} ->
-        {updated_mission, mission_packets} = process_mission_event(mission, event_type, event_data)
+      Enum.reduce(active_missions, {%{}, []}, fn {mission_id, mission},
+                                                 {missions_acc, packets_acc} ->
+        {updated_mission, mission_packets} =
+          process_mission_event(mission, event_type, event_data)
+
         {Map.put(missions_acc, mission_id, updated_mission), packets_acc ++ mission_packets}
       end)
 
@@ -146,7 +172,8 @@ defmodule BezgelorWorld.Path.SessionPathManager do
 
   Loads available missions for the player's path in the given zone.
   """
-  @spec initialize_zone_missions(map(), integer(), integer(), integer(), integer()) :: {map(), [{atom(), binary()}]}
+  @spec initialize_zone_missions(map(), integer(), integer(), integer(), integer()) ::
+          {map(), [{atom(), binary()}]}
   def initialize_zone_missions(session_data, _character_id, path_type, world_id, zone_id) do
     # Get completed mission IDs
     completed_ids = session_data[:completed_path_mission_ids] || MapSet.new()
@@ -177,7 +204,9 @@ defmodule BezgelorWorld.Path.SessionPathManager do
 
     updated_session = Map.put(session_data, :active_path_missions, new_missions)
 
-    Logger.debug("Initialized #{length(packets)} path missions for zone #{zone_id}, path #{path_name(path_type)}")
+    Logger.debug(
+      "Initialized #{length(packets)} path missions for zone #{zone_id}, path #{path_name(path_type)}"
+    )
 
     {updated_session, packets}
   end
@@ -185,7 +214,8 @@ defmodule BezgelorWorld.Path.SessionPathManager do
   @doc """
   Activate a specific mission (e.g., when approaching location).
   """
-  @spec activate_mission(map(), integer(), integer()) :: {map(), [{atom(), binary()}]} | {:error, term()}
+  @spec activate_mission(map(), integer(), integer()) ::
+          {map(), [{atom(), binary()}]} | {:error, term()}
   def activate_mission(session_data, _character_id, mission_id) do
     case Store.get_path_mission(mission_id) do
       {:ok, mission_data} ->
@@ -440,7 +470,12 @@ defmodule BezgelorWorld.Path.SessionPathManager do
     mission.object_id == object_id
   end
 
-  defp matches_event?(@type_operations, :complete_objective, %{objective_id: objective_id}, mission) do
+  defp matches_event?(
+         @type_operations,
+         :complete_objective,
+         %{objective_id: objective_id},
+         mission
+       ) do
     mission.object_id == objective_id
   end
 
@@ -511,7 +546,8 @@ defmodule BezgelorWorld.Path.SessionPathManager do
     Store.get_zone_path_missions(world_id, zone_id, path_type)
   end
 
-  defp faction_matches?(0, _player_faction), do: true  # Both factions
+  # Both factions
+  defp faction_matches?(0, _player_faction), do: true
   defp faction_matches?(mission_faction, player_faction), do: mission_faction == player_faction
 
   defp prerequisite_met?(0, _completed_ids), do: true
@@ -564,22 +600,26 @@ defmodule BezgelorWorld.Path.SessionPathManager do
     end
   end
 
-  defp in_mission_area?(_mission, _zone_id), do: true  # Simplified for now
+  # Simplified for now
+  defp in_mission_area?(_mission, _zone_id), do: true
 
-  defp creature_in_target_list?(_mission, _creature_id), do: true  # Simplified for now
+  # Simplified for now
+  defp creature_in_target_list?(_mission, _creature_id), do: true
 
   defp build_mission_update_packet(mission_id, mission_state) do
-    {:server_path_mission_update, %ServerPathMissionUpdate{
-      mission_id: mission_id,
-      progress: mission_state.progress
-    }}
+    {:server_path_mission_update,
+     %ServerPathMissionUpdate{
+       mission_id: mission_id,
+       progress: mission_state.progress
+     }}
   end
 
   defp build_completion_packet(mission_id, xp_reward) do
-    {:server_path_mission_complete, %ServerPathMissionComplete{
-      mission_id: mission_id,
-      xp_reward: xp_reward
-    }}
+    {:server_path_mission_complete,
+     %ServerPathMissionComplete{
+       mission_id: mission_id,
+       xp_reward: xp_reward
+     }}
   end
 
   defp path_name(0), do: "Soldier"

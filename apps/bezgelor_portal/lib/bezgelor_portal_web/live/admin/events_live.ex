@@ -28,11 +28,15 @@ defmodule BezgelorPortalWeb.Admin.EventsLive do
        page_title: "Event Manager",
        active_tab: :events,
        show_schedule_modal: false,
-       schedule_form: %{"event_id" => "", "zone_id" => "", "trigger_type" => "interval", "interval_hours" => "4"},
+       schedule_form: %{
+         "event_id" => "",
+         "zone_id" => "",
+         "trigger_type" => "interval",
+         "interval_hours" => "4"
+       },
        countdown: @refresh_interval
      )
-     |> load_data(),
-     layout: {BezgelorPortalWeb.Layouts, :admin}}
+     |> load_data(), layout: {BezgelorPortalWeb.Layouts, :admin}}
   end
 
   @impl true
@@ -66,8 +70,8 @@ defmodule BezgelorPortalWeb.Admin.EventsLive do
           <span>s</span>
         </div>
       </div>
-
-      <!-- Tabs -->
+      
+    <!-- Tabs -->
       <div role="tablist" class="tabs tabs-boxed bg-base-100 p-1 w-fit">
         <button
           :for={tab <- [:events, :world_bosses, :schedules]}
@@ -80,8 +84,8 @@ defmodule BezgelorPortalWeb.Admin.EventsLive do
           {tab_label(tab)}
         </button>
       </div>
-
-      <!-- Tab Content -->
+      
+    <!-- Tab Content -->
       <%= case @active_tab do %>
         <% :events -> %>
           <.events_tab events={@active_events} permissions={@permissions} />
@@ -215,7 +219,9 @@ defmodule BezgelorPortalWeb.Admin.EventsLive do
                     </td>
                     <td>
                       <%= if boss.spawn_window_start && boss.spawn_window_end do %>
-                        {format_datetime(boss.spawn_window_start)} - {format_datetime(boss.spawn_window_end)}
+                        {format_datetime(boss.spawn_window_start)} - {format_datetime(
+                          boss.spawn_window_end
+                        )}
                       <% else %>
                         <span class="text-base-content/50">Not set</span>
                       <% end %>
@@ -276,8 +282,7 @@ defmodule BezgelorPortalWeb.Admin.EventsLive do
               class="btn btn-primary btn-sm"
               phx-click="show_schedule_modal"
             >
-              <.icon name="hero-plus" class="size-4" />
-              Add Schedule
+              <.icon name="hero-plus" class="size-4" /> Add Schedule
             </button>
           </div>
 
@@ -329,30 +334,52 @@ defmodule BezgelorPortalWeb.Admin.EventsLive do
           <% end %>
         </div>
       </div>
-
-      <!-- Schedule Modal -->
+      
+    <!-- Schedule Modal -->
       <.modal :if={@show_modal} id="schedule-modal" show on_cancel={JS.push("hide_schedule_modal")}>
         <:title>Create Event Schedule</:title>
         <form phx-submit="create_schedule" class="space-y-4">
           <div class="form-control">
             <label class="label"><span class="label-text">Event ID</span></label>
-            <input type="number" name="event_id" value={@form["event_id"]} class="input input-bordered" required />
+            <input
+              type="number"
+              name="event_id"
+              value={@form["event_id"]}
+              class="input input-bordered"
+              required
+            />
           </div>
           <div class="form-control">
             <label class="label"><span class="label-text">Zone ID</span></label>
-            <input type="number" name="zone_id" value={@form["zone_id"]} class="input input-bordered" required />
+            <input
+              type="number"
+              name="zone_id"
+              value={@form["zone_id"]}
+              class="input input-bordered"
+              required
+            />
           </div>
           <div class="form-control">
             <label class="label"><span class="label-text">Trigger Type</span></label>
             <select name="trigger_type" class="select select-bordered">
-              <option value="interval" selected={@form["trigger_type"] == "interval"}>Interval</option>
-              <option value="time_of_day" selected={@form["trigger_type"] == "time_of_day"}>Time of Day</option>
+              <option value="interval" selected={@form["trigger_type"] == "interval"}>
+                Interval
+              </option>
+              <option value="time_of_day" selected={@form["trigger_type"] == "time_of_day"}>
+                Time of Day
+              </option>
               <option value="manual" selected={@form["trigger_type"] == "manual"}>Manual Only</option>
             </select>
           </div>
           <div class="form-control">
             <label class="label"><span class="label-text">Interval (hours)</span></label>
-            <input type="number" name="interval_hours" value={@form["interval_hours"]} class="input input-bordered" min="1" />
+            <input
+              type="number"
+              name="interval_hours"
+              value={@form["interval_hours"]}
+              class="input input-bordered"
+              min="1"
+            />
           </div>
           <div class="modal-action">
             <button type="button" class="btn" phx-click="hide_schedule_modal">Cancel</button>
@@ -366,19 +393,37 @@ defmodule BezgelorPortalWeb.Admin.EventsLive do
 
   attr :status, :atom, required: true
 
-  defp event_status_badge(%{status: :pending} = assigns), do: ~H|<span class="badge badge-ghost">Pending</span>|
-  defp event_status_badge(%{status: :active} = assigns), do: ~H|<span class="badge badge-success">Active</span>|
-  defp event_status_badge(%{status: :completed} = assigns), do: ~H|<span class="badge badge-info">Completed</span>|
-  defp event_status_badge(%{status: :failed} = assigns), do: ~H|<span class="badge badge-error">Failed</span>|
-  defp event_status_badge(%{status: :cancelled} = assigns), do: ~H|<span class="badge badge-warning">Cancelled</span>|
+  defp event_status_badge(%{status: :pending} = assigns),
+    do: ~H|<span class="badge badge-ghost">Pending</span>|
+
+  defp event_status_badge(%{status: :active} = assigns),
+    do: ~H|<span class="badge badge-success">Active</span>|
+
+  defp event_status_badge(%{status: :completed} = assigns),
+    do: ~H|<span class="badge badge-info">Completed</span>|
+
+  defp event_status_badge(%{status: :failed} = assigns),
+    do: ~H|<span class="badge badge-error">Failed</span>|
+
+  defp event_status_badge(%{status: :cancelled} = assigns),
+    do: ~H|<span class="badge badge-warning">Cancelled</span>|
+
   defp event_status_badge(assigns), do: ~H|<span class="badge">{@status}</span>|
 
   attr :status, :atom, required: true
 
-  defp boss_status_badge(%{status: :waiting} = assigns), do: ~H|<span class="badge badge-ghost">Waiting</span>|
-  defp boss_status_badge(%{status: :spawned} = assigns), do: ~H|<span class="badge badge-success">Spawned</span>|
-  defp boss_status_badge(%{status: :engaged} = assigns), do: ~H|<span class="badge badge-warning">Engaged</span>|
-  defp boss_status_badge(%{status: :dead} = assigns), do: ~H|<span class="badge badge-error">Dead</span>|
+  defp boss_status_badge(%{status: :waiting} = assigns),
+    do: ~H|<span class="badge badge-ghost">Waiting</span>|
+
+  defp boss_status_badge(%{status: :spawned} = assigns),
+    do: ~H|<span class="badge badge-success">Spawned</span>|
+
+  defp boss_status_badge(%{status: :engaged} = assigns),
+    do: ~H|<span class="badge badge-warning">Engaged</span>|
+
+  defp boss_status_badge(%{status: :dead} = assigns),
+    do: ~H|<span class="badge badge-error">Dead</span>|
+
   defp boss_status_badge(assigns), do: ~H|<span class="badge">{@status}</span>|
 
   # Event handlers
@@ -531,25 +576,27 @@ defmodule BezgelorPortalWeb.Admin.EventsLive do
     permissions = Authorization.get_account_permissions(admin) |> Enum.map(& &1.key)
 
     # Get active events from world server via Portal
-    active_events = Portal.list_active_events()
-    |> Enum.map(fn event ->
-      %{
-        id: event[:id] || event[:event_instance_id],
-        event_id: event[:event_id],
-        zone_id: event[:zone_id],
-        status: event[:status] || :active,
-        current_phase: event[:current_phase] || 1,
-        max_phases: event[:max_phases],
-        progress: event[:progress] || 0,
-        participant_count: event[:participant_count] || 0,
-        started_at: event[:started_at]
-      }
-    end)
+    active_events =
+      Portal.list_active_events()
+      |> Enum.map(fn event ->
+        %{
+          id: event[:id] || event[:event_instance_id],
+          event_id: event[:event_id],
+          zone_id: event[:zone_id],
+          status: event[:status] || :active,
+          current_phase: event[:current_phase] || 1,
+          max_phases: event[:max_phases],
+          progress: event[:progress] || 0,
+          participant_count: event[:participant_count] || 0,
+          started_at: event[:started_at]
+        }
+      end)
 
     # Get world boss spawns from database and Portal
-    world_bosses = (PublicEvents.get_waiting_bosses() ++ get_spawned_bosses())
-    |> Enum.concat(Portal.list_world_bosses())
-    |> Enum.uniq_by(& &1.boss_id)
+    world_bosses =
+      (PublicEvents.get_waiting_bosses() ++ get_spawned_bosses())
+      |> Enum.concat(Portal.list_world_bosses())
+      |> Enum.uniq_by(& &1.boss_id)
 
     # Get schedules
     schedules = get_all_schedules()

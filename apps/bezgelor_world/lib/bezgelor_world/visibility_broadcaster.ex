@@ -22,7 +22,8 @@ defmodule BezgelorWorld.VisibilityBroadcaster do
 
   Called when a player enters a zone or becomes visible.
   """
-  @spec broadcast_player_spawn(map(), non_neg_integer(), non_neg_integer(), non_neg_integer()) :: :ok
+  @spec broadcast_player_spawn(map(), non_neg_integer(), non_neg_integer(), non_neg_integer()) ::
+          :ok
   def broadcast_player_spawn(character, zone_id, instance_id, entity_guid) do
     # Build spawn location from character (uses location_x/y/z fields)
     spawn = %{
@@ -41,8 +42,15 @@ defmodule BezgelorWorld.VisibilityBroadcaster do
     case serialize_packet(entity_packet) do
       {:ok, packet_data} ->
         # Broadcast to zone, excluding the spawning player
-        ZoneInstance.broadcast({zone_id, instance_id}, {:server_entity_create, packet_data, entity_guid})
-        Logger.debug("[Visibility] Broadcast player spawn: #{character.name} (guid=#{entity_guid}) to zone #{zone_id}")
+        ZoneInstance.broadcast(
+          {zone_id, instance_id},
+          {:server_entity_create, packet_data, entity_guid}
+        )
+
+        Logger.debug(
+          "[Visibility] Broadcast player spawn: #{character.name} (guid=#{entity_guid}) to zone #{zone_id}"
+        )
+
         :ok
 
       {:error, reason} ->
@@ -56,7 +64,8 @@ defmodule BezgelorWorld.VisibilityBroadcaster do
 
   Called when a player leaves a zone, disconnects, or becomes invisible.
   """
-  @spec broadcast_player_despawn(non_neg_integer(), non_neg_integer(), non_neg_integer(), atom()) :: :ok
+  @spec broadcast_player_despawn(non_neg_integer(), non_neg_integer(), non_neg_integer(), atom()) ::
+          :ok
   def broadcast_player_despawn(entity_guid, zone_id, instance_id, reason \\ :out_of_range) do
     # Build entity destroy packet
     destroy_packet = %ServerEntityDestroy{
@@ -68,12 +77,22 @@ defmodule BezgelorWorld.VisibilityBroadcaster do
     case serialize_packet(destroy_packet) do
       {:ok, packet_data} ->
         # Broadcast to zone, excluding the despawning player
-        ZoneInstance.broadcast({zone_id, instance_id}, {:server_entity_destroy, packet_data, entity_guid})
-        Logger.debug("[Visibility] Broadcast player despawn: guid=#{entity_guid} reason=#{reason} to zone #{zone_id}")
+        ZoneInstance.broadcast(
+          {zone_id, instance_id},
+          {:server_entity_destroy, packet_data, entity_guid}
+        )
+
+        Logger.debug(
+          "[Visibility] Broadcast player despawn: guid=#{entity_guid} reason=#{reason} to zone #{zone_id}"
+        )
+
         :ok
 
       {:error, reason} ->
-        Logger.warning("[Visibility] Failed to serialize player despawn packet: #{inspect(reason)}")
+        Logger.warning(
+          "[Visibility] Failed to serialize player despawn packet: #{inspect(reason)}"
+        )
+
         :ok
     end
   end
@@ -85,10 +104,19 @@ defmodule BezgelorWorld.VisibilityBroadcaster do
   these to other players so they see the movement. The packet is forwarded
   as-is since it contains all the movement commands.
   """
-  @spec broadcast_player_movement(non_neg_integer(), binary(), non_neg_integer(), non_neg_integer()) :: :ok
+  @spec broadcast_player_movement(
+          non_neg_integer(),
+          binary(),
+          non_neg_integer(),
+          non_neg_integer()
+        ) :: :ok
   def broadcast_player_movement(entity_guid, movement_data, zone_id, instance_id) do
     # Forward movement packet to zone, excluding the moving player
-    ZoneInstance.broadcast({zone_id, instance_id}, {:server_entity_command, movement_data, entity_guid})
+    ZoneInstance.broadcast(
+      {zone_id, instance_id},
+      {:server_entity_command, movement_data, entity_guid}
+    )
+
     :ok
   end
 
@@ -98,7 +126,12 @@ defmodule BezgelorWorld.VisibilityBroadcaster do
   Used when we need to send a position update synthesized from server state
   rather than relaying client movement.
   """
-  @spec broadcast_player_position(non_neg_integer(), {float(), float(), float()}, non_neg_integer(), non_neg_integer()) :: :ok
+  @spec broadcast_player_position(
+          non_neg_integer(),
+          {float(), float(), float()},
+          non_neg_integer(),
+          non_neg_integer()
+        ) :: :ok
   def broadcast_player_position(entity_guid, position, zone_id, instance_id) do
     alias BezgelorProtocol.Packets.World.ServerEntityCommand
 
@@ -115,7 +148,11 @@ defmodule BezgelorWorld.VisibilityBroadcaster do
 
     case serialize_packet(command_packet) do
       {:ok, packet_data} ->
-        ZoneInstance.broadcast({zone_id, instance_id}, {:server_entity_command, packet_data, entity_guid})
+        ZoneInstance.broadcast(
+          {zone_id, instance_id},
+          {:server_entity_command, packet_data, entity_guid}
+        )
+
         :ok
 
       {:error, reason} ->
@@ -144,7 +181,10 @@ defmodule BezgelorWorld.VisibilityBroadcaster do
       if session.entity_guid do
         # We need character data to build the entity packet
         # For now, just log - full implementation requires character lookup
-        Logger.debug("[Visibility] Would send existing player #{session.character_name} to connection")
+        Logger.debug(
+          "[Visibility] Would send existing player #{session.character_name} to connection"
+        )
+
         # TODO: Fetch character data and send ServerEntityCreate
       end
     end)

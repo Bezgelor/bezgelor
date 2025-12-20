@@ -15,7 +15,15 @@ defmodule BezgelorProtocol.Packets.World.ClientSplitStack do
 
   alias BezgelorProtocol.PacketReader
 
-  defstruct [:src_container, :src_bag_index, :src_slot, :quantity, :dst_container, :dst_bag_index, :dst_slot]
+  defstruct [
+    :src_container,
+    :src_bag_index,
+    :src_slot,
+    :quantity,
+    :dst_container,
+    :dst_bag_index,
+    :dst_slot
+  ]
 
   @impl true
   def opcode, do: :client_split_stack

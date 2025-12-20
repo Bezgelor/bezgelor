@@ -36,7 +36,7 @@ defmodule BezgelorProtocol.Handler.StatisticsWatchdogHandler do
         if packet.time_to_buffer_middle > 2000 do
           Logger.warning(
             "[Telemetry] #{character_name} - Client performance issue: " <>
-            "buffer time #{Float.round(packet.time_to_buffer_middle, 1)}ms (should be ~1000ms)"
+              "buffer time #{Float.round(packet.time_to_buffer_middle, 1)}ms (should be ~1000ms)"
           )
         end
 

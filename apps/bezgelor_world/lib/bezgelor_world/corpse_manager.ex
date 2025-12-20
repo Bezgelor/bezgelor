@@ -123,13 +123,17 @@ defmodule BezgelorWorld.CorpseManager do
 
     # Schedule despawn
     despawn_delay = corpse.despawn_at - System.monotonic_time(:millisecond)
+
     if despawn_delay > 0 do
       Process.send_after(self(), {:despawn, corpse_guid}, despawn_delay)
     end
 
     state = %{state | corpses: corpses, zone_index: zone_index}
 
-    Logger.debug("Spawned corpse #{corpse_guid} from creature #{creature.guid} in zone #{zone_id}")
+    Logger.debug(
+      "Spawned corpse #{corpse_guid} from creature #{creature.guid} in zone #{zone_id}"
+    )
+
     {:reply, {:ok, corpse_guid}, state}
   end
 
@@ -152,7 +156,10 @@ defmodule BezgelorWorld.CorpseManager do
         corpses = Map.put(state.corpses, corpse_guid, updated_corpse)
         state = %{state | corpses: corpses}
 
-        Logger.debug("Player #{player_guid} looted corpse #{corpse_guid}: #{length(loot_items)} items")
+        Logger.debug(
+          "Player #{player_guid} looted corpse #{corpse_guid}: #{length(loot_items)} items"
+        )
+
         {:reply, {:ok, loot_items}, state}
     end
   end

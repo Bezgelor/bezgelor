@@ -212,7 +212,8 @@ defmodule BezgelorProtocol.Packets.World.ServerPlayerCreate do
   defp get_class_proficiencies(5), do: @proficiency_medium_armor ||| @proficiency_claws
   defp get_class_proficiencies(7), do: @proficiency_light_armor ||| @proficiency_pistols
   # Default: allow all armor types if class unknown
-  defp get_class_proficiencies(_), do: @proficiency_heavy_armor ||| @proficiency_medium_armor ||| @proficiency_light_armor
+  defp get_class_proficiencies(_),
+    do: @proficiency_heavy_armor ||| @proficiency_medium_armor ||| @proficiency_light_armor
 
   # Write all inventory items
   defp write_inventory_items(writer, []), do: writer
@@ -307,6 +308,6 @@ defmodule BezgelorProtocol.Packets.World.ServerPlayerCreate do
   # Generate a unique item guid from location and slot
   defp generate_item_guid(item) do
     container_int = location_to_int(item[:container_type])
-    (container_int <<< 32) ||| (item[:slot] || 0)
+    container_int <<< 32 ||| (item[:slot] || 0)
   end
 end

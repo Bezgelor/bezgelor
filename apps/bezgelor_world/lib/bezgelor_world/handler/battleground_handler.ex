@@ -63,7 +63,14 @@ defmodule BezgelorWorld.Handler.BattlegroundHandler do
     level = Map.get(state, :level, 50)
     class_id = Map.get(state, :class_id, 1)
 
-    case BattlegroundQueue.join_queue(player_guid, player_name, faction, level, class_id, battleground_id) do
+    case BattlegroundQueue.join_queue(
+           player_guid,
+           player_name,
+           faction,
+           level,
+           class_id,
+           battleground_id
+         ) do
       {:ok, estimated_wait} ->
         Logger.debug("Player #{player_name} joined BG queue #{battleground_id}")
         packet = build_queue_joined_packet(battleground_id, estimated_wait)
@@ -168,25 +175,30 @@ defmodule BezgelorWorld.Handler.BattlegroundHandler do
 
   defp build_queue_joined_packet(battleground_id, estimated_wait) do
     PacketWriter.new()
-    |> PacketWriter.write_u16(0x0B81)  # Server opcode for queue joined
+    # Server opcode for queue joined
+    |> PacketWriter.write_u16(0x0B81)
     |> PacketWriter.write_u32(battleground_id)
     |> PacketWriter.write_u32(estimated_wait)
-    |> PacketWriter.write_u8(1)  # Success
+    # Success
+    |> PacketWriter.write_u8(1)
     |> PacketWriter.flush_bits()
     |> PacketWriter.to_binary()
   end
 
   defp build_queue_left_packet do
     PacketWriter.new()
-    |> PacketWriter.write_u16(0x0B82)  # Server opcode for queue left
-    |> PacketWriter.write_u8(1)  # Success
+    # Server opcode for queue left
+    |> PacketWriter.write_u16(0x0B82)
+    # Success
+    |> PacketWriter.write_u8(1)
     |> PacketWriter.flush_bits()
     |> PacketWriter.to_binary()
   end
 
   defp build_queue_status_packet(status) do
     PacketWriter.new()
-    |> PacketWriter.write_u16(0x0B83)  # Server opcode for queue status
+    # Server opcode for queue status
+    |> PacketWriter.write_u16(0x0B83)
     |> PacketWriter.write_u32(status.battleground_id)
     |> PacketWriter.write_u32(status.wait_time_seconds)
     |> PacketWriter.write_u32(status.estimated_wait)
@@ -198,20 +210,28 @@ defmodule BezgelorWorld.Handler.BattlegroundHandler do
 
   defp build_not_in_queue_packet do
     PacketWriter.new()
-    |> PacketWriter.write_u16(0x0B83)  # Server opcode for queue status
-    |> PacketWriter.write_u32(0)  # No battleground
-    |> PacketWriter.write_u32(0)  # No wait time
-    |> PacketWriter.write_u32(0)  # No estimated wait
-    |> PacketWriter.write_u32(0)  # No position
-    |> PacketWriter.write_u8(0)  # No faction
+    # Server opcode for queue status
+    |> PacketWriter.write_u16(0x0B83)
+    # No battleground
+    |> PacketWriter.write_u32(0)
+    # No wait time
+    |> PacketWriter.write_u32(0)
+    # No estimated wait
+    |> PacketWriter.write_u32(0)
+    # No position
+    |> PacketWriter.write_u32(0)
+    # No faction
+    |> PacketWriter.write_u8(0)
     |> PacketWriter.flush_bits()
     |> PacketWriter.to_binary()
   end
 
   defp build_ready_confirmed_packet do
     PacketWriter.new()
-    |> PacketWriter.write_u16(0x0B84)  # Server opcode for ready confirmed
-    |> PacketWriter.write_u8(1)  # Success
+    # Server opcode for ready confirmed
+    |> PacketWriter.write_u16(0x0B84)
+    # Success
+    |> PacketWriter.write_u8(1)
     |> PacketWriter.flush_bits()
     |> PacketWriter.to_binary()
   end
@@ -227,7 +247,8 @@ defmodule BezgelorWorld.Handler.BattlegroundHandler do
       end
 
     PacketWriter.new()
-    |> PacketWriter.write_u16(0x0B85)  # Server opcode for queue error
+    # Server opcode for queue error
+    |> PacketWriter.write_u16(0x0B85)
     |> PacketWriter.write_u8(error_code)
     |> PacketWriter.flush_bits()
     |> PacketWriter.to_binary()
@@ -241,7 +262,8 @@ defmodule BezgelorWorld.Handler.BattlegroundHandler do
 
         if objective do
           PacketWriter.new()
-          |> PacketWriter.write_u16(0x0B86)  # Server opcode for objective update
+          # Server opcode for objective update
+          |> PacketWriter.write_u16(0x0B86)
           |> PacketWriter.write_u32(objective_id)
           |> PacketWriter.write_u8(owner_to_int(objective.owner))
           |> PacketWriter.write_f32(objective.progress)
@@ -271,7 +293,8 @@ defmodule BezgelorWorld.Handler.BattlegroundHandler do
   Called by CombatHandler when a kill occurs in a battleground.
   Returns true if the kill was in a battleground context.
   """
-  @spec report_battleground_kill(String.t() | nil, non_neg_integer(), non_neg_integer()) :: boolean()
+  @spec report_battleground_kill(String.t() | nil, non_neg_integer(), non_neg_integer()) ::
+          boolean()
   def report_battleground_kill(nil, _killer_guid, _victim_guid), do: false
 
   def report_battleground_kill(match_id, killer_guid, victim_guid) do

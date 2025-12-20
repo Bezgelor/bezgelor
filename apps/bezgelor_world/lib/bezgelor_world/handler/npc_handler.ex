@@ -14,11 +14,13 @@ defmodule BezgelorWorld.Handler.NpcHandler do
   alias BezgelorData.Store
   alias BezgelorDb.{Characters, Quests}
   alias BezgelorProtocol.PacketReader
+
   alias BezgelorProtocol.Packets.World.{
     ClientNpcInteract,
     ServerDialogStart,
     ServerQuestOffer
   }
+
   alias BezgelorWorld.{CombatBroadcaster, GossipManager, Quest.PrerequisiteChecker}
 
   require Logger
@@ -214,9 +216,14 @@ defmodule BezgelorWorld.Handler.NpcHandler do
           if entry = GossipManager.select_gossip_entry(entries, []) do
             packet = GossipManager.build_gossip_packet(creature, entry)
             send(connection_pid, {:send_packet, packet})
-            Logger.debug("Sent gossip from creature #{creature_id}: text_id #{entry.localizedTextId}")
+
+            Logger.debug(
+              "Sent gossip from creature #{creature_id}: text_id #{entry.localizedTextId}"
+            )
           else
-            Logger.debug("NPC #{creature_id} has gossip set #{gossip_set_id} but no valid entries")
+            Logger.debug(
+              "NPC #{creature_id} has gossip set #{gossip_set_id} but no valid entries"
+            )
           end
         else
           Logger.debug("NPC #{creature_id} has no special interactions")

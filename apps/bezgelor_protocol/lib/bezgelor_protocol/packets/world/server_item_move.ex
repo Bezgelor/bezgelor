@@ -59,7 +59,7 @@ defmodule BezgelorProtocol.Packets.World.ServerItemMove do
   # Format: (location << 8) | slot - matching NexusForever's ItemLocationToDragDropData
   defp encode_drag_drop(location, slot) do
     location_int = location_to_int(location)
-    (location_int <<< 8) ||| slot
+    location_int <<< 8 ||| slot
   end
 
   defp location_to_int(:equipped), do: 0

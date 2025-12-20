@@ -19,10 +19,10 @@ defmodule BezgelorProtocol.Packets.ClientHelloAuthTest do
 
       payload =
         <<16042::little-32>> <>
-        <<String.length(email)::little-32>> <>
-        email_utf16 <>
-        fake_key_a <>
-        fake_m1
+          <<String.length(email)::little-32>> <>
+          email_utf16 <>
+          fake_key_a <>
+          fake_m1
 
       reader = PacketReader.new(payload)
       {:ok, packet, _reader} = ClientHelloAuth.read(reader)
@@ -44,10 +44,10 @@ defmodule BezgelorProtocol.Packets.ClientHelloAuthTest do
       # Wrong build version
       payload =
         <<12345::little-32>> <>
-        <<String.length(email)::little-32>> <>
-        email_utf16 <>
-        fake_key_a <>
-        fake_m1
+          <<String.length(email)::little-32>> <>
+          email_utf16 <>
+          fake_key_a <>
+          fake_m1
 
       reader = PacketReader.new(payload)
       {:ok, packet, _reader} = ClientHelloAuth.read(reader)

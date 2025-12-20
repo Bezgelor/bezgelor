@@ -87,7 +87,9 @@ defmodule Mix.Tasks.Bezgelor.Start do
   defp wait_for_database(0), do: Mix.raise("Database failed to start")
 
   defp wait_for_database(retries) do
-    case System.cmd("docker", ["compose", "exec", "-T", "postgres", "pg_isready", "-U", "bezgelor"],
+    case System.cmd(
+           "docker",
+           ["compose", "exec", "-T", "postgres", "pg_isready", "-U", "bezgelor"],
            stderr_to_stdout: true
          ) do
       {_, 0} ->

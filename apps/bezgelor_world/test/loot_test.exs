@@ -33,15 +33,21 @@ defmodule BezgelorWorld.LootTest do
     end
 
     test "group loot requires roll for rare+" do
-      refute LootRules.requires_roll?(%{quality: 2}, :group_loot)  # Uncommon
-      assert LootRules.requires_roll?(%{quality: 3}, :group_loot)  # Rare
-      assert LootRules.requires_roll?(%{quality: 4}, :group_loot)  # Epic
+      # Uncommon
+      refute LootRules.requires_roll?(%{quality: 2}, :group_loot)
+      # Rare
+      assert LootRules.requires_roll?(%{quality: 3}, :group_loot)
+      # Epic
+      assert LootRules.requires_roll?(%{quality: 4}, :group_loot)
     end
 
     test "need before greed requires roll for uncommon+" do
-      refute LootRules.requires_roll?(%{quality: 1}, :need_before_greed)  # Common
-      assert LootRules.requires_roll?(%{quality: 2}, :need_before_greed)  # Uncommon
-      assert LootRules.requires_roll?(%{quality: 3}, :need_before_greed)  # Rare
+      # Common
+      refute LootRules.requires_roll?(%{quality: 1}, :need_before_greed)
+      # Uncommon
+      assert LootRules.requires_roll?(%{quality: 2}, :need_before_greed)
+      # Rare
+      assert LootRules.requires_roll?(%{quality: 3}, :need_before_greed)
     end
   end
 
@@ -155,12 +161,14 @@ defmodule BezgelorWorld.LootTest do
 
   describe "LootRules.calculate_personal_loot/3" do
     test "filters by eligibility" do
-      character = %{class_id: 1}  # Warrior - heavy armor
+      # Warrior - heavy armor
+      character = %{class_id: 1}
 
       loot_table = [
         %{id: 1, armor_type: :heavy, drop_chance: 100},
         %{id: 2, armor_type: :light, drop_chance: 100},
-        %{id: 3, bind_on_pickup: false, drop_chance: 100}  # Anyone can get
+        # Anyone can get
+        %{id: 3, bind_on_pickup: false, drop_chance: 100}
       ]
 
       # Seed random for deterministic test
@@ -170,8 +178,10 @@ defmodule BezgelorWorld.LootTest do
 
       # Should include heavy armor and BoE items, not light armor
       item_ids = Enum.map(loot, & &1.id)
-      assert 1 in item_ids or 3 in item_ids  # At least one should drop
-      refute 2 in item_ids  # Light armor shouldn't drop for warrior
+      # At least one should drop
+      assert 1 in item_ids or 3 in item_ids
+      # Light armor shouldn't drop for warrior
+      refute 2 in item_ids
     end
   end
 end

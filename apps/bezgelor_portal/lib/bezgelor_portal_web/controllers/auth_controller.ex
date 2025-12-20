@@ -43,7 +43,9 @@ defmodule BezgelorPortalWeb.AuthController do
   # Handle login callback after TOTP verification - this is called after the user successfully enters their TOTP code
   def callback(conn, %{"totp_verified" => account_id_str, "token" => token}) do
     # Verify the TOTP verified token (valid for 60 seconds)
-    case Phoenix.Token.verify(BezgelorPortalWeb.Endpoint, "totp_verified_login", token, max_age: 60) do
+    case Phoenix.Token.verify(BezgelorPortalWeb.Endpoint, "totp_verified_login", token,
+           max_age: 60
+         ) do
       {:ok, verified_account_id} ->
         # Ensure the account IDs match
         {account_id, _} = Integer.parse(account_id_str)

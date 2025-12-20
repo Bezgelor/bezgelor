@@ -11,20 +11,20 @@ defmodule BezgelorDb.Schema.EventInstance do
   @states [:pending, :active, :completed, :failed, :cancelled]
 
   schema "event_instances" do
-    field :event_id, :integer
-    field :zone_id, :integer
-    field :instance_id, :integer, default: 1
-    field :state, Ecto.Enum, values: @states, default: :pending
-    field :current_phase, :integer, default: 0
-    field :current_wave, :integer, default: 0
-    field :phase_progress, :map, default: %{}
-    field :participant_count, :integer, default: 0
-    field :difficulty_multiplier, :float, default: 1.0
-    field :started_at, :utc_datetime
-    field :ends_at, :utc_datetime
-    field :completed_at, :utc_datetime
+    field(:event_id, :integer)
+    field(:zone_id, :integer)
+    field(:instance_id, :integer, default: 1)
+    field(:state, Ecto.Enum, values: @states, default: :pending)
+    field(:current_phase, :integer, default: 0)
+    field(:current_wave, :integer, default: 0)
+    field(:phase_progress, :map, default: %{})
+    field(:participant_count, :integer, default: 0)
+    field(:difficulty_multiplier, :float, default: 1.0)
+    field(:started_at, :utc_datetime)
+    field(:ends_at, :utc_datetime)
+    field(:completed_at, :utc_datetime)
 
-    has_many :participations, BezgelorDb.Schema.EventParticipation
+    has_many(:participations, BezgelorDb.Schema.EventParticipation)
 
     timestamps(type: :utc_datetime)
   end
@@ -32,8 +32,17 @@ defmodule BezgelorDb.Schema.EventInstance do
   def changeset(instance, attrs) do
     instance
     |> cast(attrs, [
-      :event_id, :zone_id, :instance_id, :state, :current_phase, :current_wave,
-      :phase_progress, :participant_count, :difficulty_multiplier, :started_at, :ends_at
+      :event_id,
+      :zone_id,
+      :instance_id,
+      :state,
+      :current_phase,
+      :current_wave,
+      :phase_progress,
+      :participant_count,
+      :difficulty_multiplier,
+      :started_at,
+      :ends_at
     ])
     |> validate_required([:event_id, :zone_id])
     |> validate_number(:current_phase, greater_than_or_equal_to: 0)
@@ -79,6 +88,7 @@ defmodule BezgelorDb.Schema.EventInstance do
 
   def fail_changeset(instance) do
     now = DateTime.utc_now() |> DateTime.truncate(:second)
+
     instance
     |> change(state: :failed, completed_at: now)
   end

@@ -136,7 +136,8 @@ defmodule BezgelorWorld.Integration.WorldEntryTest do
       >> = payload
 
       assert guid > 0
-      assert entity_type == 1  # player
+      # player
+      assert entity_type == 1
 
       :gen_tcp.close(socket)
     end
@@ -239,14 +240,22 @@ defmodule BezgelorWorld.Integration.WorldEntryTest do
       pos_x::little-float-32,
       pos_y::little-float-32,
       pos_z::little-float-32,
-      0.0::little-float-32,  # rotation_x
-      0.0::little-float-32,  # rotation_y
-      0.0::little-float-32,  # rotation_z
-      0.0::little-float-32,  # velocity_x
-      0.0::little-float-32,  # velocity_y
-      0.0::little-float-32,  # velocity_z
-      0::little-32,          # movement_flags
-      0::little-32           # timestamp
+      # rotation_x
+      0.0::little-float-32,
+      # rotation_y
+      0.0::little-float-32,
+      # rotation_z
+      0.0::little-float-32,
+      # velocity_x
+      0.0::little-float-32,
+      # velocity_y
+      0.0::little-float-32,
+      # velocity_z
+      0.0::little-float-32,
+      # movement_flags
+      0::little-32,
+      # timestamp
+      0::little-32
     >>
   end
 end

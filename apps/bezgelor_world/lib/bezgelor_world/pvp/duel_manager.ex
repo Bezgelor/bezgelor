@@ -81,10 +81,19 @@ defmodule BezgelorWorld.PvP.DuelManager do
   Request a duel with another player.
   Returns {:ok, duel_id} or {:error, reason}.
   """
-  @spec request_duel(non_neg_integer(), String.t(), non_neg_integer(), String.t(), {float(), float(), float()}) ::
+  @spec request_duel(
+          non_neg_integer(),
+          String.t(),
+          non_neg_integer(),
+          String.t(),
+          {float(), float(), float()}
+        ) ::
           {:ok, String.t()} | {:error, atom()}
   def request_duel(challenger_guid, challenger_name, target_guid, target_name, position) do
-    GenServer.call(__MODULE__, {:request_duel, challenger_guid, challenger_name, target_guid, target_name, position})
+    GenServer.call(
+      __MODULE__,
+      {:request_duel, challenger_guid, challenger_name, target_guid, target_name, position}
+    )
   end
 
   @doc """
@@ -170,7 +179,11 @@ defmodule BezgelorWorld.PvP.DuelManager do
   end
 
   @impl true
-  def handle_call({:request_duel, challenger_guid, challenger_name, target_guid, target_name, position}, _from, state) do
+  def handle_call(
+        {:request_duel, challenger_guid, challenger_name, target_guid, target_name, position},
+        _from,
+        state
+      ) do
     cond do
       Map.has_key?(state.player_duels, challenger_guid) ->
         {:reply, {:error, :already_in_duel}, state}
@@ -183,7 +196,8 @@ defmodule BezgelorWorld.PvP.DuelManager do
 
       true ->
         # Create timeout for the request
-        timer_ref = Process.send_after(self(), {:request_timeout, target_guid}, @request_timeout_ms)
+        timer_ref =
+          Process.send_after(self(), {:request_timeout, target_guid}, @request_timeout_ms)
 
         pending = Map.put(state.pending_requests, target_guid, {challenger_guid, timer_ref})
         duel_id = generate_duel_id()
@@ -218,11 +232,13 @@ defmodule BezgelorWorld.PvP.DuelManager do
 
         if accepted do
           # Find the pending duel
-          duel = Enum.find_value(state.duels, fn {_id, d} ->
-            if d.challenger_guid == challenger_guid and d.target_guid == target_guid and d.state == @state_pending do
-              d
-            end
-          end)
+          duel =
+            Enum.find_value(state.duels, fn {_id, d} ->
+              if d.challenger_guid == challenger_guid and d.target_guid == target_guid and
+                   d.state == @state_pending do
+                d
+              end
+            end)
 
           if duel do
             # Start countdown
@@ -230,9 +246,10 @@ defmodule BezgelorWorld.PvP.DuelManager do
             duels = Map.put(state.duels, duel.id, duel)
 
             # Track both players
-            player_duels = state.player_duels
-                          |> Map.put(challenger_guid, duel.id)
-                          |> Map.put(target_guid, duel.id)
+            player_duels =
+              state.player_duels
+              |> Map.put(challenger_guid, duel.id)
+              |> Map.put(target_guid, duel.id)
 
             # Schedule countdown end
             Process.send_after(self(), {:countdown_complete, duel.id}, @countdown_seconds * 1000)
@@ -248,7 +265,8 @@ defmodule BezgelorWorld.PvP.DuelManager do
           duels =
             state.duels
             |> Enum.reject(fn {_id, d} ->
-              d.challenger_guid == challenger_guid and d.target_guid == target_guid and d.state == @state_pending
+              d.challenger_guid == challenger_guid and d.target_guid == target_guid and
+                d.state == @state_pending
             end)
             |> Map.new()
 
@@ -272,7 +290,8 @@ defmodule BezgelorWorld.PvP.DuelManager do
         duels =
           state.duels
           |> Enum.reject(fn {_id, d} ->
-            d.challenger_guid == challenger_guid and d.target_guid == target_guid and d.state == @state_pending
+            d.challenger_guid == challenger_guid and d.target_guid == target_guid and
+              d.state == @state_pending
           end)
           |> Map.new()
 
@@ -392,7 +411,8 @@ defmodule BezgelorWorld.PvP.DuelManager do
         duels =
           state.duels
           |> Enum.reject(fn {_id, d} ->
-            d.challenger_guid == challenger_guid and d.target_guid == target_guid and d.state == @state_pending
+            d.challenger_guid == challenger_guid and d.target_guid == target_guid and
+              d.state == @state_pending
           end)
           |> Map.new()
 
@@ -475,11 +495,12 @@ defmodule BezgelorWorld.PvP.DuelManager do
   defp check_boundary(state, duel, player_guid, {px, py, pz}) do
     {cx, cy, cz} = duel.center
 
-    distance = :math.sqrt(
-      :math.pow(px - cx, 2) +
-      :math.pow(py - cy, 2) +
-      :math.pow(pz - cz, 2)
-    )
+    distance =
+      :math.sqrt(
+        :math.pow(px - cx, 2) +
+          :math.pow(py - cy, 2) +
+          :math.pow(pz - cz, 2)
+      )
 
     is_out_of_bounds = distance > duel.radius
 
@@ -492,9 +513,10 @@ defmodule BezgelorWorld.PvP.DuelManager do
           @out_of_bounds_grace_ms
         )
 
-        duel = %{duel |
-          out_of_bounds_player: player_guid,
-          out_of_bounds_at: System.monotonic_time(:millisecond)
+        duel = %{
+          duel
+          | out_of_bounds_player: player_guid,
+            out_of_bounds_at: System.monotonic_time(:millisecond)
         }
 
         %{state | duels: Map.put(state.duels, duel.id, duel)}
@@ -510,14 +532,18 @@ defmodule BezgelorWorld.PvP.DuelManager do
   end
 
   defp end_duel(state, duel, winner_guid, loser_guid, reason) do
-    winner_name = if duel.challenger_guid == winner_guid, do: duel.challenger_name, else: duel.target_name
-    loser_name = if duel.challenger_guid == loser_guid, do: duel.challenger_name, else: duel.target_name
+    winner_name =
+      if duel.challenger_guid == winner_guid, do: duel.challenger_name, else: duel.target_name
 
-    duel = %{duel |
-      state: @state_ended,
-      winner_guid: winner_guid,
-      loser_guid: loser_guid,
-      end_reason: reason
+    loser_name =
+      if duel.challenger_guid == loser_guid, do: duel.challenger_name, else: duel.target_name
+
+    duel = %{
+      duel
+      | state: @state_ended,
+        winner_guid: winner_guid,
+        loser_guid: loser_guid,
+        end_reason: reason
     }
 
     # Update duel stats asynchronously
@@ -527,9 +553,11 @@ defmodule BezgelorWorld.PvP.DuelManager do
 
     # Clean up
     duels = Map.put(state.duels, duel.id, duel)
-    player_duels = state.player_duels
-                   |> Map.delete(duel.challenger_guid)
-                   |> Map.delete(duel.target_guid)
+
+    player_duels =
+      state.player_duels
+      |> Map.delete(duel.challenger_guid)
+      |> Map.delete(duel.target_guid)
 
     # Schedule cleanup of ended duel
     Process.send_after(self(), {:cleanup_duel, duel.id}, 30_000)

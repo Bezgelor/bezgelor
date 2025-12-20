@@ -104,9 +104,10 @@ defmodule BezgelorWorld.Handler.CombatHandler do
           Logger.info("Player #{entity_guid} respawning (type: #{packet.respawn_type})")
 
           # Restore health in zone instance
-          :ok = ZoneInstance.update_entity({zone_id, instance_id}, entity_guid, fn e ->
-            Entity.respawn(e)
-          end)
+          :ok =
+            ZoneInstance.update_entity({zone_id, instance_id}, entity_guid, fn e ->
+              Entity.respawn(e)
+            end)
 
           # Get updated entity for position
           {:ok, respawned_entity} = ZoneInstance.get_entity({zone_id, instance_id}, entity_guid)

@@ -5,10 +5,10 @@ defmodule BezgelorDb.Schema.ActiveMount do
   @type t :: %__MODULE__{}
 
   schema "active_mounts" do
-    belongs_to :character, BezgelorDb.Schema.Character
+    belongs_to(:character, BezgelorDb.Schema.Character)
 
-    field :mount_id, :integer
-    field :customization, :map, default: %{}
+    field(:mount_id, :integer)
+    field(:customization, :map, default: %{})
 
     timestamps(type: :utc_datetime)
   end

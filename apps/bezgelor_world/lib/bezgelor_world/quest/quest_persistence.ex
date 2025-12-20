@@ -50,7 +50,9 @@ defmodule BezgelorWorld.Quest.QuestPersistence do
     if dirty_quests == [] do
       {:ok, 0, 0, session_data}
     else
-      Logger.debug("Persisting #{length(dirty_quests)} dirty quests for character #{character_id}")
+      Logger.debug(
+        "Persisting #{length(dirty_quests)} dirty quests for character #{character_id}"
+      )
 
       # Persist each dirty quest and track results
       results =
@@ -66,7 +68,10 @@ defmodule BezgelorWorld.Quest.QuestPersistence do
 
       if failure_count > 0 do
         failed_ids = Enum.map(failures, fn {id, _} -> id end)
-        Logger.warning("Failed to persist #{failure_count} quests for character #{character_id}: #{inspect(failed_ids)}")
+
+        Logger.warning(
+          "Failed to persist #{failure_count} quests for character #{character_id}: #{inspect(failed_ids)}"
+        )
       end
 
       # Only clear dirty flags for quests that succeeded
@@ -100,7 +105,10 @@ defmodule BezgelorWorld.Quest.QuestPersistence do
     case Quests.get_quest(character_id, quest_id) do
       nil ->
         # Quest not in DB yet - might be newly accepted
-        Logger.debug("Quest #{quest_id} not found in DB for character #{character_id}, creating...")
+        Logger.debug(
+          "Quest #{quest_id} not found in DB for character #{character_id}, creating..."
+        )
+
         create_quest_record(character_id, session_quest)
 
       db_quest ->
@@ -142,14 +150,16 @@ defmodule BezgelorWorld.Quest.QuestPersistence do
         if success_count > 0 do
           Logger.info("Persisted #{success_count} quests on logout for character #{character_id}")
         end
+
         :ok
 
       {:ok, success_count, failure_count, updated_session_data} when attempts_remaining > 1 ->
         # Some quests failed, retry with remaining dirty quests
         Logger.warning(
           "Quest persistence: #{success_count} succeeded, #{failure_count} failed for character #{character_id}. " <>
-          "Retrying (#{attempts_remaining - 1} attempts remaining)..."
+            "Retrying (#{attempts_remaining - 1} attempts remaining)..."
         )
+
         Process.sleep(@logout_retry_delay_ms * (@logout_max_retries - attempts_remaining + 1))
         persist_with_retry(character_id, updated_session_data, attempts_remaining - 1)
 
@@ -157,8 +167,9 @@ defmodule BezgelorWorld.Quest.QuestPersistence do
         # Final attempt failed
         Logger.error(
           "Quest persistence FAILED after #{@logout_max_retries} attempts for character #{character_id}: " <>
-          "#{success_count} succeeded, #{failure_count} lost"
+            "#{success_count} succeeded, #{failure_count} lost"
         )
+
         :ok
     end
   end
@@ -170,7 +181,10 @@ defmodule BezgelorWorld.Quest.QuestPersistence do
 
     case Quests.accept_quest(character_id, session_quest.quest_id, progress: progress) do
       {:ok, _quest} ->
-        Logger.debug("Created quest record #{session_quest.quest_id} for character #{character_id}")
+        Logger.debug(
+          "Created quest record #{session_quest.quest_id} for character #{character_id}"
+        )
+
         :ok
 
       {:error, :already_have_quest} ->

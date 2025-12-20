@@ -5,10 +5,10 @@ defmodule BezgelorDb.Schema.AccountCurrency do
   @type t :: %__MODULE__{}
 
   schema "account_currencies" do
-    belongs_to :account, BezgelorDb.Schema.Account
+    belongs_to(:account, BezgelorDb.Schema.Account)
 
-    field :premium_currency, :integer, default: 0
-    field :bonus_currency, :integer, default: 0
+    field(:premium_currency, :integer, default: 0)
+    field(:bonus_currency, :integer, default: 0)
 
     timestamps(type: :utc_datetime)
   end
@@ -30,6 +30,7 @@ defmodule BezgelorDb.Schema.AccountCurrency do
 
   def deduct_premium_changeset(currency, amount) do
     new_amount = currency.premium_currency - amount
+
     if new_amount >= 0 do
       {:ok, change(currency, premium_currency: new_amount)}
     else
@@ -44,6 +45,7 @@ defmodule BezgelorDb.Schema.AccountCurrency do
 
   def deduct_bonus_changeset(currency, amount) do
     new_amount = currency.bonus_currency - amount
+
     if new_amount >= 0 do
       {:ok, change(currency, bonus_currency: new_amount)}
     else

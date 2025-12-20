@@ -16,15 +16,17 @@ defmodule BezgelorDb.PublicEventsTest do
 
     email = "eventer#{System.unique_integer([:positive])}@test.com"
     {:ok, account} = Accounts.create_account(email, "password123")
-    {:ok, character} = Characters.create_character(account.id, %{
-      name: "EventHero#{System.unique_integer([:positive])}",
-      sex: 0,
-      race: 0,
-      class: 0,
-      faction_id: 166,
-      world_id: 1,
-      world_zone_id: 1
-    })
+
+    {:ok, character} =
+      Characters.create_character(account.id, %{
+        name: "EventHero#{System.unique_integer([:positive])}",
+        sex: 0,
+        race: 0,
+        class: 0,
+        faction_id: 166,
+        world_id: 1,
+        world_zone_id: 1
+      })
 
     %{character: character}
   end
@@ -259,8 +261,9 @@ defmodule BezgelorDb.PublicEventsTest do
       past = DateTime.utc_now() |> DateTime.add(-3600, :second) |> DateTime.truncate(:second)
       config = %{"interval_hours" => 2}
 
-      {:ok, _} = PublicEvents.create_schedule(1, 100, :timer, config)
-      |> then(fn {:ok, s} -> PublicEvents.set_next_trigger(s.id, past) end)
+      {:ok, _} =
+        PublicEvents.create_schedule(1, 100, :timer, config)
+        |> then(fn {:ok, s} -> PublicEvents.set_next_trigger(s.id, past) end)
 
       schedules = PublicEvents.get_due_schedules()
       assert length(schedules) >= 1

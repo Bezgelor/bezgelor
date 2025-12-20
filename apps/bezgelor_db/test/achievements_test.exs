@@ -54,7 +54,8 @@ defmodule BezgelorDb.AchievementsTest do
       {:ok, ach, :already_complete} = Achievements.update_progress(character.id, 1001, 15, 10)
 
       assert ach.completed
-      assert ach.progress == 10  # Not updated
+      # Not updated
+      assert ach.progress == 10
     end
   end
 
@@ -140,7 +141,8 @@ defmodule BezgelorDb.AchievementsTest do
     test "total_points sums completed", %{character: character} do
       Achievements.complete(character.id, 1001, 10)
       Achievements.complete(character.id, 1002, 25)
-      Achievements.update_progress(character.id, 1003, 5, 10, 15)  # Not complete
+      # Not complete
+      Achievements.update_progress(character.id, 1003, 5, 10, 15)
 
       assert Achievements.total_points(character.id) == 35
     end
@@ -157,13 +159,15 @@ defmodule BezgelorDb.AchievementsTest do
   describe "recent_completions/2" do
     test "returns recent in order", %{character: character} do
       Achievements.complete(character.id, 1001, 10)
-      Process.sleep(10)  # Ensure different timestamps
+      # Ensure different timestamps
+      Process.sleep(10)
       Achievements.complete(character.id, 1002, 10)
 
       recent = Achievements.recent_completions(character.id, 5)
 
       assert length(recent) == 2
-      assert hd(recent).achievement_id == 1002  # Most recent first
+      # Most recent first
+      assert hd(recent).achievement_id == 1002
     end
   end
 end

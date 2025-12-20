@@ -19,7 +19,9 @@ defmodule BezgelorCore.EntityBuffsTest do
   describe "apply_buff/4" do
     test "adds buff to entity" do
       entity = make_entity()
-      buff = BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 100, duration: 10_000})
+
+      buff =
+        BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 100, duration: 10_000})
 
       entity = Entity.apply_buff(entity, buff, 12345, 1000)
 
@@ -30,7 +32,9 @@ defmodule BezgelorCore.EntityBuffsTest do
   describe "remove_buff/2" do
     test "removes buff from entity" do
       entity = make_entity()
-      buff = BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 100, duration: 10_000})
+
+      buff =
+        BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 100, duration: 10_000})
 
       entity = Entity.apply_buff(entity, buff, 12345, 1000)
       entity = Entity.remove_buff(entity, 1)
@@ -42,7 +46,9 @@ defmodule BezgelorCore.EntityBuffsTest do
   describe "has_buff?/3" do
     test "returns true if buff is active" do
       entity = make_entity()
-      buff = BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 100, duration: 10_000})
+
+      buff =
+        BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 100, duration: 10_000})
 
       entity = Entity.apply_buff(entity, buff, 12345, 1000)
 
@@ -51,7 +57,9 @@ defmodule BezgelorCore.EntityBuffsTest do
 
     test "returns false if buff expired" do
       entity = make_entity()
-      buff = BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 100, duration: 10_000})
+
+      buff =
+        BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 100, duration: 10_000})
 
       entity = Entity.apply_buff(entity, buff, 12345, 1000)
 
@@ -69,7 +77,16 @@ defmodule BezgelorCore.EntityBuffsTest do
 
     test "applies stat modifiers from buffs" do
       entity = make_entity()
-      buff = BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :stat_modifier, stat: :power, amount: 50, duration: 10_000})
+
+      buff =
+        BuffDebuff.new(%{
+          id: 1,
+          spell_id: 4,
+          buff_type: :stat_modifier,
+          stat: :power,
+          amount: 50,
+          duration: 10_000
+        })
 
       entity = Entity.apply_buff(entity, buff, 12345, 1000)
       base_stats = %{power: 100}
@@ -79,7 +96,17 @@ defmodule BezgelorCore.EntityBuffsTest do
 
     test "applies debuff stat reductions" do
       entity = make_entity()
-      debuff = BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :stat_modifier, stat: :power, amount: -25, duration: 10_000, is_debuff: true})
+
+      debuff =
+        BuffDebuff.new(%{
+          id: 1,
+          spell_id: 4,
+          buff_type: :stat_modifier,
+          stat: :power,
+          amount: -25,
+          duration: 10_000,
+          is_debuff: true
+        })
 
       entity = Entity.apply_buff(entity, debuff, 12345, 1000)
       base_stats = %{power: 100}
@@ -99,7 +126,9 @@ defmodule BezgelorCore.EntityBuffsTest do
 
     test "absorb reduces damage" do
       entity = make_entity()
-      buff = BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 50, duration: 10_000})
+
+      buff =
+        BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 50, duration: 10_000})
 
       entity = Entity.apply_buff(entity, buff, 12345, 1000)
       {entity, absorbed} = Entity.apply_damage_with_absorb(entity, 30, 5000)
@@ -110,7 +139,9 @@ defmodule BezgelorCore.EntityBuffsTest do
 
     test "partial absorb when damage exceeds shield" do
       entity = make_entity()
-      buff = BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 20, duration: 10_000})
+
+      buff =
+        BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 20, duration: 10_000})
 
       entity = Entity.apply_buff(entity, buff, 12345, 1000)
       {entity, absorbed} = Entity.apply_damage_with_absorb(entity, 50, 5000)
@@ -123,8 +154,18 @@ defmodule BezgelorCore.EntityBuffsTest do
   describe "cleanup_effects/2" do
     test "removes expired effects" do
       entity = make_entity()
-      buff1 = BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 100, duration: 5_000})
-      buff2 = BuffDebuff.new(%{id: 2, spell_id: 5, buff_type: :stat_modifier, amount: 50, duration: 15_000})
+
+      buff1 =
+        BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 100, duration: 5_000})
+
+      buff2 =
+        BuffDebuff.new(%{
+          id: 2,
+          spell_id: 5,
+          buff_type: :stat_modifier,
+          amount: 50,
+          duration: 15_000
+        })
 
       entity = Entity.apply_buff(entity, buff1, 12345, 1000)
       entity = Entity.apply_buff(entity, buff2, 12345, 1000)
@@ -138,8 +179,19 @@ defmodule BezgelorCore.EntityBuffsTest do
   describe "list_buffs/2" do
     test "returns list of active buffs" do
       entity = make_entity()
-      buff = BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 100, duration: 10_000})
-      debuff = BuffDebuff.new(%{id: 2, spell_id: 5, buff_type: :stat_modifier, amount: -10, duration: 10_000, is_debuff: true})
+
+      buff =
+        BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 100, duration: 10_000})
+
+      debuff =
+        BuffDebuff.new(%{
+          id: 2,
+          spell_id: 5,
+          buff_type: :stat_modifier,
+          amount: -10,
+          duration: 10_000,
+          is_debuff: true
+        })
 
       entity = Entity.apply_buff(entity, buff, 12345, 1000)
       entity = Entity.apply_buff(entity, debuff, 12345, 1000)
@@ -153,8 +205,19 @@ defmodule BezgelorCore.EntityBuffsTest do
   describe "list_debuffs/2" do
     test "returns list of active debuffs" do
       entity = make_entity()
-      buff = BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 100, duration: 10_000})
-      debuff = BuffDebuff.new(%{id: 2, spell_id: 5, buff_type: :stat_modifier, amount: -10, duration: 10_000, is_debuff: true})
+
+      buff =
+        BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 100, duration: 10_000})
+
+      debuff =
+        BuffDebuff.new(%{
+          id: 2,
+          spell_id: 5,
+          buff_type: :stat_modifier,
+          amount: -10,
+          duration: 10_000,
+          is_debuff: true
+        })
 
       entity = Entity.apply_buff(entity, buff, 12345, 1000)
       entity = Entity.apply_buff(entity, debuff, 12345, 1000)

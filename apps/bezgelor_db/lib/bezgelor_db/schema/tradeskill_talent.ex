@@ -14,11 +14,11 @@ defmodule BezgelorDb.Schema.TradeskillTalent do
   @type t :: %__MODULE__{}
 
   schema "tradeskill_talents" do
-    belongs_to :character, Character
+    belongs_to(:character, Character)
 
-    field :profession_id, :integer
-    field :talent_id, :integer
-    field :points_spent, :integer, default: 1
+    field(:profession_id, :integer)
+    field(:talent_id, :integer)
+    field(:points_spent, :integer, default: 1)
 
     timestamps(type: :utc_datetime)
   end

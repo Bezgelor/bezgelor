@@ -20,7 +20,10 @@ defmodule BezgelorCrypto.RandomTest do
     test "generates valid UUID format" do
       uuid = Random.uuid()
       # UUID format: 8-4-4-4-12 hex chars
-      assert String.match?(uuid, ~r/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/)
+      assert String.match?(
+               uuid,
+               ~r/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
+             )
     end
   end
 

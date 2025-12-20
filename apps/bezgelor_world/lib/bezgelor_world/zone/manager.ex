@@ -60,8 +60,12 @@ defmodule BezgelorWorld.Zone.Manager do
         on_timeout: :kill_task
       )
       |> Enum.reduce(0, fn
-        {:ok, 1}, acc -> acc + 1
-        {:ok, 0}, acc -> acc
+        {:ok, 1}, acc ->
+          acc + 1
+
+        {:ok, 0}, acc ->
+          acc
+
         {:exit, reason}, acc ->
           Logger.warning("Zone start task crashed: #{inspect(reason)}")
           acc
@@ -71,7 +75,11 @@ defmodule BezgelorWorld.Zone.Manager do
     tutorial_started = start_tutorial_zones()
 
     total = spawn_started + tutorial_started
-    Logger.info("Initialized #{total} zone instances (#{spawn_started} spawn zones + #{tutorial_started} tutorial zones)")
+
+    Logger.info(
+      "Initialized #{total} zone instances (#{spawn_started} spawn zones + #{tutorial_started} tutorial zones)"
+    )
+
     :ok
   rescue
     # BezgelorData may not be started yet, or no zones defined
@@ -227,8 +235,8 @@ defmodule BezgelorWorld.Zone.Manager do
           {:ok, {non_neg_integer(), non_neg_integer()}} | {:error, term()}
   def transfer_player(entity, {from_zone_id, from_instance_id}, to_zone_id)
       when is_integer(from_zone_id) and from_zone_id > 0 and
-           is_integer(from_instance_id) and from_instance_id > 0 and
-           is_integer(to_zone_id) and to_zone_id > 0 do
+             is_integer(from_instance_id) and from_instance_id > 0 and
+             is_integer(to_zone_id) and to_zone_id > 0 do
     # Remove from old zone
     Instance.remove_entity({from_zone_id, from_instance_id}, entity.guid)
 

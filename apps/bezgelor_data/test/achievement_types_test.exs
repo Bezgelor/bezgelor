@@ -123,15 +123,21 @@ defmodule BezgelorData.AchievementTypesTest do
 
   describe "uses_counter?/1" do
     test "returns true for counter-based types" do
-      assert AchievementTypes.uses_counter?(61) == true  # Kill X creatures
-      assert AchievementTypes.uses_counter?(77) == true  # Complete X quests
-      assert AchievementTypes.uses_counter?(88) == true  # Craft X items
-      assert AchievementTypes.uses_counter?(33) == true  # Win X PvP matches
+      # Kill X creatures
+      assert AchievementTypes.uses_counter?(61) == true
+      # Complete X quests
+      assert AchievementTypes.uses_counter?(77) == true
+      # Craft X items
+      assert AchievementTypes.uses_counter?(88) == true
+      # Win X PvP matches
+      assert AchievementTypes.uses_counter?(33) == true
     end
 
     test "returns false for specific-target types" do
-      assert AchievementTypes.uses_counter?(2) == false  # Kill specific creature
-      assert AchievementTypes.uses_counter?(35) == false # Complete specific quest
+      # Kill specific creature
+      assert AchievementTypes.uses_counter?(2) == false
+      # Complete specific quest
+      assert AchievementTypes.uses_counter?(35) == false
     end
   end
 

@@ -28,28 +28,32 @@ defmodule BezgelorWorld.MythicPlusTest do
   describe "Keystone.calculate_time_bonus/2" do
     test "under 60% gives +3 levels" do
       time_limit = 1_000_000
-      completion = 500_000  # 50%
+      # 50%
+      completion = 500_000
 
       assert Keystone.calculate_time_bonus(time_limit, completion) == 3
     end
 
     test "under 80% gives +2 levels" do
       time_limit = 1_000_000
-      completion = 700_000  # 70%
+      # 70%
+      completion = 700_000
 
       assert Keystone.calculate_time_bonus(time_limit, completion) == 2
     end
 
     test "under 100% gives +1 level" do
       time_limit = 1_000_000
-      completion = 900_000  # 90%
+      # 90%
+      completion = 900_000
 
       assert Keystone.calculate_time_bonus(time_limit, completion) == 1
     end
 
     test "over time gives no bonus" do
       time_limit = 1_000_000
-      completion = 1_100_000  # 110%
+      # 110%
+      completion = 1_100_000
 
       assert Keystone.calculate_time_bonus(time_limit, completion) == 0
     end
@@ -137,8 +141,8 @@ defmodule BezgelorWorld.MythicPlusTest do
       effects = Affix.process_trigger(:enemy_death, [3], context)
 
       assert length(effects) == 3
-      assert Enum.all?(effects, & &1.type == :buff)
-      assert Enum.all?(effects, & &1.buff_id == :bolstering)
+      assert Enum.all?(effects, &(&1.type == :buff))
+      assert Enum.all?(effects, &(&1.buff_id == :bolstering))
     end
 
     test "raging triggers at low health" do

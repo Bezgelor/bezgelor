@@ -74,7 +74,10 @@ defmodule BezgelorWorld.WorldManager do
   @doc "Register a player session."
   @spec register_session(non_neg_integer(), non_neg_integer(), String.t() | nil, pid()) :: :ok
   def register_session(account_id, character_id, character_name, connection_pid) do
-    GenServer.call(__MODULE__, {:register_session, account_id, character_id, character_name, connection_pid})
+    GenServer.call(
+      __MODULE__,
+      {:register_session, account_id, character_id, character_name, connection_pid}
+    )
   end
 
   @doc "Update session with entity GUID."
@@ -114,9 +117,18 @@ defmodule BezgelorWorld.WorldManager do
   end
 
   @doc "Broadcast chat to nearby players."
-  @spec broadcast_chat(non_neg_integer(), String.t(), atom(), String.t(), {float(), float(), float()}) :: :ok
+  @spec broadcast_chat(
+          non_neg_integer(),
+          String.t(),
+          atom(),
+          String.t(),
+          {float(), float(), float()}
+        ) :: :ok
   def broadcast_chat(sender_guid, sender_name, channel, message, position) do
-    GenServer.cast(__MODULE__, {:broadcast_chat, sender_guid, sender_name, channel, message, position})
+    GenServer.cast(
+      __MODULE__,
+      {:broadcast_chat, sender_guid, sender_name, channel, message, position}
+    )
   end
 
   @doc "Send whisper to a specific player by name."
@@ -194,7 +206,11 @@ defmodule BezgelorWorld.WorldManager do
   end
 
   @impl true
-  def handle_call({:register_session, account_id, character_id, character_name, connection_pid}, _from, state) do
+  def handle_call(
+        {:register_session, account_id, character_id, character_name, connection_pid},
+        _from,
+        state
+      ) do
     session = %{
       character_id: character_id,
       character_name: character_name,
@@ -344,7 +360,13 @@ defmodule BezgelorWorld.WorldManager do
 
       session ->
         # Remove from old zone index if exists
-        zone_index = remove_from_zone_index(state.zone_index, account_id, session.zone_id, session.instance_id)
+        zone_index =
+          remove_from_zone_index(
+            state.zone_index,
+            account_id,
+            session.zone_id,
+            session.instance_id
+          )
 
         # Add to new zone index
         zone_index = add_to_zone_index(zone_index, account_id, zone_id, instance_id)
@@ -384,7 +406,9 @@ defmodule BezgelorWorld.WorldManager do
 
     sessions = Map.delete(state.sessions, account_id)
     Logger.debug("Unregistered session for account #{account_id}")
-    {:noreply, %{state | sessions: sessions, name_to_account: name_to_account, zone_index: zone_index}}
+
+    {:noreply,
+     %{state | sessions: sessions, name_to_account: name_to_account, zone_index: zone_index}}
   end
 
   @impl true
@@ -451,7 +475,8 @@ defmodule BezgelorWorld.WorldManager do
 
   defp add_to_zone_index(zone_index, _account_id, nil, _instance_id), do: zone_index
 
-  defp remove_from_zone_index(zone_index, account_id, zone_id, instance_id) when not is_nil(zone_id) do
+  defp remove_from_zone_index(zone_index, account_id, zone_id, instance_id)
+       when not is_nil(zone_id) do
     key = {zone_id, instance_id || 0}
 
     case Map.get(zone_index, key) do
@@ -517,7 +542,8 @@ defmodule BezgelorWorld.WorldManager do
 
   defp get_zone_instance_sessions_from_state(state, nil), do: Map.values(state.sessions)
 
-  defp get_zone_instance_sessions_from_state(state, %{zone_id: nil}), do: Map.values(state.sessions)
+  defp get_zone_instance_sessions_from_state(state, %{zone_id: nil}),
+    do: Map.values(state.sessions)
 
   defp get_zone_instance_sessions_from_state(state, %{zone_id: zone_id, instance_id: instance_id}) do
     key = {zone_id, instance_id || 0}

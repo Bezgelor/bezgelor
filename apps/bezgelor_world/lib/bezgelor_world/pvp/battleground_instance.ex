@@ -133,7 +133,8 @@ defmodule BezgelorWorld.PvP.BattlegroundInstance do
   @doc """
   Report objective interaction (flag pickup, capture point progress, etc.).
   """
-  @spec interact_objective(String.t(), non_neg_integer(), non_neg_integer()) :: :ok | {:error, atom()}
+  @spec interact_objective(String.t(), non_neg_integer(), non_neg_integer()) ::
+          :ok | {:error, atom()}
   def interact_objective(match_id, player_guid, objective_id) do
     case GenServer.whereis(via_tuple(match_id)) do
       nil -> {:error, :not_found}
@@ -239,11 +240,7 @@ defmodule BezgelorWorld.PvP.BattlegroundInstance do
       now = DateTime.utc_now()
       ends_at = DateTime.add(now, div(@match_duration_ms, 1000), :second)
 
-      state = %{state |
-        match_state: @match_state_active,
-        started_at: now,
-        ends_at: ends_at
-      }
+      state = %{state | match_state: @match_state_active, started_at: now, ends_at: ends_at}
 
       # Schedule match end
       Process.send_after(self(), :match_time_expired, @match_duration_ms)
@@ -328,17 +325,54 @@ defmodule BezgelorWorld.PvP.BattlegroundInstance do
       "capture" ->
         # Capture the flag style (Walatiki Temple)
         [
-          %{id: 1, type: :flag, owner: :neutral, progress: 0.0, position: {0.0, 0.0, 0.0}, carrier: nil},
-          %{id: 2, type: :capture_point, owner: :exile, progress: 1.0, position: {-100.0, 0.0, 0.0}},
-          %{id: 3, type: :capture_point, owner: :dominion, progress: 1.0, position: {100.0, 0.0, 0.0}}
+          %{
+            id: 1,
+            type: :flag,
+            owner: :neutral,
+            progress: 0.0,
+            position: {0.0, 0.0, 0.0},
+            carrier: nil
+          },
+          %{
+            id: 2,
+            type: :capture_point,
+            owner: :exile,
+            progress: 1.0,
+            position: {-100.0, 0.0, 0.0}
+          },
+          %{
+            id: 3,
+            type: :capture_point,
+            owner: :dominion,
+            progress: 1.0,
+            position: {100.0, 0.0, 0.0}
+          }
         ]
 
       "control" ->
         # Control points (Halls of the Bloodsworn)
         [
-          %{id: 1, type: :capture_point, owner: :neutral, progress: 0.5, position: {0.0, 0.0, 0.0}},
-          %{id: 2, type: :capture_point, owner: :neutral, progress: 0.5, position: {-50.0, 0.0, 50.0}},
-          %{id: 3, type: :capture_point, owner: :neutral, progress: 0.5, position: {50.0, 0.0, 50.0}}
+          %{
+            id: 1,
+            type: :capture_point,
+            owner: :neutral,
+            progress: 0.5,
+            position: {0.0, 0.0, 0.0}
+          },
+          %{
+            id: 2,
+            type: :capture_point,
+            owner: :neutral,
+            progress: 0.5,
+            position: {-50.0, 0.0, 50.0}
+          },
+          %{
+            id: 3,
+            type: :capture_point,
+            owner: :neutral,
+            progress: 0.5,
+            position: {50.0, 0.0, 50.0}
+          }
         ]
 
       _ ->
@@ -390,9 +424,10 @@ defmodule BezgelorWorld.PvP.BattlegroundInstance do
 
       objective.type == :flag and objective.carrier == player_guid ->
         # Capture flag at base
-        base = Enum.find(state.objectives, fn o ->
-          o.type == :capture_point and o.owner == player_faction
-        end)
+        base =
+          Enum.find(state.objectives, fn o ->
+            o.type == :capture_point and o.owner == player_faction
+          end)
 
         if base do
           # Score and reset flag
@@ -480,9 +515,10 @@ defmodule BezgelorWorld.PvP.BattlegroundInstance do
       end)
     end
 
-    %{state |
-      exile_team: update_team_fn.(state.exile_team),
-      dominion_team: update_team_fn.(state.dominion_team)
+    %{
+      state
+      | exile_team: update_team_fn.(state.exile_team),
+        dominion_team: update_team_fn.(state.dominion_team)
     }
   end
 
@@ -507,9 +543,10 @@ defmodule BezgelorWorld.PvP.BattlegroundInstance do
       end)
     end
 
-    %{state |
-      exile_team: update_team_fn.(state.exile_team),
-      dominion_team: update_team_fn.(state.dominion_team)
+    %{
+      state
+      | exile_team: update_team_fn.(state.exile_team),
+        dominion_team: update_team_fn.(state.dominion_team)
     }
   end
 
@@ -529,8 +566,12 @@ defmodule BezgelorWorld.PvP.BattlegroundInstance do
   defp end_match(state, reason) do
     winner =
       case reason do
-        :exile_victory -> :exile
-        :dominion_victory -> :dominion
+        :exile_victory ->
+          :exile
+
+        :dominion_victory ->
+          :dominion
+
         :time_expired ->
           cond do
             state.exile_score > state.dominion_score -> :exile
@@ -541,10 +582,7 @@ defmodule BezgelorWorld.PvP.BattlegroundInstance do
 
     Logger.info("Battleground #{state.match_id} ending - #{reason}")
 
-    state = %{state |
-      match_state: @match_state_ending,
-      winner: winner
-    }
+    state = %{state | match_state: @match_state_ending, winner: winner}
 
     Process.send_after(self(), :ending_complete, @ending_time_ms)
 
@@ -557,7 +595,7 @@ defmodule BezgelorWorld.PvP.BattlegroundInstance do
 
     spawn(fn ->
       Enum.each(all_players, fn player ->
-        won = (player.faction == state.winner)
+        won = player.faction == state.winner
 
         # TODO: Add kills/deaths tracking to record_battleground
         PvP.record_battleground(player.player_guid, won)

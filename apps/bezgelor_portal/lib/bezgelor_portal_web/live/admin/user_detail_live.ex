@@ -38,15 +38,13 @@ defmodule BezgelorPortalWeb.Admin.UserDetailLive do
            show_ban_modal: false,
            show_role_modal: false,
            ban_form: %{"reason" => "", "duration" => "7", "permanent" => false}
-         ),
-         layout: {BezgelorPortalWeb.Layouts, :admin}}
+         ), layout: {BezgelorPortalWeb.Layouts, :admin}}
 
       {:error, :not_found} ->
         {:ok,
          socket
          |> put_flash(:error, "User not found")
-         |> push_navigate(to: ~p"/admin/users"),
-         layout: {BezgelorPortalWeb.Layouts, :admin}}
+         |> push_navigate(to: ~p"/admin/users"), layout: {BezgelorPortalWeb.Layouts, :admin}}
     end
   end
 
@@ -60,15 +58,14 @@ defmodule BezgelorPortalWeb.Admin.UserDetailLive do
           <h1 class="text-2xl font-bold">{@user.email}</h1>
           <%= if @user.email_verified_at do %>
             <span class="badge badge-success gap-1">
-              <.icon name="hero-check-badge-micro" class="size-3" />
-              Verified
+              <.icon name="hero-check-badge-micro" class="size-3" /> Verified
             </span>
           <% end %>
           <.status_badges user={@user} active_suspension={@active_suspension} />
         </div>
       </div>
-
-      <!-- Account Info and Roles/Actions -->
+      
+    <!-- Account Info and Roles/Actions -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Account Info Card (Left) -->
         <div class="card bg-base-100 shadow">
@@ -116,8 +113,8 @@ defmodule BezgelorPortalWeb.Admin.UserDetailLive do
             </div>
           </div>
         </div>
-
-        <!-- Roles and Actions (Right) -->
+        
+    <!-- Roles and Actions (Right) -->
         <div class="space-y-6">
           <!-- Roles Card -->
           <div class="card bg-base-100 shadow">
@@ -130,8 +127,7 @@ defmodule BezgelorPortalWeb.Admin.UserDetailLive do
                   class="btn btn-ghost btn-sm"
                   phx-click="show_role_modal"
                 >
-                  <.icon name="hero-pencil" class="size-4" />
-                  Edit
+                  <.icon name="hero-pencil" class="size-4" /> Edit
                 </button>
               </div>
               <div class="mt-2">
@@ -148,8 +144,8 @@ defmodule BezgelorPortalWeb.Admin.UserDetailLive do
               </div>
             </div>
           </div>
-
-          <!-- Actions Card -->
+          
+    <!-- Actions Card -->
           <div class="card bg-base-100 shadow">
             <div class="card-body">
               <h2 class="card-title">Actions</h2>
@@ -161,8 +157,7 @@ defmodule BezgelorPortalWeb.Admin.UserDetailLive do
                   phx-click="reset_password"
                   data-confirm="Are you sure you want to reset this user's password? They will receive an email with a reset link."
                 >
-                  <.icon name="hero-key" class="size-4" />
-                  Reset Password
+                  <.icon name="hero-key" class="size-4" /> Reset Password
                 </button>
 
                 <%= if @active_suspension do %>
@@ -173,8 +168,7 @@ defmodule BezgelorPortalWeb.Admin.UserDetailLive do
                     phx-click="unban"
                     data-confirm="Are you sure you want to remove the ban/suspension from this account?"
                   >
-                    <.icon name="hero-check-circle" class="size-4" />
-                    Remove Ban
+                    <.icon name="hero-check-circle" class="size-4" /> Remove Ban
                   </button>
                 <% else %>
                   <button
@@ -183,8 +177,7 @@ defmodule BezgelorPortalWeb.Admin.UserDetailLive do
                     class="btn btn-error btn-sm justify-start"
                     phx-click="show_ban_modal"
                   >
-                    <.icon name="hero-no-symbol" class="size-4" />
-                    Ban/Suspend
+                    <.icon name="hero-no-symbol" class="size-4" /> Ban/Suspend
                   </button>
                 <% end %>
 
@@ -196,8 +189,7 @@ defmodule BezgelorPortalWeb.Admin.UserDetailLive do
                     phx-click="restore_account"
                     data-confirm="Are you sure you want to restore this deleted account?"
                   >
-                    <.icon name="hero-arrow-uturn-left" class="size-4" />
-                    Restore Account
+                    <.icon name="hero-arrow-uturn-left" class="size-4" /> Restore Account
                   </button>
                 <% else %>
                   <button
@@ -207,8 +199,7 @@ defmodule BezgelorPortalWeb.Admin.UserDetailLive do
                     phx-click="delete_account"
                     data-confirm="Are you sure you want to delete this account? This is a soft delete and can be restored."
                   >
-                    <.icon name="hero-trash" class="size-4" />
-                    Delete Account
+                    <.icon name="hero-trash" class="size-4" /> Delete Account
                   </button>
                 <% end %>
               </div>
@@ -216,12 +207,16 @@ defmodule BezgelorPortalWeb.Admin.UserDetailLive do
           </div>
         </div>
       </div>
-
-      <!-- Suspension Info -->
+      
+    <!-- Suspension Info -->
       <div :if={@active_suspension} class="alert alert-error">
         <.icon name="hero-exclamation-triangle" class="size-6" />
         <div>
-          <h3 class="font-bold">Account is {if is_nil(@active_suspension.end_time), do: "Permanently Banned", else: "Suspended"}</h3>
+          <h3 class="font-bold">
+            Account is {if is_nil(@active_suspension.end_time),
+              do: "Permanently Banned",
+              else: "Suspended"}
+          </h3>
           <div class="text-sm">
             <p><strong>Reason:</strong> {@active_suspension.reason}</p>
             <p><strong>Since:</strong> {format_datetime(@active_suspension.start_time)}</p>
@@ -231,8 +226,8 @@ defmodule BezgelorPortalWeb.Admin.UserDetailLive do
           </div>
         </div>
       </div>
-
-      <!-- Characters Card -->
+      
+    <!-- Characters Card -->
       <div class="card bg-base-100 shadow">
         <div class="card-body">
           <h2 class="card-title">Characters ({length(@characters)})</h2>
@@ -276,8 +271,8 @@ defmodule BezgelorPortalWeb.Admin.UserDetailLive do
           <% end %>
         </div>
       </div>
-
-      <!-- Ban Modal -->
+      
+    <!-- Ban Modal -->
       <.modal :if={@show_ban_modal} id="ban-modal" show on_cancel={JS.push("hide_ban_modal")}>
         <:title>Ban / Suspend Account</:title>
         <form phx-submit="ban_account" class="space-y-4">
@@ -332,8 +327,8 @@ defmodule BezgelorPortalWeb.Admin.UserDetailLive do
           </div>
         </form>
       </.modal>
-
-      <!-- Role Modal -->
+      
+    <!-- Role Modal -->
       <.modal :if={@show_role_modal} id="role-modal" show on_cancel={JS.push("hide_role_modal")}>
         <:title>Manage Roles</:title>
         <div class="space-y-4">
@@ -353,7 +348,9 @@ defmodule BezgelorPortalWeb.Admin.UserDetailLive do
                 />
                 <div>
                   <span class="label-text font-medium">{role.name}</span>
-                  <p :if={role.description} class="text-xs text-base-content/50">{role.description}</p>
+                  <p :if={role.description} class="text-xs text-base-content/50">
+                    {role.description}
+                  </p>
                 </div>
               </label>
             </div>
@@ -416,7 +413,8 @@ defmodule BezgelorPortalWeb.Admin.UserDetailLive do
 
     duration_days =
       if params["permanent"] do
-        nil  # Permanent ban
+        # Permanent ban
+        nil
       else
         String.to_integer(params["duration"])
       end
@@ -425,6 +423,7 @@ defmodule BezgelorPortalWeb.Admin.UserDetailLive do
       {:ok, _suspension} ->
         # Log the action
         action = if duration_days, do: "user.suspend", else: "user.ban"
+
         Authorization.log_action(admin, action, "account", user.id, %{
           reason: reason,
           duration_days: duration_days
@@ -432,7 +431,10 @@ defmodule BezgelorPortalWeb.Admin.UserDetailLive do
 
         {:noreply,
          socket
-         |> put_flash(:info, "Account #{if duration_days, do: "suspended", else: "banned"} successfully")
+         |> put_flash(
+           :info,
+           "Account #{if duration_days, do: "suspended", else: "banned"} successfully"
+         )
          |> assign(
            active_suspension: Accounts.get_active_suspension(user),
            show_ban_modal: false,
@@ -488,7 +490,8 @@ defmodule BezgelorPortalWeb.Admin.UserDetailLive do
          |> put_flash(:info, "Password reset email sent to #{user.email}")}
 
       {:error, reason} ->
-        {:noreply, put_flash(socket, :error, "Failed to send password reset email: #{inspect(reason)}")}
+        {:noreply,
+         put_flash(socket, :error, "Failed to send password reset email: #{inspect(reason)}")}
     end
   end
 
@@ -562,14 +565,16 @@ defmodule BezgelorPortalWeb.Admin.UserDetailLive do
            |> assign(user_roles: Authorization.get_account_roles(user))}
         else
           # Check TOTP requirement for admin roles
-          role_has_admin_perms = Enum.any?(role.permissions, fn p ->
-            String.starts_with?(p.key, "admin.") or
-            String.starts_with?(p.key, "users.") or
-            String.starts_with?(p.key, "characters.")
-          end)
+          role_has_admin_perms =
+            Enum.any?(role.permissions, fn p ->
+              String.starts_with?(p.key, "admin.") or
+                String.starts_with?(p.key, "users.") or
+                String.starts_with?(p.key, "characters.")
+            end)
 
           if role_has_admin_perms and is_nil(user.totp_enabled_at) do
-            {:noreply, put_flash(socket, :error, "User must enable 2FA before receiving admin roles")}
+            {:noreply,
+             put_flash(socket, :error, "User must enable 2FA before receiving admin roles")}
           else
             case Authorization.assign_role(user, role, admin) do
               {:ok, _} ->
@@ -616,6 +621,7 @@ defmodule BezgelorPortalWeb.Admin.UserDetailLive do
   end
 
   defp format_datetime(nil), do: "-"
+
   defp format_datetime(datetime) do
     Calendar.strftime(datetime, "%Y-%m-%d %H:%M")
   end

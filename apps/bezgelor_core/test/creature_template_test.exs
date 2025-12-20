@@ -94,7 +94,8 @@ defmodule BezgelorCore.CreatureTemplateTest do
 
   describe "movement_duration/2" do
     test "calculates duration based on distance and speed" do
-      template = %CreatureTemplate{movement_speed: 5.0}  # 5 units/second
+      # 5 units/second
+      template = %CreatureTemplate{movement_speed: 5.0}
 
       # 10 unit path = 2 seconds = 2000ms
       duration = CreatureTemplate.movement_duration(template, 10.0)

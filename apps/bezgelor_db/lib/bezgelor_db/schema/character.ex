@@ -78,47 +78,47 @@ defmodule BezgelorDb.Schema.Character do
         }
 
   schema "characters" do
-    belongs_to :account, Account
-    belongs_to :realm, Realm
-    has_one :appearance, CharacterAppearance
+    belongs_to(:account, Account)
+    belongs_to(:realm, Realm)
+    has_one(:appearance, CharacterAppearance)
 
-    field :name, :string
-    field :sex, :integer
-    field :race, :integer
-    field :class, :integer
-    field :level, :integer, default: 1
-    field :faction_id, :integer
+    field(:name, :string)
+    field(:sex, :integer)
+    field(:race, :integer)
+    field(:class, :integer)
+    field(:level, :integer, default: 1)
+    field(:faction_id, :integer)
 
     # Position
-    field :location_x, :float, default: 0.0
-    field :location_y, :float, default: 0.0
-    field :location_z, :float, default: 0.0
-    field :rotation_x, :float, default: 0.0
-    field :rotation_y, :float, default: 0.0
-    field :rotation_z, :float, default: 0.0
-    field :world_id, :integer
-    field :world_zone_id, :integer
+    field(:location_x, :float, default: 0.0)
+    field(:location_y, :float, default: 0.0)
+    field(:location_z, :float, default: 0.0)
+    field(:rotation_x, :float, default: 0.0)
+    field(:rotation_y, :float, default: 0.0)
+    field(:rotation_z, :float, default: 0.0)
+    field(:world_id, :integer)
+    field(:world_zone_id, :integer)
 
     # State
-    field :title, :integer, default: 0
-    field :active_path, :integer, default: 0
-    field :active_costume_index, :integer, default: -1
-    field :active_spec, :integer, default: 0
-    field :innate_index, :integer, default: 0
-    field :total_xp, :integer, default: 0
-    field :rest_bonus_xp, :integer, default: 0
-    field :time_played_total, :integer, default: 0
-    field :time_played_level, :integer, default: 0
-    field :flags, :integer, default: 0
+    field(:title, :integer, default: 0)
+    field(:active_path, :integer, default: 0)
+    field(:active_costume_index, :integer, default: -1)
+    field(:active_spec, :integer, default: 0)
+    field(:innate_index, :integer, default: 0)
+    field(:total_xp, :integer, default: 0)
+    field(:rest_bonus_xp, :integer, default: 0)
+    field(:time_played_total, :integer, default: 0)
+    field(:time_played_level, :integer, default: 0)
+    field(:flags, :integer, default: 0)
     # Gear visibility bitmask: set bit = visible, clear bit = hidden
     # All bits set = all visible (default), 0 = all hidden
     # Stored as -1 (signed) which equals 0xFFFFFFFF (unsigned) in two's complement
-    field :gear_mask, :integer, default: -1
+    field(:gear_mask, :integer, default: -1)
 
     # Timestamps
-    field :last_online, :utc_datetime
-    field :deleted_at, :utc_datetime
-    field :original_name, :string
+    field(:last_online, :utc_datetime)
+    field(:deleted_at, :utc_datetime)
+    field(:original_name, :string)
 
     timestamps(type: :utc_datetime)
   end
@@ -149,9 +149,16 @@ defmodule BezgelorDb.Schema.Character do
   @spec position_changeset(t(), map()) :: Ecto.Changeset.t()
   def position_changeset(character, attrs) do
     character
-    |> cast(attrs, [:location_x, :location_y, :location_z,
-                    :rotation_x, :rotation_y, :rotation_z,
-                    :world_id, :world_zone_id])
+    |> cast(attrs, [
+      :location_x,
+      :location_y,
+      :location_z,
+      :rotation_x,
+      :rotation_y,
+      :rotation_z,
+      :world_id,
+      :world_zone_id
+    ])
   end
 
   @doc """

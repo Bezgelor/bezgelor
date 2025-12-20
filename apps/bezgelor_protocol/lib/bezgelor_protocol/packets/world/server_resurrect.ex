@@ -53,12 +53,13 @@ defmodule BezgelorProtocol.Packets.World.ServerResurrect do
   """
   @spec new(resurrect_type(), non_neg_integer(), {float(), float(), float()}, float()) :: t()
   def new(type, zone_id, {x, y, z}, health_percent) do
-    type_int = case type do
-      :spell -> 0
-      :bindpoint -> 1
-      :soulstone -> 2
-      int when is_integer(int) -> int
-    end
+    type_int =
+      case type do
+        :spell -> 0
+        :bindpoint -> 1
+        :soulstone -> 2
+        int when is_integer(int) -> int
+      end
 
     %__MODULE__{
       resurrect_type: type_int,
@@ -78,12 +79,12 @@ defmodule BezgelorProtocol.Packets.World.ServerResurrect do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_byte(packet.resurrect_type)
-      |> PacketWriter.write_uint32(packet.zone_id)
-      |> PacketWriter.write_float32(packet.position_x)
-      |> PacketWriter.write_float32(packet.position_y)
-      |> PacketWriter.write_float32(packet.position_z)
-      |> PacketWriter.write_float32(packet.health_percent)
+      |> PacketWriter.write_u8(packet.resurrect_type)
+      |> PacketWriter.write_u32(packet.zone_id)
+      |> PacketWriter.write_f32(packet.position_x)
+      |> PacketWriter.write_f32(packet.position_y)
+      |> PacketWriter.write_f32(packet.position_z)
+      |> PacketWriter.write_f32(packet.health_percent)
 
     {:ok, writer}
   end

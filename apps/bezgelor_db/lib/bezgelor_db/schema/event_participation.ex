@@ -13,19 +13,19 @@ defmodule BezgelorDb.Schema.EventParticipation do
   @reward_tiers [:gold, :silver, :bronze, :participation]
 
   schema "event_participations" do
-    belongs_to :event_instance, EventInstance
-    belongs_to :character, Character
+    belongs_to(:event_instance, EventInstance)
+    belongs_to(:character, Character)
 
-    field :contribution_score, :integer, default: 0
-    field :kills, :integer, default: 0
-    field :damage_dealt, :integer, default: 0
-    field :healing_done, :integer, default: 0
-    field :objectives_completed, {:array, :integer}, default: []
+    field(:contribution_score, :integer, default: 0)
+    field(:kills, :integer, default: 0)
+    field(:damage_dealt, :integer, default: 0)
+    field(:healing_done, :integer, default: 0)
+    field(:objectives_completed, {:array, :integer}, default: [])
 
-    field :reward_tier, Ecto.Enum, values: @reward_tiers
-    field :rewards_claimed, :boolean, default: false
-    field :joined_at, :utc_datetime
-    field :last_activity_at, :utc_datetime
+    field(:reward_tier, Ecto.Enum, values: @reward_tiers)
+    field(:rewards_claimed, :boolean, default: false)
+    field(:joined_at, :utc_datetime)
+    field(:last_activity_at, :utc_datetime)
 
     timestamps(type: :utc_datetime)
   end
@@ -33,9 +33,17 @@ defmodule BezgelorDb.Schema.EventParticipation do
   def changeset(participation, attrs) do
     participation
     |> cast(attrs, [
-      :event_instance_id, :character_id, :contribution_score, :kills,
-      :damage_dealt, :healing_done, :objectives_completed, :reward_tier,
-      :rewards_claimed, :joined_at, :last_activity_at
+      :event_instance_id,
+      :character_id,
+      :contribution_score,
+      :kills,
+      :damage_dealt,
+      :healing_done,
+      :objectives_completed,
+      :reward_tier,
+      :rewards_claimed,
+      :joined_at,
+      :last_activity_at
     ])
     |> validate_required([:event_instance_id, :character_id])
     |> validate_number(:contribution_score, greater_than_or_equal_to: 0)

@@ -135,9 +135,12 @@ defmodule BezgelorWorld.Encounter.Primitives.Interrupt do
   defmacro uninterruptible do
     quote do
       ability = Module.get_attribute(__MODULE__, :current_ability)
-      updated = ability
+
+      updated =
+        ability
         |> Map.put(:interruptible, false)
         |> Map.put(:interrupt_armor, :infinite)
+
       Module.put_attribute(__MODULE__, :current_ability, updated)
     end
   end
@@ -182,9 +185,12 @@ defmodule BezgelorWorld.Encounter.Primitives.Interrupt do
       }
 
       ability = Module.get_attribute(__MODULE__, :current_ability)
-      updated = ability
+
+      updated =
+        ability
         |> Map.put(:channel, channel_data)
         |> Map.put(:interruptible, true)
+
       Module.put_attribute(__MODULE__, :current_ability, updated)
     end
   end

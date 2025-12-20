@@ -62,11 +62,11 @@ defmodule BezgelorProtocol.Packets.World.ServerResurrectOffer do
   def write(%__MODULE__{} = packet, writer) do
     writer =
       writer
-      |> PacketWriter.write_uint64(packet.caster_guid)
+      |> PacketWriter.write_u64(packet.caster_guid)
       |> PacketWriter.write_wide_string(packet.caster_name)
-      |> PacketWriter.write_uint32(packet.spell_id)
-      |> PacketWriter.write_float32(packet.health_percent)
-      |> PacketWriter.write_uint32(packet.timeout_ms)
+      |> PacketWriter.write_u32(packet.spell_id)
+      |> PacketWriter.write_f32(packet.health_percent)
+      |> PacketWriter.write_u32(packet.timeout_ms)
 
     {:ok, writer}
   end

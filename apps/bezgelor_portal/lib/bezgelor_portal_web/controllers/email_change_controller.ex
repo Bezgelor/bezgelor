@@ -25,7 +25,8 @@ defmodule BezgelorPortalWeb.EmailChangeController do
 
           account ->
             # Check if the new email is already taken
-            if Accounts.email_exists?(new_email) and String.downcase(new_email) != String.downcase(account.email) do
+            if Accounts.email_exists?(new_email) and
+                 String.downcase(new_email) != String.downcase(account.email) do
               conn
               |> put_flash(:error, "This email address is already in use by another account.")
               |> redirect(to: ~p"/settings")
@@ -33,7 +34,10 @@ defmodule BezgelorPortalWeb.EmailChangeController do
               case Accounts.update_email(account, new_email) do
                 {:ok, _updated_account} ->
                   conn
-                  |> put_flash(:info, "Email address updated successfully! You may need to log in again.")
+                  |> put_flash(
+                    :info,
+                    "Email address updated successfully! You may need to log in again."
+                  )
                   |> redirect(to: ~p"/logout")
 
                 {:error, _changeset} ->
@@ -46,7 +50,10 @@ defmodule BezgelorPortalWeb.EmailChangeController do
 
       {:error, :token_expired} ->
         conn
-        |> put_flash(:error, "This verification link has expired. Please request a new email change.")
+        |> put_flash(
+          :error,
+          "This verification link has expired. Please request a new email change."
+        )
         |> redirect(to: ~p"/settings")
 
       {:error, :invalid_token} ->

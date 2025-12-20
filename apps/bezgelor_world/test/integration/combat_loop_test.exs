@@ -120,7 +120,7 @@ defmodule BezgelorWorld.Integration.CombatLoopTest do
     end
 
     test "corpse not found returns error" do
-      result = CorpseManager.take_loot(999999, 12345)
+      result = CorpseManager.take_loot(999_999, 12345)
       assert result == {:error, :not_found}
     end
 
@@ -173,9 +173,16 @@ defmodule BezgelorWorld.Integration.CombatLoopTest do
       assert result == :ok
 
       # Circle telegraph helper
-      result2 = CombatBroadcaster.broadcast_circle_telegraph(
-        12345, {0.0, 0.0, 0.0}, 5.0, 1000, :blue, []
-      )
+      result2 =
+        CombatBroadcaster.broadcast_circle_telegraph(
+          12345,
+          {0.0, 0.0, 0.0},
+          5.0,
+          1000,
+          :blue,
+          []
+        )
+
       assert result2 == :ok
     end
   end

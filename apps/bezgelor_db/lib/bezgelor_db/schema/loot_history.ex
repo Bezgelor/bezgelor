@@ -32,16 +32,16 @@ defmodule BezgelorDb.Schema.LootHistory do
   @distribution_methods ~w(personal need greed master round_robin)
 
   schema "loot_history" do
-    belongs_to :character, Character
+    belongs_to(:character, Character)
 
-    field :instance_guid, :binary
-    field :item_id, :integer
-    field :item_quality, :string
-    field :source_type, :string
-    field :source_id, :integer
-    field :distribution_method, :string
-    field :roll_value, :integer
-    field :awarded_at, :utc_datetime
+    field(:instance_guid, :binary)
+    field(:item_id, :integer)
+    field(:item_quality, :string)
+    field(:source_type, :string)
+    field(:source_id, :integer)
+    field(:distribution_method, :string)
+    field(:roll_value, :integer)
+    field(:awarded_at, :utc_datetime)
 
     timestamps()
   end

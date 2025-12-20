@@ -180,6 +180,7 @@ defmodule BezgelorDev.LlmAssistant do
   # Private helpers
 
   defp format_decimal(opcode) when is_integer(opcode), do: Integer.to_string(opcode)
+
   defp format_decimal(opcode) when is_atom(opcode) do
     try do
       Integer.to_string(BezgelorProtocol.Opcode.to_integer(opcode))
@@ -189,11 +190,13 @@ defmodule BezgelorDev.LlmAssistant do
   end
 
   defp format_position(nil), do: "Unknown"
+
   defp format_position({x, y, z}) do
     "(#{Float.round(x * 1.0, 1)}, #{Float.round(y * 1.0, 1)}, #{Float.round(z * 1.0, 1)})"
   end
 
   defp format_recent_packets([]), do: "_No recent packets recorded_"
+
   defp format_recent_packets(packets) do
     packets
     |> Enum.take(10)

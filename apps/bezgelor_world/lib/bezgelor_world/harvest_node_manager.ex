@@ -234,11 +234,12 @@ defmodule BezgelorWorld.HarvestNodeManager do
     loot = generate_node_loot(node_type_id)
 
     # Schedule respawn
-    respawn_timer = Process.send_after(
-      self(),
-      {:respawn_node, node_state.entity.guid},
-      node_state.respawn_time_ms
-    )
+    respawn_timer =
+      Process.send_after(
+        self(),
+        {:respawn_node, node_state.entity.guid},
+        node_state.respawn_time_ms
+      )
 
     new_node_state = %{
       node_state
@@ -371,9 +372,7 @@ defmodule BezgelorWorld.HarvestNodeManager do
       respawn_time_ms: spawn_def.respawn_time_ms || 60_000
     }
 
-    Logger.debug(
-      "Spawned harvest node #{node_name} (#{guid}) at #{inspect(position)}"
-    )
+    Logger.debug("Spawned harvest node #{node_name} (#{guid}) at #{inspect(position)}")
 
     {:ok, guid, node_state}
   end

@@ -16,14 +16,38 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
   """
 
   @behaviour BezgelorProtocol.Handler
-  @compile {:no_warn_undefined, [BezgelorWorld.Quest.QuestCache, BezgelorWorld.Handler.AchievementHandler, BezgelorWorld.Cinematic.CinematicManager, BezgelorWorld.TriggerManager, BezgelorWorld.Creature.ZoneManager, BezgelorWorld.CreatureManager, BezgelorWorld.WorldManager, BezgelorWorld.VisibilityBroadcaster]}
+  @compile {:no_warn_undefined,
+            [
+              BezgelorWorld.Abilities,
+              BezgelorWorld.Quest.QuestCache,
+              BezgelorWorld.Handler.AchievementHandler,
+              BezgelorWorld.Cinematic.CinematicManager,
+              BezgelorWorld.TriggerManager,
+              BezgelorWorld.Creature.ZoneManager,
+              BezgelorWorld.CreatureManager,
+              BezgelorWorld.WorldManager,
+              BezgelorWorld.VisibilityBroadcaster
+            ]}
   # Suppress warning for {:play, packets} clause - cinematics are intentionally disabled
   # but this code is correct for when they're re-enabled
   @dialyzer {:nowarn_function, build_cinematic_packets: 2}
 
-  alias BezgelorProtocol.Packets.World.{ServerEntityCreate, ServerQuestList, ServerPlayerEnteredWorld}
+  alias BezgelorProtocol.Packets.World.{
+    ServerAbilityBook,
+    ServerAbilityPoints,
+    ServerAmpList,
+    ServerActionSet,
+    ServerCooldownList,
+    ServerEntityCreate,
+    ServerItemAdd,
+    ServerPlayerEnteredWorld,
+    ServerQuestList
+  }
+
   alias BezgelorProtocol.PacketWriter
   alias BezgelorCore.Entity
+  alias BezgelorDb.{ActionSets, Inventory}
+  alias BezgelorWorld.Abilities
   alias BezgelorWorld.Handler.AchievementHandler
   alias BezgelorWorld.Quest.QuestCache
   alias BezgelorWorld.TriggerManager
@@ -61,8 +85,12 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
         }
       else
         %{
-          position: {character.location_x || 0.0, character.location_y || 0.0, character.location_z || 0.0},
-          rotation: {character.rotation_x || 0.0, character.rotation_y || 0.0, character.rotation_z || 0.0}
+          position:
+            {character.location_x || 0.0, character.location_y || 0.0,
+             character.location_z || 0.0},
+          rotation:
+            {character.rotation_x || 0.0, character.rotation_y || 0.0,
+             character.rotation_z || 0.0}
         }
       end
 
@@ -126,7 +154,8 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
     state = put_in(state.session_data[:zone_triggers], triggers)
     state = put_in(state.session_data[:active_triggers], MapSet.new())
     state = put_in(state.session_data[:zone_id], zone_id)
-    state = put_in(state.session_data[:instance_id], 1)  # Single instance per zone for now
+    # Single instance per zone for now
+    state = put_in(state.session_data[:instance_id], 1)
     state = put_in(state.session_data[:world_id], world_id)
 
     Logger.debug("Loaded #{length(triggers)} trigger volumes for zone #{zone_id}")
@@ -152,7 +181,10 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
 
     # Build ServerPlayerEnteredWorld packet - this dismisses the loading screen
     entered_world_writer = PacketWriter.new()
-    {:ok, entered_world_writer} = ServerPlayerEnteredWorld.write(%ServerPlayerEnteredWorld{}, entered_world_writer)
+
+    {:ok, entered_world_writer} =
+      ServerPlayerEnteredWorld.write(%ServerPlayerEnteredWorld{}, entered_world_writer)
+
     entered_world_data = PacketWriter.to_binary(entered_world_writer)
 
     # Check for zone entry cinematics (e.g., tutorial intro)
@@ -161,7 +193,11 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
     # Build creature spawn packets for creatures near the player
     creature_packets = build_creature_packets(spawn.position)
 
-    Logger.debug("Sending #{length(creature_packets)} creature entity packets to player at #{inspect(spawn.position)}")
+    Logger.debug(
+      "Sending #{length(creature_packets)} creature entity packets to player at #{inspect(spawn.position)}"
+    )
+
+    ability_packets = build_ability_packets(character)
 
     # Base packets always sent
     base_packets = [
@@ -173,9 +209,10 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
     # Note: Inventory already sent via ServerPlayerCreate in CharacterSelectHandler
     final_packets =
       base_packets ++
-      creature_packets ++
-      cinematic_packets ++
-      [{:server_player_entered_world, entered_world_data}]
+        ability_packets ++
+        creature_packets ++
+        cinematic_packets ++
+        [{:server_player_entered_world, entered_world_data}]
 
     {:reply_multi_world_encrypted, final_packets, state}
   end
@@ -203,57 +240,170 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
       end
 
     # Build packets and count what we're sending
-    {packets, stats} = Enum.reduce(creatures, {[], %{entities: 0, movements: 0, skipped_stale: 0, initial_patrol: 0}}, fn creature_state, {acc_packets, acc_stats} ->
-      # Skip dead creatures
-      if creature_state.ai.state == :dead do
-        {acc_packets, acc_stats}
-      else
-        # Build entity create packet
-        create_packet = ServerEntityCreate.from_creature(creature_state)
-        writer = PacketWriter.new()
-        {:ok, writer} = ServerEntityCreate.write(create_packet, writer)
-        create_data = PacketWriter.to_binary(writer)
+    {packets, stats} =
+      Enum.reduce(
+        creatures,
+        {[], %{entities: 0, movements: 0, skipped_stale: 0, initial_patrol: 0}},
+        fn creature_state, {acc_packets, acc_stats} ->
+          # Skip dead creatures
+          if creature_state.ai.state == :dead do
+            {acc_packets, acc_stats}
+          else
+            # Build entity create packet
+            create_packet = ServerEntityCreate.from_creature(creature_state)
+            writer = PacketWriter.new()
+            {:ok, writer} = ServerEntityCreate.write(create_packet, writer)
+            create_data = PacketWriter.to_binary(writer)
 
-        # Build movement packets based on creature state
-        ai = creature_state.ai
-        {movement_packets, updated_stats} =
-          cond do
-            # Already moving - send current movement
-            ai.state in [:patrol, :wandering] and length(ai.movement_path) > 1 ->
-              packets = build_movement_packet(creature_state)
-              if packets == [] do
-                {[], Map.update(acc_stats, :skipped_stale, 1, &(&1 + 1))}
-              else
-                {packets, Map.update(acc_stats, :movements, 1, &(&1 + 1))}
+            # Build movement packets based on creature state
+            ai = creature_state.ai
+
+            {movement_packets, updated_stats} =
+              cond do
+                # Already moving - send current movement
+                ai.state in [:patrol, :wandering] and length(ai.movement_path) > 1 ->
+                  packets = build_movement_packet(creature_state)
+
+                  if packets == [] do
+                    {[], Map.update(acc_stats, :skipped_stale, 1, &(&1 + 1))}
+                  else
+                    {packets, Map.update(acc_stats, :movements, 1, &(&1 + 1))}
+                  end
+
+                # Idle but should be patrolling - start patrol now!
+                ai.state == :idle and ai.patrol_enabled and length(ai.patrol_waypoints) > 0 ->
+                  packets = build_initial_patrol_packet(creature_state)
+
+                  if packets == [] do
+                    Logger.warning(
+                      "build_initial_patrol_packet returned empty for creature with #{length(ai.patrol_waypoints)} waypoints"
+                    )
+
+                    {[], acc_stats}
+                  else
+                    {packets, Map.update(acc_stats, :initial_patrol, 1, &(&1 + 1))}
+                  end
+
+                # Idle with patrol_enabled but no waypoints - log for debug
+                ai.state == :idle and ai.patrol_enabled ->
+                  Logger.warning(
+                    "Creature has patrol_enabled but #{length(ai.patrol_waypoints)} waypoints"
+                  )
+
+                  {[], acc_stats}
+
+                # Nothing to do
+                true ->
+                  {[], acc_stats}
               end
 
-            # Idle but should be patrolling - start patrol now!
-            ai.state == :idle and ai.patrol_enabled and length(ai.patrol_waypoints) > 0 ->
-              packets = build_initial_patrol_packet(creature_state)
-              if packets == [] do
-                Logger.warning("build_initial_patrol_packet returned empty for creature with #{length(ai.patrol_waypoints)} waypoints")
-                {[], acc_stats}
-              else
-                {packets, Map.update(acc_stats, :initial_patrol, 1, &(&1 + 1))}
-              end
-
-            # Idle with patrol_enabled but no waypoints - log for debug
-            ai.state == :idle and ai.patrol_enabled ->
-              Logger.warning("Creature has patrol_enabled but #{length(ai.patrol_waypoints)} waypoints")
-              {[], acc_stats}
-
-            # Nothing to do
-            true ->
-              {[], acc_stats}
+            new_stats = Map.update(updated_stats, :entities, 1, &(&1 + 1))
+            {acc_packets ++ [{:server_entity_create, create_data}] ++ movement_packets, new_stats}
           end
-
-        new_stats = Map.update(updated_stats, :entities, 1, &(&1 + 1))
-        {acc_packets ++ [{:server_entity_create, create_data}] ++ movement_packets, new_stats}
-      end
-    end)
+        end
+      )
 
     Logger.info("Zone entry packets: #{inspect(stats)}")
     packets
+  end
+
+  defp build_ability_packets(character) do
+    class_id = character.class || 1
+    active_spec = character.active_spec || 0
+    ability_points = Abilities.max_tier_points()
+
+    spellbook_abilities = Abilities.get_class_spellbook_abilities(class_id)
+    action_set_abilities = Abilities.get_class_action_set_abilities(class_id)
+    ActionSets.ensure_default_shortcuts(character.id, action_set_abilities, active_spec)
+    shortcuts = ActionSets.list_shortcuts(character.id)
+    shortcuts_by_spec = ActionSets.group_by_spec(shortcuts)
+    spell_shortcuts_by_spec = ActionSets.spell_index_by_spec(shortcuts)
+
+    ability_items =
+      Inventory.ensure_ability_items(character.id, spellbook_abilities)
+      |> Enum.map(fn item ->
+        %ServerItemAdd{
+          guid: item.id,
+          item_id: item.item_id,
+          location: :ability,
+          bag_index: item.bag_index,
+          stack_count: item.quantity,
+          durability: item.durability
+        }
+      end)
+
+    ability_book_data =
+      encode_packet(
+        %ServerAbilityBook{
+          spells:
+            Abilities.build_ability_book_for_specs(spellbook_abilities, spell_shortcuts_by_spec)
+        },
+        ServerAbilityBook
+      )
+
+    ability_points_data =
+      encode_packet(
+        %ServerAbilityPoints{
+          ability_points: ability_points,
+          total_ability_points: ability_points
+        },
+        ServerAbilityPoints
+      )
+
+    action_set_actions = Abilities.build_action_set_from_shortcuts(shortcuts_by_spec)
+
+    action_set_packets =
+      for spec_index <- 0..3 do
+        actions = Map.get(action_set_actions, spec_index, [])
+
+        action_set_data =
+          encode_packet(
+            %ServerActionSet{
+              spec_index: spec_index,
+              unlocked: true,
+              result: :ok,
+              actions: actions
+            },
+            ServerActionSet
+          )
+
+        {:server_action_set, action_set_data}
+      end
+
+    amp_list_packets =
+      for spec_index <- 0..3 do
+        amp_list_data =
+          encode_packet(
+            %ServerAmpList{
+              spec_index: spec_index,
+              amps: []
+            },
+            ServerAmpList
+          )
+
+        {:server_amp_list, amp_list_data}
+      end
+
+    ability_item_packets =
+      Enum.map(ability_items, &{:server_item_add, encode_packet(&1, ServerItemAdd)})
+
+    cooldown_list_data =
+      encode_packet(
+        %ServerCooldownList{cooldowns: []},
+        ServerCooldownList
+      )
+
+    ability_item_packets ++
+      [{:server_ability_book, ability_book_data}, {:server_ability_points, ability_points_data}] ++
+      action_set_packets ++
+      amp_list_packets ++
+      [{:server_cooldown_list, cooldown_list_data}]
+  end
+
+  defp encode_packet(packet, module) do
+    writer = PacketWriter.new()
+    {:ok, writer} = module.write(packet, writer)
+    PacketWriter.to_binary(writer)
   end
 
   # Build patrol movement packet for a creature that should start patrolling
@@ -269,13 +419,14 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
     first_waypoint = Enum.at(ai.patrol_waypoints, 0)
 
     if first_waypoint do
-      target_pos = case first_waypoint do
-        %{position: {x, y, z}} -> {x, y, z}
-        %{position: [x, y, z]} -> {x, y, z}
-        {x, y, z} -> {x, y, z}
-        [x, y, z] -> {x, y, z}
-        _ -> nil
-      end
+      target_pos =
+        case first_waypoint do
+          %{position: {x, y, z}} -> {x, y, z}
+          %{position: [x, y, z]} -> {x, y, z}
+          {x, y, z} -> {x, y, z}
+          [x, y, z] -> {x, y, z}
+          _ -> nil
+        end
 
       if target_pos do
         # Generate path from current position to first waypoint
@@ -355,7 +506,8 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
           # Build remaining path from current position to destination
           destination = List.last(path)
           remaining_path = Movement.direct_path(current_pos, destination)
-          remaining_duration = max(100, duration - elapsed)  # At least 100ms
+          # At least 100ms
+          remaining_duration = max(100, duration - elapsed)
 
           {remaining_path, remaining_duration}
         else

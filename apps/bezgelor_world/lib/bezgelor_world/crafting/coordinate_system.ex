@@ -14,14 +14,14 @@ defmodule BezgelorWorld.Crafting.CoordinateSystem do
 
   @type cursor :: {float(), float()}
   @type zone :: %{
-    id: integer(),
-    x_min: number(),
-    x_max: number(),
-    y_min: number(),
-    y_max: number(),
-    variant_id: integer(),
-    quality: atom()
-  }
+          id: integer(),
+          x_min: number(),
+          x_max: number(),
+          y_min: number(),
+          y_max: number(),
+          variant_id: integer(),
+          quality: atom()
+        }
   @type additive :: %{vector_x: float(), vector_y: float()}
 
   @doc """
@@ -33,9 +33,9 @@ defmodule BezgelorWorld.Crafting.CoordinateSystem do
   @spec find_target_zone(float(), float(), [zone()]) :: {:ok, zone()} | :no_zone
   def find_target_zone(cursor_x, cursor_y, zones) do
     case Enum.find(zones, fn zone ->
-      cursor_x >= zone.x_min and cursor_x <= zone.x_max and
-      cursor_y >= zone.y_min and cursor_y <= zone.y_max
-    end) do
+           cursor_x >= zone.x_min and cursor_x <= zone.x_max and
+             cursor_y >= zone.y_min and cursor_y <= zone.y_max
+         end) do
       nil -> :no_zone
       zone -> {:ok, zone}
     end
@@ -67,7 +67,8 @@ defmodule BezgelorWorld.Crafting.CoordinateSystem do
   def calculate_overcharge_multiplier(1), do: 1.25
   def calculate_overcharge_multiplier(2), do: 1.5
   def calculate_overcharge_multiplier(3), do: 2.0
-  def calculate_overcharge_multiplier(_), do: 2.0  # Cap at level 3
+  # Cap at level 3
+  def calculate_overcharge_multiplier(_), do: 2.0
 
   @doc """
   Calculate the failure chance for a given overcharge level.
@@ -82,7 +83,8 @@ defmodule BezgelorWorld.Crafting.CoordinateSystem do
   def calculate_failure_chance(1), do: 0.10
   def calculate_failure_chance(2), do: 0.25
   def calculate_failure_chance(3), do: 0.50
-  def calculate_failure_chance(_), do: 0.50  # Cap at level 3
+  # Cap at level 3
+  def calculate_failure_chance(_), do: 0.50
 
   @doc """
   Check if craft failed due to overcharge.

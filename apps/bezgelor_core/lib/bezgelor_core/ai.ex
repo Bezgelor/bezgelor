@@ -188,7 +188,12 @@ defmodule BezgelorCore.AI do
     nil
   end
 
-  def check_aggro_with_faction(%__MODULE__{spawn_position: spawn_pos}, nearby_players, aggro_range, creature_faction) do
+  def check_aggro_with_faction(
+        %__MODULE__{spawn_position: spawn_pos},
+        nearby_players,
+        aggro_range,
+        creature_faction
+      ) do
     alias BezgelorCore.Faction
 
     nearby_players
@@ -226,7 +231,11 @@ defmodule BezgelorCore.AI do
   Only triggers when in combat and distance from spawn exceeds leash_range.
   """
   @spec check_leash(t(), {float(), float(), float()}, float()) :: :evade | :ok
-  def check_leash(%__MODULE__{state: :combat, spawn_position: spawn_pos}, current_pos, leash_range) do
+  def check_leash(
+        %__MODULE__{state: :combat, spawn_position: spawn_pos},
+        current_pos,
+        leash_range
+      ) do
     if distance(spawn_pos, current_pos) > leash_range do
       :evade
     else
@@ -428,10 +437,11 @@ defmodule BezgelorCore.AI do
   """
   @spec start_chase(t(), [{float(), float(), float()}], non_neg_integer()) :: t()
   def start_chase(%__MODULE__{state: :combat} = ai, path, duration) do
-    %{ai |
-      chase_path: path,
-      chase_start_time: System.monotonic_time(:millisecond),
-      chase_duration: duration
+    %{
+      ai
+      | chase_path: path,
+        chase_start_time: System.monotonic_time(:millisecond),
+        chase_duration: duration
     }
   end
 
@@ -454,18 +464,18 @@ defmodule BezgelorCore.AI do
   """
   @spec complete_chase(t()) :: t()
   def complete_chase(%__MODULE__{} = ai) do
-    %{ai |
-      chase_path: nil,
-      chase_start_time: nil,
-      chase_duration: nil
-    }
+    %{ai | chase_path: nil, chase_start_time: nil, chase_duration: nil}
   end
 
   @doc """
   Get current position along chase path.
   """
   @spec get_chase_position(t()) :: {float(), float(), float()} | nil
-  def get_chase_position(%__MODULE__{chase_path: path, chase_start_time: start, chase_duration: duration})
+  def get_chase_position(%__MODULE__{
+        chase_path: path,
+        chase_start_time: start,
+        chase_duration: duration
+      })
       when is_list(path) and is_integer(start) and is_integer(duration) do
     elapsed = System.monotonic_time(:millisecond) - start
     progress = min(elapsed / duration, 1.0)
@@ -579,7 +589,10 @@ defmodule BezgelorCore.AI do
   Check if wandering movement is complete.
   """
   @spec wander_complete?(t(), integer()) :: boolean()
-  def wander_complete?(%__MODULE__{state: :wandering, movement_start_time: start, movement_duration: duration}, now) do
+  def wander_complete?(
+        %__MODULE__{state: :wandering, movement_start_time: start, movement_duration: duration},
+        now
+      ) do
     now - start >= duration
   end
 

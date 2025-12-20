@@ -112,9 +112,11 @@ defmodule BezgelorDb.Schema.EventCompletionTest do
         best_contribution: 500,
         fastest_completion_ms: 300_000
       }
+
       completed_at = DateTime.utc_now() |> DateTime.truncate(:second)
 
-      changeset = EventCompletion.increment_changeset(completion, :gold, 600, 250_000, completed_at)
+      changeset =
+        EventCompletion.increment_changeset(completion, :gold, 600, 250_000, completed_at)
 
       assert Ecto.Changeset.get_field(changeset, :completion_count) == 6
       assert Ecto.Changeset.get_field(changeset, :gold_count) == 3
@@ -133,9 +135,11 @@ defmodule BezgelorDb.Schema.EventCompletionTest do
         best_contribution: 400,
         fastest_completion_ms: nil
       }
+
       completed_at = DateTime.utc_now() |> DateTime.truncate(:second)
 
-      changeset = EventCompletion.increment_changeset(completion, :silver, 300, 350_000, completed_at)
+      changeset =
+        EventCompletion.increment_changeset(completion, :silver, 300, 350_000, completed_at)
 
       assert Ecto.Changeset.get_field(changeset, :completion_count) == 4
       assert Ecto.Changeset.get_field(changeset, :gold_count) == 1
@@ -154,9 +158,11 @@ defmodule BezgelorDb.Schema.EventCompletionTest do
         best_contribution: 200,
         fastest_completion_ms: 400_000
       }
+
       completed_at = DateTime.utc_now() |> DateTime.truncate(:second)
 
-      changeset = EventCompletion.increment_changeset(completion, :bronze, 150, 500_000, completed_at)
+      changeset =
+        EventCompletion.increment_changeset(completion, :bronze, 150, 500_000, completed_at)
 
       assert Ecto.Changeset.get_field(changeset, :completion_count) == 3
       assert Ecto.Changeset.get_field(changeset, :gold_count) == 0
@@ -175,9 +181,11 @@ defmodule BezgelorDb.Schema.EventCompletionTest do
         best_contribution: 50,
         fastest_completion_ms: nil
       }
+
       completed_at = DateTime.utc_now() |> DateTime.truncate(:second)
 
-      changeset = EventCompletion.increment_changeset(completion, :participation, 60, 600_000, completed_at)
+      changeset =
+        EventCompletion.increment_changeset(completion, :participation, 60, 600_000, completed_at)
 
       assert Ecto.Changeset.get_field(changeset, :completion_count) == 2
       assert Ecto.Changeset.get_field(changeset, :gold_count) == 0
@@ -194,9 +202,11 @@ defmodule BezgelorDb.Schema.EventCompletionTest do
         best_contribution: 100,
         fastest_completion_ms: 300_000
       }
+
       completed_at = DateTime.utc_now() |> DateTime.truncate(:second)
 
-      changeset = EventCompletion.increment_changeset(completion, :gold, 200, 400_000, completed_at)
+      changeset =
+        EventCompletion.increment_changeset(completion, :gold, 200, 400_000, completed_at)
 
       assert Ecto.Changeset.get_field(changeset, :best_contribution) == 200
     end
@@ -210,9 +220,11 @@ defmodule BezgelorDb.Schema.EventCompletionTest do
         best_contribution: 300,
         fastest_completion_ms: 300_000
       }
+
       completed_at = DateTime.utc_now() |> DateTime.truncate(:second)
 
-      changeset = EventCompletion.increment_changeset(completion, :silver, 200, 400_000, completed_at)
+      changeset =
+        EventCompletion.increment_changeset(completion, :silver, 200, 400_000, completed_at)
 
       assert Ecto.Changeset.get_field(changeset, :best_contribution) == 300
     end
@@ -226,9 +238,11 @@ defmodule BezgelorDb.Schema.EventCompletionTest do
         best_contribution: 100,
         fastest_completion_ms: 300_000
       }
+
       completed_at = DateTime.utc_now() |> DateTime.truncate(:second)
 
-      changeset = EventCompletion.increment_changeset(completion, :gold, 100, 200_000, completed_at)
+      changeset =
+        EventCompletion.increment_changeset(completion, :gold, 100, 200_000, completed_at)
 
       assert Ecto.Changeset.get_field(changeset, :fastest_completion_ms) == 200_000
     end
@@ -242,9 +256,11 @@ defmodule BezgelorDb.Schema.EventCompletionTest do
         best_contribution: 100,
         fastest_completion_ms: 200_000
       }
+
       completed_at = DateTime.utc_now() |> DateTime.truncate(:second)
 
-      changeset = EventCompletion.increment_changeset(completion, :gold, 100, 300_000, completed_at)
+      changeset =
+        EventCompletion.increment_changeset(completion, :gold, 100, 300_000, completed_at)
 
       assert Ecto.Changeset.get_field(changeset, :fastest_completion_ms) == 200_000
     end
@@ -258,9 +274,11 @@ defmodule BezgelorDb.Schema.EventCompletionTest do
         best_contribution: 100,
         fastest_completion_ms: nil
       }
+
       completed_at = DateTime.utc_now() |> DateTime.truncate(:second)
 
-      changeset = EventCompletion.increment_changeset(completion, :gold, 100, 300_000, completed_at)
+      changeset =
+        EventCompletion.increment_changeset(completion, :gold, 100, 300_000, completed_at)
 
       assert Ecto.Changeset.get_change(changeset, :fastest_completion_ms) == 300_000
     end
@@ -274,9 +292,11 @@ defmodule BezgelorDb.Schema.EventCompletionTest do
         best_contribution: 100,
         fastest_completion_ms: nil
       }
+
       completed_at = DateTime.utc_now() |> DateTime.truncate(:second)
 
-      changeset = EventCompletion.increment_changeset(completion, :gold, 100, 300_000, completed_at)
+      changeset =
+        EventCompletion.increment_changeset(completion, :gold, 100, 300_000, completed_at)
 
       assert Ecto.Changeset.get_change(changeset, :last_completed_at) == completed_at
     end

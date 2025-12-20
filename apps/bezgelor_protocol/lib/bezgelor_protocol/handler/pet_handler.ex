@@ -22,6 +22,7 @@ defmodule BezgelorProtocol.Handler.PetHandler do
 
   alias BezgelorProtocol.PacketReader
   alias BezgelorProtocol.PacketWriter
+
   alias BezgelorProtocol.Packets.World.{
     ClientPetSummon,
     ClientPetDismiss,
@@ -29,6 +30,7 @@ defmodule BezgelorProtocol.Handler.PetHandler do
     ServerPetUpdate,
     ServerPetXP
   }
+
   alias BezgelorDb.Pets
 
   require Logger
@@ -134,13 +136,15 @@ defmodule BezgelorProtocol.Handler.PetHandler do
 
     case Pets.set_active_pet(character_id, account_id, packet.pet_id) do
       {:ok, pet} ->
-        update_packet = ServerPetUpdate.summoned(
-          entity_guid,
-          pet.pet_id,
-          pet.level,
-          pet.xp,
-          pet.nickname
-        )
+        update_packet =
+          ServerPetUpdate.summoned(
+            entity_guid,
+            pet.pet_id,
+            pet.level,
+            pet.xp,
+            pet.nickname
+          )
+
         {opcode, payload} = serialize_packet(update_packet)
 
         Logger.debug("Player #{character_id} summoned pet #{packet.pet_id}")
@@ -175,13 +179,15 @@ defmodule BezgelorProtocol.Handler.PetHandler do
 
     case Pets.set_nickname(character_id, packet.nickname) do
       {:ok, pet} ->
-        update_packet = ServerPetUpdate.summoned(
-          entity_guid,
-          pet.pet_id,
-          pet.level,
-          pet.xp,
-          pet.nickname
-        )
+        update_packet =
+          ServerPetUpdate.summoned(
+            entity_guid,
+            pet.pet_id,
+            pet.level,
+            pet.xp,
+            pet.nickname
+          )
+
         {opcode, payload} = serialize_packet(update_packet)
 
         Logger.debug("Player #{character_id} renamed pet to '#{packet.nickname}'")

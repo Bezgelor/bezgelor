@@ -24,12 +24,13 @@ defmodule BezgelorProtocol.Packets.World.ServerReputationList do
   def write(%__MODULE__{reputations: reputations}, writer) do
     writer = PacketWriter.write_u32(writer, length(reputations))
 
-    writer = Enum.reduce(reputations, writer, fn rep, w ->
-      w
-      |> PacketWriter.write_u32(rep.faction_id)
-      |> PacketWriter.write_i32(rep.standing)
-      |> PacketWriter.write_u8(level_to_int(rep.level))
-    end)
+    writer =
+      Enum.reduce(reputations, writer, fn rep, w ->
+        w
+        |> PacketWriter.write_u32(rep.faction_id)
+        |> PacketWriter.write_i32(rep.standing)
+        |> PacketWriter.write_u8(level_to_int(rep.level))
+      end)
 
     {:ok, writer}
   end

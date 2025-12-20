@@ -19,17 +19,17 @@ defmodule BezgelorDb.Schema.QuestHistory do
   @type t :: %__MODULE__{}
 
   schema "quest_history" do
-    belongs_to :character, BezgelorDb.Schema.Character
+    belongs_to(:character, BezgelorDb.Schema.Character)
 
     # Quest template reference
-    field :quest_id, :integer
+    field(:quest_id, :integer)
 
     # Completion tracking
-    field :completed_at, :utc_datetime
-    field :completion_count, :integer, default: 1
+    field(:completed_at, :utc_datetime)
+    field(:completion_count, :integer, default: 1)
 
     # For daily/weekly reset tracking
-    field :last_completion, :utc_datetime
+    field(:last_completion, :utc_datetime)
 
     timestamps(type: :utc_datetime)
   end
@@ -40,7 +40,9 @@ defmodule BezgelorDb.Schema.QuestHistory do
     |> validate_required([:character_id, :quest_id, :completed_at])
     |> validate_number(:completion_count, greater_than: 0)
     |> foreign_key_constraint(:character_id)
-    |> unique_constraint([:character_id, :quest_id], name: :quest_history_character_id_quest_id_index)
+    |> unique_constraint([:character_id, :quest_id],
+      name: :quest_history_character_id_quest_id_index
+    )
   end
 
   def increment_changeset(history) do

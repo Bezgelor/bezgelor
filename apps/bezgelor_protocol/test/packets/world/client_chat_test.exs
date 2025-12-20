@@ -28,7 +28,10 @@ defmodule BezgelorProtocol.Packets.World.ClientChatTest do
       # channel: uint32 (2 = whisper)
       # target: wide string "Player"
       # message: wide string "Hi"
-      target_str = <<6::32-little, "P"::utf8, 0, "l"::utf8, 0, "a"::utf8, 0, "y"::utf8, 0, "e"::utf8, 0, "r"::utf8, 0>>
+      target_str =
+        <<6::32-little, "P"::utf8, 0, "l"::utf8, 0, "a"::utf8, 0, "y"::utf8, 0, "e"::utf8, 0,
+          "r"::utf8, 0>>
+
       message_str = <<2::32-little, "H"::utf8, 0, "i"::utf8, 0>>
 
       payload = <<2::32-little>> <> target_str <> message_str

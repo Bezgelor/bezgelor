@@ -38,7 +38,7 @@ defmodule BezgelorDb.Storefront do
   def list_categories do
     StoreCategory
     |> where([c], c.is_active == true)
-    |> order_by([c], [asc: c.sort_order, asc: c.name])
+    |> order_by([c], asc: c.sort_order, asc: c.name)
     |> Repo.all()
   end
 
@@ -47,7 +47,7 @@ defmodule BezgelorDb.Storefront do
   def list_root_categories do
     StoreCategory
     |> where([c], c.is_active == true and is_nil(c.parent_id))
-    |> order_by([c], [asc: c.sort_order, asc: c.name])
+    |> order_by([c], asc: c.sort_order, asc: c.name)
     |> Repo.all()
   end
 
@@ -65,7 +65,7 @@ defmodule BezgelorDb.Storefront do
   def get_subcategories(parent_id) do
     StoreCategory
     |> where([c], c.parent_id == ^parent_id and c.is_active == true)
-    |> order_by([c], [asc: c.sort_order, asc: c.name])
+    |> order_by([c], asc: c.sort_order, asc: c.name)
     |> Repo.all()
   end
 
@@ -90,7 +90,7 @@ defmodule BezgelorDb.Storefront do
     |> where([i], i.active == true)
     |> where([i], is_nil(i.available_from) or i.available_from <= ^now)
     |> where([i], is_nil(i.available_until) or i.available_until >= ^now)
-    |> order_by([i], [desc: i.featured, asc: i.sort_order, asc: i.name])
+    |> order_by([i], desc: i.featured, asc: i.sort_order, asc: i.name)
     |> Repo.all()
   end
 
@@ -103,7 +103,7 @@ defmodule BezgelorDb.Storefront do
     |> where([i], i.active == true and i.category_id == ^category_id)
     |> where([i], is_nil(i.available_from) or i.available_from <= ^now)
     |> where([i], is_nil(i.available_until) or i.available_until >= ^now)
-    |> order_by([i], [desc: i.featured, asc: i.sort_order, asc: i.name])
+    |> order_by([i], desc: i.featured, asc: i.sort_order, asc: i.name)
     |> Repo.all()
   end
 
@@ -116,7 +116,7 @@ defmodule BezgelorDb.Storefront do
     |> where([i], i.active == true and i.category == ^category)
     |> where([i], is_nil(i.available_from) or i.available_from <= ^now)
     |> where([i], is_nil(i.available_until) or i.available_until >= ^now)
-    |> order_by([i], [desc: i.featured, asc: i.name])
+    |> order_by([i], desc: i.featured, asc: i.name)
     |> Repo.all()
   end
 
@@ -129,7 +129,7 @@ defmodule BezgelorDb.Storefront do
     |> where([i], i.active == true and i.featured == true)
     |> where([i], is_nil(i.available_from) or i.available_from <= ^now)
     |> where([i], is_nil(i.available_until) or i.available_until >= ^now)
-    |> order_by([i], [asc: i.sort_order, asc: i.name])
+    |> order_by([i], asc: i.sort_order, asc: i.name)
     |> limit(^limit)
     |> Repo.all()
   end
@@ -142,7 +142,7 @@ defmodule BezgelorDb.Storefront do
     StoreItem
     |> where([i], i.active == true and not is_nil(i.sale_price))
     |> where([i], i.sale_ends_at > ^now)
-    |> order_by([i], [asc: i.sale_ends_at, asc: i.name])
+    |> order_by([i], asc: i.sale_ends_at, asc: i.name)
     |> Repo.all()
   end
 
@@ -154,7 +154,7 @@ defmodule BezgelorDb.Storefront do
     StoreItem
     |> where([i], i.active == true and not is_nil(i.new_until))
     |> where([i], i.new_until > ^now)
-    |> order_by([i], [desc: i.inserted_at, asc: i.name])
+    |> order_by([i], desc: i.inserted_at, asc: i.name)
     |> Repo.all()
   end
 
@@ -187,7 +187,7 @@ defmodule BezgelorDb.Storefront do
     StorePromotion
     |> where([p], p.is_active == true)
     |> where([p], p.starts_at <= ^now and p.ends_at >= ^now)
-    |> order_by([p], [asc: p.ends_at])
+    |> order_by([p], asc: p.ends_at)
     |> Repo.all()
   end
 
@@ -217,9 +217,9 @@ defmodule BezgelorDb.Storefront do
       |> where(
         [p],
         # Empty applies_to means applies to all
+        # Item ID is in the promotion's item_ids array
         is_nil(p.applies_to) or
           p.applies_to == ^%{} or
-          # Item ID is in the promotion's item_ids array
           fragment("?->'item_ids' @> ?::jsonb", p.applies_to, ^[item_id])
       )
 
@@ -610,11 +610,24 @@ defmodule BezgelorDb.Storefront do
   @spec gift_item(integer(), integer(), integer(), :premium | :bonus, String.t() | nil) ::
           {:ok, StorePurchase.t()}
           | {:error, :not_found | :insufficient_funds | :no_price | :recipient_not_found | term()}
-  def gift_item(gifter_account_id, recipient_account_id, store_item_id, currency_type, message \\ nil) do
+  def gift_item(
+        gifter_account_id,
+        recipient_account_id,
+        store_item_id,
+        currency_type,
+        message \\ nil
+      ) do
     with {:ok, item} <- get_store_item(store_item_id),
          {:ok, base_price} <- get_price(item, currency_type),
          {:ok, result} <-
-           execute_gift(gifter_account_id, recipient_account_id, item, currency_type, base_price, message) do
+           execute_gift(
+             gifter_account_id,
+             recipient_account_id,
+             item,
+             currency_type,
+             base_price,
+             message
+           ) do
       {:ok, result.purchase}
     else
       {:error, :currency, :insufficient_funds, _} -> {:error, :insufficient_funds}

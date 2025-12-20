@@ -14,6 +14,7 @@ defmodule BezgelorWorld.CombatBroadcaster do
   alias BezgelorDb.Achievements
 
   alias BezgelorCore.Death
+
   alias BezgelorProtocol.Packets.World.{
     ServerBuffApply,
     ServerBuffRemove,
@@ -74,7 +75,10 @@ defmodule BezgelorWorld.CombatBroadcaster do
     packet_data = PacketWriter.to_binary(writer)
 
     send_to_players(recipient_guids, :server_respawn, packet_data)
-    Logger.debug("Broadcast resurrection of player #{player_guid} to #{length(recipient_guids)} players")
+
+    Logger.debug(
+      "Broadcast resurrection of player #{player_guid} to #{length(recipient_guids)} players"
+    )
   end
 
   @doc """
@@ -103,21 +107,36 @@ defmodule BezgelorWorld.CombatBroadcaster do
   @doc """
   Send spell effect (damage/heal) to recipient players.
   """
-  @spec send_spell_effect(non_neg_integer(), non_neg_integer(), non_neg_integer(), map(), [non_neg_integer()]) :: :ok
+  @spec send_spell_effect(non_neg_integer(), non_neg_integer(), non_neg_integer(), map(), [
+          non_neg_integer()
+        ]) :: :ok
   def send_spell_effect(caster_guid, target_guid, spell_id, effect, recipient_guids) do
-    packet = case effect.type do
-      :damage ->
-        ServerSpellEffect.damage(caster_guid, target_guid, spell_id, effect.amount, Map.get(effect, :is_crit, false))
+    packet =
+      case effect.type do
+        :damage ->
+          ServerSpellEffect.damage(
+            caster_guid,
+            target_guid,
+            spell_id,
+            effect.amount,
+            Map.get(effect, :is_crit, false)
+          )
 
-      :heal ->
-        ServerSpellEffect.heal(caster_guid, target_guid, spell_id, effect.amount, Map.get(effect, :is_crit, false))
+        :heal ->
+          ServerSpellEffect.heal(
+            caster_guid,
+            target_guid,
+            spell_id,
+            effect.amount,
+            Map.get(effect, :is_crit, false)
+          )
 
-      :buff ->
-        ServerSpellEffect.buff(caster_guid, target_guid, spell_id, effect.amount)
+        :buff ->
+          ServerSpellEffect.buff(caster_guid, target_guid, spell_id, effect.amount)
 
-      _ ->
-        ServerSpellEffect.damage(caster_guid, target_guid, spell_id, effect.amount, false)
-    end
+        _ ->
+          ServerSpellEffect.damage(caster_guid, target_guid, spell_id, effect.amount, false)
+      end
 
     writer = PacketWriter.new()
     {:ok, writer} = ServerSpellEffect.write(packet, writer)
@@ -156,7 +175,9 @@ defmodule BezgelorWorld.CombatBroadcaster do
   @doc """
   Send loot drop notification to a player.
   """
-  @spec send_loot_drop(non_neg_integer(), non_neg_integer(), non_neg_integer(), [{non_neg_integer(), non_neg_integer()}]) :: :ok
+  @spec send_loot_drop(non_neg_integer(), non_neg_integer(), non_neg_integer(), [
+          {non_neg_integer(), non_neg_integer()}
+        ]) :: :ok
   def send_loot_drop(player_guid, source_guid, gold, items) do
     packet = %ServerLootDrop{
       source_guid: source_guid,
@@ -176,7 +197,13 @@ defmodule BezgelorWorld.CombatBroadcaster do
   @doc """
   Send respawn notification to a player.
   """
-  @spec send_respawn(non_neg_integer(), {float(), float(), float()}, non_neg_integer(), non_neg_integer(), [non_neg_integer()]) :: :ok
+  @spec send_respawn(
+          non_neg_integer(),
+          {float(), float(), float()},
+          non_neg_integer(),
+          non_neg_integer(),
+          [non_neg_integer()]
+        ) :: :ok
   def send_respawn(entity_guid, {x, y, z}, health, max_health, recipient_guids) do
     packet = %ServerRespawn{
       entity_guid: entity_guid,
@@ -197,18 +224,21 @@ defmodule BezgelorWorld.CombatBroadcaster do
   @doc """
   Broadcast buff application to a list of player GUIDs.
   """
-  @spec broadcast_buff_apply(non_neg_integer(), non_neg_integer(), BezgelorCore.BuffDebuff.t(), [non_neg_integer()]) :: :ok
+  @spec broadcast_buff_apply(non_neg_integer(), non_neg_integer(), BezgelorCore.BuffDebuff.t(), [
+          non_neg_integer()
+        ]) :: :ok
   def broadcast_buff_apply(target_guid, caster_guid, buff, recipient_guids) do
-    packet = ServerBuffApply.new(
-      target_guid,
-      caster_guid,
-      buff.id,
-      buff.spell_id,
-      buff.buff_type,
-      buff.amount,
-      buff.duration,
-      buff.is_debuff
-    )
+    packet =
+      ServerBuffApply.new(
+        target_guid,
+        caster_guid,
+        buff.id,
+        buff.spell_id,
+        buff.buff_type,
+        buff.amount,
+        buff.duration,
+        buff.is_debuff
+      )
 
     writer = PacketWriter.new()
     {:ok, writer} = ServerBuffApply.write(packet, writer)
@@ -220,7 +250,8 @@ defmodule BezgelorWorld.CombatBroadcaster do
   @doc """
   Broadcast buff removal to a list of player GUIDs.
   """
-  @spec broadcast_buff_remove(non_neg_integer(), non_neg_integer(), atom(), [non_neg_integer()]) :: :ok
+  @spec broadcast_buff_remove(non_neg_integer(), non_neg_integer(), atom(), [non_neg_integer()]) ::
+          :ok
   def broadcast_buff_remove(target_guid, buff_id, reason, recipient_guids) do
     packet = ServerBuffRemove.new(target_guid, buff_id, reason)
 
@@ -360,81 +391,120 @@ defmodule BezgelorWorld.CombatBroadcaster do
     telegraph_shapes = BezgelorData.Store.get_telegraph_shapes_for_spell(spell_id)
 
     Enum.each(telegraph_shapes, fn telegraph_data ->
-      broadcast_telegraph_from_data(telegraph_data, caster_guid, spell_id, position, rotation, recipient_guids)
+      broadcast_telegraph_from_data(
+        telegraph_data,
+        caster_guid,
+        spell_id,
+        position,
+        rotation,
+        recipient_guids
+      )
     end)
 
     :ok
   end
 
   # Convert telegraph_damage data to ServerTelegraph packet and broadcast
-  defp broadcast_telegraph_from_data(telegraph_data, caster_guid, spell_id, position, rotation, recipient_guids) do
+  defp broadcast_telegraph_from_data(
+         telegraph_data,
+         caster_guid,
+         spell_id,
+         position,
+         rotation,
+         recipient_guids
+       ) do
     shape = Map.get(telegraph_data, :damageShape, 0)
-    duration_ms = Map.get(telegraph_data, :telegraphTimeEndMs, 1000) - Map.get(telegraph_data, :telegraphTimeStartMs, 0)
-    duration = max(duration_ms, 500)  # Minimum 500ms display
+
+    duration_ms =
+      Map.get(telegraph_data, :telegraphTimeEndMs, 1000) -
+        Map.get(telegraph_data, :telegraphTimeStartMs, 0)
+
+    # Minimum 500ms display
+    duration = max(duration_ms, 500)
 
     # Determine color - enemy spells are red, player spells are blue
-    color = :blue  # Default to blue for player abilities
+    # Default to blue for player abilities
+    color = :blue
 
-    packet = case shape do
-      # Circle (0)
-      0 ->
-        radius = Map.get(telegraph_data, :param00, 5.0)
-        ServerTelegraph.circle(caster_guid, position, radius, duration, color)
+    packet =
+      case shape do
+        # Circle (0)
+        0 ->
+          radius = Map.get(telegraph_data, :param00, 5.0)
+          ServerTelegraph.circle(caster_guid, position, radius, duration, color)
 
-      # Ring/Donut (1)
-      1 ->
-        inner_radius = Map.get(telegraph_data, :param00, 2.0)
-        outer_radius = Map.get(telegraph_data, :param01, 5.0)
-        ServerTelegraph.donut(caster_guid, position, inner_radius, outer_radius, duration, color)
+        # Ring/Donut (1)
+        1 ->
+          inner_radius = Map.get(telegraph_data, :param00, 2.0)
+          outer_radius = Map.get(telegraph_data, :param01, 5.0)
 
-      # Square (2) - Map to rectangle
-      2 ->
-        width = Map.get(telegraph_data, :param00, 5.0)
-        length = Map.get(telegraph_data, :param02, 5.0)
-        %ServerTelegraph{
-          caster_guid: caster_guid,
-          spell_id: spell_id,
-          shape: :rectangle,
-          position: position,
-          rotation: rotation,
-          duration: duration,
-          color: color,
-          params: %{width: width, length: length}
-        }
+          ServerTelegraph.donut(
+            caster_guid,
+            position,
+            inner_radius,
+            outer_radius,
+            duration,
+            color
+          )
 
-      # Cone (4) or LongCone (8)
-      shape_id when shape_id in [4, 8] ->
-        _start_radius = Map.get(telegraph_data, :param00, 0.0)
-        end_radius = Map.get(telegraph_data, :param01, 10.0)
-        angle = Map.get(telegraph_data, :param02, 90.0)
-        # Use end_radius as length for cone (start_radius is offset from caster)
-        ServerTelegraph.cone(caster_guid, position, angle, end_radius, rotation, duration, color)
+        # Square (2) - Map to rectangle
+        2 ->
+          width = Map.get(telegraph_data, :param00, 5.0)
+          length = Map.get(telegraph_data, :param02, 5.0)
 
-      # Pie (5) - Map to donut with arc (simplified as circle)
-      5 ->
-        radius = Map.get(telegraph_data, :param01, 5.0)
-        ServerTelegraph.circle(caster_guid, position, radius, duration, color)
+          %ServerTelegraph{
+            caster_guid: caster_guid,
+            spell_id: spell_id,
+            shape: :rectangle,
+            position: position,
+            rotation: rotation,
+            duration: duration,
+            color: color,
+            params: %{width: width, length: length}
+          }
 
-      # Rectangle (7)
-      7 ->
-        width = Map.get(telegraph_data, :param00, 3.0)
-        length = Map.get(telegraph_data, :param02, 10.0)
-        %ServerTelegraph{
-          caster_guid: caster_guid,
-          spell_id: spell_id,
-          shape: :rectangle,
-          position: position,
-          rotation: rotation,
-          duration: duration,
-          color: color,
-          params: %{width: width, length: length}
-        }
+        # Cone (4) or LongCone (8)
+        shape_id when shape_id in [4, 8] ->
+          _start_radius = Map.get(telegraph_data, :param00, 0.0)
+          end_radius = Map.get(telegraph_data, :param01, 10.0)
+          angle = Map.get(telegraph_data, :param02, 90.0)
+          # Use end_radius as length for cone (start_radius is offset from caster)
+          ServerTelegraph.cone(
+            caster_guid,
+            position,
+            angle,
+            end_radius,
+            rotation,
+            duration,
+            color
+          )
 
-      # Unknown shape - default to circle
-      _ ->
-        radius = Map.get(telegraph_data, :param00, 5.0)
-        ServerTelegraph.circle(caster_guid, position, radius, duration, color)
-    end
+        # Pie (5) - Map to donut with arc (simplified as circle)
+        5 ->
+          radius = Map.get(telegraph_data, :param01, 5.0)
+          ServerTelegraph.circle(caster_guid, position, radius, duration, color)
+
+        # Rectangle (7)
+        7 ->
+          width = Map.get(telegraph_data, :param00, 3.0)
+          length = Map.get(telegraph_data, :param02, 10.0)
+
+          %ServerTelegraph{
+            caster_guid: caster_guid,
+            spell_id: spell_id,
+            shape: :rectangle,
+            position: position,
+            rotation: rotation,
+            duration: duration,
+            color: color,
+            params: %{width: width, length: length}
+          }
+
+        # Unknown shape - default to circle
+        _ ->
+          radius = Map.get(telegraph_data, :param00, 5.0)
+          ServerTelegraph.circle(caster_guid, position, radius, duration, color)
+      end
 
     if packet do
       # Add spell_id to packet if not already set
@@ -452,7 +522,12 @@ defmodule BezgelorWorld.CombatBroadcaster do
 
   ## Single participant (legacy)
   """
-  @spec notify_creature_kill(non_neg_integer(), non_neg_integer(), non_neg_integer(), non_neg_integer()) :: :ok
+  @spec notify_creature_kill(
+          non_neg_integer(),
+          non_neg_integer(),
+          non_neg_integer(),
+          non_neg_integer()
+        ) :: :ok
   def notify_creature_kill(zone_id, instance_id, killer_character_id, creature_id) do
     notify_creature_kill_multi(zone_id, instance_id, [killer_character_id], creature_id)
   end
@@ -474,7 +549,12 @@ defmodule BezgelorWorld.CombatBroadcaster do
       # Notify all participants from creature death result
       notify_creature_kill_multi(zone_id, instance_id, result.participant_character_ids, creature_id)
   """
-  @spec notify_creature_kill_multi(non_neg_integer(), non_neg_integer(), [non_neg_integer()], non_neg_integer()) :: :ok
+  @spec notify_creature_kill_multi(
+          non_neg_integer(),
+          non_neg_integer(),
+          [non_neg_integer()],
+          non_neg_integer()
+        ) :: :ok
   def notify_creature_kill_multi(zone_id, instance_id, participant_character_ids, creature_id) do
     # Notify EventManager (uses first participant as "killer" for event tracking)
     manager = EventManager.via_tuple(zone_id, instance_id)
@@ -487,6 +567,7 @@ defmodule BezgelorWorld.CombatBroadcaster do
       _pid ->
         # Notify the EventManager of the kill with first participant
         first_participant = List.first(participant_character_ids)
+
         if first_participant do
           EventManager.report_creature_kill(manager, first_participant, creature_id)
         end
@@ -582,7 +663,13 @@ defmodule BezgelorWorld.CombatBroadcaster do
 
   Tracks damage contribution for boss fights.
   """
-  @spec notify_boss_damage(non_neg_integer(), non_neg_integer(), non_neg_integer(), non_neg_integer(), non_neg_integer()) :: :ok
+  @spec notify_boss_damage(
+          non_neg_integer(),
+          non_neg_integer(),
+          non_neg_integer(),
+          non_neg_integer(),
+          non_neg_integer()
+        ) :: :ok
   def notify_boss_damage(zone_id, instance_id, character_id, boss_id, damage_amount) do
     manager = EventManager.via_tuple(zone_id, instance_id)
 
@@ -615,7 +702,14 @@ defmodule BezgelorWorld.CombatBroadcaster do
   - `:alive` if player survives
   - `:dead` if player died
   """
-  @spec handle_player_damage(non_neg_integer(), non_neg_integer(), {float(), float(), float()}, non_neg_integer(), non_neg_integer(), non_neg_integer()) :: :alive | :dead
+  @spec handle_player_damage(
+          non_neg_integer(),
+          non_neg_integer(),
+          {float(), float(), float()},
+          non_neg_integer(),
+          non_neg_integer(),
+          non_neg_integer()
+        ) :: :alive | :dead
   def handle_player_damage(player_guid, zone_id, position, current_health, damage, attacker_guid) do
     new_health = current_health - damage
 
@@ -649,7 +743,12 @@ defmodule BezgelorWorld.CombatBroadcaster do
   - `position` - Player position at time of death
   - `death_type` - Type of death (:fall, :drown, :environment)
   """
-  @spec handle_environmental_death(non_neg_integer(), non_neg_integer(), {float(), float(), float()}, atom()) :: :ok
+  @spec handle_environmental_death(
+          non_neg_integer(),
+          non_neg_integer(),
+          {float(), float(), float()},
+          atom()
+        ) :: :ok
   def handle_environmental_death(player_guid, zone_id, position, death_type) do
     # Environmental deaths have no killer
     DeathManager.player_died(player_guid, zone_id, position, nil)
@@ -737,7 +836,8 @@ defmodule BezgelorWorld.CombatBroadcaster do
                   Logger.info("Character #{character_id} leveled up to #{updated.level}!")
                   # Broadcast level up achievement event
                   Achievements.broadcast(character_id, {:level_up, updated.level})
-                  # TODO: Send level up packet
+
+                # TODO: Send level up packet
 
                 {:error, reason} ->
                   Logger.error("Failed to persist XP: #{inspect(reason)}")
@@ -781,7 +881,8 @@ defmodule BezgelorWorld.CombatBroadcaster do
 
   Merges body appearance visuals (skin, face, etc.) with equipment visuals.
   """
-  @spec broadcast_item_visual_update(non_neg_integer(), map(), [map()], [non_neg_integer()]) :: :ok
+  @spec broadcast_item_visual_update(non_neg_integer(), map(), [map()], [non_neg_integer()]) ::
+          :ok
   def broadcast_item_visual_update(entity_guid, character, equipment_visuals, recipient_guids) do
     alias BezgelorProtocol.Packets.World.ServerEntityVisualUpdate
 

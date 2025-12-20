@@ -17,10 +17,12 @@ defmodule BezgelorProtocol.Packets.World.ServerVendorItemsUpdatedTest do
 
     test "creates packet with custom multipliers" do
       items = []
-      packet = ServerVendorItemsUpdated.new(100, items,
-        sell_price_multiplier: 0.5,
-        buy_price_multiplier: 0.75
-      )
+
+      packet =
+        ServerVendorItemsUpdated.new(100, items,
+          sell_price_multiplier: 0.5,
+          buy_price_multiplier: 0.75
+        )
 
       assert packet.sell_price_multiplier == 0.5
       assert packet.buy_price_multiplier == 0.75
@@ -106,6 +108,7 @@ defmodule BezgelorProtocol.Packets.World.ServerVendorItemsUpdatedTest do
         ServerVendorItemsUpdated.vendor_item(0, 1234),
         ServerVendorItemsUpdated.vendor_item(1, 5678)
       ]
+
       packet = ServerVendorItemsUpdated.new(100, items)
       writer = PacketWriter.new()
 
@@ -130,6 +133,7 @@ defmodule BezgelorProtocol.Packets.World.ServerVendorItemsUpdatedTest do
         %{index: 0, localized_text_id: 12345},
         %{index: 1, localized_text_id: 67890}
       ]
+
       packet = ServerVendorItemsUpdated.new(100, [], categories: categories)
       writer = PacketWriter.new()
 

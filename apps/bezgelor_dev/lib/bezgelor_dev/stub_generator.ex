@@ -12,7 +12,9 @@ defmodule BezgelorDev.StubGenerator do
   @spec generate_opcode_entry(integer(), String.t()) :: String.t()
   def generate_opcode_entry(opcode_int, suggested_name) do
     atom_name = to_atom_name(suggested_name)
-    hex_value = "0x#{Integer.to_string(opcode_int, 16) |> String.upcase() |> String.pad_leading(4, "0")}"
+
+    hex_value =
+      "0x#{Integer.to_string(opcode_int, 16) |> String.upcase() |> String.pad_leading(4, "0")}"
 
     """
     # Add to module attributes section:
@@ -158,7 +160,8 @@ defmodule BezgelorDev.StubGenerator do
   @doc """
   Writes generated stubs to files in the capture session directory.
   """
-  @spec write_stubs_to_session(String.t(), String.t(), map()) :: {:ok, [String.t()]} | {:error, term()}
+  @spec write_stubs_to_session(String.t(), String.t(), map()) ::
+          {:ok, [String.t()]} | {:error, term()}
   def write_stubs_to_session(session_id, suggested_name, analysis) do
     base_dir = BezgelorDev.capture_directory()
     stubs_dir = Path.join([base_dir, "sessions", session_id, "generated_stubs"])
@@ -208,10 +211,12 @@ defmodule BezgelorDev.StubGenerator do
   defp determine_module_path(suggested_name, _opcode_int) do
     # Determine if this is a world, realm, or auth packet based on name patterns
     cond do
-      String.starts_with?(suggested_name, "ClientAuth") or String.starts_with?(suggested_name, "ServerAuth") ->
+      String.starts_with?(suggested_name, "ClientAuth") or
+          String.starts_with?(suggested_name, "ServerAuth") ->
         "BezgelorProtocol.Packets.#{suggested_name}"
 
-      String.starts_with?(suggested_name, "ClientRealm") or String.starts_with?(suggested_name, "ServerRealm") ->
+      String.starts_with?(suggested_name, "ClientRealm") or
+          String.starts_with?(suggested_name, "ServerRealm") ->
         "BezgelorProtocol.Packets.Realm.#{suggested_name}"
 
       true ->
@@ -305,6 +310,7 @@ defmodule BezgelorDev.StubGenerator do
   defp read_function_for_type(_), do: "read_uint32"
 
   defp format_fields_doc([]), do: "_No fields analyzed_"
+
   defp format_fields_doc(field_analysis) do
     field_analysis
     |> Enum.map(fn field ->

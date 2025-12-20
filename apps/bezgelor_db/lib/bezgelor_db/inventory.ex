@@ -104,6 +104,46 @@ defmodule BezgelorDb.Inventory do
     |> Repo.all()
   end
 
+  @doc """
+  Ensure ability items exist for the character.
+
+  Abilities are stored as items in the :ability container with bag_index
+  set to the ability slot and slot set to 0.
+  """
+  @spec ensure_ability_items(integer(), [map()]) :: [InventoryItem.t()]
+  def ensure_ability_items(character_id, abilities) when is_list(abilities) do
+    Enum.each(abilities, fn ability ->
+      attrs = %{
+        character_id: character_id,
+        item_id: ability.spell_id,
+        container_type: :ability,
+        bag_index: ability.slot,
+        slot: 0,
+        quantity: 1,
+        max_stack: 1,
+        durability: 100,
+        max_durability: 100
+      }
+
+      %InventoryItem{}
+      |> InventoryItem.changeset(attrs)
+      |> Repo.insert(
+        on_conflict: [
+          set: [
+            item_id: attrs.item_id,
+            quantity: attrs.quantity,
+            max_stack: attrs.max_stack,
+            durability: attrs.durability,
+            max_durability: attrs.max_durability
+          ]
+        ],
+        conflict_target: [:character_id, :container_type, :bag_index, :slot]
+      )
+    end)
+
+    get_items(character_id, :ability)
+  end
+
   @doc "Get item at a specific location."
   @spec get_item_at(integer(), atom(), integer(), integer()) :: InventoryItem.t() | nil
   def get_item_at(character_id, container_type, bag_index, slot) do
@@ -128,7 +168,8 @@ defmodule BezgelorDb.Inventory do
     container_type = Map.get(opts, :container_type, :bag)
 
     Repo.transaction(fn ->
-      remaining = add_to_existing_stacks(character_id, item_id, quantity, max_stack, container_type)
+      remaining =
+        add_to_existing_stacks(character_id, item_id, quantity, max_stack, container_type)
 
       if remaining > 0 do
         case create_new_stacks(character_id, item_id, remaining, max_stack, container_type, opts) do
@@ -149,7 +190,8 @@ defmodule BezgelorDb.Inventory do
     items =
       InventoryItem
       |> where([i], i.character_id == ^character_id and i.item_id == ^item_id)
-      |> order_by([i], asc: i.quantity)  # Remove from smallest stacks first
+      # Remove from smallest stacks first
+      |> order_by([i], asc: i.quantity)
       |> Repo.all()
 
     total_available = Enum.sum(Enum.map(items, & &1.quantity))
@@ -371,14 +413,15 @@ defmodule BezgelorDb.Inventory do
     # Single query: get all bags and their occupied slots in one shot
     # This replaces the previous N+1 pattern (1 query for bags + N queries for items)
     query =
-      from b in Bag,
+      from(b in Bag,
         left_join: i in InventoryItem,
-          on:
-            i.character_id == b.character_id and
-              i.bag_index == b.bag_index and
-              i.container_type == ^container_type,
+        on:
+          i.character_id == b.character_id and
+            i.bag_index == b.bag_index and
+            i.container_type == ^container_type,
         where: b.character_id == ^character_id,
         select: {b, i.slot}
+      )
 
     results = Repo.all(query)
 
@@ -417,13 +460,15 @@ defmodule BezgelorDb.Inventory do
       # Find existing partial stacks
       partial_stacks =
         InventoryItem
-        |> where([i],
+        |> where(
+          [i],
           i.character_id == ^character_id and
-          i.item_id == ^item_id and
-          i.container_type == ^container_type and
-          i.quantity < i.max_stack
+            i.item_id == ^item_id and
+            i.container_type == ^container_type and
+            i.quantity < i.max_stack
         )
-        |> order_by([i], desc: i.quantity)  # Fill fullest stacks first
+        # Fill fullest stacks first
+        |> order_by([i], desc: i.quantity)
         |> Repo.all()
 
       Enum.reduce_while(partial_stacks, quantity, fn stack, remaining ->
@@ -748,6 +793,7 @@ defmodule BezgelorDb.Inventory do
       end
     end)
 
-    {:ok, 0}  # TODO: Calculate repair cost
+    # TODO: Calculate repair cost
+    {:ok, 0}
   end
 end

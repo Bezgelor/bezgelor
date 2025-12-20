@@ -170,7 +170,8 @@ defmodule BezgelorDev.PacketContextTest do
 
       assert is_binary(map.connection_id)
       assert map.connection_type == :world
-      assert is_binary(map.timestamp)  # ISO8601 string
+      # ISO8601 string
+      assert is_binary(map.timestamp)
 
       assert map.player.id == 1
       assert map.player.name == "Test"

@@ -8,6 +8,7 @@ defmodule BezgelorWorld.Handler.InventoryHandler do
   import Bitwise
 
   alias BezgelorDb.Inventory
+
   alias BezgelorProtocol.Packets.World.{
     ClientSplitStack,
     ServerInventoryList,
@@ -24,7 +25,11 @@ defmodule BezgelorWorld.Handler.InventoryHandler do
   @spec send_inventory(pid(), integer()) :: :ok
   def send_inventory(connection_pid, character_id) do
     bags = Inventory.get_bags(character_id)
-    items = Inventory.get_items(character_id)
+
+    items =
+      character_id
+      |> Inventory.get_items()
+      |> Enum.reject(&(&1.container_type == :ability))
 
     bag_data =
       Enum.map(bags, fn bag ->
@@ -252,6 +257,6 @@ defmodule BezgelorWorld.Handler.InventoryHandler do
       end
 
     # Combine container, bag_index, and slot into a unique ID
-    (container_int <<< 48) ||| ((item.bag_index || 0) <<< 32) ||| (item.slot || 0)
+    container_int <<< 48 ||| (item.bag_index || 0) <<< 32 ||| (item.slot || 0)
   end
 end

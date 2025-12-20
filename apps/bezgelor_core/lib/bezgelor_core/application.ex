@@ -45,12 +45,15 @@ defmodule BezgelorCore.Application do
             max_no_files: max_files
           },
           level: :debug,
-          formatter: {:logger_formatter, %{template: [:time, ~c" [", :level, ~c"] ", :msg, ~c"\n"]}}
+          formatter:
+            {:logger_formatter, %{template: [:time, ~c" [", :level, ~c"] ", :msg, ~c"\n"]}}
         }
 
         case :logger.add_handler(:file_log, :logger_disk_log_h, handler_config) do
           :ok ->
-            Logger.info("Rotating file log: #{path} (#{div(max_bytes, 1_000_000)}MB x #{max_files})")
+            Logger.info(
+              "Rotating file log: #{path} (#{div(max_bytes, 1_000_000)}MB x #{max_files})"
+            )
 
           {:error, {:already_exist, _}} ->
             :ok

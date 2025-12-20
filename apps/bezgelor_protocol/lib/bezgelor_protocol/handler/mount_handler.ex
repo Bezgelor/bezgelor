@@ -16,6 +16,7 @@ defmodule BezgelorProtocol.Handler.MountHandler do
 
   alias BezgelorProtocol.PacketReader
   alias BezgelorProtocol.PacketWriter
+
   alias BezgelorProtocol.Packets.World.{
     ClientMountSummon,
     ClientMountDismiss,
@@ -23,6 +24,7 @@ defmodule BezgelorProtocol.Handler.MountHandler do
     ServerMountUpdate,
     ServerMountCustomization
   }
+
   alias BezgelorDb.Mounts
 
   require Logger
@@ -134,6 +136,7 @@ defmodule BezgelorProtocol.Handler.MountHandler do
           dyes: packet.dyes,
           flairs: packet.flairs
         }
+
         {opcode, payload} = serialize_packet(custom_packet)
 
         Logger.debug("Player #{character_id} customized mount")

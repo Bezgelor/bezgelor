@@ -14,11 +14,12 @@ defmodule BezgelorDb.VendorsTest do
     end
 
     test "changeset validates quantity >= 0" do
-      changeset = VendorStock.changeset(%VendorStock{}, %{
-        vendor_id: 1,
-        item_id: 100,
-        quantity_remaining: -1
-      })
+      changeset =
+        VendorStock.changeset(%VendorStock{}, %{
+          vendor_id: 1,
+          item_id: 100,
+          quantity_remaining: -1
+        })
 
       refute changeset.valid?
       # Check for validation error on quantity_remaining
@@ -26,21 +27,23 @@ defmodule BezgelorDb.VendorsTest do
     end
 
     test "changeset accepts valid data" do
-      changeset = VendorStock.changeset(%VendorStock{}, %{
-        vendor_id: 1,
-        item_id: 100,
-        quantity_remaining: 5
-      })
+      changeset =
+        VendorStock.changeset(%VendorStock{}, %{
+          vendor_id: 1,
+          item_id: 100,
+          quantity_remaining: 5
+        })
 
       assert changeset.valid?
     end
 
     test "changeset accepts zero quantity" do
-      changeset = VendorStock.changeset(%VendorStock{}, %{
-        vendor_id: 1,
-        item_id: 100,
-        quantity_remaining: 0
-      })
+      changeset =
+        VendorStock.changeset(%VendorStock{}, %{
+          vendor_id: 1,
+          item_id: 100,
+          quantity_remaining: 0
+        })
 
       assert changeset.valid?
     end

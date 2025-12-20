@@ -42,12 +42,13 @@ defmodule BezgelorPortal.TOTP do
 
     qr_code_svg = generate_qr_svg(otpauth_uri)
 
-    {:ok, %{
-      secret: secret,
-      secret_base32: secret_base32,
-      otpauth_uri: otpauth_uri,
-      qr_code_svg: qr_code_svg
-    }}
+    {:ok,
+     %{
+       secret: secret,
+       secret_base32: secret_base32,
+       otpauth_uri: otpauth_uri,
+       qr_code_svg: qr_code_svg
+     }}
   end
 
   @doc """

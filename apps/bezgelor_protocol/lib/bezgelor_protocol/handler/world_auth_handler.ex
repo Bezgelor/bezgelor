@@ -76,7 +76,11 @@ defmodule BezgelorProtocol.Handler.WorldAuthHandler do
 
     # Use atomic validation that checks email + session_key + account_id together
     # to prevent race conditions between session lookup and account ID verification
-    case Accounts.validate_session_key_with_account(packet.email, session_key_hex, packet.account_id) do
+    case Accounts.validate_session_key_with_account(
+           packet.email,
+           session_key_hex,
+           packet.account_id
+         ) do
       {:error, :session_not_found} ->
         Logger.debug("Invalid session for email: #{packet.email}")
         {:error, :invalid_session}

@@ -52,7 +52,15 @@ defmodule BezgelorWorld.PvP.ArenaInstance do
   @type team_state :: %{
           team_id: integer(),
           name: String.t(),
-          members: [%{guid: non_neg_integer(), alive: boolean(), damage_done: non_neg_integer(), healing_done: non_neg_integer(), kills: non_neg_integer()}],
+          members: [
+            %{
+              guid: non_neg_integer(),
+              alive: boolean(),
+              damage_done: non_neg_integer(),
+              healing_done: non_neg_integer(),
+              kills: non_neg_integer()
+            }
+          ],
           rating: non_neg_integer()
         }
 

@@ -44,11 +44,12 @@ defmodule BezgelorWorld.CreatureDeath do
 
     # Resolve combat participants BEFORE setting AI to dead
     # (set_dead preserves combat_participants, but we want to be explicit)
-    participant_character_ids = CombatParticipants.resolve(
-      creature_state.ai,
-      zone_id,
-      instance_id
-    )
+    participant_character_ids =
+      CombatParticipants.resolve(
+        creature_state.ai,
+        zone_id,
+        instance_id
+      )
 
     # Set AI to dead
     ai = AI.set_dead(creature_state.ai)
@@ -112,7 +113,13 @@ defmodule BezgelorWorld.CreatureDeath do
   - `:creature_tier` - Creature tier (1-5) for equipment drops
   - `:class_id` - Player class ID for class-specific equipment
   """
-  @spec generate_loot(non_neg_integer() | nil, non_neg_integer(), non_neg_integer(), map(), Keyword.t()) ::
+  @spec generate_loot(
+          non_neg_integer() | nil,
+          non_neg_integer(),
+          non_neg_integer(),
+          map(),
+          Keyword.t()
+        ) ::
           [{non_neg_integer(), non_neg_integer()}]
   def generate_loot(creature_id, creature_level, killer_level, template, opts \\ []) do
     if creature_id && creature_id > 0 do
@@ -135,10 +142,11 @@ defmodule BezgelorWorld.CreatureDeath do
     base_opts = []
 
     # Add group_size if provided
-    base_opts = case Keyword.get(opts, :group_size) do
-      nil -> base_opts
-      size -> Keyword.put(base_opts, :group_size, size)
-    end
+    base_opts =
+      case Keyword.get(opts, :group_size) do
+        nil -> base_opts
+        size -> Keyword.put(base_opts, :group_size, size)
+      end
 
     # Add creature_tier from template or options
     creature_tier = Keyword.get(opts, :creature_tier) || Map.get(template, :tier, 1)
@@ -187,7 +195,10 @@ defmodule BezgelorWorld.CreatureDeath do
   defp spawn_corpse_if_needed(entity, loot_drops) do
     case CorpseManager.spawn_corpse(entity, loot_drops) do
       {:ok, corpse_guid} ->
-        Logger.debug("Spawned corpse #{corpse_guid} for creature #{entity.guid} with #{length(loot_drops)} loot items")
+        Logger.debug(
+          "Spawned corpse #{corpse_guid} for creature #{entity.guid} with #{length(loot_drops)} loot items"
+        )
+
         corpse_guid
 
       {:error, reason} ->

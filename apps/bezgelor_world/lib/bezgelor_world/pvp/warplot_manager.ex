@@ -53,7 +53,8 @@ defmodule BezgelorWorld.PvP.WarplotManager do
   @doc """
   Install a plug in a warplot slot.
   """
-  @spec install_plug(non_neg_integer(), non_neg_integer(), atom()) :: {:ok, map()} | {:error, atom()}
+  @spec install_plug(non_neg_integer(), non_neg_integer(), atom()) ::
+          {:ok, map()} | {:error, atom()}
   def install_plug(guild_id, slot_id, plug_type) do
     GenServer.call(__MODULE__, {:install_plug, guild_id, slot_id, plug_type})
   end

@@ -50,17 +50,23 @@ defmodule BezgelorProtocol.Packets.World.ServerItemVisualUpdateTest do
       assert slot == 3
 
       # display_id is next 15 bits (bits 7-21)
-      display_id_low = Bitwise.bsr(b0, 7)  # 1 bit from b0
-      display_id_mid = b1  # 8 bits from b1
-      display_id_high = Bitwise.band(b2, 0x3F)  # 6 bits from b2
-      display_id = display_id_low ||| (display_id_mid <<< 1) ||| (display_id_high <<< 9)
+      # 1 bit from b0
+      display_id_low = Bitwise.bsr(b0, 7)
+      # 8 bits from b1
+      display_id_mid = b1
+      # 6 bits from b2
+      display_id_high = Bitwise.band(b2, 0x3F)
+      display_id = display_id_low ||| display_id_mid <<< 1 ||| display_id_high <<< 9
       assert display_id == 1000
 
       # colour_set is next 14 bits (bits 22-35)
-      colour_set_low = Bitwise.bsr(b2, 6)  # 2 bits from b2
-      colour_set_mid = b3  # 8 bits from b3
-      colour_set_high = Bitwise.band(b4, 0x0F)  # 4 bits from b4
-      colour_set = colour_set_low ||| (colour_set_mid <<< 2) ||| (colour_set_high <<< 10)
+      # 2 bits from b2
+      colour_set_low = Bitwise.bsr(b2, 6)
+      # 8 bits from b3
+      colour_set_mid = b3
+      # 4 bits from b4
+      colour_set_high = Bitwise.band(b4, 0x0F)
+      colour_set = colour_set_low ||| colour_set_mid <<< 2 ||| colour_set_high <<< 10
       assert colour_set == 5
 
       assert dye_data == 0
@@ -72,6 +78,7 @@ defmodule BezgelorProtocol.Packets.World.ServerItemVisualUpdateTest do
         ServerItemVisualUpdate.visual(1, 200, 1, -1),
         ServerItemVisualUpdate.visual(2, 300, 2, 100)
       ]
+
       packet = ServerItemVisualUpdate.new(55555, visuals)
       writer = PacketWriter.new()
 

@@ -61,7 +61,8 @@ defmodule BezgelorPortalWeb.Router do
     get "/verify/:token", VerificationController, :verify
     get "/verify-email-change/:token", EmailChangeController, :verify
     delete "/logout", AuthController, :logout
-    get "/logout", AuthController, :logout  # Also allow GET for simple links
+    # Also allow GET for simple links
+    get "/logout", AuthController, :logout
   end
 
   # Authenticated routes

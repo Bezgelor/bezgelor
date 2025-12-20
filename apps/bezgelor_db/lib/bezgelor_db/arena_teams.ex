@@ -91,7 +91,8 @@ defmodule BezgelorDb.ArenaTeams do
   @doc """
   Records a match result for the team.
   """
-  @spec record_match(integer(), boolean(), integer(), [integer()]) :: {:ok, ArenaTeam.t()} | {:error, term()}
+  @spec record_match(integer(), boolean(), integer(), [integer()]) ::
+          {:ok, ArenaTeam.t()} | {:error, term()}
   def record_match(team_id, won, rating_change, participant_ids) do
     Repo.transaction(fn ->
       team = get_team(team_id)
@@ -221,7 +222,8 @@ defmodule BezgelorDb.ArenaTeams do
   @doc """
   Promotes a member to captain.
   """
-  @spec promote_to_captain(integer(), integer(), integer()) :: {:ok, ArenaTeam.t()} | {:error, term()}
+  @spec promote_to_captain(integer(), integer(), integer()) ::
+          {:ok, ArenaTeam.t()} | {:error, term()}
   def promote_to_captain(team_id, current_captain_id, new_captain_id) do
     Repo.transaction(fn ->
       team = get_team(team_id)

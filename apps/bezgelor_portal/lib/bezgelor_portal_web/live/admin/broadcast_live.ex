@@ -26,8 +26,7 @@ defmodule BezgelorPortalWeb.Admin.BroadcastLive do
        message_type: "info",
        recent_broadcasts: [],
        sending: false
-     ),
-     layout: {BezgelorPortalWeb.Layouts, :admin}}
+     ), layout: {BezgelorPortalWeb.Layouts, :admin}}
   end
 
   @impl true
@@ -40,8 +39,8 @@ defmodule BezgelorPortalWeb.Admin.BroadcastLive do
           <p class="text-base-content/70">Send announcements to all online players</p>
         </div>
       </div>
-
-      <!-- Broadcast Form -->
+      
+    <!-- Broadcast Form -->
       <div class="card bg-base-100 shadow">
         <div class="card-body">
           <h2 class="card-title">New Broadcast</h2>
@@ -104,15 +103,17 @@ defmodule BezgelorPortalWeb.Admin.BroadcastLive do
                 required
               >{@message}</textarea>
             </div>
-
-            <!-- Preview -->
+            
+    <!-- Preview -->
             <div class="form-control">
               <label class="label">
                 <span class="label-text">Preview</span>
               </label>
               <div class={"alert #{type_alert_class(@message_type)}"}>
                 <.icon name={type_icon(@message_type)} class="size-5" />
-                <span>{if @message == "", do: "Your message will appear here...", else: @message}</span>
+                <span>
+                  {if @message == "", do: "Your message will appear here...", else: @message}
+                </span>
               </div>
             </div>
 
@@ -123,19 +124,17 @@ defmodule BezgelorPortalWeb.Admin.BroadcastLive do
                 disabled={@sending || String.length(@message) == 0}
               >
                 <%= if @sending do %>
-                  <span class="loading loading-spinner loading-sm"></span>
-                  Sending...
+                  <span class="loading loading-spinner loading-sm"></span> Sending...
                 <% else %>
-                  <.icon name="hero-megaphone" class="size-4" />
-                  Send Broadcast
+                  <.icon name="hero-megaphone" class="size-4" /> Send Broadcast
                 <% end %>
               </button>
             </div>
           </form>
         </div>
       </div>
-
-      <!-- Recent Broadcasts -->
+      
+    <!-- Recent Broadcasts -->
       <div class="card bg-base-100 shadow">
         <div class="card-body">
           <h2 class="card-title">Recent Broadcasts</h2>
@@ -143,7 +142,10 @@ defmodule BezgelorPortalWeb.Admin.BroadcastLive do
             <p class="text-base-content/50 py-4">No broadcasts sent yet this session</p>
           <% else %>
             <div class="space-y-3 mt-2">
-              <div :for={broadcast <- @recent_broadcasts} class={"alert #{type_alert_class(broadcast.type)} py-2"}>
+              <div
+                :for={broadcast <- @recent_broadcasts}
+                class={"alert #{type_alert_class(broadcast.type)} py-2"}
+              >
                 <.icon name={type_icon(broadcast.type)} class="size-4" />
                 <div class="flex-1">
                   <p>{broadcast.message}</p>

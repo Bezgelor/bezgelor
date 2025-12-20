@@ -29,13 +29,13 @@ defmodule BezgelorDb.Schema.AdminAuditLog do
         }
 
   schema "admin_audit_log" do
-    belongs_to :admin_account, BezgelorDb.Schema.Account
+    belongs_to(:admin_account, BezgelorDb.Schema.Account)
 
-    field :action, :string
-    field :target_type, :string
-    field :target_id, :integer
-    field :details, :map
-    field :ip_address, :string
+    field(:action, :string)
+    field(:target_type, :string)
+    field(:target_id, :integer)
+    field(:details, :map)
+    field(:ip_address, :string)
 
     timestamps(updated_at: false, type: :utc_datetime)
   end

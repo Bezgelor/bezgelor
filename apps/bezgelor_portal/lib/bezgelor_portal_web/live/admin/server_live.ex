@@ -40,8 +40,7 @@ defmodule BezgelorPortalWeb.Admin.ServerLive do
        server_start_time: get_server_start_time(),
        connected_players: load_online_players(),
        zone_instances: Portal.zone_player_counts()
-     ),
-     layout: {BezgelorPortalWeb.Layouts, :admin}}
+     ), layout: {BezgelorPortalWeb.Layouts, :admin}}
   end
 
   @impl true
@@ -69,8 +68,8 @@ defmodule BezgelorPortalWeb.Admin.ServerLive do
           </span>
         </div>
       </div>
-
-      <!-- Tabs -->
+      
+    <!-- Tabs -->
       <div role="tablist" class="tabs tabs-boxed bg-base-100 p-1 w-fit">
         <button
           :for={tab <- [:status, :broadcast, :players, :zones]}
@@ -83,8 +82,8 @@ defmodule BezgelorPortalWeb.Admin.ServerLive do
           {tab_label(tab)}
         </button>
       </div>
-
-      <!-- Tab Content -->
+      
+    <!-- Tab Content -->
       <%= case @active_tab do %>
         <% :status -> %>
           <.status_tab
@@ -133,13 +132,15 @@ defmodule BezgelorPortalWeb.Admin.ServerLive do
             </div>
             <div class="flex justify-between items-center">
               <span class="text-base-content/70">Server Time</span>
-              <span class="font-mono">{Calendar.strftime(DateTime.utc_now(), "%Y-%m-%d %H:%M:%S UTC")}</span>
+              <span class="font-mono">
+                {Calendar.strftime(DateTime.utc_now(), "%Y-%m-%d %H:%M:%S UTC")}
+              </span>
             </div>
           </div>
         </div>
       </div>
-
-      <!-- Maintenance Mode -->
+      
+    <!-- Maintenance Mode -->
       <div class="card bg-base-100 shadow">
         <div class="card-body">
           <h2 class="card-title">Maintenance Mode</h2>
@@ -167,8 +168,8 @@ defmodule BezgelorPortalWeb.Admin.ServerLive do
           </div>
         </div>
       </div>
-
-      <!-- MOTD -->
+      
+    <!-- MOTD -->
       <div class="card bg-base-100 shadow lg:col-span-2">
         <div class="card-body">
           <div class="flex items-center justify-between">
@@ -179,8 +180,7 @@ defmodule BezgelorPortalWeb.Admin.ServerLive do
               class="btn btn-ghost btn-sm"
               phx-click="edit_motd"
             >
-              <.icon name="hero-pencil" class="size-4" />
-              Edit
+              <.icon name="hero-pencil" class="size-4" /> Edit
             </button>
           </div>
 
@@ -194,7 +194,9 @@ defmodule BezgelorPortalWeb.Admin.ServerLive do
               >{@motd_draft}</textarea>
               <div class="flex gap-2 mt-2">
                 <button type="submit" class="btn btn-primary btn-sm">Save</button>
-                <button type="button" class="btn btn-ghost btn-sm" phx-click="cancel_motd">Cancel</button>
+                <button type="button" class="btn btn-ghost btn-sm" phx-click="cancel_motd">
+                  Cancel
+                </button>
               </div>
             </form>
           <% else %>
@@ -250,8 +252,7 @@ defmodule BezgelorPortalWeb.Admin.ServerLive do
           </div>
 
           <button type="submit" class="btn btn-primary">
-            <.icon name="hero-megaphone" class="size-4" />
-            Send Broadcast
+            <.icon name="hero-megaphone" class="size-4" /> Send Broadcast
           </button>
         </form>
       </div>
@@ -273,8 +274,7 @@ defmodule BezgelorPortalWeb.Admin.ServerLive do
             phx-click="kick_all"
             data-confirm="Kick all connected players?"
           >
-            <.icon name="hero-x-mark" class="size-4" />
-            Kick All
+            <.icon name="hero-x-mark" class="size-4" /> Kick All
           </button>
         </div>
 
@@ -397,7 +397,10 @@ defmodule BezgelorPortalWeb.Admin.ServerLive do
 
     {:noreply,
      socket
-     |> put_flash(:info, if(new_mode, do: "Maintenance mode enabled", else: "Maintenance mode disabled"))
+     |> put_flash(
+       :info,
+       if(new_mode, do: "Maintenance mode enabled", else: "Maintenance mode disabled")
+     )
      |> assign(maintenance_mode: new_mode)}
   end
 
@@ -416,6 +419,7 @@ defmodule BezgelorPortalWeb.Admin.ServerLive do
     admin = socket.assigns.current_account
 
     Portal.set_motd(new_motd)
+
     Authorization.log_action(admin, "server.motd_update", "system", nil, %{
       old_motd: socket.assigns.motd,
       new_motd: new_motd
@@ -432,13 +436,17 @@ defmodule BezgelorPortalWeb.Admin.ServerLive do
     admin = socket.assigns.current_account
 
     case target do
-      "all" -> Portal.broadcast_system_message(message)
+      "all" ->
+        Portal.broadcast_system_message(message)
+
       zone_id when is_binary(zone_id) ->
         case Integer.parse(zone_id) do
           {id, ""} -> Portal.broadcast_to_zone(id, message)
           _ -> Portal.broadcast_system_message(message)
         end
-      _ -> Portal.broadcast_system_message(message)
+
+      _ ->
+        Portal.broadcast_system_message(message)
     end
 
     Authorization.log_action(admin, "server.broadcast", "system", nil, %{
@@ -458,6 +466,7 @@ defmodule BezgelorPortalWeb.Admin.ServerLive do
         case Portal.kick_player(account_id, "Kicked by administrator") do
           :ok ->
             Authorization.log_action(admin, "server.kick_player", "account", account_id, %{})
+
             {:noreply,
              socket
              |> put_flash(:info, "Player kicked")
@@ -500,6 +509,7 @@ defmodule BezgelorPortalWeb.Admin.ServerLive do
         case Portal.restart_zone(zone_id) do
           :ok ->
             Authorization.log_action(admin, "server.restart_zone", "zone", zone_id, %{})
+
             {:noreply,
              socket
              |> put_flash(:info, "Zone restart initiated")
@@ -567,6 +577,7 @@ defmodule BezgelorPortalWeb.Admin.ServerLive do
   end
 
   defp get_character_info(nil), do: %{}
+
   defp get_character_info(character_id) do
     case BezgelorDb.Characters.get_character(character_id) do
       {:ok, char} -> %{level: char.level, name: char.name}
@@ -575,6 +586,7 @@ defmodule BezgelorPortalWeb.Admin.ServerLive do
   end
 
   defp get_account_info(nil), do: %{}
+
   defp get_account_info(account_id) do
     case BezgelorDb.Accounts.get_by_id(account_id) do
       %{email: email} -> %{email: email}
@@ -583,6 +595,7 @@ defmodule BezgelorPortalWeb.Admin.ServerLive do
   end
 
   defp get_zone_name(nil), do: "Unknown"
+
   defp get_zone_name(zone_id) do
     try do
       case BezgelorData.Store.get(:world_location, zone_id) do

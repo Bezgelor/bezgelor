@@ -35,24 +35,37 @@ defmodule BezgelorDb.Schema.InstanceCompletion do
   @difficulties ~w(normal veteran challenge mythic_plus)
 
   schema "instance_completions" do
-    belongs_to :character, Character
+    belongs_to(:character, Character)
 
-    field :instance_definition_id, :integer
-    field :instance_type, :string
-    field :difficulty, :string
-    field :completed_at, :utc_datetime
-    field :duration_seconds, :integer
-    field :deaths, :integer, default: 0
-    field :damage_done, :integer, default: 0
-    field :healing_done, :integer, default: 0
-    field :mythic_level, :integer
-    field :timed, :boolean
+    field(:instance_definition_id, :integer)
+    field(:instance_type, :string)
+    field(:difficulty, :string)
+    field(:completed_at, :utc_datetime)
+    field(:duration_seconds, :integer)
+    field(:deaths, :integer, default: 0)
+    field(:damage_done, :integer, default: 0)
+    field(:healing_done, :integer, default: 0)
+    field(:mythic_level, :integer)
+    field(:timed, :boolean)
 
     timestamps()
   end
 
-  @required_fields [:character_id, :instance_definition_id, :instance_type, :difficulty, :completed_at]
-  @optional_fields [:duration_seconds, :deaths, :damage_done, :healing_done, :mythic_level, :timed]
+  @required_fields [
+    :character_id,
+    :instance_definition_id,
+    :instance_type,
+    :difficulty,
+    :completed_at
+  ]
+  @optional_fields [
+    :duration_seconds,
+    :deaths,
+    :damage_done,
+    :healing_done,
+    :mythic_level,
+    :timed
+  ]
 
   @doc """
   Creates a changeset for an instance completion record.

@@ -79,7 +79,8 @@ defmodule BezgelorWorld.CreatureAggroIntegrationTest do
       # Spawn wolves all within 10m social aggro range of wolf1
       {:ok, wolf1} = CreatureManager.spawn_creature(2, {0.0, 0.0, 0.0})
       {:ok, wolf2} = CreatureManager.spawn_creature(2, {8.0, 0.0, 0.0})
-      {:ok, wolf3} = CreatureManager.spawn_creature(2, {6.0, 6.0, 0.0})  # ~8.5m from wolf1
+      # ~8.5m from wolf1
+      {:ok, wolf3} = CreatureManager.spawn_creature(2, {6.0, 6.0, 0.0})
 
       # Wolf4 is too far from wolf1 (beyond 10m social aggro range)
       {:ok, wolf4} = CreatureManager.spawn_creature(2, {100.0, 0.0, 0.0})

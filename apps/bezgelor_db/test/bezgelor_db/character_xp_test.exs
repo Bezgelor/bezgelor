@@ -39,10 +39,13 @@ defmodule BezgelorDb.CharacterXPTest do
 
       # Second add might cause level up, handle both cases
       result = Characters.add_experience(updated1, 300)
-      updated2 = case result do
-        {:ok, char, level_up: true} -> char
-        {:ok, char} -> char
-      end
+
+      updated2 =
+        case result do
+          {:ok, char, level_up: true} -> char
+          {:ok, char} -> char
+        end
+
       assert updated2.total_xp == 1000
     end
 
@@ -65,7 +68,8 @@ defmodule BezgelorDb.CharacterXPTest do
       result = Characters.add_experience(character, 5000)
 
       assert {:ok, updated, level_up: true} = result
-      assert updated.level > 2  # Should be level 3 or higher
+      # Should be level 3 or higher
+      assert updated.level > 2
       assert updated.total_xp == 5000
     end
 
@@ -77,6 +81,7 @@ defmodule BezgelorDb.CharacterXPTest do
       case result do
         {:ok, updated, level_up: true} ->
           assert updated.level <= 50
+
         {:ok, updated} ->
           assert updated.level <= 50
       end
@@ -126,6 +131,7 @@ defmodule BezgelorDb.CharacterXPTest do
 
   defp create_test_character(account_id, attrs \\ %{}) do
     name = "XPTest#{System.unique_integer([:positive])}"
+
     default_attrs = %{
       name: name,
       sex: 0,

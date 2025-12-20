@@ -103,7 +103,8 @@ defmodule BezgelorPortal.Notifier do
 
   The token encodes both the account ID and the new email address.
   """
-  @spec deliver_email_change_verification(Account.t(), String.t()) :: {:ok, Swoosh.Email.t()} | {:error, any()}
+  @spec deliver_email_change_verification(Account.t(), String.t()) ::
+          {:ok, Swoosh.Email.t()} | {:error, any()}
   def deliver_email_change_verification(account, new_email) do
     token = generate_email_change_token(account, new_email)
     verification_url = url("/verify-email-change/#{token}")

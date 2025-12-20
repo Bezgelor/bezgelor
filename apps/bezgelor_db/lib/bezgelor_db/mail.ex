@@ -105,7 +105,8 @@ defmodule BezgelorDb.Mail do
   end
 
   @doc "Send system mail (no sender)."
-  @spec send_system_mail(integer(), String.t(), String.t(), keyword()) :: {:ok, Mail.t()} | {:error, term()}
+  @spec send_system_mail(integer(), String.t(), String.t(), keyword()) ::
+          {:ok, Mail.t()} | {:error, term()}
   def send_system_mail(recipient_id, subject, body, opts \\ []) do
     gold = Keyword.get(opts, :gold, 0)
     attachments = Keyword.get(opts, :attachments, [])
@@ -188,7 +189,7 @@ defmodule BezgelorDb.Mail do
         attachments = get_attachments(mail.id)
 
         # Clear attachments
-        Repo.delete_all(from a in MailAttachment, where: a.mail_id == ^mail.id)
+        Repo.delete_all(from(a in MailAttachment, where: a.mail_id == ^mail.id))
 
         {:ok, _} =
           mail
@@ -223,7 +224,7 @@ defmodule BezgelorDb.Mail do
 
         Repo.transaction(fn ->
           # Clear attachments and COD
-          Repo.delete_all(from a in MailAttachment, where: a.mail_id == ^mail.id)
+          Repo.delete_all(from(a in MailAttachment, where: a.mail_id == ^mail.id))
 
           mail
           |> Ecto.Changeset.change(has_attachments: false, cod_amount: 0)
@@ -307,7 +308,8 @@ defmodule BezgelorDb.Mail do
                 subject: "Returned: #{mail.subject}",
                 body: mail.body,
                 gold_attached: mail.gold_attached,
-                cod_amount: 0  # No COD on returns
+                # No COD on returns
+                cod_amount: 0
               },
               Enum.map(attachments, fn a ->
                 %{item_id: a.item_id, stack_count: a.stack_count, item_data: a.item_data}
@@ -315,7 +317,7 @@ defmodule BezgelorDb.Mail do
             )
 
           # Mark original as returned and clear contents
-          Repo.delete_all(from a in MailAttachment, where: a.mail_id == ^mail.id)
+          Repo.delete_all(from(a in MailAttachment, where: a.mail_id == ^mail.id))
 
           mail
           |> Ecto.Changeset.change(
@@ -344,10 +346,10 @@ defmodule BezgelorDb.Mail do
       |> where([m], m.expires_at <= ^now)
       |> select([m], m.id)
 
-    Repo.delete_all(from a in MailAttachment, where: a.mail_id in subquery(expired_mail_ids))
+    Repo.delete_all(from(a in MailAttachment, where: a.mail_id in subquery(expired_mail_ids)))
 
     # Then delete the mail
-    Repo.delete_all(from m in Mail, where: m.expires_at <= ^now)
+    Repo.delete_all(from(m in Mail, where: m.expires_at <= ^now))
   end
 
   def max_inbox_size, do: @max_inbox_size

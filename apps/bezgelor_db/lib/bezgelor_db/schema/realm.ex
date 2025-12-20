@@ -47,13 +47,13 @@ defmodule BezgelorDb.Schema.Realm do
         }
 
   schema "realms" do
-    field :name, :string
-    field :address, :string
-    field :port, :integer
-    field :type, Ecto.Enum, values: [:pve, :pvp]
-    field :flags, :integer, default: 0
-    field :online, :boolean, default: false
-    field :note_text_id, :integer, default: 0
+    field(:name, :string)
+    field(:address, :string)
+    field(:port, :integer)
+    field(:type, Ecto.Enum, values: [:pve, :pvp])
+    field(:flags, :integer, default: 0)
+    field(:online, :boolean, default: false)
+    field(:note_text_id, :integer, default: 0)
 
     timestamps(type: :utc_datetime)
   end

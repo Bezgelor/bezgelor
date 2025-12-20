@@ -39,10 +39,22 @@ defmodule BezgelorWorld.Encounter.Primitives.Target do
       end
   """
 
-  @type target_type :: :tank | :healer | :random | :farthest | :nearest
-                     | :lowest_health | :highest_threat | :second_threat
-                     | :marked | :all | :all_except_tank | :random_n
-                     | :spread | :chain | :self
+  @type target_type ::
+          :tank
+          | :healer
+          | :random
+          | :farthest
+          | :nearest
+          | :lowest_health
+          | :highest_threat
+          | :second_threat
+          | :marked
+          | :all
+          | :all_except_tank
+          | :random_n
+          | :spread
+          | :chain
+          | :self
 
   @doc """
   Defines explicit targeting for the current ability.
@@ -122,9 +134,19 @@ defmodule BezgelorWorld.Encounter.Primitives.Target do
   end
 
   def build_target(simple_type, _opts)
-      when simple_type in [:tank, :healer, :random, :farthest, :nearest,
-                           :lowest_health, :highest_threat, :second_threat,
-                           :all, :all_except_tank, :self] do
+      when simple_type in [
+             :tank,
+             :healer,
+             :random,
+             :farthest,
+             :nearest,
+             :lowest_health,
+             :highest_threat,
+             :second_threat,
+             :all,
+             :all_except_tank,
+             :self
+           ] do
     %{type: simple_type}
   end
 

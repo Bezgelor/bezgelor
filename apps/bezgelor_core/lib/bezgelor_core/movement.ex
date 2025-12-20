@@ -241,7 +241,11 @@ defmodule BezgelorCore.Movement do
 
   defp find_position_at_distance([current], _target, _accumulated), do: current
 
-  defp find_position_at_distance([{x1, y1, z1} = _current, {x2, y2, z2} = next | rest], target, accumulated) do
+  defp find_position_at_distance(
+         [{x1, y1, z1} = _current, {x2, y2, z2} = next | rest],
+         target,
+         accumulated
+       ) do
     v1 = %Vector3{x: x1, y: y1, z: z1}
     v2 = %Vector3{x: x2, y: y2, z: z2}
     segment_length = Vector3.distance(v1, v2)
@@ -302,6 +306,7 @@ defmodule BezgelorCore.Movement do
       0..num_steps
       |> Enum.map(fn step ->
         progress = min(step * step_size / stop_distance, 1.0)
+
         {
           cx + nx * stop_distance * progress,
           cy + ny * stop_distance * progress,
@@ -371,6 +376,7 @@ defmodule BezgelorCore.Movement do
     0..num_steps
     |> Enum.map(fn step ->
       progress = min(step * @step_size / distance, 1.0)
+
       {
         cx + nx * distance * progress,
         cy + ny * distance * progress,

@@ -91,7 +91,10 @@ defmodule BezgelorData.Compiler do
 
       case File.write(etf_path, etf_content) do
         :ok ->
-          Logger.debug("Compiled #{byte_size(json_content)} bytes JSON -> #{byte_size(etf_content)} bytes ETF")
+          Logger.debug(
+            "Compiled #{byte_size(json_content)} bytes JSON -> #{byte_size(etf_content)} bytes ETF"
+          )
+
           :ok
 
         {:error, reason} ->

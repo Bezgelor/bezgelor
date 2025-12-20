@@ -12,11 +12,11 @@ defmodule BezgelorDb.Schema.HousingNeighbor do
   @type t :: %__MODULE__{}
 
   schema "housing_neighbors" do
-    belongs_to :plot, BezgelorDb.Schema.HousingPlot
-    belongs_to :character, BezgelorDb.Schema.Character
+    belongs_to(:plot, BezgelorDb.Schema.HousingPlot)
+    belongs_to(:character, BezgelorDb.Schema.Character)
 
-    field :is_roommate, :boolean, default: false
-    field :added_at, :utc_datetime
+    field(:is_roommate, :boolean, default: false)
+    field(:added_at, :utc_datetime)
   end
 
   def changeset(neighbor, attrs) do

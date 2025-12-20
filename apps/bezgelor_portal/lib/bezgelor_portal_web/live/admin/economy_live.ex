@@ -33,8 +33,7 @@ defmodule BezgelorPortalWeb.Admin.EconomyLive do
          "reason" => ""
        },
        gift_result: nil
-     ),
-     layout: {BezgelorPortalWeb.Layouts, :admin}}
+     ), layout: {BezgelorPortalWeb.Layouts, :admin}}
   end
 
   @impl true
@@ -45,8 +44,8 @@ defmodule BezgelorPortalWeb.Admin.EconomyLive do
         <h1 class="text-2xl font-bold">Economy Management</h1>
         <p class="text-base-content/70">Monitor and manage game economy</p>
       </div>
-
-      <!-- Tabs -->
+      
+    <!-- Tabs -->
       <div role="tablist" class="tabs tabs-boxed bg-base-100 p-1 w-fit">
         <button
           :for={tab <- [:overview, :transactions, :gifts]}
@@ -59,8 +58,8 @@ defmodule BezgelorPortalWeb.Admin.EconomyLive do
           {tab_label(tab)}
         </button>
       </div>
-
-      <!-- Tab Content -->
+      
+    <!-- Tab Content -->
       <%= case @active_tab do %>
         <% :overview -> %>
           <.overview_tab />
@@ -162,13 +161,18 @@ defmodule BezgelorPortalWeb.Admin.EconomyLive do
             <li>By item involved</li>
           </ul>
         </div>
-
-        <!-- Placeholder search form -->
+        
+    <!-- Placeholder search form -->
         <div class="mt-6 opacity-50 pointer-events-none">
           <form class="flex flex-wrap gap-4 items-end">
             <div class="form-control">
               <label class="label"><span class="label-text">Character</span></label>
-              <input type="text" class="input input-bordered input-sm" placeholder="Character name" disabled />
+              <input
+                type="text"
+                class="input input-bordered input-sm"
+                placeholder="Character name"
+                disabled
+              />
             </div>
             <div class="form-control">
               <label class="label"><span class="label-text">Type</span></label>
@@ -221,8 +225,8 @@ defmodule BezgelorPortalWeb.Admin.EconomyLive do
                 required
               />
             </div>
-
-            <!-- Gift Type -->
+            
+    <!-- Gift Type -->
             <div class="form-control">
               <label class="label">
                 <span class="label-text">Gift Type</span>
@@ -232,8 +236,8 @@ defmodule BezgelorPortalWeb.Admin.EconomyLive do
                 <option value="currency" selected={@form["gift_type"] == "currency"}>Currency</option>
               </select>
             </div>
-
-            <!-- Item fields -->
+            
+    <!-- Item fields -->
             <div :if={@form["gift_type"] == "item"} class="space-y-4">
               <div class="form-control">
                 <label class="label">
@@ -262,8 +266,8 @@ defmodule BezgelorPortalWeb.Admin.EconomyLive do
                 />
               </div>
             </div>
-
-            <!-- Currency fields -->
+            
+    <!-- Currency fields -->
             <div :if={@form["gift_type"] == "currency"} class="space-y-4">
               <div class="form-control">
                 <label class="label">
@@ -292,8 +296,8 @@ defmodule BezgelorPortalWeb.Admin.EconomyLive do
                 />
               </div>
             </div>
-
-            <!-- Reason -->
+            
+    <!-- Reason -->
             <div class="form-control">
               <label class="label">
                 <span class="label-text">Reason (for audit log)</span>
@@ -308,26 +312,33 @@ defmodule BezgelorPortalWeb.Admin.EconomyLive do
             </div>
 
             <button type="submit" class="btn btn-primary w-full">
-              <.icon name="hero-gift" class="size-4" />
-              Send Gift
+              <.icon name="hero-gift" class="size-4" /> Send Gift
             </button>
           </form>
-
-          <!-- Result message -->
-          <div :if={@result} class={"alert mt-4 #{if @result.success, do: "alert-success", else: "alert-error"}"}>
-            <.icon name={if @result.success, do: "hero-check-circle", else: "hero-x-circle"} class="size-5" />
+          
+    <!-- Result message -->
+          <div
+            :if={@result}
+            class={"alert mt-4 #{if @result.success, do: "alert-success", else: "alert-error"}"}
+          >
+            <.icon
+              name={if @result.success, do: "hero-check-circle", else: "hero-x-circle"}
+              class="size-5"
+            />
             <span>{@result.message}</span>
           </div>
         </div>
       </div>
-
-      <!-- Recent Gifts -->
+      
+    <!-- Recent Gifts -->
       <div class="card bg-base-100 shadow">
         <div class="card-body">
           <h2 class="card-title">Recent Admin Gifts</h2>
           <p class="text-sm text-base-content/70">
-            View recent gifts sent by administrators in the
-            <.link navigate={~p"/admin/audit-log?action=character.grant*"} class="link link-primary">
+            View recent gifts sent by administrators in the <.link
+              navigate={~p"/admin/audit-log?action=character.grant*"}
+              class="link link-primary"
+            >
               audit log
             </.link>.
           </p>
@@ -388,7 +399,10 @@ defmodule BezgelorPortalWeb.Admin.EconomyLive do
 
     case Characters.get_character_by_name(recipient_name) do
       nil ->
-        {:noreply, assign(socket, gift_result: %{success: false, message: "Character not found: #{recipient_name}"})}
+        {:noreply,
+         assign(socket,
+           gift_result: %{success: false, message: "Character not found: #{recipient_name}"}
+         )}
 
       character ->
         result = send_gift(admin, character, gift_type, params, reason)
@@ -428,13 +442,21 @@ defmodule BezgelorPortalWeb.Admin.EconomyLive do
          currency_type when not is_nil(currency_type) <- currency_id_to_atom(currency_id) do
       case Inventory.modify_currency(character.id, currency_type, amount) do
         {:ok, _} ->
-          Authorization.log_action(admin, "character.grant_currency", "character", character.id, %{
-            currency_type: currency_type,
-            amount: amount,
-            reason: reason
-          })
+          Authorization.log_action(
+            admin,
+            "character.grant_currency",
+            "character",
+            character.id,
+            %{
+              currency_type: currency_type,
+              amount: amount,
+              reason: reason
+            }
+          )
 
-          currency_name = currency_type |> Atom.to_string() |> String.replace("_", " ") |> String.capitalize()
+          currency_name =
+            currency_type |> Atom.to_string() |> String.replace("_", " ") |> String.capitalize()
+
           %{success: true, message: "Granted #{amount} #{currency_name} to #{character.name}"}
 
         {:error, :insufficient_funds} ->

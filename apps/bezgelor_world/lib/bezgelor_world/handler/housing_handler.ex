@@ -18,6 +18,7 @@ defmodule BezgelorWorld.Handler.HousingHandler do
   alias BezgelorDb.Housing
   alias BezgelorWorld.HousingManager
   alias BezgelorProtocol.PacketReader
+
   alias BezgelorProtocol.Packets.World.{
     ServerHousingEnter,
     ServerHousingDecorUpdate,
@@ -157,7 +158,8 @@ defmodule BezgelorWorld.Handler.HousingHandler do
          true <- Housing.can_decorate?(plot_id, character_id),
          {:ok, socket_index, reader} <- PacketReader.read_byte(reader),
          {:ok, fabkit_id, _reader} <- PacketReader.read_uint32(reader),
-         {:ok, fabkit} <- Housing.install_fabkit(plot_id, %{socket_index: socket_index, fabkit_id: fabkit_id}) do
+         {:ok, fabkit} <-
+           Housing.install_fabkit(plot_id, %{socket_index: socket_index, fabkit_id: fabkit_id}) do
       packet = ServerHousingFabkitUpdate.installed(plot_id, fabkit)
       HousingManager.broadcast_to_plot(plot_id, packet)
       {:ok, [packet], state}

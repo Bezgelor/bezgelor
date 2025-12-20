@@ -43,8 +43,10 @@ defmodule BezgelorCore.AIAggroTest do
       ai = AI.new({0.0, 0.0, 0.0})
 
       nearby_players = [
-        %{guid: 11111, position: {5.0, 0.0, 0.0}, faction: :exile},  # Same faction
-        %{guid: 22222, position: {6.0, 0.0, 0.0}, faction: :dominion}  # Enemy
+        # Same faction
+        %{guid: 11111, position: {5.0, 0.0, 0.0}, faction: :exile},
+        # Enemy
+        %{guid: 22222, position: {6.0, 0.0, 0.0}, faction: :dominion}
       ]
 
       result = AI.check_aggro_with_faction(ai, nearby_players, 10.0, :exile)
@@ -69,7 +71,8 @@ defmodule BezgelorCore.AIAggroTest do
       ai = AI.new({0.0, 0.0, 0.0})
 
       nearby_players = [
-        %{guid: 12345, position: {5.0, 0.0, 0.0}}  # 5 units away
+        # 5 units away
+        %{guid: 12345, position: {5.0, 0.0, 0.0}}
       ]
 
       result = AI.check_aggro(ai, nearby_players, 10.0)
@@ -81,7 +84,8 @@ defmodule BezgelorCore.AIAggroTest do
       ai = AI.new({0.0, 0.0, 0.0})
 
       nearby_players = [
-        %{guid: 12345, position: {50.0, 0.0, 0.0}}  # 50 units away
+        # 50 units away
+        %{guid: 12345, position: {50.0, 0.0, 0.0}}
       ]
 
       result = AI.check_aggro(ai, nearby_players, 10.0)
@@ -105,9 +109,12 @@ defmodule BezgelorCore.AIAggroTest do
       ai = AI.new({0.0, 0.0, 0.0})
 
       nearby_players = [
-        %{guid: 11111, position: {8.0, 0.0, 0.0}},  # 8 units
-        %{guid: 22222, position: {3.0, 0.0, 0.0}},  # 3 units (closest)
-        %{guid: 33333, position: {6.0, 0.0, 0.0}}   # 6 units
+        # 8 units
+        %{guid: 11111, position: {8.0, 0.0, 0.0}},
+        # 3 units (closest)
+        %{guid: 22222, position: {3.0, 0.0, 0.0}},
+        # 6 units
+        %{guid: 33333, position: {6.0, 0.0, 0.0}}
       ]
 
       result = AI.check_aggro(ai, nearby_players, 10.0)
@@ -163,7 +170,8 @@ defmodule BezgelorCore.AIAggroTest do
 
       new_ai = AI.social_aggro(ai, 22222)
 
-      assert new_ai.target_guid == 11111  # Keeps original target
+      # Keeps original target
+      assert new_ai.target_guid == 11111
     end
 
     test "evading creature ignores social aggro" do

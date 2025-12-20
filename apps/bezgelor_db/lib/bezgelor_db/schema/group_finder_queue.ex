@@ -36,23 +36,31 @@ defmodule BezgelorDb.Schema.GroupFinderQueue do
   @roles ~w(tank healer dps)
 
   schema "group_finder_queue" do
-    belongs_to :character, Character
-    belongs_to :account, Account
+    belongs_to(:character, Character)
+    belongs_to(:account, Account)
 
-    field :instance_type, :string
-    field :instance_ids, {:array, :integer}
-    field :difficulty, :string
-    field :role, :string
-    field :gear_score, :integer, default: 0
-    field :completion_rate, :float, default: 1.0
-    field :preferences, :map, default: %{}
-    field :queued_at, :utc_datetime
-    field :estimated_wait_seconds, :integer
+    field(:instance_type, :string)
+    field(:instance_ids, {:array, :integer})
+    field(:difficulty, :string)
+    field(:role, :string)
+    field(:gear_score, :integer, default: 0)
+    field(:completion_rate, :float, default: 1.0)
+    field(:preferences, :map, default: %{})
+    field(:queued_at, :utc_datetime)
+    field(:estimated_wait_seconds, :integer)
 
     timestamps()
   end
 
-  @required_fields [:character_id, :account_id, :instance_type, :instance_ids, :difficulty, :role, :queued_at]
+  @required_fields [
+    :character_id,
+    :account_id,
+    :instance_type,
+    :instance_ids,
+    :difficulty,
+    :role,
+    :queued_at
+  ]
   @optional_fields [:gear_score, :completion_rate, :preferences, :estimated_wait_seconds]
 
   @doc """
@@ -67,7 +75,10 @@ defmodule BezgelorDb.Schema.GroupFinderQueue do
     |> validate_inclusion(:difficulty, @difficulties)
     |> validate_inclusion(:role, @roles)
     |> validate_number(:gear_score, greater_than_or_equal_to: 0)
-    |> validate_number(:completion_rate, greater_than_or_equal_to: 0.0, less_than_or_equal_to: 1.0)
+    |> validate_number(:completion_rate,
+      greater_than_or_equal_to: 0.0,
+      less_than_or_equal_to: 1.0
+    )
     |> validate_length(:instance_ids, min: 1)
     |> unique_constraint(:character_id)
     |> foreign_key_constraint(:character_id)

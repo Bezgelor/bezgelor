@@ -20,7 +20,8 @@ defmodule BezgelorWorld.CombatEdgeCasesTest do
       base_xp = 100
       xp = Experience.xp_from_kill(10, 4, base_xp)
 
-      assert xp == 10  # 10% of 100
+      # 10% of 100
+      assert xp == 10
     end
 
     test "much higher level creature gives 120% XP" do
@@ -28,7 +29,8 @@ defmodule BezgelorWorld.CombatEdgeCasesTest do
       base_xp = 100
       xp = Experience.xp_from_kill(5, 12, base_xp)
 
-      assert xp == 120  # 120% of 100
+      # 120% of 100
+      assert xp == 120
     end
 
     test "same level creature gives 100% XP" do
@@ -65,7 +67,8 @@ defmodule BezgelorWorld.CombatEdgeCasesTest do
       {new_level, remaining_xp, leveled_up?} = Experience.apply_xp(1, 0, huge_xp)
 
       assert leveled_up?
-      assert new_level > 2  # Should have leveled up multiple times
+      # Should have leveled up multiple times
+      assert new_level > 2
     end
 
     test "max level prevents overflow" do
@@ -83,7 +86,8 @@ defmodule BezgelorWorld.CombatEdgeCasesTest do
       {level, remaining_xp, _} = Experience.apply_xp(1, 0, 450)
 
       assert level == 2
-      assert remaining_xp == 50  # 450 - 400
+      # 450 - 400
+      assert remaining_xp == 50
     end
   end
 

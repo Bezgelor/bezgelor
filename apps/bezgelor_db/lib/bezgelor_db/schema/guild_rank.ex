@@ -48,11 +48,12 @@ defmodule BezgelorDb.Schema.GuildRank do
               @perm_bank_withdraw ||| @perm_disband ||| @perm_edit_info
 
   schema "guild_ranks" do
-    belongs_to :guild, BezgelorDb.Schema.Guild
+    belongs_to(:guild, BezgelorDb.Schema.Guild)
 
-    field :rank_index, :integer  # 0 = Guild Master, 4 = lowest
-    field :name, :string
-    field :permissions, :integer, default: 0
+    # 0 = Guild Master, 4 = lowest
+    field(:rank_index, :integer)
+    field(:name, :string)
+    field(:permissions, :integer, default: 0)
 
     timestamps(type: :utc_datetime)
   end
@@ -98,8 +99,18 @@ defmodule BezgelorDb.Schema.GuildRank do
   def default_ranks do
     [
       %{rank_index: 0, name: "Guild Master", permissions: @perm_all},
-      %{rank_index: 1, name: "Officer", permissions: @perm_invite ||| @perm_kick ||| @perm_promote ||| @perm_demote ||| @perm_edit_motd ||| @perm_bank_deposit ||| @perm_bank_withdraw},
-      %{rank_index: 2, name: "Veteran", permissions: @perm_invite ||| @perm_bank_deposit ||| @perm_bank_withdraw},
+      %{
+        rank_index: 1,
+        name: "Officer",
+        permissions:
+          @perm_invite ||| @perm_kick ||| @perm_promote ||| @perm_demote ||| @perm_edit_motd |||
+            @perm_bank_deposit ||| @perm_bank_withdraw
+      },
+      %{
+        rank_index: 2,
+        name: "Veteran",
+        permissions: @perm_invite ||| @perm_bank_deposit ||| @perm_bank_withdraw
+      },
       %{rank_index: 3, name: "Member", permissions: @perm_bank_deposit},
       %{rank_index: 4, name: "Initiate", permissions: 0}
     ]

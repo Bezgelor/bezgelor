@@ -11,20 +11,20 @@ defmodule BezgelorDb.Schema.StorePurchase do
   @currency_types ~w(premium bonus gold)
 
   schema "store_purchases" do
-    belongs_to :account, BezgelorDb.Schema.Account
-    belongs_to :store_item, BezgelorDb.Schema.StoreItem
-    belongs_to :promo_code, BezgelorDb.Schema.PromoCode
-    belongs_to :promotion, BezgelorDb.Schema.StorePromotion
-    belongs_to :daily_deal, BezgelorDb.Schema.DailyDeal
+    belongs_to(:account, BezgelorDb.Schema.Account)
+    belongs_to(:store_item, BezgelorDb.Schema.StoreItem)
+    belongs_to(:promo_code, BezgelorDb.Schema.PromoCode)
+    belongs_to(:promotion, BezgelorDb.Schema.StorePromotion)
+    belongs_to(:daily_deal, BezgelorDb.Schema.DailyDeal)
 
-    field :currency_type, :string
-    field :amount_paid, :integer
-    field :character_id, :integer
+    field(:currency_type, :string)
+    field(:amount_paid, :integer)
+    field(:character_id, :integer)
 
     # New fields from migration
-    field :original_price, :integer
-    field :discount_applied, :integer, default: 0
-    field :metadata, :map, default: %{}
+    field(:original_price, :integer)
+    field(:discount_applied, :integer, default: 0)
+    field(:metadata, :map, default: %{})
 
     timestamps(type: :utc_datetime)
   end
@@ -32,9 +32,17 @@ defmodule BezgelorDb.Schema.StorePurchase do
   def changeset(purchase, attrs) do
     purchase
     |> cast(attrs, [
-      :account_id, :store_item_id, :currency_type, :amount_paid, :character_id,
-      :promo_code_id, :promotion_id, :daily_deal_id,
-      :original_price, :discount_applied, :metadata
+      :account_id,
+      :store_item_id,
+      :currency_type,
+      :amount_paid,
+      :character_id,
+      :promo_code_id,
+      :promotion_id,
+      :daily_deal_id,
+      :original_price,
+      :discount_applied,
+      :metadata
     ])
     |> validate_required([:account_id, :store_item_id, :currency_type, :amount_paid])
     |> validate_inclusion(:currency_type, @currency_types)

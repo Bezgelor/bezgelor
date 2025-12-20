@@ -24,6 +24,7 @@ defmodule BezgelorProtocol.Packets.World.ServerResurrectOfferTest do
 
     test "serializes caster guid at start of packet" do
       caster_guid = 0x1000000000000123
+
       packet = %ServerResurrectOffer{
         caster_guid: caster_guid,
         caster_name: "Test",
@@ -56,7 +57,8 @@ defmodule BezgelorProtocol.Packets.World.ServerResurrectOfferTest do
 
       # "TestHealer" in UTF-16LE should contain these bytes
       # T=0x54, e=0x65, s=0x73, t=0x74, H=0x48, etc.
-      assert :binary.match(binary, <<0x54, 0x00>>) != :nomatch  # "T" in UTF-16LE
+      # "T" in UTF-16LE
+      assert :binary.match(binary, <<0x54, 0x00>>) != :nomatch
     end
 
     test "handles empty caster name" do
@@ -108,13 +110,14 @@ defmodule BezgelorProtocol.Packets.World.ServerResurrectOfferTest do
 
   describe "new/5" do
     test "creates packet with correct values" do
-      packet = ServerResurrectOffer.new(
-        0x1000000000000002,
-        "Medic",
-        12345,
-        35.0,
-        60_000
-      )
+      packet =
+        ServerResurrectOffer.new(
+          0x1000000000000002,
+          "Medic",
+          12345,
+          35.0,
+          60_000
+        )
 
       assert packet.caster_guid == 0x1000000000000002
       assert packet.caster_name == "Medic"

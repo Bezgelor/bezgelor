@@ -15,16 +15,86 @@ defmodule BezgelorWorld.InstanceIntegrationTest do
     test "group finder forms valid 5-player dungeon group" do
       # Simulate 10 players queuing
       queue = [
-        %{character_id: 1, roles: [:tank], queued_at: 0, instance_ids: [100], gear_score: 500, language: "en"},
-        %{character_id: 2, roles: [:healer], queued_at: 1, instance_ids: [100], gear_score: 510, language: "en"},
-        %{character_id: 3, roles: [:dps], queued_at: 2, instance_ids: [100], gear_score: 490, language: "en"},
-        %{character_id: 4, roles: [:dps], queued_at: 3, instance_ids: [100], gear_score: 505, language: "en"},
-        %{character_id: 5, roles: [:dps], queued_at: 4, instance_ids: [100], gear_score: 495, language: "en"},
-        %{character_id: 6, roles: [:tank], queued_at: 5, instance_ids: [100], gear_score: 520, language: "en"},
-        %{character_id: 7, roles: [:healer], queued_at: 6, instance_ids: [100], gear_score: 515, language: "en"},
-        %{character_id: 8, roles: [:dps], queued_at: 7, instance_ids: [100], gear_score: 500, language: "en"},
-        %{character_id: 9, roles: [:dps], queued_at: 8, instance_ids: [100], gear_score: 500, language: "en"},
-        %{character_id: 10, roles: [:dps], queued_at: 9, instance_ids: [100], gear_score: 500, language: "en"}
+        %{
+          character_id: 1,
+          roles: [:tank],
+          queued_at: 0,
+          instance_ids: [100],
+          gear_score: 500,
+          language: "en"
+        },
+        %{
+          character_id: 2,
+          roles: [:healer],
+          queued_at: 1,
+          instance_ids: [100],
+          gear_score: 510,
+          language: "en"
+        },
+        %{
+          character_id: 3,
+          roles: [:dps],
+          queued_at: 2,
+          instance_ids: [100],
+          gear_score: 490,
+          language: "en"
+        },
+        %{
+          character_id: 4,
+          roles: [:dps],
+          queued_at: 3,
+          instance_ids: [100],
+          gear_score: 505,
+          language: "en"
+        },
+        %{
+          character_id: 5,
+          roles: [:dps],
+          queued_at: 4,
+          instance_ids: [100],
+          gear_score: 495,
+          language: "en"
+        },
+        %{
+          character_id: 6,
+          roles: [:tank],
+          queued_at: 5,
+          instance_ids: [100],
+          gear_score: 520,
+          language: "en"
+        },
+        %{
+          character_id: 7,
+          roles: [:healer],
+          queued_at: 6,
+          instance_ids: [100],
+          gear_score: 515,
+          language: "en"
+        },
+        %{
+          character_id: 8,
+          roles: [:dps],
+          queued_at: 7,
+          instance_ids: [100],
+          gear_score: 500,
+          language: "en"
+        },
+        %{
+          character_id: 9,
+          roles: [:dps],
+          queued_at: 8,
+          instance_ids: [100],
+          gear_score: 500,
+          language: "en"
+        },
+        %{
+          character_id: 10,
+          roles: [:dps],
+          queued_at: 9,
+          instance_ids: [100],
+          gear_score: 500,
+          language: "en"
+        }
       ]
 
       # First match should take first 5 eligible players
@@ -35,12 +105,13 @@ defmodule BezgelorWorld.InstanceIntegrationTest do
       roles = Enum.map(match.members, & &1.role)
       assert :tank in roles
       assert :healer in roles
-      assert Enum.count(roles, & &1 == :dps) == 3
+      assert Enum.count(roles, &(&1 == :dps)) == 3
 
       # Second match should form from remaining players
-      remaining = Enum.reject(queue, fn p ->
-        p.character_id in Enum.map(match.members, & &1.character_id)
-      end)
+      remaining =
+        Enum.reject(queue, fn p ->
+          p.character_id in Enum.map(match.members, & &1.character_id)
+        end)
 
       {:ok, match2} = Matcher.find_dungeon_match(:normal, remaining)
       assert length(match2.members) == 5
@@ -50,17 +121,41 @@ defmodule BezgelorWorld.InstanceIntegrationTest do
   describe "raid composition requirements" do
     test "raid requires proper tank/healer/dps ratio" do
       # Build a full raid queue (20 players)
-      tanks = for i <- 1..2 do
-        %{character_id: i, roles: [:tank], queued_at: i, instance_ids: [200], gear_score: 550, language: "en"}
-      end
+      tanks =
+        for i <- 1..2 do
+          %{
+            character_id: i,
+            roles: [:tank],
+            queued_at: i,
+            instance_ids: [200],
+            gear_score: 550,
+            language: "en"
+          }
+        end
 
-      healers = for i <- 3..7 do
-        %{character_id: i, roles: [:healer], queued_at: i, instance_ids: [200], gear_score: 540, language: "en"}
-      end
+      healers =
+        for i <- 3..7 do
+          %{
+            character_id: i,
+            roles: [:healer],
+            queued_at: i,
+            instance_ids: [200],
+            gear_score: 540,
+            language: "en"
+          }
+        end
 
-      dps = for i <- 8..20 do
-        %{character_id: i, roles: [:dps], queued_at: i, instance_ids: [200], gear_score: 530, language: "en"}
-      end
+      dps =
+        for i <- 8..20 do
+          %{
+            character_id: i,
+            roles: [:dps],
+            queued_at: i,
+            instance_ids: [200],
+            gear_score: 530,
+            language: "en"
+          }
+        end
 
       queue = tanks ++ healers ++ dps
 
@@ -68,9 +163,9 @@ defmodule BezgelorWorld.InstanceIntegrationTest do
 
       assert length(match.members) == 20
       roles = Enum.map(match.members, & &1.role)
-      assert Enum.count(roles, & &1 == :tank) == 2
-      assert Enum.count(roles, & &1 == :healer) == 5
-      assert Enum.count(roles, & &1 == :dps) == 13
+      assert Enum.count(roles, &(&1 == :tank)) == 2
+      assert Enum.count(roles, &(&1 == :healer)) == 5
+      assert Enum.count(roles, &(&1 == :dps)) == 13
     end
   end
 
@@ -170,11 +265,46 @@ defmodule BezgelorWorld.InstanceIntegrationTest do
   describe "difficulty scaling" do
     test "veteran dungeon uses smart matching" do
       queue = [
-        %{character_id: 1, roles: [:tank], queued_at: 0, instance_ids: [100], gear_score: 600, language: "en"},
-        %{character_id: 2, roles: [:healer], queued_at: 1, instance_ids: [100], gear_score: 580, language: "en"},
-        %{character_id: 3, roles: [:dps], queued_at: 2, instance_ids: [100], gear_score: 620, language: "en"},
-        %{character_id: 4, roles: [:dps], queued_at: 3, instance_ids: [100], gear_score: 590, language: "en"},
-        %{character_id: 5, roles: [:dps], queued_at: 4, instance_ids: [100], gear_score: 610, language: "en"}
+        %{
+          character_id: 1,
+          roles: [:tank],
+          queued_at: 0,
+          instance_ids: [100],
+          gear_score: 600,
+          language: "en"
+        },
+        %{
+          character_id: 2,
+          roles: [:healer],
+          queued_at: 1,
+          instance_ids: [100],
+          gear_score: 580,
+          language: "en"
+        },
+        %{
+          character_id: 3,
+          roles: [:dps],
+          queued_at: 2,
+          instance_ids: [100],
+          gear_score: 620,
+          language: "en"
+        },
+        %{
+          character_id: 4,
+          roles: [:dps],
+          queued_at: 3,
+          instance_ids: [100],
+          gear_score: 590,
+          language: "en"
+        },
+        %{
+          character_id: 5,
+          roles: [:dps],
+          queued_at: 4,
+          instance_ids: [100],
+          gear_score: 610,
+          language: "en"
+        }
       ]
 
       {:ok, match} = Matcher.find_dungeon_match(:veteran, queue)
@@ -197,11 +327,46 @@ defmodule BezgelorWorld.InstanceIntegrationTest do
     test "players can fill multiple roles" do
       # Hybrid players who can tank or DPS
       queue = [
-        %{character_id: 1, roles: [:tank, :dps], queued_at: 0, instance_ids: [100], gear_score: 500, language: "en"},
-        %{character_id: 2, roles: [:healer], queued_at: 1, instance_ids: [100], gear_score: 500, language: "en"},
-        %{character_id: 3, roles: [:dps], queued_at: 2, instance_ids: [100], gear_score: 500, language: "en"},
-        %{character_id: 4, roles: [:dps], queued_at: 3, instance_ids: [100], gear_score: 500, language: "en"},
-        %{character_id: 5, roles: [:tank, :dps], queued_at: 4, instance_ids: [100], gear_score: 500, language: "en"}
+        %{
+          character_id: 1,
+          roles: [:tank, :dps],
+          queued_at: 0,
+          instance_ids: [100],
+          gear_score: 500,
+          language: "en"
+        },
+        %{
+          character_id: 2,
+          roles: [:healer],
+          queued_at: 1,
+          instance_ids: [100],
+          gear_score: 500,
+          language: "en"
+        },
+        %{
+          character_id: 3,
+          roles: [:dps],
+          queued_at: 2,
+          instance_ids: [100],
+          gear_score: 500,
+          language: "en"
+        },
+        %{
+          character_id: 4,
+          roles: [:dps],
+          queued_at: 3,
+          instance_ids: [100],
+          gear_score: 500,
+          language: "en"
+        },
+        %{
+          character_id: 5,
+          roles: [:tank, :dps],
+          queued_at: 4,
+          instance_ids: [100],
+          gear_score: 500,
+          language: "en"
+        }
       ]
 
       {:ok, match} = Matcher.find_dungeon_match(:normal, queue)
@@ -209,7 +374,7 @@ defmodule BezgelorWorld.InstanceIntegrationTest do
       # One hybrid should be assigned tank, one should be assigned DPS
       roles = Enum.map(match.members, & &1.role)
       assert :tank in roles
-      assert Enum.count(roles, & &1 == :dps) == 3
+      assert Enum.count(roles, &(&1 == :dps)) == 3
     end
   end
 end

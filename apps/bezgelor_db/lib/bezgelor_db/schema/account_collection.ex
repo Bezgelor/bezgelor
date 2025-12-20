@@ -5,11 +5,12 @@ defmodule BezgelorDb.Schema.AccountCollection do
   @type t :: %__MODULE__{}
 
   schema "account_collections" do
-    belongs_to :account, BezgelorDb.Schema.Account
+    belongs_to(:account, BezgelorDb.Schema.Account)
 
-    field :collectible_type, :string  # "mount" or "pet"
-    field :collectible_id, :integer
-    field :unlock_source, :string
+    # "mount" or "pet"
+    field(:collectible_type, :string)
+    field(:collectible_id, :integer)
+    field(:unlock_source, :string)
 
     timestamps(type: :utc_datetime)
   end

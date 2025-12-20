@@ -90,7 +90,12 @@ defmodule BezgelorCore.Telegraph do
   ## Returns
   A Telegraph struct with calculated position/rotation including offsets.
   """
-  @spec new(map(), Vector3.t() | {float(), float(), float()}, Vector3.t() | {float(), float(), float()}, float()) :: t()
+  @spec new(
+          map(),
+          Vector3.t() | {float(), float(), float()},
+          Vector3.t() | {float(), float(), float()},
+          float()
+        ) :: t()
   def new(telegraph_data, caster_position, caster_rotation, caster_hit_radius \\ 1.0)
 
   def new(telegraph_data, {cx, cy, cz}, rotation, caster_hit_radius) do
@@ -101,7 +106,12 @@ defmodule BezgelorCore.Telegraph do
     new(telegraph_data, position, %Vector3{x: rx, y: ry, z: rz}, caster_hit_radius)
   end
 
-  def new(telegraph_data, %Vector3{} = caster_position, %Vector3{} = caster_rotation, caster_hit_radius) do
+  def new(
+        telegraph_data,
+        %Vector3{} = caster_position,
+        %Vector3{} = caster_rotation,
+        caster_hit_radius
+      ) do
     telegraph = %__MODULE__{
       shape: Map.get(telegraph_data, :damageShapeEnum, 0),
       position: caster_position,
@@ -187,7 +197,8 @@ defmodule BezgelorCore.Telegraph do
   def search_radius(%__MODULE__{shape: @shape_square, param02: length}), do: length
   def search_radius(%__MODULE__{shape: @shape_rectangle, param02: length}), do: length
   def search_radius(%__MODULE__{shape: @shape_pie, param01: radius}), do: radius
-  def search_radius(%__MODULE__{}), do: 30.0  # Default fallback
+  # Default fallback
+  def search_radius(%__MODULE__{}), do: 30.0
 
   @doc """
   Get the shape type name as an atom for debugging/logging.
@@ -213,9 +224,14 @@ defmodule BezgelorCore.Telegraph do
       telegraph
     else
       # Apply Z offset (forward from caster facing)
-      pos =
+      %Vector3{} =
+        pos =
         if z_offset != 0.0 do
-          get_point_for_telegraph(telegraph.position, telegraph.rotation.x + :math.pi() / 2, z_offset)
+          get_point_for_telegraph(
+            telegraph.position,
+            telegraph.rotation.x + :math.pi() / 2,
+            z_offset
+          )
         else
           telegraph.position
         end
@@ -242,12 +258,13 @@ defmodule BezgelorCore.Telegraph do
     if rotation_degrees == 0.0 do
       telegraph
     else
-      rotation_radians = telegraph.rotation.x + degrees_to_radians(rotation_degrees)
+      %Vector3{} = rotation = telegraph.rotation
+      rotation_radians = rotation.x + degrees_to_radians(rotation_degrees)
 
       # Normalize to -PI to PI range
       rotation_radians = normalize_rotation(rotation_radians)
 
-      %{telegraph | rotation: %Vector3{telegraph.rotation | x: rotation_radians}}
+      %{telegraph | rotation: %Vector3{rotation | x: rotation_radians}}
     end
   end
 
@@ -257,7 +274,11 @@ defmodule BezgelorCore.Telegraph do
     distance_2d(pos, target) <= radius + hit_radius * 0.5
   end
 
-  defp check_ring(%__MODULE__{position: pos, param00: inner_radius, param01: outer_radius}, %Vector3{} = target, hit_radius) do
+  defp check_ring(
+         %__MODULE__{position: pos, param00: inner_radius, param01: outer_radius},
+         %Vector3{} = target,
+         hit_radius
+       ) do
     dist = distance_2d(pos, target)
     adjusted_hit = hit_radius * 0.5
     dist >= inner_radius - adjusted_hit and dist <= outer_radius + adjusted_hit
@@ -278,6 +299,7 @@ defmodule BezgelorCore.Telegraph do
 
     # Check if within radius
     distance = distance_3d(telegraph.position, target) - hit_radius * 0.5
+
     if distance > radius do
       false
     else
@@ -334,7 +356,8 @@ defmodule BezgelorCore.Telegraph do
 
       polygon = [bl, tl, tr, br]
 
-      point_in_polygon?(polygon, target) or radius_intersects_polygon?(polygon, target, hit_radius * 0.5)
+      point_in_polygon?(polygon, target) or
+        radius_intersects_polygon?(polygon, target, hit_radius * 0.5)
     end
   end
 
@@ -409,7 +432,7 @@ defmodule BezgelorCore.Telegraph do
       j = if i == 0, do: n - 1, else: i - 1
       %Vector3{x: nx, z: nz} = Enum.at(polygon, j)
 
-      if ((cz > pz) != (nz > pz)) and (px < (nx - cx) * (pz - cz) / (nz - cz) + cx) do
+      if cz > pz != nz > pz and px < (nx - cx) * (pz - cz) / (nz - cz) + cx do
         not inside
       else
         inside
@@ -429,7 +452,12 @@ defmodule BezgelorCore.Telegraph do
     end)
   end
 
-  defp line_circle_intersects?(%Vector3{} = start_p, %Vector3{} = end_p, %Vector3{} = circle, radius) do
+  defp line_circle_intersects?(
+         %Vector3{} = start_p,
+         %Vector3{} = end_p,
+         %Vector3{} = circle,
+         radius
+       ) do
     # Check if endpoints are inside circle
     if distance_2d(start_p, circle) < radius or distance_2d(end_p, circle) < radius do
       true
@@ -446,7 +474,10 @@ defmodule BezgelorCore.Telegraph do
     end
   end
 
-  defp closest_point_on_line(%Vector3{x: x1, z: z1}, %Vector3{x: x2, z: z2}, %Vector3{x: cx, z: cz}) do
+  defp closest_point_on_line(%Vector3{x: x1, z: z1}, %Vector3{x: x2, z: z2}, %Vector3{
+         x: cx,
+         z: cz
+       }) do
     dx = x2 - x1
     dz = z2 - z1
     len_sq = dx * dx + dz * dz
@@ -460,7 +491,10 @@ defmodule BezgelorCore.Telegraph do
     end
   end
 
-  defp point_on_line_segment?(%Vector3{x: x1, z: z1}, %Vector3{x: x2, z: z2}, %Vector3{x: px, z: pz}) do
+  defp point_on_line_segment?(%Vector3{x: x1, z: z1}, %Vector3{x: x2, z: z2}, %Vector3{
+         x: px,
+         z: pz
+       }) do
     d1 = :math.sqrt(:math.pow(px - x1, 2) + :math.pow(pz - z1, 2))
     d2 = :math.sqrt(:math.pow(px - x2, 2) + :math.pow(pz - z2, 2))
     line_len = :math.sqrt(:math.pow(x2 - x1, 2) + :math.pow(z2 - z1, 2))

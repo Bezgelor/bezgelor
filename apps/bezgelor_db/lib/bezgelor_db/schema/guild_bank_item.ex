@@ -20,34 +20,46 @@ defmodule BezgelorDb.Schema.GuildBankItem do
   @slots_per_tab 98
 
   schema "guild_bank_items" do
-    belongs_to :guild, BezgelorDb.Schema.Guild
+    belongs_to(:guild, BezgelorDb.Schema.Guild)
 
     # Position
-    field :tab_index, :integer  # 0-5
-    field :slot_index, :integer  # 0-97
+    # 0-5
+    field(:tab_index, :integer)
+    # 0-97
+    field(:slot_index, :integer)
 
     # Item data (references BezgelorData)
-    field :item_id, :integer
-    field :stack_count, :integer, default: 1
+    field(:item_id, :integer)
+    field(:stack_count, :integer, default: 1)
 
     # Extended item data
-    field :item_data, :map, default: %{}
+    field(:item_data, :map, default: %{})
 
     # Who deposited this item
-    field :depositor_id, :integer
+    field(:depositor_id, :integer)
 
     timestamps(type: :utc_datetime)
   end
 
   def changeset(item, attrs) do
     item
-    |> cast(attrs, [:guild_id, :tab_index, :slot_index, :item_id, :stack_count, :item_data, :depositor_id])
+    |> cast(attrs, [
+      :guild_id,
+      :tab_index,
+      :slot_index,
+      :item_id,
+      :stack_count,
+      :item_data,
+      :depositor_id
+    ])
     |> validate_required([:guild_id, :tab_index, :slot_index, :item_id])
     |> validate_number(:tab_index, greater_than_or_equal_to: 0, less_than: 6)
     |> validate_number(:slot_index, greater_than_or_equal_to: 0, less_than: @slots_per_tab)
     |> validate_number(:stack_count, greater_than: 0)
     |> foreign_key_constraint(:guild_id)
-    |> unique_constraint([:guild_id, :tab_index, :slot_index], name: :guild_bank_items_guild_id_tab_index_slot_index_index)
+    |> unique_constraint([:guild_id, :tab_index, :slot_index],
+      name: :guild_bank_items_guild_id_tab_index_slot_index_index
+    )
   end
 
   def stack_changeset(item, new_count) do

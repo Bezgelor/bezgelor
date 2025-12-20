@@ -11,6 +11,7 @@ defmodule BezgelorWorld.Handler.ChatHandlerTest do
     case WorldManager.start_link() do
       {:ok, pid} ->
         on_exit(fn -> Process.exit(pid, :normal) end)
+
       {:error, {:already_started, _}} ->
         :ok
     end

@@ -149,7 +149,10 @@ defmodule BezgelorProtocol.Handler.MovementHandler do
             :ok
 
           {:error, reason} ->
-            Logger.warning("Failed to save position for character #{character_id}: #{inspect(reason)}")
+            Logger.warning(
+              "Failed to save position for character #{character_id}: #{inspect(reason)}"
+            )
+
             :ok
         end
     end

@@ -8,7 +8,14 @@ defmodule BezgelorDb.PublicEvents do
 
   import Ecto.Query
   alias BezgelorDb.Repo
-  alias BezgelorDb.Schema.{EventInstance, EventParticipation, EventCompletion, EventSchedule, WorldBossSpawn}
+
+  alias BezgelorDb.Schema.{
+    EventInstance,
+    EventParticipation,
+    EventCompletion,
+    EventSchedule,
+    WorldBossSpawn
+  }
 
   # ============================================================================
   # Event Instance Management
@@ -338,7 +345,14 @@ defmodule BezgelorDb.PublicEvents do
         participations
         |> Enum.with_index(1)
         |> Enum.map(fn {p, rank} ->
-          tier = determine_tier(rank, p.contribution_score, gold_threshold, silver_threshold, bronze_threshold)
+          tier =
+            determine_tier(
+              rank,
+              p.contribution_score,
+              gold_threshold,
+              silver_threshold,
+              bronze_threshold
+            )
 
           {:ok, updated} =
             p
@@ -525,7 +539,9 @@ defmodule BezgelorDb.PublicEvents do
   @doc "Enable a schedule."
   def enable_schedule(schedule_id) do
     case get_schedule(schedule_id) do
-      nil -> {:error, :not_found}
+      nil ->
+        {:error, :not_found}
+
       schedule ->
         schedule
         |> EventSchedule.enable_changeset()
@@ -536,7 +552,9 @@ defmodule BezgelorDb.PublicEvents do
   @doc "Disable a schedule."
   def disable_schedule(schedule_id) do
     case get_schedule(schedule_id) do
-      nil -> {:error, :not_found}
+      nil ->
+        {:error, :not_found}
+
       schedule ->
         schedule
         |> EventSchedule.disable_changeset()

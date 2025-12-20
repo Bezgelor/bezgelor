@@ -21,7 +21,9 @@ defmodule BezgelorWorld.Integration.SpellDamageTest do
 
       # Simulate what SpellHandler should do: apply damage effect
       damage_amount = 25
-      {:ok, :damaged, result} = CreatureManager.damage_creature(creature_guid, player_guid, damage_amount)
+
+      {:ok, :damaged, result} =
+        CreatureManager.damage_creature(creature_guid, player_guid, damage_amount)
 
       assert result.remaining_health == 75
       assert result.max_health == 100

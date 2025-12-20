@@ -87,7 +87,10 @@ defmodule BezgelorWorld.DeathManager do
   @spec offer_resurrection(player_guid(), player_guid(), non_neg_integer(), float()) ::
           :ok | {:error, :not_dead}
   def offer_resurrection(player_guid, caster_guid, spell_id, health_percent) do
-    GenServer.call(__MODULE__, {:offer_resurrection, player_guid, caster_guid, spell_id, health_percent})
+    GenServer.call(
+      __MODULE__,
+      {:offer_resurrection, player_guid, caster_guid, spell_id, health_percent}
+    )
   end
 
   @doc """
@@ -112,7 +115,13 @@ defmodule BezgelorWorld.DeathManager do
   Player respawns at their bindpoint.
   """
   @spec respawn_at_bindpoint(player_guid()) ::
-          {:ok, %{zone_id: non_neg_integer(), position: position(), health_percent: float(), resurrect_type: atom()}}
+          {:ok,
+           %{
+             zone_id: non_neg_integer(),
+             position: position(),
+             health_percent: float(),
+             resurrect_type: atom()
+           }}
           | {:error, :not_dead}
   def respawn_at_bindpoint(player_guid) do
     GenServer.call(__MODULE__, {:respawn_at_bindpoint, player_guid})
@@ -169,7 +178,9 @@ defmodule BezgelorWorld.DeathManager do
       |> put_in([:dead_players, player_guid], death_info)
       |> put_in([:death_counts, player_guid], updated_deaths)
 
-    Logger.debug("Player #{player_guid} died at zone #{zone_id} (#{length(updated_deaths)} deaths in window)")
+    Logger.debug(
+      "Player #{player_guid} died at zone #{zone_id} (#{length(updated_deaths)} deaths in window)"
+    )
 
     {:noreply, new_state}
   end
@@ -228,7 +239,11 @@ defmodule BezgelorWorld.DeathManager do
   end
 
   @impl true
-  def handle_call({:offer_resurrection, player_guid, caster_guid, spell_id, health_percent}, _from, state) do
+  def handle_call(
+        {:offer_resurrection, player_guid, caster_guid, spell_id, health_percent},
+        _from,
+        state
+      ) do
     case Map.get(state.dead_players, player_guid) do
       nil ->
         {:reply, {:error, :not_dead}, state}

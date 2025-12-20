@@ -33,33 +33,37 @@ defmodule BezgelorDb.Schema.PvpSeason do
         }
 
   # Default rating cutoffs (top X%)
-  @gladiator_cutoff 2400    # Top 0.5%
-  @duelist_cutoff 2100      # Top 3%
-  @rival_cutoff 1800        # Top 10%
-  @challenger_cutoff 1500   # Top 35%
+  # Top 0.5%
+  @gladiator_cutoff 2400
+  # Top 3%
+  @duelist_cutoff 2100
+  # Top 10%
+  @rival_cutoff 1800
+  # Top 35%
+  @challenger_cutoff 1500
 
   schema "pvp_seasons" do
-    field :season_number, :integer
-    field :name, :string
-    field :starts_at, :utc_datetime
-    field :ends_at, :utc_datetime
-    field :is_active, :boolean, default: false
+    field(:season_number, :integer)
+    field(:name, :string)
+    field(:starts_at, :utc_datetime)
+    field(:ends_at, :utc_datetime)
+    field(:is_active, :boolean, default: false)
 
     # Rating cutoffs for titles
-    field :gladiator_cutoff, :integer, default: @gladiator_cutoff
-    field :duelist_cutoff, :integer, default: @duelist_cutoff
-    field :rival_cutoff, :integer, default: @rival_cutoff
-    field :challenger_cutoff, :integer, default: @challenger_cutoff
+    field(:gladiator_cutoff, :integer, default: @gladiator_cutoff)
+    field(:duelist_cutoff, :integer, default: @duelist_cutoff)
+    field(:rival_cutoff, :integer, default: @rival_cutoff)
+    field(:challenger_cutoff, :integer, default: @challenger_cutoff)
 
     # Reward IDs
-    field :gladiator_title_id, :integer
-    field :gladiator_mount_id, :integer
-    field :duelist_title_id, :integer
-    field :rival_title_id, :integer
-    field :challenger_title_id, :integer
+    field(:gladiator_title_id, :integer)
+    field(:gladiator_mount_id, :integer)
+    field(:duelist_title_id, :integer)
+    field(:rival_title_id, :integer)
+    field(:challenger_title_id, :integer)
 
     # Weekly caps
-    field :conquest_cap, :integer, default: 1800
+    field(:conquest_cap, :integer, default: 1800)
 
     timestamps()
   end
@@ -67,9 +71,15 @@ defmodule BezgelorDb.Schema.PvpSeason do
   @required_fields [:season_number, :name, :starts_at, :ends_at]
   @optional_fields [
     :is_active,
-    :gladiator_cutoff, :duelist_cutoff, :rival_cutoff, :challenger_cutoff,
-    :gladiator_title_id, :gladiator_mount_id,
-    :duelist_title_id, :rival_title_id, :challenger_title_id,
+    :gladiator_cutoff,
+    :duelist_cutoff,
+    :rival_cutoff,
+    :challenger_cutoff,
+    :gladiator_title_id,
+    :gladiator_mount_id,
+    :duelist_title_id,
+    :rival_title_id,
+    :challenger_title_id,
     :conquest_cap
   ]
 
@@ -143,8 +153,9 @@ defmodule BezgelorDb.Schema.PvpSeason do
   @spec current?(t()) :: boolean()
   def current?(season) do
     now = DateTime.utc_now()
+
     DateTime.compare(now, season.starts_at) != :lt and
-    DateTime.compare(now, season.ends_at) == :lt
+      DateTime.compare(now, season.ends_at) == :lt
   end
 
   @doc """

@@ -14,6 +14,7 @@ defmodule BezgelorWorld.Handler.SocialHandler do
 
   alias BezgelorProtocol.PacketReader
   alias BezgelorProtocol.PacketWriter
+
   alias BezgelorProtocol.Packets.World.{
     ClientAddFriend,
     ClientRemoveFriend,
@@ -23,6 +24,7 @@ defmodule BezgelorWorld.Handler.SocialHandler do
     ServerIgnoreList,
     ServerSocialResult
   }
+
   alias BezgelorDb.{Characters, Social}
   alias BezgelorWorld.WorldManager
 
@@ -157,20 +159,21 @@ defmodule BezgelorWorld.Handler.SocialHandler do
   def send_friend_list(character_id, state) do
     friends = Social.list_friends(character_id)
 
-    friend_data = Enum.map(friends, fn friend ->
-      char = friend.friend_character
-      online_session = WorldManager.get_session_by_character(char.id)
+    friend_data =
+      Enum.map(friends, fn friend ->
+        char = friend.friend_character
+        online_session = WorldManager.get_session_by_character(char.id)
 
-      %{
-        character_id: char.id,
-        name: char.name,
-        level: char.level,
-        class: char.class,
-        online: online_session != nil,
-        zone_id: if(online_session, do: online_session.zone_id, else: 0),
-        note: friend.note
-      }
-    end)
+        %{
+          character_id: char.id,
+          name: char.name,
+          level: char.level,
+          class: char.class,
+          online: online_session != nil,
+          zone_id: if(online_session, do: online_session.zone_id, else: 0),
+          note: friend.note
+        }
+      end)
 
     packet = %ServerFriendList{friends: friend_data}
     writer = PacketWriter.new()
@@ -184,13 +187,15 @@ defmodule BezgelorWorld.Handler.SocialHandler do
   def send_ignore_list(character_id, state) do
     ignores = Social.list_ignores(character_id)
 
-    ignore_data = Enum.map(ignores, fn ignore ->
-      char = ignore.ignored_character
-      %{
-        character_id: char.id,
-        name: char.name
-      }
-    end)
+    ignore_data =
+      Enum.map(ignores, fn ignore ->
+        char = ignore.ignored_character
+
+        %{
+          character_id: char.id,
+          name: char.name
+        }
+      end)
 
     packet = %ServerIgnoreList{ignores: ignore_data}
     writer = PacketWriter.new()

@@ -44,59 +44,71 @@ defmodule BezgelorDb.Schema.PvpStats do
         }
 
   schema "pvp_stats" do
-    belongs_to :character, Character
+    belongs_to(:character, Character)
 
     # Kill statistics
-    field :honorable_kills, :integer, default: 0
-    field :deaths, :integer, default: 0
-    field :killing_blows, :integer, default: 0
-    field :assists, :integer, default: 0
-    field :damage_done, :integer, default: 0
-    field :healing_done, :integer, default: 0
+    field(:honorable_kills, :integer, default: 0)
+    field(:deaths, :integer, default: 0)
+    field(:killing_blows, :integer, default: 0)
+    field(:assists, :integer, default: 0)
+    field(:damage_done, :integer, default: 0)
+    field(:healing_done, :integer, default: 0)
 
     # Battleground stats
-    field :battlegrounds_played, :integer, default: 0
-    field :battlegrounds_won, :integer, default: 0
+    field(:battlegrounds_played, :integer, default: 0)
+    field(:battlegrounds_won, :integer, default: 0)
 
     # Arena stats
-    field :arenas_played, :integer, default: 0
-    field :arenas_won, :integer, default: 0
+    field(:arenas_played, :integer, default: 0)
+    field(:arenas_won, :integer, default: 0)
 
     # Duel stats
-    field :duels_won, :integer, default: 0
-    field :duels_lost, :integer, default: 0
+    field(:duels_won, :integer, default: 0)
+    field(:duels_lost, :integer, default: 0)
 
     # Warplot stats
-    field :warplots_played, :integer, default: 0
-    field :warplots_won, :integer, default: 0
+    field(:warplots_played, :integer, default: 0)
+    field(:warplots_won, :integer, default: 0)
 
     # Highest ratings (lifetime)
-    field :highest_arena_2v2, :integer, default: 0
-    field :highest_arena_3v3, :integer, default: 0
-    field :highest_arena_5v5, :integer, default: 0
-    field :highest_rbg_rating, :integer, default: 0
+    field(:highest_arena_2v2, :integer, default: 0)
+    field(:highest_arena_3v3, :integer, default: 0)
+    field(:highest_arena_5v5, :integer, default: 0)
+    field(:highest_rbg_rating, :integer, default: 0)
 
     # Currency totals
-    field :conquest_earned_total, :integer, default: 0
-    field :honor_earned_total, :integer, default: 0
-    field :conquest_this_week, :integer, default: 0
-    field :honor_this_week, :integer, default: 0
+    field(:conquest_earned_total, :integer, default: 0)
+    field(:honor_earned_total, :integer, default: 0)
+    field(:conquest_this_week, :integer, default: 0)
+    field(:honor_this_week, :integer, default: 0)
 
     timestamps()
   end
 
   @required_fields [:character_id]
   @optional_fields [
-    :honorable_kills, :deaths, :killing_blows, :assists,
-    :damage_done, :healing_done,
-    :battlegrounds_played, :battlegrounds_won,
-    :arenas_played, :arenas_won,
-    :duels_won, :duels_lost,
-    :warplots_played, :warplots_won,
-    :highest_arena_2v2, :highest_arena_3v3, :highest_arena_5v5,
+    :honorable_kills,
+    :deaths,
+    :killing_blows,
+    :assists,
+    :damage_done,
+    :healing_done,
+    :battlegrounds_played,
+    :battlegrounds_won,
+    :arenas_played,
+    :arenas_won,
+    :duels_won,
+    :duels_lost,
+    :warplots_played,
+    :warplots_won,
+    :highest_arena_2v2,
+    :highest_arena_3v3,
+    :highest_arena_5v5,
     :highest_rbg_rating,
-    :conquest_earned_total, :honor_earned_total,
-    :conquest_this_week, :honor_this_week
+    :conquest_earned_total,
+    :honor_earned_total,
+    :conquest_this_week,
+    :honor_this_week
   ]
 
   @doc """
@@ -240,6 +252,7 @@ defmodule BezgelorDb.Schema.PvpStats do
   """
   @spec kd_ratio(t()) :: float()
   def kd_ratio(%__MODULE__{honorable_kills: kills, deaths: 0}), do: kills * 1.0
+
   def kd_ratio(%__MODULE__{honorable_kills: kills, deaths: deaths}) do
     Float.round(kills / deaths, 2)
   end
@@ -249,6 +262,7 @@ defmodule BezgelorDb.Schema.PvpStats do
   """
   @spec bg_win_rate(t()) :: float()
   def bg_win_rate(%__MODULE__{battlegrounds_played: 0}), do: 0.0
+
   def bg_win_rate(%__MODULE__{battlegrounds_won: won, battlegrounds_played: played}) do
     Float.round(won / played * 100, 1)
   end
@@ -258,6 +272,7 @@ defmodule BezgelorDb.Schema.PvpStats do
   """
   @spec arena_win_rate(t()) :: float()
   def arena_win_rate(%__MODULE__{arenas_played: 0}), do: 0.0
+
   def arena_win_rate(%__MODULE__{arenas_won: won, arenas_played: played}) do
     Float.round(won / played * 100, 1)
   end

@@ -45,14 +45,18 @@ defmodule BezgelorProtocol.Handler.ItemMoveHandler do
     from_location = ClientItemMove.location_to_atom(packet.from_location)
     to_location = ClientItemMove.location_to_atom(packet.to_location)
 
-    Logger.debug("ItemMove: #{from_location}:#{packet.from_bag_index} -> #{to_location}:#{packet.to_bag_index}")
+    Logger.debug(
+      "ItemMove: #{from_location}:#{packet.from_bag_index} -> #{to_location}:#{packet.to_bag_index}"
+    )
 
     # For equipped items, bag_index is always 0 and the slot is encoded in from_bag_index
     # For bag items, bag_index is the bag number (0-3) and we need to find the item
     {from_bag, from_slot} = decode_location(from_location, packet.from_bag_index)
     {to_bag, to_slot} = decode_location(to_location, packet.to_bag_index)
 
-    Logger.debug("  Decoded: from bag=#{from_bag} slot=#{from_slot}, to bag=#{to_bag} slot=#{to_slot}")
+    Logger.debug(
+      "  Decoded: from bag=#{from_bag} slot=#{from_slot}, to bag=#{to_bag} slot=#{to_slot}"
+    )
 
     case Inventory.get_item_at(character_id, from_location, from_bag, from_slot) do
       nil ->
@@ -68,7 +72,9 @@ defmodule BezgelorProtocol.Handler.ItemMoveHandler do
             # Simple move
             case Inventory.move_item(item, to_location, to_bag, to_slot) do
               {:ok, updated_item} ->
-                Logger.debug("Moved item #{item.item_id} to #{updated_item.container_type}:#{updated_item.bag_index}:#{updated_item.slot}")
+                Logger.debug(
+                  "Moved item #{item.item_id} to #{updated_item.container_type}:#{updated_item.bag_index}:#{updated_item.slot}"
+                )
 
                 # Broadcast visual update if equipment changed
                 if from_location == :equipped or to_location == :equipped do
@@ -82,6 +88,7 @@ defmodule BezgelorProtocol.Handler.ItemMoveHandler do
                   location: updated_item.container_type,
                   slot: updated_item.slot
                 }
+
                 {:reply_world_encrypted, :server_item_move, encode_packet(response), state}
 
               {:error, reason} ->
@@ -108,6 +115,7 @@ defmodule BezgelorProtocol.Handler.ItemMoveHandler do
                   location: updated1.container_type,
                   slot: updated1.slot
                 }
+
                 {:reply_world_encrypted, :server_item_move, encode_packet(response), state}
 
               {:error, reason} ->
@@ -171,7 +179,9 @@ defmodule BezgelorProtocol.Handler.ItemMoveHandler do
 
     # Broadcast to self (and nearby players if we had zone info)
     if entity_guid && character do
-      CombatBroadcaster.broadcast_item_visual_update(entity_guid, character, visuals, [entity_guid])
+      CombatBroadcaster.broadcast_item_visual_update(entity_guid, character, visuals, [
+        entity_guid
+      ])
     end
   end
 

@@ -54,10 +54,12 @@ defmodule BezgelorDb.Schema.WorldBossSpawnTest do
       window_start = DateTime.add(now, 3600, :second)
       window_end = DateTime.add(now, 7200, :second)
 
-      attrs = Map.merge(@valid_attrs, %{
-        spawn_window_start: window_start,
-        spawn_window_end: window_end
-      })
+      attrs =
+        Map.merge(@valid_attrs, %{
+          spawn_window_start: window_start,
+          spawn_window_end: window_end
+        })
+
       changeset = WorldBossSpawn.changeset(%WorldBossSpawn{}, attrs)
       assert changeset.valid?
     end

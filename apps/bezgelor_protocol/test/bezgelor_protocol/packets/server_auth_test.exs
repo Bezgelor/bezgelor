@@ -44,7 +44,8 @@ defmodule BezgelorProtocol.Packets.ServerAuthTest do
       assert byte_size(binary) == 12
 
       <<result::little-32, error::little-32, _days::little-float-32>> = binary
-      assert result == 19  # version_mismatch
+      # version_mismatch
+      assert result == 19
       assert error == 0
     end
 
@@ -60,7 +61,8 @@ defmodule BezgelorProtocol.Packets.ServerAuthTest do
       binary = PacketWriter.to_binary(writer)
 
       <<result::little-32, _error::little-32, days::little-float-32>> = binary
-      assert result == 21  # account_suspended
+      # account_suspended
+      assert result == 21
       assert_in_delta days, 7.5, 0.001
     end
 

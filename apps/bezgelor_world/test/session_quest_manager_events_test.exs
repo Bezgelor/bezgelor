@@ -16,7 +16,8 @@ defmodule BezgelorWorld.Quest.SessionQuestManagerEventsTest do
               %{
                 index: 0,
                 type: 5,
-                data: 50231,  # World location ID to enter
+                # World location ID to enter
+                data: 50231,
                 target: 1,
                 current: 0
               }
@@ -37,8 +38,10 @@ defmodule BezgelorWorld.Quest.SessionQuestManagerEventsTest do
       objective = Enum.find(quest.objectives, &(&1.index == 0))
 
       assert objective.current == 1
-      assert quest.state == :complete  # All objectives done
-      assert packets != []  # Update packet sent
+      # All objectives done
+      assert quest.state == :complete
+      # Update packet sent
+      assert packets != []
     end
 
     test "does not update objective for non-matching area" do
@@ -89,7 +92,8 @@ defmodule BezgelorWorld.Quest.SessionQuestManagerEventsTest do
               %{
                 index: 0,
                 type: 5,
-                data: 4844,  # Zone ID to enter
+                # Zone ID to enter
+                data: 4844,
                 target: 1,
                 current: 0
               }

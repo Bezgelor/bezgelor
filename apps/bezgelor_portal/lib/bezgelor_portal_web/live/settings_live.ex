@@ -28,11 +28,15 @@ defmodule BezgelorPortalWeb.SettingsLive do
        email_error: nil,
        email_success: nil,
        # Security tab
-       password_form: to_form(%{
-         "current_password" => "",
-         "new_password" => "",
-         "new_password_confirmation" => ""
-       }, as: :password_change),
+       password_form:
+         to_form(
+           %{
+             "current_password" => "",
+             "new_password" => "",
+             "new_password_confirmation" => ""
+           },
+           as: :password_change
+         ),
        password_error: nil,
        password_success: nil,
        password_strength: nil,
@@ -68,24 +72,21 @@ defmodule BezgelorPortalWeb.SettingsLive do
           phx-click="switch_tab"
           phx-value-tab="profile"
         >
-          <.icon name="hero-user" class="size-4 mr-2" />
-          Profile
+          <.icon name="hero-user" class="size-4 mr-2" /> Profile
         </button>
         <button
           class={["tab", @active_tab == "security" && "tab-active"]}
           phx-click="switch_tab"
           phx-value-tab="security"
         >
-          <.icon name="hero-shield-check" class="size-4 mr-2" />
-          Security
+          <.icon name="hero-shield-check" class="size-4 mr-2" /> Security
         </button>
         <button
           class={["tab", @active_tab == "account" && "tab-active"]}
           phx-click="switch_tab"
           phx-value-tab="account"
         >
-          <.icon name="hero-cog-6-tooth" class="size-4 mr-2" />
-          Account
+          <.icon name="hero-cog-6-tooth" class="size-4 mr-2" /> Account
         </button>
       </div>
 
@@ -142,13 +143,11 @@ defmodule BezgelorPortalWeb.SettingsLive do
             <span class="text-lg">{@account.email}</span>
             <%= if @account.email_verified_at do %>
               <span class="badge badge-success gap-1">
-                <.icon name="hero-check-circle" class="size-3" />
-                Verified
+                <.icon name="hero-check-circle" class="size-3" /> Verified
               </span>
             <% else %>
               <span class="badge badge-warning gap-1">
-                <.icon name="hero-exclamation-triangle" class="size-3" />
-                Unverified
+                <.icon name="hero-exclamation-triangle" class="size-3" /> Unverified
               </span>
             <% end %>
           </div>
@@ -177,8 +176,7 @@ defmodule BezgelorPortalWeb.SettingsLive do
 
           <div class="form-control">
             <.button type="submit" variant="primary">
-              <.icon name="hero-envelope" class="size-4 mr-2" />
-              Request Email Change
+              <.icon name="hero-envelope" class="size-4 mr-2" /> Request Email Change
             </.button>
           </div>
           <p class="text-sm text-base-content/60">
@@ -206,7 +204,12 @@ defmodule BezgelorPortalWeb.SettingsLive do
         <div>
           <h3 class="font-semibold text-lg mb-4">Change Password</h3>
 
-          <.form for={@form} phx-change="validate_password" phx-submit="change_password" class="space-y-4">
+          <.form
+            for={@form}
+            phx-change="validate_password"
+            phx-submit="change_password"
+            class="space-y-4"
+          >
             <.input
               field={@form[:current_password]}
               type="password"
@@ -250,8 +253,7 @@ defmodule BezgelorPortalWeb.SettingsLive do
 
             <div class="form-control">
               <.button type="submit" variant="primary">
-                <.icon name="hero-key" class="size-4 mr-2" />
-                Update Password
+                <.icon name="hero-key" class="size-4 mr-2" /> Update Password
               </.button>
             </div>
           </.form>
@@ -269,8 +271,7 @@ defmodule BezgelorPortalWeb.SettingsLive do
           <%= if @totp_enabled do %>
             <div class="flex items-center gap-3">
               <span class="badge badge-success gap-1">
-                <.icon name="hero-check-circle" class="size-3" />
-                Enabled
+                <.icon name="hero-check-circle" class="size-3" /> Enabled
               </span>
               <.link href={~p"/settings/totp/disable"} class="btn btn-sm btn-outline btn-error">
                 Disable
@@ -278,8 +279,7 @@ defmodule BezgelorPortalWeb.SettingsLive do
             </div>
           <% else %>
             <.link href={~p"/settings/totp/setup"} class="btn btn-primary btn-sm">
-              <.icon name="hero-device-phone-mobile" class="size-4 mr-2" />
-              Set Up
+              <.icon name="hero-device-phone-mobile" class="size-4 mr-2" /> Set Up
             </.link>
           <% end %>
         </div>
@@ -333,8 +333,7 @@ defmodule BezgelorPortalWeb.SettingsLive do
               class="btn btn-outline btn-error"
               phx-click="show_delete_modal"
             >
-              <.icon name="hero-trash" class="size-4 mr-2" />
-              Delete Account
+              <.icon name="hero-trash" class="size-4 mr-2" /> Delete Account
             </button>
           </div>
         </div>
@@ -386,8 +385,7 @@ defmodule BezgelorPortalWeb.SettingsLive do
               Cancel
             </button>
             <button type="submit" class="btn btn-error">
-              <.icon name="hero-trash" class="size-4 mr-2" />
-              Delete My Account
+              <.icon name="hero-trash" class="size-4 mr-2" /> Delete My Account
             </button>
           </div>
         </.form>
@@ -417,13 +415,14 @@ defmodule BezgelorPortalWeb.SettingsLive do
   end
 
   defp strength_color(strength, level) do
-    required = case strength do
-      :weak -> 1
-      :fair -> 2
-      :good -> 3
-      :strong -> 4
-      _ -> 0
-    end
+    required =
+      case strength do
+        :weak -> 1
+        :fair -> 2
+        :good -> 3
+        :strong -> 4
+        _ -> 0
+      end
 
     if level <= required do
       case strength do
@@ -510,14 +509,25 @@ defmodule BezgelorPortalWeb.SettingsLive do
     confirmation = params["new_password_confirmation"]
 
     cond do
-      not Password.verify_password(account.email, current_password, account.salt, account.verifier) ->
-        {:noreply, assign(socket, password_error: "Current password is incorrect.", password_success: nil)}
+      not Password.verify_password(
+        account.email,
+        current_password,
+        account.salt,
+        account.verifier
+      ) ->
+        {:noreply,
+         assign(socket, password_error: "Current password is incorrect.", password_success: nil)}
 
       String.length(new_password) < @min_password_length ->
-        {:noreply, assign(socket, password_error: "New password must be at least #{@min_password_length} characters.", password_success: nil)}
+        {:noreply,
+         assign(socket,
+           password_error: "New password must be at least #{@min_password_length} characters.",
+           password_success: nil
+         )}
 
       new_password != confirmation ->
-        {:noreply, assign(socket, password_error: "New passwords do not match.", password_success: nil)}
+        {:noreply,
+         assign(socket, password_error: "New passwords do not match.", password_success: nil)}
 
       true ->
         case Accounts.update_password(account, new_password) do
@@ -527,16 +537,24 @@ defmodule BezgelorPortalWeb.SettingsLive do
              |> assign(
                password_error: nil,
                password_success: "Password updated successfully.",
-               password_form: to_form(%{
-                 "current_password" => "",
-                 "new_password" => "",
-                 "new_password_confirmation" => ""
-               }, as: :password_change),
+               password_form:
+                 to_form(
+                   %{
+                     "current_password" => "",
+                     "new_password" => "",
+                     "new_password_confirmation" => ""
+                   },
+                   as: :password_change
+                 ),
                password_strength: nil
              )}
 
           {:error, _changeset} ->
-            {:noreply, assign(socket, password_error: "Failed to update password. Please try again.", password_success: nil)}
+            {:noreply,
+             assign(socket,
+               password_error: "Failed to update password. Please try again.",
+               password_success: nil
+             )}
         end
     end
   end
@@ -549,7 +567,11 @@ defmodule BezgelorPortalWeb.SettingsLive do
     {:noreply, assign(socket, show_delete_modal: false, delete_error: nil)}
   end
 
-  def handle_event("delete_account", %{"delete_account" => %{"confirm_email" => confirm_email}}, socket) do
+  def handle_event(
+        "delete_account",
+        %{"delete_account" => %{"confirm_email" => confirm_email}},
+        socket
+      ) do
     account = socket.assigns.current_account
 
     if String.downcase(confirm_email) == String.downcase(account.email) do
@@ -564,7 +586,8 @@ defmodule BezgelorPortalWeb.SettingsLive do
           {:noreply, assign(socket, delete_error: "Failed to delete account. Please try again.")}
       end
     else
-      {:noreply, assign(socket, delete_error: "Email does not match. Please type your email exactly.")}
+      {:noreply,
+       assign(socket, delete_error: "Email does not match. Please type your email exactly.")}
     end
   end
 

@@ -51,6 +51,7 @@ defmodule BezgelorWorld.CombatBroadcasterTest do
 
       assert_receive {:send_packet, :server_spell_effect, packet_data}, 1000
       assert is_binary(packet_data)
+
       # Effect packet: caster(8) + target(8) + spell_id(4) + type(1) + amount(4) + flags(1) = 26 bytes
       assert byte_size(packet_data) == 26
     end

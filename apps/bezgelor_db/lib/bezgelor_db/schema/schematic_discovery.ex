@@ -15,12 +15,12 @@ defmodule BezgelorDb.Schema.SchematicDiscovery do
   @type t :: %__MODULE__{}
 
   schema "schematic_discoveries" do
-    belongs_to :character, Character
+    belongs_to(:character, Character)
 
-    field :account_id, :integer
-    field :schematic_id, :integer
-    field :variant_id, :integer, default: 0
-    field :discovered_at, :utc_datetime
+    field(:account_id, :integer)
+    field(:schematic_id, :integer)
+    field(:variant_id, :integer, default: 0)
+    field(:discovered_at, :utc_datetime)
 
     timestamps(type: :utc_datetime)
   end

@@ -91,7 +91,8 @@ defmodule BezgelorCrypto.PacketCrypt do
           state_pos = 7 - state_index
           key_pos = v9 + state_index
 
-          if state_pos < 0 or state_pos >= byte_size(state) or key_pos < 0 or key_pos >= byte_size(key) do
+          if state_pos < 0 or state_pos >= byte_size(state) or key_pos < 0 or
+               key_pos >= byte_size(key) do
             {:halt, {:error, :index_out_of_bounds}}
           else
             state_byte = :binary.at(state, state_pos)
@@ -153,7 +154,8 @@ defmodule BezgelorCrypto.PacketCrypt do
           # Safely access bytes with bounds checking
           key_pos = v9 + state_index
 
-          if state_index < 0 or state_index >= byte_size(state) or key_pos < 0 or key_pos >= byte_size(key) do
+          if state_index < 0 or state_index >= byte_size(state) or key_pos < 0 or
+               key_pos >= byte_size(key) do
             {:halt, {:error, :index_out_of_bounds}}
           else
             state_byte = :binary.at(state, state_index)

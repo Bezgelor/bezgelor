@@ -18,6 +18,7 @@ defmodule BezgelorWorld.Handler.TitleHandler do
 
   alias BezgelorDb.Titles
   alias BezgelorData
+
   alias BezgelorProtocol.Packets.World.{
     ServerTitleList,
     ServerTitleUnlocked,

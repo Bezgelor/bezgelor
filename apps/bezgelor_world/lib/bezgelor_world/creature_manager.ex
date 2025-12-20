@@ -317,7 +317,9 @@ defmodule BezgelorWorld.CreatureManager do
   def handle_call({:load_zone_spawns, world_id}, _from, state) do
     case Store.get_creature_spawns(world_id) do
       {:ok, zone_data} ->
-        {spawned_count, new_state} = spawn_from_definitions(zone_data.creature_spawns, world_id, state)
+        {spawned_count, new_state} =
+          spawn_from_definitions(zone_data.creature_spawns, world_id, state)
+
         Logger.info("Loaded #{spawned_count} creature spawns for world #{world_id}")
         {:reply, {:ok, spawned_count}, new_state}
 
@@ -386,7 +388,9 @@ defmodule BezgelorWorld.CreatureManager do
   def handle_cast({:load_zone_spawns_async, world_id}, state) do
     case Store.get_creature_spawns(world_id) do
       {:ok, zone_data} ->
-        {spawned_count, new_state} = spawn_from_definitions(zone_data.creature_spawns, world_id, state)
+        {spawned_count, new_state} =
+          spawn_from_definitions(zone_data.creature_spawns, world_id, state)
+
         Logger.info("Loaded #{spawned_count} creature spawns for world #{world_id}")
         {:noreply, new_state}
 
@@ -612,10 +616,10 @@ defmodule BezgelorWorld.CreatureManager do
         needs_ai_processing?(creature_state, now)
       end)
 
-
     # Process the filtered creatures
     creatures =
-      Enum.reduce(creatures_needing_update, state.creatures, fn {guid, creature_state}, creatures ->
+      Enum.reduce(creatures_needing_update, state.creatures, fn {guid, creature_state},
+                                                                creatures ->
         case process_creature_ai(creature_state, now) do
           {:no_change, _} ->
             creatures
@@ -635,8 +639,8 @@ defmodule BezgelorWorld.CreatureManager do
     ai = creature_state.ai
 
     # Always process creatures in combat or evading
+    # Process creatures in zones with players
     ai.state == :combat or ai.state == :evade or
-      # Process creatures in zones with players
       MapSet.member?(active_zones, world_id)
   end
 
@@ -697,7 +701,8 @@ defmodule BezgelorWorld.CreatureManager do
 
   # Get nearby player entities from zone instance (including faction)
   defp get_nearby_players(world_id, position, range) do
-    zone_key = {world_id, 1}  # Assuming instance 1
+    # Assuming instance 1
+    zone_key = {world_id, 1}
 
     case ZoneInstance.entities_in_range(zone_key, position, range) do
       {:ok, entities} ->
@@ -707,7 +712,8 @@ defmodule BezgelorWorld.CreatureManager do
           %{
             guid: e.guid,
             position: e.position,
-            faction: Map.get(e, :faction, :exile)  # Default to exile for players
+            # Default to exile for players
+            faction: Map.get(e, :faction, :exile)
           }
         end)
 
@@ -760,7 +766,9 @@ defmodule BezgelorWorld.CreatureManager do
         current_pos = entity.position
         {tx, ty, tz} = target_pos
         {cx, cy, cz} = current_pos
-        current_distance = :math.sqrt((tx - cx) * (tx - cx) + (ty - cy) * (ty - cy) + (tz - cz) * (tz - cz))
+
+        current_distance =
+          :math.sqrt((tx - cx) * (tx - cx) + (ty - cy) * (ty - cy) + (tz - cz) * (tz - cz))
 
         min_range = if template.is_ranged, do: attack_range * 0.5, else: 0.0
 
@@ -777,7 +785,11 @@ defmodule BezgelorWorld.CreatureManager do
             broadcast_creature_movement(entity.guid, path, speed, world_id)
             end_pos = List.last(path)
             new_entity = %{entity | position: end_pos}
-            Logger.debug("Ranged creature #{entity.name} backing away, too close at #{current_distance}")
+
+            Logger.debug(
+              "Ranged creature #{entity.name} backing away, too close at #{current_distance}"
+            )
+
             {:updated, %{creature_state | ai: new_ai, entity: new_entity}}
           else
             {:no_change, creature_state}
@@ -847,7 +859,8 @@ defmodule BezgelorWorld.CreatureManager do
 
         case get_entity_position(world_id, target_guid) do
           {:ok, pos} -> pos
-          :error -> creature_state.entity.position  # Fallback to own position
+          # Fallback to own position
+          :error -> creature_state.entity.position
         end
 
       pos ->
@@ -906,7 +919,13 @@ defmodule BezgelorWorld.CreatureManager do
       {:start_wander, new_ai} ->
         # Creature is starting to wander - broadcast movement to players in zone
         world_id = Map.get(creature_state, :world_id)
-        broadcast_creature_movement(entity.guid, new_ai.movement_path, new_ai.wander_speed, world_id)
+
+        broadcast_creature_movement(
+          entity.guid,
+          new_ai.movement_path,
+          new_ai.wander_speed,
+          world_id
+        )
 
         # Update entity position to path end (client will animate the movement)
         end_position = List.last(new_ai.movement_path) || entity.position
@@ -921,7 +940,13 @@ defmodule BezgelorWorld.CreatureManager do
       {:start_patrol, new_ai} ->
         # Creature is starting a patrol segment - broadcast movement to players in zone
         world_id = Map.get(creature_state, :world_id)
-        broadcast_creature_movement(entity.guid, new_ai.movement_path, new_ai.patrol_speed, world_id)
+
+        broadcast_creature_movement(
+          entity.guid,
+          new_ai.movement_path,
+          new_ai.patrol_speed,
+          world_id
+        )
 
         # Update entity position to path end (client will animate the movement)
         end_position = List.last(new_ai.movement_path) || entity.position
@@ -1345,7 +1370,8 @@ defmodule BezgelorWorld.CreatureManager do
     # Armor reduces damage (capped at 75% mitigation)
     mitigation = min(armor, 0.75)
     final_damage = round(base_damage * (1 - mitigation))
-    max(final_damage, 1)  # Always deal at least 1 damage
+    # Always deal at least 1 damage
+    max(final_damage, 1)
   end
 
   # Get defensive stats for a player target
@@ -1437,7 +1463,9 @@ defmodule BezgelorWorld.CreatureManager do
     # Zone.Instance.broadcast routes via WorldManager's zone_index
     ZoneInstance.broadcast({world_id, 1}, {:server_entity_command, packet_data})
 
-    Logger.debug("Broadcast movement for creature #{creature_guid} in zone #{world_id}, path length: #{length(path)}")
+    Logger.debug(
+      "Broadcast movement for creature #{creature_guid} in zone #{world_id}, path length: #{length(path)}"
+    )
   end
 
   defp broadcast_creature_movement(_creature_guid, _path, _speed, _world_id), do: :ok

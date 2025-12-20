@@ -93,7 +93,11 @@ defmodule BezgelorProtocol.Handler.PackedHandler do
     else
       {:error, :unknown_opcode} ->
         <<opcode_int::little-16, _rest::binary>> = data
-        Logger.warning("PackedHandler: unknown inner opcode 0x#{Integer.to_string(opcode_int, 16)}")
+
+        Logger.warning(
+          "PackedHandler: unknown inner opcode 0x#{Integer.to_string(opcode_int, 16)}"
+        )
+
         {:error, {:unknown_opcode, opcode_int}}
 
       error ->

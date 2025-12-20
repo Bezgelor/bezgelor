@@ -28,13 +28,13 @@ defmodule BezgelorDb.Schema.MythicKeystone do
   @max_level 30
 
   schema "mythic_keystones" do
-    belongs_to :character, Character
+    belongs_to(:character, Character)
 
-    field :instance_definition_id, :integer
-    field :level, :integer, default: 1
-    field :affixes, {:array, :string}, default: []
-    field :obtained_at, :utc_datetime
-    field :depleted, :boolean, default: false
+    field(:instance_definition_id, :integer)
+    field(:level, :integer, default: 1)
+    field(:affixes, {:array, :string}, default: [])
+    field(:obtained_at, :utc_datetime)
+    field(:depleted, :boolean, default: false)
 
     timestamps()
   end
@@ -116,8 +116,10 @@ defmodule BezgelorDb.Schema.MythicKeystone do
 
     cond do
       remaining <= 0 -> 0
-      remaining >= time_limit_seconds * 0.4 -> 3  # 40%+ time remaining
-      remaining >= time_limit_seconds * 0.2 -> 2  # 20%+ time remaining
+      # 40%+ time remaining
+      remaining >= time_limit_seconds * 0.4 -> 3
+      # 20%+ time remaining
+      remaining >= time_limit_seconds * 0.2 -> 2
       true -> 1
     end
   end

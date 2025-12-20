@@ -90,7 +90,9 @@ defmodule BezgelorData.Queries.Quests do
       {:ok, creature} ->
         0..24
         |> Enum.map(fn i ->
-          key = String.to_atom("questIdReceive#{String.pad_leading(Integer.to_string(i), 2, "0")}")
+          key =
+            String.to_atom("questIdReceive#{String.pad_leading(Integer.to_string(i), 2, "0")}")
+
           Map.get(creature, key)
         end)
         |> Enum.reject(&(&1 == 0 or is_nil(&1)))

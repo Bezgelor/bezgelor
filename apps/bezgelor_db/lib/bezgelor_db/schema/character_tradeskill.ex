@@ -15,13 +15,13 @@ defmodule BezgelorDb.Schema.CharacterTradeskill do
   @type t :: %__MODULE__{}
 
   schema "character_tradeskills" do
-    belongs_to :character, Character
+    belongs_to(:character, Character)
 
-    field :profession_id, :integer
-    field :profession_type, Ecto.Enum, values: [:crafting, :gathering]
-    field :skill_level, :integer, default: 0
-    field :skill_xp, :integer, default: 0
-    field :is_active, :boolean, default: true
+    field(:profession_id, :integer)
+    field(:profession_type, Ecto.Enum, values: [:crafting, :gathering])
+    field(:skill_level, :integer, default: 0)
+    field(:skill_xp, :integer, default: 0)
+    field(:is_active, :boolean, default: true)
 
     timestamps(type: :utc_datetime)
   end

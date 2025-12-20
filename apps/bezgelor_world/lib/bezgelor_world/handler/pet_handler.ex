@@ -25,6 +25,7 @@ defmodule BezgelorWorld.Handler.PetHandler do
   alias BezgelorDb.{Collections, Pets}
   alias BezgelorProtocol.PacketReader
   alias BezgelorProtocol.PacketWriter
+
   alias BezgelorProtocol.Packets.World.{
     ClientPetSummon,
     ClientPetDismiss,
@@ -33,7 +34,8 @@ defmodule BezgelorWorld.Handler.PetHandler do
     ServerPetXP
   }
 
-  @pet_xp_share 0.10  # 10% of kill XP goes to pet
+  # 10% of kill XP goes to pet
+  @pet_xp_share 0.10
 
   @impl true
   def handle(payload, state) do
@@ -64,13 +66,14 @@ defmodule BezgelorWorld.Handler.PetHandler do
       {:ok, pet} ->
         Logger.debug("Character #{character_id} summoned pet #{pet.pet_id}")
 
-        response = ServerPetUpdate.summoned(
-          entity_guid,
-          pet.pet_id,
-          pet.level,
-          pet.xp,
-          pet.nickname
-        )
+        response =
+          ServerPetUpdate.summoned(
+            entity_guid,
+            pet.pet_id,
+            pet.level,
+            pet.xp,
+            pet.nickname
+          )
 
         writer = PacketWriter.new()
         {:ok, writer} = ServerPetUpdate.write(response, writer)
@@ -131,13 +134,14 @@ defmodule BezgelorWorld.Handler.PetHandler do
       {:ok, pet} ->
         Logger.debug("Character #{character_id} renamed pet to #{pet.nickname}")
 
-        response = ServerPetUpdate.summoned(
-          entity_guid,
-          pet.pet_id,
-          pet.level,
-          pet.xp,
-          pet.nickname
-        )
+        response =
+          ServerPetUpdate.summoned(
+            entity_guid,
+            pet.pet_id,
+            pet.level,
+            pet.xp,
+            pet.nickname
+          )
 
         writer = PacketWriter.new()
         {:ok, writer} = ServerPetUpdate.write(response, writer)
@@ -169,13 +173,14 @@ defmodule BezgelorWorld.Handler.PetHandler do
     if active do
       entity_guid = get_entity_guid(connection_pid)
 
-      response = ServerPetUpdate.summoned(
-        entity_guid,
-        active.pet_id,
-        active.level,
-        active.xp,
-        active.nickname
-      )
+      response =
+        ServerPetUpdate.summoned(
+          entity_guid,
+          active.pet_id,
+          active.level,
+          active.xp,
+          active.nickname
+        )
 
       writer = PacketWriter.new()
       {:ok, writer} = ServerPetUpdate.write(response, writer)

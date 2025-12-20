@@ -31,22 +31,29 @@ defmodule BezgelorDb.Schema.ArenaTeamMember do
   @roles ~w(captain member)
 
   schema "arena_team_members" do
-    belongs_to :team, ArenaTeam
-    belongs_to :character, Character
+    belongs_to(:team, ArenaTeam)
+    belongs_to(:character, Character)
 
-    field :personal_rating, :integer, default: 0
-    field :games_played, :integer, default: 0
-    field :games_won, :integer, default: 0
-    field :season_games, :integer, default: 0
-    field :season_wins, :integer, default: 0
-    field :joined_at, :utc_datetime
-    field :role, :string, default: "member"
+    field(:personal_rating, :integer, default: 0)
+    field(:games_played, :integer, default: 0)
+    field(:games_won, :integer, default: 0)
+    field(:season_games, :integer, default: 0)
+    field(:season_wins, :integer, default: 0)
+    field(:joined_at, :utc_datetime)
+    field(:role, :string, default: "member")
 
     timestamps()
   end
 
   @required_fields [:team_id, :character_id, :joined_at]
-  @optional_fields [:personal_rating, :games_played, :games_won, :season_games, :season_wins, :role]
+  @optional_fields [
+    :personal_rating,
+    :games_played,
+    :games_won,
+    :season_games,
+    :season_wins,
+    :role
+  ]
 
   @doc """
   Creates a changeset for team membership.
@@ -123,6 +130,7 @@ defmodule BezgelorDb.Schema.ArenaTeamMember do
   """
   @spec win_rate(t()) :: float()
   def win_rate(%__MODULE__{games_played: 0}), do: 0.0
+
   def win_rate(%__MODULE__{games_won: won, games_played: played}) do
     Float.round(won / played * 100, 1)
   end

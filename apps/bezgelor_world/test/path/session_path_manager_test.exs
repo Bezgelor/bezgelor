@@ -552,7 +552,9 @@ defmodule BezgelorWorld.Path.SessionPathManagerTest do
     end
 
     test "mission auto-completes when target reached" do
-      mission = build_mission(501, @type_assassination, 123, progress: %{"count" => 0, "target" => 2})
+      mission =
+        build_mission(501, @type_assassination, 123, progress: %{"count" => 0, "target" => 2})
+
       session = session_with_missions([mission])
 
       # Kill once - not yet complete
@@ -561,7 +563,8 @@ defmodule BezgelorWorld.Path.SessionPathManagerTest do
       assert session[:active_path_missions][501].progress["count"] == 1
 
       # Kill again - reaches target, auto-completes
-      {session, packets} = SessionPathManager.process_game_event(session, :kill, %{creature_id: 123})
+      {session, packets} =
+        SessionPathManager.process_game_event(session, :kill, %{creature_id: 123})
 
       # Mission is removed from active (completed)
       assert session[:active_path_missions][501] == nil
@@ -570,13 +573,16 @@ defmodule BezgelorWorld.Path.SessionPathManagerTest do
       assert Enum.any?(packets, fn {type, _} -> type == :server_path_mission_complete end)
 
       # Additional kills have no effect
-      {session, packets} = SessionPathManager.process_game_event(session, :kill, %{creature_id: 123})
+      {session, packets} =
+        SessionPathManager.process_game_event(session, :kill, %{creature_id: 123})
+
       assert packets == []
     end
 
     test "multiple missions can receive the same event" do
       mission1 = build_mission(600, @type_assassination, 5000)
-      mission2 = build_mission(601, @type_swat, 5000)  # SWAT also triggers on kill
+      # SWAT also triggers on kill
+      mission2 = build_mission(601, @type_swat, 5000)
       session = session_with_missions([mission1, mission2])
 
       {updated_session, packets} =

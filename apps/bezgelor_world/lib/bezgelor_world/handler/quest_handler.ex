@@ -10,6 +10,7 @@ defmodule BezgelorWorld.Handler.QuestHandler do
 
   alias BezgelorDb.{Characters, Quests}
   alias BezgelorProtocol.PacketReader
+
   alias BezgelorProtocol.Packets.World.{
     ClientAcceptQuest,
     ClientAbandonQuest,
@@ -94,7 +95,10 @@ defmodule BezgelorWorld.Handler.QuestHandler do
             {:reply, opcode, packet_data, updated_state}
 
           {:error, :quest_not_found} ->
-            Logger.warning("Character #{character_id} tried to abandon unknown quest #{packet.quest_id}")
+            Logger.warning(
+              "Character #{character_id} tried to abandon unknown quest #{packet.quest_id}"
+            )
+
             {:ok, state}
 
           {:error, reason} ->
@@ -130,11 +134,17 @@ defmodule BezgelorWorld.Handler.QuestHandler do
             {:reply, opcode, packet_data, updated_state}
 
           {:error, :quest_not_found} ->
-            Logger.warning("Character #{character_id} tried to turn in unknown quest #{packet.quest_id}")
+            Logger.warning(
+              "Character #{character_id} tried to turn in unknown quest #{packet.quest_id}"
+            )
+
             {:ok, state}
 
           {:error, :quest_not_complete} ->
-            Logger.warning("Character #{character_id} tried to turn in incomplete quest #{packet.quest_id}")
+            Logger.warning(
+              "Character #{character_id} tried to turn in incomplete quest #{packet.quest_id}"
+            )
+
             {:ok, state}
 
           {:error, reason} ->

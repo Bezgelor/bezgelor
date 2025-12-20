@@ -27,13 +27,13 @@ defmodule BezgelorDb.Schema.WarplotPlug do
   @socket_count 8
 
   schema "warplot_plugs" do
-    belongs_to :warplot, Warplot
+    belongs_to(:warplot, Warplot)
 
-    field :plug_id, :integer
-    field :socket_id, :integer
-    field :tier, :integer, default: 1
-    field :health_percent, :integer, default: 100
-    field :installed_at, :utc_datetime
+    field(:plug_id, :integer)
+    field(:socket_id, :integer)
+    field(:tier, :integer, default: 1)
+    field(:health_percent, :integer, default: 100)
+    field(:installed_at, :utc_datetime)
 
     timestamps()
   end
@@ -49,7 +49,10 @@ defmodule BezgelorDb.Schema.WarplotPlug do
     plug
     |> cast(attrs, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
-    |> validate_number(:socket_id, greater_than_or_equal_to: 1, less_than_or_equal_to: @socket_count)
+    |> validate_number(:socket_id,
+      greater_than_or_equal_to: 1,
+      less_than_or_equal_to: @socket_count
+    )
     |> validate_number(:tier, greater_than_or_equal_to: 1, less_than_or_equal_to: @max_tier)
     |> validate_number(:health_percent, greater_than_or_equal_to: 0, less_than_or_equal_to: 100)
     |> unique_constraint([:warplot_id, :socket_id])

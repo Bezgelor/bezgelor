@@ -154,7 +154,10 @@ defmodule BezgelorWorld.PvP.ArenaQueue do
               state = add_to_queue(state, entry)
               estimated_wait = estimate_wait_time(state, bracket, team.rating)
 
-              Logger.debug("Team #{team.name} joined #{bracket} arena queue (rating: #{team.rating})")
+              Logger.debug(
+                "Team #{team.name} joined #{bracket} arena queue (rating: #{team.rating})"
+              )
+
               {:reply, {:ok, estimated_wait}, state}
             else
               {:reply, {:error, :wrong_bracket}, state}
@@ -168,7 +171,8 @@ defmodule BezgelorWorld.PvP.ArenaQueue do
 
   def handle_call({:join_queue_solo, player_guid, player_name, bracket, rating}, _from, state) do
     # Create ad-hoc team entry for solo queue
-    team_id = -player_guid  # Negative to distinguish from real teams
+    # Negative to distinguish from real teams
+    team_id = -player_guid
 
     cond do
       Map.has_key?(state.team_queues, team_id) ->
@@ -191,7 +195,10 @@ defmodule BezgelorWorld.PvP.ArenaQueue do
         state = add_to_queue(state, entry)
         estimated_wait = estimate_wait_time(state, bracket, rating)
 
-        Logger.debug("Player #{player_name} joined #{bracket} solo arena queue (rating: #{rating})")
+        Logger.debug(
+          "Player #{player_name} joined #{bracket} solo arena queue (rating: #{rating})"
+        )
+
         {:reply, {:ok, estimated_wait}, state}
     end
   end
@@ -308,7 +315,10 @@ defmodule BezgelorWorld.PvP.ArenaQueue do
     case find_match(queue) do
       {:ok, team1, team2, remaining_queue} ->
         match_id = create_arena_match(bracket, team1, team2)
-        Logger.info("Created arena match #{match_id} for #{bracket} (#{team1.team_name} vs #{team2.team_name})")
+
+        Logger.info(
+          "Created arena match #{match_id} for #{bracket} (#{team1.team_name} vs #{team2.team_name})"
+        )
 
         # Update queues
         queues = Map.put(state.queues, bracket, remaining_queue)
@@ -417,7 +427,7 @@ defmodule BezgelorWorld.PvP.ArenaQueue do
 
       true ->
         # Estimate based on queue activity
-        60 + (30 * div(@rating_window_max, @initial_rating_window))
+        60 + 30 * div(@rating_window_max, @initial_rating_window)
     end
   end
 

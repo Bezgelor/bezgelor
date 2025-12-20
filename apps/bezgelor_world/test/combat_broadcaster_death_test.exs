@@ -27,7 +27,14 @@ defmodule BezgelorWorld.CombatBroadcasterDeathTest do
       current_health = 100
       damage = 100
 
-      CombatBroadcaster.handle_player_damage(player_guid, zone_id, position, current_health, damage, attacker_guid)
+      CombatBroadcaster.handle_player_damage(
+        player_guid,
+        zone_id,
+        position,
+        current_health,
+        damage,
+        attacker_guid
+      )
 
       # Player should now be marked as dead
       assert DeathManager.is_dead?(player_guid) == true
@@ -43,7 +50,14 @@ defmodule BezgelorWorld.CombatBroadcasterDeathTest do
       current_health = 100
       damage = 50
 
-      CombatBroadcaster.handle_player_damage(player_guid, zone_id, position, current_health, damage, attacker_guid)
+      CombatBroadcaster.handle_player_damage(
+        player_guid,
+        zone_id,
+        position,
+        current_health,
+        damage,
+        attacker_guid
+      )
 
       # Player should NOT be dead
       assert DeathManager.is_dead?(player_guid) == false
@@ -56,7 +70,14 @@ defmodule BezgelorWorld.CombatBroadcasterDeathTest do
       attacker_guid = 0x0400000000000005
 
       # Lethal damage
-      CombatBroadcaster.handle_player_damage(player_guid, zone_id, position, 100, 200, attacker_guid)
+      CombatBroadcaster.handle_player_damage(
+        player_guid,
+        zone_id,
+        position,
+        100,
+        200,
+        attacker_guid
+      )
 
       # Check death info contains killer
       {:ok, info} = DeathManager.get_death_info(player_guid)
@@ -70,7 +91,14 @@ defmodule BezgelorWorld.CombatBroadcasterDeathTest do
       attacker_guid = 0x0400000000000001
 
       # Lethal damage
-      CombatBroadcaster.handle_player_damage(player_guid, zone_id, position, 50, 100, attacker_guid)
+      CombatBroadcaster.handle_player_damage(
+        player_guid,
+        zone_id,
+        position,
+        50,
+        100,
+        attacker_guid
+      )
 
       # Check death info contains position
       {:ok, info} = DeathManager.get_death_info(player_guid)
@@ -84,7 +112,14 @@ defmodule BezgelorWorld.CombatBroadcasterDeathTest do
       attacker_guid = 0x0400000000000001
 
       # Lethal damage
-      CombatBroadcaster.handle_player_damage(player_guid, zone_id, position, 10, 999, attacker_guid)
+      CombatBroadcaster.handle_player_damage(
+        player_guid,
+        zone_id,
+        position,
+        10,
+        999,
+        attacker_guid
+      )
 
       # Check death info contains zone
       {:ok, info} = DeathManager.get_death_info(player_guid)

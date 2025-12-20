@@ -20,7 +20,12 @@ defmodule BezgelorDb.CollectionsTest do
     {:ok, character} =
       Characters.create_character(account.id, %{
         name: "Collector#{System.unique_integer([:positive])}",
-        sex: 0, race: 0, class: 0, faction_id: 166, world_id: 1, world_zone_id: 1
+        sex: 0,
+        race: 0,
+        class: 0,
+        faction_id: 166,
+        world_id: 1,
+        world_zone_id: 1
       })
 
     {:ok, account: account, character: character}

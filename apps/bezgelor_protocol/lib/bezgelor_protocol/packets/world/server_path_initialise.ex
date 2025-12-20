@@ -20,7 +20,8 @@ defmodule BezgelorProtocol.Packets.World.ServerPathInitialise do
 
   defstruct active_path: 0,
             path_progress: [0, 0, 0, 0],
-            path_unlocked_mask: 0x0F,  # All paths unlocked by default
+            # All paths unlocked by default
+            path_unlocked_mask: 0x0F,
             time_since_last_activate: 0.0
 
   @type t :: %__MODULE__{
@@ -40,9 +41,10 @@ defmodule BezgelorProtocol.Packets.World.ServerPathInitialise do
     writer = PacketWriter.write_bits(writer, packet.active_path, 3)
 
     # Path progress - 4 uint32 values (XP for each path)
-    writer = Enum.reduce(packet.path_progress, writer, fn xp, w ->
-      PacketWriter.write_bits(w, xp, 32)
-    end)
+    writer =
+      Enum.reduce(packet.path_progress, writer, fn xp, w ->
+        PacketWriter.write_bits(w, xp, 32)
+      end)
 
     # Path unlocked mask (4 bits)
     writer = PacketWriter.write_bits(writer, packet.path_unlocked_mask, 4)
@@ -60,9 +62,12 @@ defmodule BezgelorProtocol.Packets.World.ServerPathInitialise do
   def from_character(character) do
     %__MODULE__{
       active_path: character.active_path || 0,
-      path_progress: [0, 0, 0, 0],  # TODO: Load from character path progress
-      path_unlocked_mask: 0x0F,     # All paths unlocked
-      time_since_last_activate: -30.0  # No cooldown (30 days ago)
+      # TODO: Load from character path progress
+      path_progress: [0, 0, 0, 0],
+      # All paths unlocked
+      path_unlocked_mask: 0x0F,
+      # No cooldown (30 days ago)
+      time_since_last_activate: -30.0
     }
   end
 end

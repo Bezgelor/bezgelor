@@ -46,7 +46,8 @@ defmodule BezgelorProtocol.Packets.World.ServerItemVisualUpdate do
   end
 
   @doc "Create an item visual entry."
-  @spec visual(non_neg_integer(), non_neg_integer(), non_neg_integer(), integer()) :: item_visual()
+  @spec visual(non_neg_integer(), non_neg_integer(), non_neg_integer(), integer()) ::
+          item_visual()
   def visual(slot, display_id, colour_set \\ 0, dye_data \\ 0) do
     %{
       slot: slot,

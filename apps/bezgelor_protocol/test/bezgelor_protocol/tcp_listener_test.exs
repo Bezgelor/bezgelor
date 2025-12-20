@@ -8,7 +8,8 @@ defmodule BezgelorProtocol.TcpListenerTest do
   describe "start_link/1" do
     test "starts TCP listener on specified port" do
       opts = [
-        port: 0,  # Random available port
+        # Random available port
+        port: 0,
         handler: BezgelorProtocol.Connection,
         name: :test_listener
       ]

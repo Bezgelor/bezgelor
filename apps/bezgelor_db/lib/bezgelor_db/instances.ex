@@ -7,7 +7,14 @@ defmodule BezgelorDb.Instances do
 
   import Ecto.Query
   alias BezgelorDb.Repo
-  alias BezgelorDb.Schema.{InstanceSave, InstanceCompletion, MythicRun, MythicKeystone, LootHistory}
+
+  alias BezgelorDb.Schema.{
+    InstanceSave,
+    InstanceCompletion,
+    MythicRun,
+    MythicKeystone,
+    LootHistory
+  }
 
   # ============================================================================
   # Instance Saves

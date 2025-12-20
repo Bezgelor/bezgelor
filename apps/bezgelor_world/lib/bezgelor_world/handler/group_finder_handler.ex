@@ -21,6 +21,7 @@ defmodule BezgelorWorld.Handler.GroupFinderHandler do
   require Logger
 
   alias BezgelorWorld.GroupFinder.GroupFinder
+
   alias BezgelorProtocol.Packets.World.{
     ServerGroupFinderQueued,
     ServerGroupFinderUpdate,
@@ -46,7 +47,9 @@ defmodule BezgelorWorld.Handler.GroupFinderHandler do
 
       case GroupFinder.join_queue(entry) do
         {:ok, position} ->
-          Logger.info("Player #{character_id} joined queue for #{packet.instance_type}:#{packet.difficulty}")
+          Logger.info(
+            "Player #{character_id} joined queue for #{packet.instance_type}:#{packet.difficulty}"
+          )
 
           response = %ServerGroupFinderQueued{
             instance_type: packet.instance_type,
@@ -117,7 +120,10 @@ defmodule BezgelorWorld.Handler.GroupFinderHandler do
     if character_id do
       case GroupFinder.respond_to_match(packet.match_id, character_id, packet.accepted) do
         :ok ->
-          Logger.info("Player #{character_id} #{if packet.accepted, do: "accepted", else: "declined"} match #{packet.match_id}")
+          Logger.info(
+            "Player #{character_id} #{if packet.accepted, do: "accepted", else: "declined"} match #{packet.match_id}"
+          )
+
           {:ok, [], state}
 
         {:error, :match_not_found} ->
@@ -166,20 +172,26 @@ defmodule BezgelorWorld.Handler.GroupFinderHandler do
 
   # Estimate wait time based on content type and roles
   defp estimate_wait_time(instance_type, roles) do
-    base_time = case instance_type do
-      :dungeon -> 300      # 5 minutes
-      :adventure -> 300    # 5 minutes
-      :raid -> 900         # 15 minutes
-      :expedition -> 180   # 3 minutes
-      _ -> 300
-    end
+    base_time =
+      case instance_type do
+        # 5 minutes
+        :dungeon -> 300
+        # 5 minutes
+        :adventure -> 300
+        # 15 minutes
+        :raid -> 900
+        # 3 minutes
+        :expedition -> 180
+        _ -> 300
+      end
 
     # Tanks and healers get shorter queues
-    role_modifier = cond do
-      :tank in roles -> 0.2
-      :healer in roles -> 0.4
-      true -> 1.0
-    end
+    role_modifier =
+      cond do
+        :tank in roles -> 0.2
+        :healer in roles -> 0.4
+        true -> 1.0
+      end
 
     round(base_time * role_modifier)
   end

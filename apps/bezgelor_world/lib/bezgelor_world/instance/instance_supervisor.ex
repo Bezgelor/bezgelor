@@ -43,19 +43,24 @@ defmodule BezgelorWorld.Instance.Supervisor do
   @spec start_instance(non_neg_integer(), non_neg_integer(), atom(), keyword()) ::
           {:ok, pid()} | {:error, term()}
   def start_instance(instance_guid, definition_id, difficulty, opts \\ []) do
-    spec = {Instance, [
-      instance_guid: instance_guid,
-      definition_id: definition_id,
-      difficulty: difficulty,
-      group_id: Keyword.get(opts, :group_id),
-      leader_id: Keyword.get(opts, :leader_id),
-      mythic_level: Keyword.get(opts, :mythic_level, 0),
-      affix_ids: Keyword.get(opts, :affix_ids, [])
-    ]}
+    spec =
+      {Instance,
+       [
+         instance_guid: instance_guid,
+         definition_id: definition_id,
+         difficulty: difficulty,
+         group_id: Keyword.get(opts, :group_id),
+         leader_id: Keyword.get(opts, :leader_id),
+         mythic_level: Keyword.get(opts, :mythic_level, 0),
+         affix_ids: Keyword.get(opts, :affix_ids, [])
+       ]}
 
     case DynamicSupervisor.start_child(__MODULE__, spec) do
       {:ok, pid} ->
-        Logger.info("Started instance #{instance_guid} (def: #{definition_id}, diff: #{difficulty})")
+        Logger.info(
+          "Started instance #{instance_guid} (def: #{definition_id}, diff: #{difficulty})"
+        )
+
         {:ok, pid}
 
       {:error, {:already_started, pid}} ->
@@ -130,6 +135,6 @@ defmodule BezgelorWorld.Instance.Supervisor do
     # Add timestamp component for sortability
     timestamp = System.system_time(:millisecond)
     unique = System.unique_integer([:positive, :monotonic]) &&& 0xFFFFFF
-    (timestamp <<< 24) ||| unique
+    timestamp <<< 24 ||| unique
   end
 end

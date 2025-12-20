@@ -5,13 +5,15 @@ defmodule BezgelorWorld.CreatureAggroTest do
 
   setup do
     # Start CreatureManager if not running
-    pid = case GenServer.whereis(CreatureManager) do
-      nil ->
-        {:ok, pid} = start_supervised!(CreatureManager)
-        pid
-      existing_pid ->
-        existing_pid
-    end
+    pid =
+      case GenServer.whereis(CreatureManager) do
+        nil ->
+          {:ok, pid} = start_supervised!(CreatureManager)
+          pid
+
+        existing_pid ->
+          existing_pid
+      end
 
     # Clear any existing creatures with a longer timeout since spline index build can be slow
     GenServer.call(pid, :clear_all_creatures, 10_000)
@@ -30,7 +32,8 @@ defmodule BezgelorWorld.CreatureAggroTest do
       # Simulate player entity nearby (within 15.0 aggro range)
       player = %{
         guid: 0x1000000000000001,
-        position: {10.0, 0.0, 0.0}  # 10 units away
+        # 10 units away
+        position: {10.0, 0.0, 0.0}
       }
 
       # Trigger aggro check with player context
@@ -51,7 +54,8 @@ defmodule BezgelorWorld.CreatureAggroTest do
       # Simulate player entity far away (outside 15.0 aggro range)
       player = %{
         guid: 0x1000000000000001,
-        position: {50.0, 0.0, 0.0}  # 50 units away
+        # 50 units away
+        position: {50.0, 0.0, 0.0}
       }
 
       CreatureManager.check_aggro_for_creature(creature_guid, [player])

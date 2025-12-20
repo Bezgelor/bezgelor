@@ -6,11 +6,46 @@ defmodule BezgelorWorld.GroupFinderTest do
   describe "Matcher.find_dungeon_match/2" do
     test "finds match when roles are satisfied (1 tank, 1 healer, 3 dps)" do
       queue = [
-        %{character_id: 1, roles: [:tank], queued_at: 0, instance_ids: [100], gear_score: 500, language: "en"},
-        %{character_id: 2, roles: [:healer], queued_at: 1, instance_ids: [100], gear_score: 500, language: "en"},
-        %{character_id: 3, roles: [:dps], queued_at: 2, instance_ids: [100], gear_score: 500, language: "en"},
-        %{character_id: 4, roles: [:dps], queued_at: 3, instance_ids: [100], gear_score: 500, language: "en"},
-        %{character_id: 5, roles: [:dps], queued_at: 4, instance_ids: [100], gear_score: 500, language: "en"}
+        %{
+          character_id: 1,
+          roles: [:tank],
+          queued_at: 0,
+          instance_ids: [100],
+          gear_score: 500,
+          language: "en"
+        },
+        %{
+          character_id: 2,
+          roles: [:healer],
+          queued_at: 1,
+          instance_ids: [100],
+          gear_score: 500,
+          language: "en"
+        },
+        %{
+          character_id: 3,
+          roles: [:dps],
+          queued_at: 2,
+          instance_ids: [100],
+          gear_score: 500,
+          language: "en"
+        },
+        %{
+          character_id: 4,
+          roles: [:dps],
+          queued_at: 3,
+          instance_ids: [100],
+          gear_score: 500,
+          language: "en"
+        },
+        %{
+          character_id: 5,
+          roles: [:dps],
+          queued_at: 4,
+          instance_ids: [100],
+          gear_score: 500,
+          language: "en"
+        }
       ]
 
       assert {:ok, match} = Matcher.find_dungeon_match(:normal, queue)
@@ -19,18 +54,53 @@ defmodule BezgelorWorld.GroupFinderTest do
 
       # Verify role distribution
       roles = Enum.map(match.members, & &1.role)
-      assert Enum.count(roles, & &1 == :tank) == 1
-      assert Enum.count(roles, & &1 == :healer) == 1
-      assert Enum.count(roles, & &1 == :dps) == 3
+      assert Enum.count(roles, &(&1 == :tank)) == 1
+      assert Enum.count(roles, &(&1 == :healer)) == 1
+      assert Enum.count(roles, &(&1 == :dps)) == 3
     end
 
     test "returns no_match when not enough tanks" do
       queue = [
-        %{character_id: 1, roles: [:healer], queued_at: 0, instance_ids: [100], gear_score: 500, language: "en"},
-        %{character_id: 2, roles: [:healer], queued_at: 1, instance_ids: [100], gear_score: 500, language: "en"},
-        %{character_id: 3, roles: [:dps], queued_at: 2, instance_ids: [100], gear_score: 500, language: "en"},
-        %{character_id: 4, roles: [:dps], queued_at: 3, instance_ids: [100], gear_score: 500, language: "en"},
-        %{character_id: 5, roles: [:dps], queued_at: 4, instance_ids: [100], gear_score: 500, language: "en"}
+        %{
+          character_id: 1,
+          roles: [:healer],
+          queued_at: 0,
+          instance_ids: [100],
+          gear_score: 500,
+          language: "en"
+        },
+        %{
+          character_id: 2,
+          roles: [:healer],
+          queued_at: 1,
+          instance_ids: [100],
+          gear_score: 500,
+          language: "en"
+        },
+        %{
+          character_id: 3,
+          roles: [:dps],
+          queued_at: 2,
+          instance_ids: [100],
+          gear_score: 500,
+          language: "en"
+        },
+        %{
+          character_id: 4,
+          roles: [:dps],
+          queued_at: 3,
+          instance_ids: [100],
+          gear_score: 500,
+          language: "en"
+        },
+        %{
+          character_id: 5,
+          roles: [:dps],
+          queued_at: 4,
+          instance_ids: [100],
+          gear_score: 500,
+          language: "en"
+        }
       ]
 
       assert :no_match = Matcher.find_dungeon_match(:normal, queue)
@@ -38,11 +108,46 @@ defmodule BezgelorWorld.GroupFinderTest do
 
     test "returns no_match when not enough healers" do
       queue = [
-        %{character_id: 1, roles: [:tank], queued_at: 0, instance_ids: [100], gear_score: 500, language: "en"},
-        %{character_id: 2, roles: [:tank], queued_at: 1, instance_ids: [100], gear_score: 500, language: "en"},
-        %{character_id: 3, roles: [:dps], queued_at: 2, instance_ids: [100], gear_score: 500, language: "en"},
-        %{character_id: 4, roles: [:dps], queued_at: 3, instance_ids: [100], gear_score: 500, language: "en"},
-        %{character_id: 5, roles: [:dps], queued_at: 4, instance_ids: [100], gear_score: 500, language: "en"}
+        %{
+          character_id: 1,
+          roles: [:tank],
+          queued_at: 0,
+          instance_ids: [100],
+          gear_score: 500,
+          language: "en"
+        },
+        %{
+          character_id: 2,
+          roles: [:tank],
+          queued_at: 1,
+          instance_ids: [100],
+          gear_score: 500,
+          language: "en"
+        },
+        %{
+          character_id: 3,
+          roles: [:dps],
+          queued_at: 2,
+          instance_ids: [100],
+          gear_score: 500,
+          language: "en"
+        },
+        %{
+          character_id: 4,
+          roles: [:dps],
+          queued_at: 3,
+          instance_ids: [100],
+          gear_score: 500,
+          language: "en"
+        },
+        %{
+          character_id: 5,
+          roles: [:dps],
+          queued_at: 4,
+          instance_ids: [100],
+          gear_score: 500,
+          language: "en"
+        }
       ]
 
       assert :no_match = Matcher.find_dungeon_match(:normal, queue)
@@ -50,11 +155,46 @@ defmodule BezgelorWorld.GroupFinderTest do
 
     test "players with multiple roles can fill needed positions" do
       queue = [
-        %{character_id: 1, roles: [:tank, :dps], queued_at: 0, instance_ids: [100], gear_score: 500, language: "en"},
-        %{character_id: 2, roles: [:healer, :dps], queued_at: 1, instance_ids: [100], gear_score: 500, language: "en"},
-        %{character_id: 3, roles: [:dps], queued_at: 2, instance_ids: [100], gear_score: 500, language: "en"},
-        %{character_id: 4, roles: [:dps], queued_at: 3, instance_ids: [100], gear_score: 500, language: "en"},
-        %{character_id: 5, roles: [:dps], queued_at: 4, instance_ids: [100], gear_score: 500, language: "en"}
+        %{
+          character_id: 1,
+          roles: [:tank, :dps],
+          queued_at: 0,
+          instance_ids: [100],
+          gear_score: 500,
+          language: "en"
+        },
+        %{
+          character_id: 2,
+          roles: [:healer, :dps],
+          queued_at: 1,
+          instance_ids: [100],
+          gear_score: 500,
+          language: "en"
+        },
+        %{
+          character_id: 3,
+          roles: [:dps],
+          queued_at: 2,
+          instance_ids: [100],
+          gear_score: 500,
+          language: "en"
+        },
+        %{
+          character_id: 4,
+          roles: [:dps],
+          queued_at: 3,
+          instance_ids: [100],
+          gear_score: 500,
+          language: "en"
+        },
+        %{
+          character_id: 5,
+          roles: [:dps],
+          queued_at: 4,
+          instance_ids: [100],
+          gear_score: 500,
+          language: "en"
+        }
       ]
 
       assert {:ok, match} = Matcher.find_dungeon_match(:normal, queue)
@@ -92,15 +232,43 @@ defmodule BezgelorWorld.GroupFinderTest do
       # 2 tanks, 5 healers, 13 dps = 20 players
       queue =
         [
-          %{character_id: 1, roles: [:tank], queued_at: 0, instance_ids: [300], gear_score: 500, language: "en"},
-          %{character_id: 2, roles: [:tank], queued_at: 1, instance_ids: [300], gear_score: 500, language: "en"}
+          %{
+            character_id: 1,
+            roles: [:tank],
+            queued_at: 0,
+            instance_ids: [300],
+            gear_score: 500,
+            language: "en"
+          },
+          %{
+            character_id: 2,
+            roles: [:tank],
+            queued_at: 1,
+            instance_ids: [300],
+            gear_score: 500,
+            language: "en"
+          }
         ] ++
-        for i <- 3..7 do
-          %{character_id: i, roles: [:healer], queued_at: i, instance_ids: [300], gear_score: 500, language: "en"}
-        end ++
-        for i <- 8..20 do
-          %{character_id: i, roles: [:dps], queued_at: i, instance_ids: [300], gear_score: 500, language: "en"}
-        end
+          for i <- 3..7 do
+            %{
+              character_id: i,
+              roles: [:healer],
+              queued_at: i,
+              instance_ids: [300],
+              gear_score: 500,
+              language: "en"
+            }
+          end ++
+          for i <- 8..20 do
+            %{
+              character_id: i,
+              roles: [:dps],
+              queued_at: i,
+              instance_ids: [300],
+              gear_score: 500,
+              language: "en"
+            }
+          end
 
       assert {:ok, match} = Matcher.find_raid_match(:normal, queue)
       assert match.instance_id == 300
@@ -108,20 +276,55 @@ defmodule BezgelorWorld.GroupFinderTest do
 
       # Verify role distribution
       roles = Enum.map(match.members, & &1.role)
-      assert Enum.count(roles, & &1 == :tank) == 2
-      assert Enum.count(roles, & &1 == :healer) == 5
-      assert Enum.count(roles, & &1 == :dps) == 13
+      assert Enum.count(roles, &(&1 == :tank)) == 2
+      assert Enum.count(roles, &(&1 == :healer)) == 5
+      assert Enum.count(roles, &(&1 == :dps)) == 13
     end
   end
 
   describe "common_instance_preference" do
     test "selects most popular instance" do
       queue = [
-        %{character_id: 1, roles: [:tank], queued_at: 0, instance_ids: [100, 101], gear_score: 500, language: "en"},
-        %{character_id: 2, roles: [:healer], queued_at: 1, instance_ids: [101, 102], gear_score: 500, language: "en"},
-        %{character_id: 3, roles: [:dps], queued_at: 2, instance_ids: [100, 101], gear_score: 500, language: "en"},
-        %{character_id: 4, roles: [:dps], queued_at: 3, instance_ids: [101], gear_score: 500, language: "en"},
-        %{character_id: 5, roles: [:dps], queued_at: 4, instance_ids: [101, 103], gear_score: 500, language: "en"}
+        %{
+          character_id: 1,
+          roles: [:tank],
+          queued_at: 0,
+          instance_ids: [100, 101],
+          gear_score: 500,
+          language: "en"
+        },
+        %{
+          character_id: 2,
+          roles: [:healer],
+          queued_at: 1,
+          instance_ids: [101, 102],
+          gear_score: 500,
+          language: "en"
+        },
+        %{
+          character_id: 3,
+          roles: [:dps],
+          queued_at: 2,
+          instance_ids: [100, 101],
+          gear_score: 500,
+          language: "en"
+        },
+        %{
+          character_id: 4,
+          roles: [:dps],
+          queued_at: 3,
+          instance_ids: [101],
+          gear_score: 500,
+          language: "en"
+        },
+        %{
+          character_id: 5,
+          roles: [:dps],
+          queued_at: 4,
+          instance_ids: [101, 103],
+          gear_score: 500,
+          language: "en"
+        }
       ]
 
       assert {:ok, match} = Matcher.find_dungeon_match(:normal, queue)

@@ -230,8 +230,8 @@ defmodule BezgelorProtocol.Packets.CombatPacketsTest do
       {:ok, writer} = ServerLevelUp.write(packet, writer)
       data = PacketWriter.to_binary(writer)
 
-      <<guid::64-little, level::32-little, health::32-little, xp::32-little,
-        to_level::32-little>> = data
+      <<guid::64-little, level::32-little, health::32-little, xp::32-little, to_level::32-little>> =
+        data
 
       assert guid == 100
       assert level == 10

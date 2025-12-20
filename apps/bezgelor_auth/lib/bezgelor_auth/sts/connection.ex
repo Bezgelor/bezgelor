@@ -86,7 +86,9 @@ defmodule BezgelorAuth.Sts.Connection do
 
     case Packet.parse_request(buffer_to_parse) do
       {:ok, packet, remaining} ->
-        Logger.debug("[STS] Recv: #{packet.method} #{packet.uri} (#{byte_size(packet.body)} bytes)")
+        Logger.debug(
+          "[STS] Recv: #{packet.method} #{packet.uri} (#{byte_size(packet.body)} bytes)"
+        )
 
         {response, new_session, init_encryption} = Handler.handle(packet, state.session)
 

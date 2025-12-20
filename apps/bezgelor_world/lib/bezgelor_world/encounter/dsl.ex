@@ -54,12 +54,20 @@ defmodule BezgelorWorld.Encounter.DSL do
       end
   """
 
-  @type health_condition :: {:health_above, number()}
-                          | {:health_below, number()}
-                          | {:health_between, {number(), number()}}
+  @type health_condition ::
+          {:health_above, number()}
+          | {:health_below, number()}
+          | {:health_between, {number(), number()}}
 
-  @type target_type :: :tank | :healer | :random | :farthest | :nearest
-                     | :highest_threat | :lowest_health | :all
+  @type target_type ::
+          :tank
+          | :healer
+          | :random
+          | :farthest
+          | :nearest
+          | :highest_threat
+          | :lowest_health
+          | :all
 
   @type telegraph_shape :: :circle | :cone | :line | :donut | :room_wide | :cross
 
@@ -107,11 +115,12 @@ defmodule BezgelorWorld.Encounter.DSL do
     # Reverse phases to maintain definition order
     phases = Enum.reverse(phases)
 
-    encounter = Map.merge(encounter_data, %{
-      phases: phases,
-      events: events,
-      module: env.module
-    })
+    encounter =
+      Map.merge(encounter_data, %{
+        phases: phases,
+        events: events,
+        module: env.module
+      })
 
     if validate do
       validate_encounter!(encounter, env)
@@ -228,7 +237,12 @@ defmodule BezgelorWorld.Encounter.DSL do
   defmacro interrupt_armor(count) do
     quote do
       data = Module.get_attribute(__MODULE__, :encounter_data) || %{}
-      Module.put_attribute(__MODULE__, :encounter_data, Map.put(data, :interrupt_armor, unquote(count)))
+
+      Module.put_attribute(
+        __MODULE__,
+        :encounter_data,
+        Map.put(data, :interrupt_armor, unquote(count))
+      )
     end
   end
 

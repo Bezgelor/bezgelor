@@ -170,10 +170,11 @@ defmodule BezgelorDb.QuestsTest do
 
   describe "all_objectives_complete?/1" do
     test "returns true when all objectives met", %{character: character} do
-      progress = Quests.init_progress([
-        %{type: "kill", target: 5},
-        %{type: "item", target: 3}
-      ])
+      progress =
+        Quests.init_progress([
+          %{type: "kill", target: 5},
+          %{type: "item", target: 3}
+        ])
 
       {:ok, quest} = Quests.accept_quest(character.id, 1001, progress: progress)
 

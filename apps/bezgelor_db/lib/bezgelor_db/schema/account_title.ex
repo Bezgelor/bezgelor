@@ -8,9 +8,9 @@ defmodule BezgelorDb.Schema.AccountTitle do
   alias BezgelorDb.Schema.Account
 
   schema "account_titles" do
-    belongs_to :account, Account
-    field :title_id, :integer
-    field :unlocked_at, :utc_datetime
+    belongs_to(:account, Account)
+    field(:title_id, :integer)
+    field(:unlocked_at, :utc_datetime)
 
     timestamps()
   end

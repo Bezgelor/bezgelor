@@ -31,7 +31,8 @@ defmodule BezgelorWorld.TickScheduler do
 
   require Logger
 
-  @default_tick_interval 1000  # WildStar's 1-second tick
+  # WildStar's 1-second tick
+  @default_tick_interval 1000
 
   ## Client API
 

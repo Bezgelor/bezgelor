@@ -134,8 +134,7 @@ defmodule BezgelorWorld.PvP.Objectives.ControlPoint do
         point = %{point | capture_progress: new_progress, capturing_faction: faction}
 
         if new_progress >= 1.0 do
-          {:captured,
-           %{point | owner: faction, capture_progress: 1.0, capturing_faction: nil}}
+          {:captured, %{point | owner: faction, capture_progress: 1.0, capturing_faction: nil}}
         else
           {:capturing, point}
         end

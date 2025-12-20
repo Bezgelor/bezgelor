@@ -46,17 +46,17 @@ defmodule BezgelorDb.Schema.CharacterCurrency do
   }
 
   schema "character_currencies" do
-    belongs_to :character, Character
+    belongs_to(:character, Character)
 
-    field :gold, :integer, default: 0
-    field :elder_gems, :integer, default: 0
-    field :renown, :integer, default: 0
-    field :prestige, :integer, default: 0
-    field :glory, :integer, default: 0
-    field :crafting_vouchers, :integer, default: 0
-    field :war_coins, :integer, default: 0
-    field :shade_silver, :integer, default: 0
-    field :protostar_promissory_notes, :integer, default: 0
+    field(:gold, :integer, default: 0)
+    field(:elder_gems, :integer, default: 0)
+    field(:renown, :integer, default: 0)
+    field(:prestige, :integer, default: 0)
+    field(:glory, :integer, default: 0)
+    field(:crafting_vouchers, :integer, default: 0)
+    field(:war_coins, :integer, default: 0)
+    field(:shade_silver, :integer, default: 0)
+    field(:protostar_promissory_notes, :integer, default: 0)
 
     timestamps(type: :utc_datetime)
   end

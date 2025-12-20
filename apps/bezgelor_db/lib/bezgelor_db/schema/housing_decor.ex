@@ -12,32 +12,43 @@ defmodule BezgelorDb.Schema.HousingDecor do
   @type t :: %__MODULE__{}
 
   schema "housing_decor" do
-    belongs_to :plot, BezgelorDb.Schema.HousingPlot
+    belongs_to(:plot, BezgelorDb.Schema.HousingPlot)
 
-    field :decor_id, :integer
+    field(:decor_id, :integer)
 
     # Position
-    field :pos_x, :float, default: 0.0
-    field :pos_y, :float, default: 0.0
-    field :pos_z, :float, default: 0.0
+    field(:pos_x, :float, default: 0.0)
+    field(:pos_y, :float, default: 0.0)
+    field(:pos_z, :float, default: 0.0)
 
     # Rotation (euler angles in degrees)
-    field :rot_pitch, :float, default: 0.0
-    field :rot_yaw, :float, default: 0.0
-    field :rot_roll, :float, default: 0.0
+    field(:rot_pitch, :float, default: 0.0)
+    field(:rot_yaw, :float, default: 0.0)
+    field(:rot_roll, :float, default: 0.0)
 
     # Scale
-    field :scale, :float, default: 1.0
+    field(:scale, :float, default: 1.0)
 
     # Interior vs exterior
-    field :is_exterior, :boolean, default: false
+    field(:is_exterior, :boolean, default: false)
 
-    field :placed_at, :utc_datetime
+    field(:placed_at, :utc_datetime)
   end
 
   def changeset(decor, attrs) do
     decor
-    |> cast(attrs, [:plot_id, :decor_id, :pos_x, :pos_y, :pos_z, :rot_pitch, :rot_yaw, :rot_roll, :scale, :is_exterior])
+    |> cast(attrs, [
+      :plot_id,
+      :decor_id,
+      :pos_x,
+      :pos_y,
+      :pos_z,
+      :rot_pitch,
+      :rot_yaw,
+      :rot_roll,
+      :scale,
+      :is_exterior
+    ])
     |> validate_required([:plot_id, :decor_id])
     |> validate_number(:scale, greater_than: 0.0, less_than_or_equal_to: 10.0)
     |> put_change(:placed_at, DateTime.utc_now() |> DateTime.truncate(:second))

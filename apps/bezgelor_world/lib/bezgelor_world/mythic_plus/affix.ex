@@ -30,12 +30,22 @@ defmodule BezgelorWorld.MythicPlus.Affix do
 
   require Logger
 
-  @type affix_type :: :fortified | :tyrannical | :bolstering | :raging | :sanguine |
-                      :inspiring | :explosive | :quaking | :grievous | :volcanic |
-                      :necrotic | :seasonal
+  @type affix_type ::
+          :fortified
+          | :tyrannical
+          | :bolstering
+          | :raging
+          | :sanguine
+          | :inspiring
+          | :explosive
+          | :quaking
+          | :grievous
+          | :volcanic
+          | :necrotic
+          | :seasonal
 
-  @type trigger :: :enemy_death | :low_health | :periodic | :combat_start |
-                   :damage_taken | :combat_end
+  @type trigger ::
+          :enemy_death | :low_health | :periodic | :combat_start | :damage_taken | :combat_end
 
   @callback on_trigger(trigger(), map(), map()) :: {:ok, [map()]} | :noop
 
@@ -55,7 +65,9 @@ defmodule BezgelorWorld.MythicPlus.Affix do
     affix_ids
     |> Enum.flat_map(fn id ->
       case get_affix(id) do
-        nil -> []
+        nil ->
+          []
+
         affix ->
           case apply_affix(affix, trigger, context) do
             {:ok, effects} -> effects
@@ -97,7 +109,6 @@ defmodule BezgelorWorld.MythicPlus.Affix do
           boss: %{health_mult: 1.0, damage_mult: 1.0}
         }
       },
-
       2 => %{
         id: 2,
         name: "Tyrannical",
@@ -120,7 +131,6 @@ defmodule BezgelorWorld.MythicPlus.Affix do
         description: "When any non-boss enemy dies, its death cry buffs nearby allies",
         triggers: [:enemy_death]
       },
-
       4 => %{
         id: 4,
         name: "Raging",
@@ -129,7 +139,6 @@ defmodule BezgelorWorld.MythicPlus.Affix do
         description: "Non-boss enemies enrage at 30% health, dealing 75% increased damage",
         triggers: [:low_health]
       },
-
       5 => %{
         id: 5,
         name: "Sanguine",
@@ -138,7 +147,6 @@ defmodule BezgelorWorld.MythicPlus.Affix do
         description: "When slain, non-boss enemies leave behind a pool that heals allies",
         triggers: [:enemy_death]
       },
-
       6 => %{
         id: 6,
         name: "Inspiring",
@@ -157,7 +165,6 @@ defmodule BezgelorWorld.MythicPlus.Affix do
         description: "While in combat, enemies periodically spawn Explosive Orbs",
         triggers: [:periodic]
       },
-
       8 => %{
         id: 8,
         name: "Quaking",
@@ -166,7 +173,6 @@ defmodule BezgelorWorld.MythicPlus.Affix do
         description: "Players periodically shockwave, dealing damage to nearby allies",
         triggers: [:periodic]
       },
-
       9 => %{
         id: 9,
         name: "Grievous",
@@ -175,7 +181,6 @@ defmodule BezgelorWorld.MythicPlus.Affix do
         description: "Players below 90% health take stacking damage over time",
         triggers: [:damage_taken]
       },
-
       10 => %{
         id: 10,
         name: "Volcanic",
@@ -184,7 +189,6 @@ defmodule BezgelorWorld.MythicPlus.Affix do
         description: "Enemies cause eruptions of flame at distant player locations",
         triggers: [:periodic]
       },
-
       11 => %{
         id: 11,
         name: "Necrotic",
@@ -240,13 +244,16 @@ defmodule BezgelorWorld.MythicPlus.Affix do
     health_percent = context[:health_percent]
 
     if health_percent <= 30 do
-      {:ok, [%{
-        type: :buff,
-        target: enemy_id,
-        buff_id: :enrage,
-        duration: :permanent,
-        effects: %{damage_mult: 1.75}
-      }]}
+      {:ok,
+       [
+         %{
+           type: :buff,
+           target: enemy_id,
+           buff_id: :enrage,
+           duration: :permanent,
+           effects: %{damage_mult: 1.75}
+         }
+       ]}
     else
       :noop
     end
@@ -255,14 +262,18 @@ defmodule BezgelorWorld.MythicPlus.Affix do
   defp apply_affix_effect(:sanguine, :enemy_death, context) do
     death_position = context[:position]
 
-    {:ok, [%{
-      type: :spawn_hazard,
-      hazard_type: :healing_pool,
-      position: death_position,
-      duration: 20_000,
-      radius: 3.0,
-      heal_percent: 5  # 5% max HP per second
-    }]}
+    {:ok,
+     [
+       %{
+         type: :spawn_hazard,
+         hazard_type: :healing_pool,
+         position: death_position,
+         duration: 20_000,
+         radius: 3.0,
+         # 5% max HP per second
+         heal_percent: 5
+       }
+     ]}
   end
 
   defp apply_affix_effect(:explosive, :periodic, context) do
@@ -272,13 +283,18 @@ defmodule BezgelorWorld.MythicPlus.Affix do
     if length(combat_positions) > 0 do
       pos = Enum.random(combat_positions)
 
-      {:ok, [%{
-        type: :spawn_add,
-        creature_id: :explosive_orb,
-        position: pos,
-        health: 1,  # Dies in one hit
-        damage_on_expire: 5000  # High damage if not killed
-      }]}
+      {:ok,
+       [
+         %{
+           type: :spawn_add,
+           creature_id: :explosive_orb,
+           position: pos,
+           # Dies in one hit
+           health: 1,
+           # High damage if not killed
+           damage_on_expire: 5000
+         }
+       ]}
     else
       :noop
     end
@@ -308,15 +324,18 @@ defmodule BezgelorWorld.MythicPlus.Affix do
     health_percent = context[:health_percent]
 
     if health_percent < 90 do
-      {:ok, [%{
-        type: :dot,
-        target: player_id,
-        dot_id: :grievous,
-        damage_per_tick: 500,
-        tick_interval: 2000,
-        stacks: true,
-        max_stacks: 5
-      }]}
+      {:ok,
+       [
+         %{
+           type: :dot,
+           target: player_id,
+           dot_id: :grievous,
+           damage_per_tick: 500,
+           tick_interval: 2000,
+           stacks: true,
+           max_stacks: 5
+         }
+       ]}
     else
       :noop
     end
@@ -334,7 +353,8 @@ defmodule BezgelorWorld.MythicPlus.Affix do
           type: :spawn_hazard,
           hazard_type: :volcanic_plume,
           position: offset_pos,
-          delay: 2000,  # 2 second warning
+          # 2 second warning
+          delay: 2000,
           damage: 3000,
           radius: 2.0
         }
@@ -345,15 +365,19 @@ defmodule BezgelorWorld.MythicPlus.Affix do
 
   defp apply_affix_effect(:necrotic, :damage_taken, context) do
     if context[:melee_attack] do
-      {:ok, [%{
-        type: :debuff,
-        target: context[:target_id],
-        debuff_id: :necrotic_wound,
-        duration: 9000,
-        stacks: true,
-        max_stacks: 50,
-        effects: %{healing_reduction: 2}  # 2% per stack
-      }]}
+      {:ok,
+       [
+         %{
+           type: :debuff,
+           target: context[:target_id],
+           debuff_id: :necrotic_wound,
+           duration: 9000,
+           stacks: true,
+           max_stacks: 50,
+           # 2% per stack
+           effects: %{healing_reduction: 2}
+         }
+       ]}
     else
       :noop
     end
@@ -367,12 +391,15 @@ defmodule BezgelorWorld.MythicPlus.Affix do
     entity_key = if entity_type == :boss, do: :boss, else: :trash
 
     case get_in(affix, [:stat_mods, entity_key]) do
-      nil -> acc
+      nil ->
+        acc
+
       mods ->
-        %{acc |
-          health_mult: acc.health_mult * (mods[:health_mult] || 1.0),
-          damage_mult: acc.damage_mult * (mods[:damage_mult] || 1.0),
-          speed_mult: acc.speed_mult * (mods[:speed_mult] || 1.0)
+        %{
+          acc
+          | health_mult: acc.health_mult * (mods[:health_mult] || 1.0),
+            damage_mult: acc.damage_mult * (mods[:damage_mult] || 1.0),
+            speed_mult: acc.speed_mult * (mods[:speed_mult] || 1.0)
         }
     end
   end

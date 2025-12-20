@@ -94,7 +94,8 @@ defmodule BezgelorDb.AccountsTest do
       assert account.email == String.downcase(email)
       assert account.salt != nil
       assert account.verifier != nil
-      assert String.length(account.salt) == 32  # 16 bytes hex encoded
+      # 16 bytes hex encoded
+      assert String.length(account.salt) == 32
     end
 
     test "fails with duplicate email" do

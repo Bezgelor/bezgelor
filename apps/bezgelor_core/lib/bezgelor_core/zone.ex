@@ -127,7 +127,10 @@ defmodule BezgelorCore.Zone do
 
   # PreTutorial (Novice = 4) - Faction-specific tutorial arkship cryopod awakening
   def starting_location(@creation_start_pretutorial, @faction_exile), do: @exile_tutorial_start
-  def starting_location(@creation_start_pretutorial, @faction_dominion), do: @dominion_tutorial_start
+
+  def starting_location(@creation_start_pretutorial, @faction_dominion),
+    do: @dominion_tutorial_start
+
   # Fallback for PreTutorial with unknown faction - use Exile arkship
   def starting_location(@creation_start_pretutorial, _faction_id), do: @exile_tutorial_start
 

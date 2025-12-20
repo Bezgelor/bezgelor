@@ -51,14 +51,19 @@ defmodule BezgelorProtocol.Handler.CharacterDeleteHandler do
   defp do_delete(account_id, character_id, state) do
     case Characters.delete_character(account_id, character_id) do
       {:ok, deleted_char} ->
-        Logger.info("Deleted character '#{deleted_char.original_name}' (ID: #{character_id}) for account #{account_id}")
+        Logger.info(
+          "Deleted character '#{deleted_char.original_name}' (ID: #{character_id}) for account #{account_id}"
+        )
 
         # Send delete success result
         response = ServerCharacterDeleteResult.success()
         {:reply_world_encrypted, :server_character_delete_result, encode_packet(response), state}
 
       {:error, :not_found} ->
-        Logger.warning("Attempted to delete non-existent character #{character_id} for account #{account_id}")
+        Logger.warning(
+          "Attempted to delete non-existent character #{character_id} for account #{account_id}"
+        )
+
         response = ServerCharacterDeleteResult.failure()
         {:reply_world_encrypted, :server_character_delete_result, encode_packet(response), state}
 

@@ -14,12 +14,18 @@ defmodule BezgelorProtocol.Handler.ResurrectionHandler do
 
   @behaviour BezgelorProtocol.Handler
 
+  @compile {:no_warn_undefined, BezgelorWorld.DeathManager}
+  @compile {:no_warn_undefined, BezgelorWorld.WorldManager}
+  @compile {:no_warn_undefined, BezgelorWorld.CombatBroadcaster}
+
   alias BezgelorProtocol.PacketReader
   alias BezgelorProtocol.PacketWriter
+
   alias BezgelorProtocol.Packets.World.{
     ClientResurrectAccept,
     ServerResurrect
   }
+
   alias BezgelorWorld.{CombatBroadcaster, DeathManager}
 
   require Logger
@@ -129,9 +135,6 @@ defmodule BezgelorProtocol.Handler.ResurrectionHandler do
 
         {:ok, 0} ->
           Logger.debug("No durability loss applied (level #{level})")
-
-        {:error, reason} ->
-          Logger.warning("Failed to apply durability loss: #{inspect(reason)}")
       end
     end
   end
