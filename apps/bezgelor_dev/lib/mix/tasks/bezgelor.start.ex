@@ -102,16 +102,69 @@ defmodule Mix.Tasks.Bezgelor.Start do
   end
 
   defp print_banner do
-    Mix.shell().info("""
+    IO.puts("")
+    IO.puts(gradient_banner())
+    IO.puts("")
 
-    ==> Starting Bezgelor servers...
+    public_address = System.get_env("WORLD_PUBLIC_ADDRESS", "127.0.0.1")
+
+    Mix.shell().info("""
         Portal:  http://localhost:#{@ports.portal}  (localhost only)
         Auth:    0.0.0.0:#{@ports.auth}             (all interfaces)
         Realm:   0.0.0.0:#{@ports.realm}            (all interfaces)
         World:   0.0.0.0:#{@ports.world}            (all interfaces)
 
-        Logs:    tail -f logs/dev.log
+        Clients: #{public_address}:#{@ports.world}
+        Logs:    tail -F logs/dev.log
     """)
+  end
+
+  defp gradient_banner do
+    # Orange to blue gradient colors (256-color ANSI)
+    colors = [208, 214, 220, 184, 148, 112, 76, 45, 39, 33]
+
+    welcome = "    W e l c o m e   t o"
+
+    # ASCII art for BEZGELOR - each line is a row
+    art = [
+      " ██████╗ ███████╗███████╗ ██████╗ ███████╗██╗      ██████╗ ██████╗ ",
+      " ██╔══██╗██╔════╝╚══███╔╝██╔════╝ ██╔════╝██║     ██╔═══██╗██╔══██╗",
+      " ██████╔╝█████╗    ███╔╝ ██║  ███╗█████╗  ██║     ██║   ██║██████╔╝",
+      " ██╔══██╗██╔══╝   ███╔╝  ██║   ██║██╔══╝  ██║     ██║   ██║██╔══██╗",
+      " ██████╔╝███████╗███████╗╚██████╔╝███████╗███████╗╚██████╔╝██║  ██║",
+      " ╚═════╝ ╚══════╝╚══════╝ ╚═════╝ ╚══════╝╚══════╝ ╚═════╝ ╚═╝  ╚═╝"
+    ]
+
+    # Calculate segment width for gradient
+    width = String.length(Enum.at(art, 0))
+    segment_width = div(width, length(colors))
+
+    # Apply gradient to welcome text (centered)
+    welcome_colored = apply_gradient(welcome, colors, segment_width)
+
+    # Apply gradient to each line of ASCII art
+    art_colored =
+      Enum.map(art, fn line ->
+        apply_gradient(line, colors, segment_width)
+      end)
+
+    reset = "\e[0m"
+
+    [welcome_colored | art_colored]
+    |> Enum.join("\n")
+    |> Kernel.<>(reset)
+  end
+
+  defp apply_gradient(line, colors, segment_width) do
+    line
+    |> String.graphemes()
+    |> Enum.with_index()
+    |> Enum.map(fn {char, idx} ->
+      color_idx = min(div(idx, segment_width), length(colors) - 1)
+      color = Enum.at(colors, color_idx)
+      "\e[38;5;#{color}m#{char}"
+    end)
+    |> Enum.join()
   end
 
   defp start_interactive do

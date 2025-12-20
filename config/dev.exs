@@ -70,7 +70,7 @@ config :bezgelor_portal, dev_routes: true
 # Usage:
 #   mix run --no-halt              # Clean console, debug in file
 #   LOG_LEVEL=debug mix run        # Debug on console too
-#   tail -f logs/dev.log           # Monitor debug output in real-time
+#   tail -F logs/dev.log           # Monitor debug output (follows rotation)
 #
 # Configuration:
 #   :logger, :console, level:      Console log level (default: info)
