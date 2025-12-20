@@ -124,6 +124,9 @@ defmodule BezgelorPortalWeb.Router do
 
       # Analytics
       live "/analytics", AnalyticsLive, :index
+
+      # Testing Tools (development only)
+      live "/testing", TestingToolsLive, :index
     end
   end
 

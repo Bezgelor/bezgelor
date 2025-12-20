@@ -274,7 +274,19 @@ defmodule BezgelorPortalWeb.Layouts do
             %{href: "/admin/audit-log", label: "Audit Log", permission: "admin.view_audit_log"}
           ]}
         />
-        
+
+    <!-- Testing Tools (only in development) -->
+        <div :if={@dev_routes_enabled} class="mb-2">
+          <div class="text-xs font-semibold text-info uppercase tracking-wider px-2 py-1 flex items-center gap-1.5">
+            <.icon name="hero-beaker" class="size-3.5" /> Testing Tools
+          </div>
+          <ul class="menu menu-xs">
+            <li>
+              <.link navigate="/admin/testing">Character Creation</.link>
+            </li>
+          </ul>
+        </div>
+
     <!-- Dev Tools (only in development) -->
         <div :if={@dev_routes_enabled} class="mb-2">
           <div class="text-xs font-semibold text-warning uppercase tracking-wider px-2 py-1 flex items-center gap-1.5">
