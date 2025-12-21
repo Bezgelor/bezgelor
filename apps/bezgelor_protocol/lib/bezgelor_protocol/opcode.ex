@@ -143,10 +143,13 @@ defmodule BezgelorProtocol.Opcode do
   # 0x009A per NexusForever GameMessageOpcode.cs
   @client_cast_spell 0x009A
   @client_cast_spell_continuous 0x04DB
-  @server_spell_start 0x0401
-  @server_spell_finish 0x0402
+  @server_spell_go 0x07F4
+  @server_cast_result 0x07FC
+  @server_spell_finish 0x07FE
+  @server_spell_start 0x07FF
+  @server_spell_buff_remove 0x0813
+  # Legacy spell opcodes (may not be correct)
   @server_spell_effect 0x0403
-  @server_cast_result 0x0404
   @client_cancel_cast 0x0405
   @server_cooldown 0x0406
   @server_telegraph 0x0407
@@ -398,10 +401,12 @@ defmodule BezgelorProtocol.Opcode do
     # Spells
     client_cast_spell: @client_cast_spell,
     client_cast_spell_continuous: @client_cast_spell_continuous,
-    server_spell_start: @server_spell_start,
-    server_spell_finish: @server_spell_finish,
-    server_spell_effect: @server_spell_effect,
+    server_spell_go: @server_spell_go,
     server_cast_result: @server_cast_result,
+    server_spell_finish: @server_spell_finish,
+    server_spell_start: @server_spell_start,
+    server_spell_buff_remove: @server_spell_buff_remove,
+    server_spell_effect: @server_spell_effect,
     client_cancel_cast: @client_cancel_cast,
     server_cooldown: @server_cooldown,
     server_telegraph: @server_telegraph,
@@ -627,10 +632,12 @@ defmodule BezgelorProtocol.Opcode do
     server_chat_result: "ServerChatResult",
     client_cast_spell: "ClientCastSpell",
     client_cast_spell_continuous: "ClientCastSpellContinuous",
-    server_spell_start: "ServerSpellStart",
-    server_spell_finish: "ServerSpellFinish",
-    server_spell_effect: "ServerSpellEffect",
+    server_spell_go: "ServerSpellGo",
     server_cast_result: "ServerCastResult",
+    server_spell_finish: "ServerSpellFinish",
+    server_spell_start: "ServerSpellStart",
+    server_spell_buff_remove: "ServerSpellBuffRemove",
+    server_spell_effect: "ServerSpellEffect",
     client_cancel_cast: "ClientCancelCast",
     server_cooldown: "ServerCooldown",
     server_telegraph: "ServerTelegraph",
