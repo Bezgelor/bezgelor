@@ -99,14 +99,16 @@ git commit -m "feat(portal): add admins_only/1 function for LiveDashboard auth"
 
 ---
 
-## Task 3: Add LiveDashboard Route
+## Task 3: Add LiveDashboard Route and Admin Integration
 
 **Files:**
 - Modify: `apps/bezgelor_portal/lib/bezgelor_portal_web/router.ex`
+- Modify: `apps/bezgelor_portal/lib/bezgelor_portal_web/components/layouts.ex`
+- Create: `apps/bezgelor_portal/assets/css/live_dashboard.css`
 
 **Step 1: Import LiveDashboard**
 
-Add at the top of the module (after line 2):
+Add at the top of `router.ex` (after line 2):
 
 ```elixir
   import Phoenix.LiveDashboard.Router
@@ -126,7 +128,9 @@ Add inside the `if Application.compile_env(:bezgelor_portal, :dev_routes)` block
       ecto_repos: [BezgelorDb.Repo],
       ecto_psql_extras_options: [long_running_queries: [threshold: "200 milliseconds"]],
       env_keys: ["POSTGRES_HOST", "POSTGRES_PORT", "MIX_ENV"],
-      on_mount: {BezgelorPortalWeb.Live.Hooks, :require_admin}
+      on_mount: {BezgelorPortalWeb.Live.Hooks, :require_admin},
+      csp_nonce_assign_key: :csp_nonce,
+      additional_pages: []
   end
 ```
 
@@ -149,16 +153,161 @@ Add a new pipeline after the `:api` pipeline (around line 16):
   end
 ```
 
-**Step 4: Verify routes compile**
+**Step 4: Add Live Dashboard link to admin sidebar**
+
+In `apps/bezgelor_portal/lib/bezgelor_portal_web/components/layouts.ex`, find the "Server" sidebar section (around line 258) and add the Live Dashboard link:
+
+```elixir
+        <.sidebar_section
+          title="Server"
+          icon="hero-server"
+          permission_set={@permission_set}
+          links={[
+            %{href: "/admin/server", label: "Server Status", permission: "server.view_logs"},
+            %{href: "/admin/dashboard", label: "Live Dashboard", permission: "server.view_logs"},
+            %{href: "/admin/server/logs", label: "Logs", permission: "server.view_logs"},
+            %{href: "/admin/settings", label: "Server Settings", permission: "server.settings"}
+          ]}
+        />
+```
+
+**Step 5: Create LiveDashboard custom CSS for admin look & feel**
+
+Create `apps/bezgelor_portal/assets/css/live_dashboard.css`:
+
+```css
+/*
+ * LiveDashboard Styling - Adopts admin panel look & feel
+ * Uses DaisyUI/Tailwind variables for consistency
+ */
+
+/* Override LiveDashboard colors to match admin theme */
+[data-dashboard] {
+  --ld-bg-color: oklch(var(--b2));
+  --ld-text-color: oklch(var(--bc));
+  --ld-primary-color: oklch(var(--p));
+  --ld-success-color: oklch(var(--su));
+  --ld-warning-color: oklch(var(--wa));
+  --ld-danger-color: oklch(var(--er));
+  --ld-border-color: oklch(var(--b3));
+  --ld-card-bg: oklch(var(--b1));
+}
+
+/* Card styling to match admin cards */
+[data-dashboard] .card,
+[data-dashboard] .ld-card {
+  background: oklch(var(--b1));
+  border-radius: var(--rounded-box, 1rem);
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  border: 1px solid oklch(var(--b3));
+}
+
+/* Navigation tabs styling */
+[data-dashboard] nav[role="tablist"] a {
+  color: oklch(var(--bc) / 0.7);
+  transition: color 0.2s;
+}
+
+[data-dashboard] nav[role="tablist"] a:hover {
+  color: oklch(var(--p));
+}
+
+[data-dashboard] nav[role="tablist"] a[aria-current="page"] {
+  color: oklch(var(--p));
+  border-bottom-color: oklch(var(--p));
+}
+
+/* Table styling to match DaisyUI tables */
+[data-dashboard] table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+[data-dashboard] table th {
+  background: oklch(var(--b2));
+  color: oklch(var(--bc) / 0.7);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.75rem 1rem;
+  text-align: left;
+}
+
+[data-dashboard] table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid oklch(var(--b3));
+}
+
+[data-dashboard] table tr:hover td {
+  background: oklch(var(--b2) / 0.5);
+}
+
+/* Button styling */
+[data-dashboard] button,
+[data-dashboard] .btn {
+  background: oklch(var(--p));
+  color: oklch(var(--pc));
+  border-radius: var(--rounded-btn, 0.5rem);
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+[data-dashboard] button:hover,
+[data-dashboard] .btn:hover {
+  background: oklch(var(--p) / 0.8);
+}
+
+/* Charts and metrics styling */
+[data-dashboard] .metric-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: oklch(var(--p));
+}
+
+/* Info boxes */
+[data-dashboard] .alert-info {
+  background: oklch(var(--in) / 0.1);
+  border: 1px solid oklch(var(--in) / 0.3);
+  color: oklch(var(--in));
+}
+
+[data-dashboard] .alert-warning {
+  background: oklch(var(--wa) / 0.1);
+  border: 1px solid oklch(var(--wa) / 0.3);
+  color: oklch(var(--wa));
+}
+
+[data-dashboard] .alert-error {
+  background: oklch(var(--er) / 0.1);
+  border: 1px solid oklch(var(--er) / 0.3);
+  color: oklch(var(--er));
+}
+```
+
+**Step 6: Import LiveDashboard CSS in main stylesheet**
+
+In `apps/bezgelor_portal/assets/css/app.css`, add at the end:
+
+```css
+/* LiveDashboard custom styling */
+@import "./live_dashboard.css";
+```
+
+**Step 7: Verify routes compile**
 
 Run: `mix compile`
 Expected: Compiles without errors
 
-**Step 5: Commit**
+**Step 8: Commit**
 
 ```bash
-git add apps/bezgelor_portal/lib/bezgelor_portal_web/router.ex
-git commit -m "feat(portal): add LiveDashboard route at /admin/dashboard"
+git add apps/bezgelor_portal/lib/bezgelor_portal_web/router.ex \
+        apps/bezgelor_portal/lib/bezgelor_portal_web/components/layouts.ex \
+        apps/bezgelor_portal/assets/css/live_dashboard.css \
+        apps/bezgelor_portal/assets/css/app.css
+git commit -m "feat(portal): add LiveDashboard route with admin styling"
 ```
 
 ---
