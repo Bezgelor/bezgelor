@@ -78,6 +78,7 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
 
   # Stat enum values (from NexusForever)
   @stat_health 0
+  @stat_resource4 6
   @stat_dash 9
   @stat_level 10
   @stat_sheathed 15
@@ -88,6 +89,7 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
 
   # Property enum values (from NexusForever)
   @property_base_health 7
+  @property_resource_max4 13
 
   # EntityCommand values
   @cmd_set_platform 1
@@ -449,22 +451,27 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
     # Build initial stats for player
     # Health must be > 0 or player spawns dead
     level = character.level || 1
+    class_id = character.class || 1
     # Base health calculation - simple formula for now
     # WildStar base health is roughly 200 + (level * 50)
     max_health = 200 + level * 50
 
-    stats = [
-      {@stat_health, @stat_type_integer, max_health},
-      {@stat_dash, @stat_type_float, 200.0},
-      {@stat_level, @stat_type_integer, level},
-      {@stat_sheathed, @stat_type_integer, 1}
-    ]
+    stats =
+      [
+        {@stat_health, @stat_type_integer, max_health},
+        {@stat_dash, @stat_type_float, 200.0},
+        {@stat_level, @stat_type_integer, level},
+        {@stat_sheathed, @stat_type_integer, 1}
+      ]
+      |> maybe_add_spell_power_stat(class_id)
 
     # Build properties - BaseHealth (Property 7) is required for max health display
     # Property format: {property_id, base_value, value} - both floats
-    properties = [
-      {@property_base_health, max_health / 1.0, max_health / 1.0}
-    ]
+    properties =
+      [
+        {@property_base_health, max_health / 1.0, max_health / 1.0}
+      ]
+      |> maybe_add_spell_power_properties(class_id)
 
     # Build visible items from appearance visuals (body parts: face, hair, skin, etc.)
     # Each visual is stored as %{slot: n, display_id: n} or %{"slot" => n, "display_id" => n}
@@ -500,7 +507,7 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
       realm_id: 1,
       name: character.name,
       race: character.race || 1,
-      class: character.class || 1,
+      class: class_id,
       sex: character.sex || 0,
       group_id: 0,
       bones: bones,
@@ -518,6 +525,18 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
       rotation: {0.0, rz, 0.0}
     }
   end
+
+  defp maybe_add_spell_power_stat(stats, 7) do
+    stats ++ [{@stat_resource4, @stat_type_float, 4.0}]
+  end
+
+  defp maybe_add_spell_power_stat(stats, _class_id), do: stats
+
+  defp maybe_add_spell_power_properties(properties, 7) do
+    properties ++ [{@property_resource_max4, 4.0, 4.0}]
+  end
+
+  defp maybe_add_spell_power_properties(properties, _class_id), do: properties
 
   @doc """
   Create an entity create packet from an Entity struct.
