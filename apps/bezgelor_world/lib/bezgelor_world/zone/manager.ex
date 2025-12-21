@@ -19,7 +19,7 @@ defmodule BezgelorWorld.Zone.Manager do
       :ok = Zone.Manager.transfer_player(entity, from_zone, to_zone)
   """
 
-  alias BezgelorWorld.Zone.{Instance, InstanceSupervisor}
+  alias BezgelorWorld.World.{Instance, InstanceSupervisor}
   alias BezgelorCore.Entity
 
   require Logger
@@ -283,7 +283,7 @@ defmodule BezgelorWorld.Zone.Manager do
 
   defp generate_instance_id(zone_id) do
     existing =
-      InstanceSupervisor.list_instances_for_zone(zone_id)
+      InstanceSupervisor.list_instances_for_world(zone_id)
       |> Enum.map(fn {id, _pid} -> id end)
 
     max_id = Enum.max(existing, fn -> 0 end)

@@ -2,7 +2,7 @@ defmodule BezgelorWorld.TeleportTest do
   use ExUnit.Case, async: false
 
   alias BezgelorWorld.Teleport
-  alias BezgelorWorld.Zone.InstanceSupervisor
+  alias BezgelorWorld.World.InstanceSupervisor
   alias BezgelorCore.Entity
 
   describe "to_world_location/2" do
@@ -22,19 +22,21 @@ defmodule BezgelorWorld.TeleportTest do
 
   describe "to_position/4" do
     setup do
-      # Create a test zone instance
-      zone_id = System.unique_integer([:positive])
+      # Create a test world instance
+      # Use a unique world_id since World.Instance is keyed by world_id
+      world_id = System.unique_integer([:positive])
       instance_id = 1
-      world_id = 426
+      # zone_id is a sub-region within the world, separate from world_id
+      zone_id = 1
 
-      zone_data = %{id: zone_id, name: "Test Zone"}
-      {:ok, _pid} = InstanceSupervisor.start_instance(zone_id, instance_id, zone_data)
+      world_data = %{id: world_id, name: "Test World"}
+      {:ok, _pid} = InstanceSupervisor.start_instance(world_id, instance_id, world_data)
 
       on_exit(fn ->
-        InstanceSupervisor.stop_instance(zone_id, instance_id)
+        InstanceSupervisor.stop_instance(world_id, instance_id)
       end)
 
-      %{zone_id: zone_id, instance_id: instance_id, world_id: world_id}
+      %{world_id: world_id, instance_id: instance_id, zone_id: zone_id}
     end
 
     test "returns error for invalid world_id" do
@@ -49,14 +51,14 @@ defmodule BezgelorWorld.TeleportTest do
       assert {:error, :invalid_world} = Teleport.to_position(fake_session, 0, {0.0, 0.0, 0.0})
     end
 
-    test "teleports player to new position in same zone", %{
-      zone_id: zone_id,
+    test "teleports player to new position in same world", %{
+      world_id: world_id,
       instance_id: instance_id,
-      world_id: world_id
+      zone_id: zone_id
     } do
       player_guid = System.unique_integer([:positive])
 
-      # Add player entity to zone
+      # Add player entity to world instance
       player = %Entity{
         guid: player_guid,
         type: :player,
@@ -64,7 +66,8 @@ defmodule BezgelorWorld.TeleportTest do
         position: {0.0, 0.0, 0.0}
       }
 
-      BezgelorWorld.Zone.Instance.add_entity({zone_id, instance_id}, player)
+      # World.Instance is keyed by world_id
+      BezgelorWorld.World.Instance.add_entity({world_id, instance_id}, player)
       Process.sleep(10)
 
       session = %{
@@ -87,7 +90,11 @@ defmodule BezgelorWorld.TeleportTest do
       assert updated_session.session_data.spawn_location.position == new_position
     end
 
-    test "teleports player to different zone", %{zone_id: zone_id, instance_id: instance_id} do
+    test "teleports player to different world", %{
+      world_id: world_id,
+      instance_id: instance_id,
+      zone_id: zone_id
+    } do
       player_guid = System.unique_integer([:positive])
 
       session = %{
@@ -95,7 +102,7 @@ defmodule BezgelorWorld.TeleportTest do
           player_guid: player_guid,
           zone_id: zone_id,
           instance_id: instance_id,
-          world_id: 426,
+          world_id: world_id,
           character: %{id: 1, name: "TestPlayer"}
         }
       }

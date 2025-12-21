@@ -6,7 +6,7 @@ defmodule BezgelorApi.Controllers.StatusController do
   import Plug.Conn
 
   alias BezgelorWorld.WorldManager
-  alias BezgelorWorld.Zone.InstanceSupervisor
+  alias BezgelorWorld.World.InstanceSupervisor
 
   @doc """
   GET /api/v1/status

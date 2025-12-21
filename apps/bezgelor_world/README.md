@@ -22,7 +22,7 @@ World server managing game state, zones, players, and combat.
 
 ## Key Modules
 
-- `BezgelorWorld.Zone.Instance` - Zone state management
+- `BezgelorWorld.World.Instance` - World instance state management (keyed by world_id, not zone_id)
 - `BezgelorWorld.Handler.*` - Packet handlers for world operations
 - `BezgelorWorld.Combat` - Combat state machine
 - `BezgelorWorld.Movement` - Position and movement validation

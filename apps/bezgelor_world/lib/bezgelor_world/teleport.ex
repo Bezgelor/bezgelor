@@ -118,12 +118,13 @@ defmodule BezgelorWorld.Teleport do
   # Same-zone teleport: Update entity position, no zone change needed
   defp same_zone_teleport(session, spawn) do
     player_guid = get_in(session, [:session_data, :player_guid])
-    zone_id = get_in(session, [:session_data, :zone_id])
+    # World.Instance is keyed by world_id, not zone_id
+    world_id = get_in(session, [:session_data, :world_id])
     instance_id = get_in(session, [:session_data, :instance_id]) || 1
 
-    # Update entity position in zone
-    case BezgelorWorld.Zone.Instance.update_entity_position(
-           {zone_id, instance_id},
+    # Update entity position in world instance
+    case BezgelorWorld.World.Instance.update_entity_position(
+           {world_id, instance_id},
            player_guid,
            spawn.position
          ) do

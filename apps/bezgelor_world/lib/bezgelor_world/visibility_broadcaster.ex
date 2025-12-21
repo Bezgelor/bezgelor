@@ -11,7 +11,7 @@ defmodule BezgelorWorld.VisibilityBroadcaster do
   can see each other. This matches WildStar's original behavior.
   """
 
-  alias BezgelorWorld.Zone.Instance, as: ZoneInstance
+  alias BezgelorWorld.World.Instance, as: WorldInstance
   alias BezgelorProtocol.Packets.World.{ServerEntityCreate, ServerEntityDestroy}
   alias BezgelorProtocol.PacketWriter
 
@@ -42,7 +42,7 @@ defmodule BezgelorWorld.VisibilityBroadcaster do
     case serialize_packet(entity_packet) do
       {:ok, packet_data} ->
         # Broadcast to zone, excluding the spawning player
-        ZoneInstance.broadcast(
+        WorldInstance.broadcast(
           {zone_id, instance_id},
           {:server_entity_create, packet_data, entity_guid}
         )
@@ -77,7 +77,7 @@ defmodule BezgelorWorld.VisibilityBroadcaster do
     case serialize_packet(destroy_packet) do
       {:ok, packet_data} ->
         # Broadcast to zone, excluding the despawning player
-        ZoneInstance.broadcast(
+        WorldInstance.broadcast(
           {zone_id, instance_id},
           {:server_entity_destroy, packet_data, entity_guid}
         )
@@ -112,7 +112,7 @@ defmodule BezgelorWorld.VisibilityBroadcaster do
         ) :: :ok
   def broadcast_player_movement(entity_guid, movement_data, zone_id, instance_id) do
     # Forward movement packet to zone, excluding the moving player
-    ZoneInstance.broadcast(
+    WorldInstance.broadcast(
       {zone_id, instance_id},
       {:server_entity_command, movement_data, entity_guid}
     )
@@ -148,7 +148,7 @@ defmodule BezgelorWorld.VisibilityBroadcaster do
 
     case serialize_packet(command_packet) do
       {:ok, packet_data} ->
-        ZoneInstance.broadcast(
+        WorldInstance.broadcast(
           {zone_id, instance_id},
           {:server_entity_command, packet_data, entity_guid}
         )

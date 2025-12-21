@@ -9,9 +9,9 @@ defmodule BezgelorWorld.Creature.ZoneManager do
   ## Architecture
 
   - One ZoneManager per active zone instance
-  - Started by Zone.InstanceSupervisor alongside Zone.Instance
+  - Started by World.InstanceSupervisor alongside World.Instance
   - Handles all creatures within its zone
-  - Communicates with Zone.Instance for entity tracking
+  - Communicates with World.Instance for entity tracking
 
   ## Usage
 
@@ -30,7 +30,7 @@ defmodule BezgelorWorld.Creature.ZoneManager do
   alias BezgelorWorld.{CombatBroadcaster, CreatureDeath, TickScheduler, WorldManager}
   alias BezgelorData.Store
 
-  alias BezgelorWorld.Zone.Instance, as: ZoneInstance
+  alias BezgelorWorld.World.Instance, as: WorldInstance
 
   @type creature_state :: %{
           entity: Entity.t(),
@@ -884,7 +884,7 @@ defmodule BezgelorWorld.Creature.ZoneManager do
       zone_key = {state.zone_id, state.instance_id}
 
       try do
-        case ZoneInstance.update_entity(zone_key, target_guid, fn player_entity ->
+        case WorldInstance.update_entity(zone_key, target_guid, fn player_entity ->
                Entity.apply_damage(player_entity, damage)
              end) do
           :ok ->
@@ -892,7 +892,7 @@ defmodule BezgelorWorld.Creature.ZoneManager do
             send_creature_attack_effect(creature_entity.guid, target_guid, damage)
 
             # Check if player died
-            case ZoneInstance.get_entity(zone_key, target_guid) do
+            case WorldInstance.get_entity(zone_key, target_guid) do
               {:ok, player_entity} when player_entity.health == 0 ->
                 handle_player_death(player_entity, creature_entity.guid)
 

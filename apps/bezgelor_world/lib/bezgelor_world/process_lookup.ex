@@ -8,8 +8,8 @@ defmodule BezgelorWorld.ProcessLookup do
 
   ## Usage
 
-      # List all zone instances
-      ProcessLookup.list_with_meta(BezgelorWorld.ZoneRegistry)
+      # List all world instances
+      ProcessLookup.list_with_meta(BezgelorWorld.WorldRegistry)
 
       # Count event managers
       ProcessLookup.count(BezgelorWorld.EventRegistry)

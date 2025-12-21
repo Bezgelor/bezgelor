@@ -163,12 +163,12 @@ defmodule BezgelorWorld.Portal do
   @spec list_zone_instances() :: [map()]
   def list_zone_instances do
     # Query the zone instance registry
-    case Process.whereis(BezgelorWorld.Zone.InstanceSupervisor) do
+    case Process.whereis(BezgelorWorld.World.InstanceSupervisor) do
       nil ->
         []
 
       _pid ->
-        DynamicSupervisor.which_children(BezgelorWorld.Zone.InstanceSupervisor)
+        DynamicSupervisor.which_children(BezgelorWorld.World.InstanceSupervisor)
         |> Enum.map(fn {_, pid, _, _} ->
           try do
             GenServer.call(pid, :get_state, 1000)

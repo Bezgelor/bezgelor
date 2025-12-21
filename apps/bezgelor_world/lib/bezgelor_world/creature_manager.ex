@@ -34,8 +34,8 @@ defmodule BezgelorWorld.CreatureManager do
   alias BezgelorCore.{AI, CreatureTemplate, Entity, Movement}
   alias BezgelorWorld.{CombatBroadcaster, CreatureDeath, TickScheduler, WorldManager}
   alias BezgelorData.Store
-  alias BezgelorWorld.Zone.Instance, as: ZoneInstance
-  alias BezgelorWorld.Zone.InstanceSupervisor
+  alias BezgelorWorld.World.Instance, as: WorldInstance
+  alias BezgelorWorld.World.InstanceSupervisor
 
   @type creature_state :: %{
           entity: Entity.t(),
@@ -580,13 +580,13 @@ defmodule BezgelorWorld.CreatureManager do
   end
 
   # Get the level of the killer for loot scaling
-  # If the killer is a player, try to get their level from ZoneInstance
+  # If the killer is a player, try to get their level from WorldInstance
   # Falls back to default_level if not found
   defp get_killer_level(killer_guid, default_level) do
     # Check if killer is a player (type bits = 1 in bits 60-63)
     if CreatureDeath.is_player_guid?(killer_guid) do
       # Try to get player entity from zone instance
-      case ZoneInstance.get_entity({1, 1}, killer_guid) do
+      case WorldInstance.get_entity({1, 1}, killer_guid) do
         {:ok, player_entity} ->
           player_entity.level
 
@@ -603,7 +603,7 @@ defmodule BezgelorWorld.CreatureManager do
 
     # Get zones with active players - only process creatures in these zones
     # This is a major optimization: we skip all AI for zones without players
-    active_zones = InstanceSupervisor.list_zones_with_players()
+    active_zones = InstanceSupervisor.list_worlds_with_players()
 
     # Filter to only creatures in active zones (or in combat regardless of zone)
     # Then apply the existing needs_ai_processing? filter
@@ -704,7 +704,7 @@ defmodule BezgelorWorld.CreatureManager do
     # Assuming instance 1
     zone_key = {world_id, 1}
 
-    case ZoneInstance.entities_in_range(zone_key, position, range) do
+    case WorldInstance.entities_in_range(zone_key, position, range) do
       {:ok, entities} ->
         entities
         |> Enum.filter(fn e -> e.type == :player end)
@@ -872,7 +872,7 @@ defmodule BezgelorWorld.CreatureManager do
   defp get_entity_position(world_id, entity_guid) do
     zone_key = {world_id, 1}
 
-    case ZoneInstance.get_entity(zone_key, entity_guid) do
+    case WorldInstance.get_entity(zone_key, entity_guid) do
       {:ok, entity} -> {:ok, entity.position}
       _ -> :error
     end
@@ -1328,7 +1328,7 @@ defmodule BezgelorWorld.CreatureManager do
       # For simplicity, assume zone 1 instance 1 (would need player tracking in real impl)
       # Use try/catch to handle zone instance not existing (e.g., during tests)
       try do
-        case ZoneInstance.update_entity({1, 1}, target_guid, fn player_entity ->
+        case WorldInstance.update_entity({1, 1}, target_guid, fn player_entity ->
                Entity.apply_damage(player_entity, final_damage)
              end) do
           :ok ->
@@ -1336,7 +1336,7 @@ defmodule BezgelorWorld.CreatureManager do
             send_creature_attack_effect(creature_entity.guid, target_guid, final_damage)
 
             # Check if player died
-            case ZoneInstance.get_entity({1, 1}, target_guid) do
+            case WorldInstance.get_entity({1, 1}, target_guid) do
               {:ok, player_entity} when player_entity.health == 0 ->
                 handle_player_death(player_entity, creature_entity.guid)
 
@@ -1422,7 +1422,7 @@ defmodule BezgelorWorld.CreatureManager do
   defp broadcast_creature_movement(creature_guid, path, speed, world_id) when length(path) > 1 do
     alias BezgelorProtocol.Packets.World.ServerEntityCommand
     alias BezgelorProtocol.PacketWriter
-    alias BezgelorWorld.Zone.Instance, as: ZoneInstance
+    alias BezgelorWorld.World.Instance, as: WorldInstance
 
     # Build movement commands using map format
     # Set move state (0x02 = Move flag per NexusForever StateFlags)
@@ -1461,7 +1461,7 @@ defmodule BezgelorWorld.CreatureManager do
 
     # Broadcast to players in the same zone (instance_id = 1 for now)
     # Zone.Instance.broadcast routes via WorldManager's zone_index
-    ZoneInstance.broadcast({world_id, 1}, {:server_entity_command, packet_data})
+    WorldInstance.broadcast({world_id, 1}, {:server_entity_command, packet_data})
 
     Logger.debug(
       "Broadcast movement for creature #{creature_guid} in zone #{world_id}, path length: #{length(path)}"
@@ -1474,7 +1474,7 @@ defmodule BezgelorWorld.CreatureManager do
   defp broadcast_creature_stop(creature_guid, world_id) do
     alias BezgelorProtocol.Packets.World.ServerEntityCommand
     alias BezgelorProtocol.PacketWriter
-    alias BezgelorWorld.Zone.Instance, as: ZoneInstance
+    alias BezgelorWorld.World.Instance, as: WorldInstance
 
     # Clear move state (0x00 = stopped)
     state_command = %{type: :set_state, state: 0x00}
@@ -1495,7 +1495,7 @@ defmodule BezgelorWorld.CreatureManager do
     {:ok, writer} = ServerEntityCommand.write(packet, writer)
     packet_data = PacketWriter.to_binary(writer)
 
-    ZoneInstance.broadcast({world_id, 1}, {:server_entity_command, packet_data})
+    WorldInstance.broadcast({world_id, 1}, {:server_entity_command, packet_data})
 
     Logger.debug("Broadcast stop for creature #{creature_guid} in zone #{world_id}")
   end

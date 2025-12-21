@@ -44,16 +44,18 @@ defmodule BezgelorWorld.Application do
       BezgelorWorld.CreatureManager,
       BezgelorWorld.HarvestNodeManager,
       BezgelorWorld.BuffManager,
+      # Spell casting manager
+      BezgelorWorld.SpellManager,
       # Corpse manager for loot pickup
       BezgelorWorld.CorpseManager,
-      # Registry for zone instance processes
-      {Registry, keys: :unique, name: BezgelorWorld.ZoneRegistry},
+      # Registry for world instance processes (keyed by world_id, not zone_id)
+      {Registry, keys: :unique, name: BezgelorWorld.WorldRegistry},
       # Registry for creature zone managers
       {Registry, keys: :unique, name: BezgelorWorld.Creature.Registry},
       # Registry for instance processes (must start before supervisors)
       BezgelorWorld.Instance.Registry,
-      # Dynamic supervisor for zone instances (5s shutdown)
-      Supervisor.child_spec(BezgelorWorld.Zone.InstanceSupervisor, shutdown: 5000),
+      # Dynamic supervisor for world instances (5s shutdown)
+      Supervisor.child_spec(BezgelorWorld.World.InstanceSupervisor, shutdown: 5000),
       # Dynamic supervisor for dungeon/raid instances (5s shutdown)
       Supervisor.child_spec(BezgelorWorld.Instance.Supervisor, shutdown: 5000),
       # Group finder matchmaking

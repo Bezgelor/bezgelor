@@ -1,11 +1,19 @@
-defmodule BezgelorWorld.Zone.Instance do
+defmodule BezgelorWorld.World.Instance do
   @moduledoc """
-  Zone instance GenServer.
+  World instance GenServer.
 
-  Each instance represents an active shard of a zone containing:
+  Each instance represents an active shard of a world containing:
   - Entities (players, creatures, objects)
-  - Zone-specific state
+  - World-specific state
   - Spatial index for range queries
+
+  ## Important: world_id vs zone_id
+
+  This module is keyed by `world_id`, NOT `zone_id`. In WildStar:
+  - `world_id` identifies the map/continent (e.g., 1634 = Gambler's Ruin)
+  - `zone_id` identifies a sub-region within a world (e.g., 4844 = Cryo Awakening Protocol)
+
+  When looking up a World.Instance, always use `world_id` from session_data.
 
   ## Instance Types
 
@@ -15,14 +23,14 @@ defmodule BezgelorWorld.Zone.Instance do
 
   ## Usage
 
-      # Add a player to the zone
-      Zone.Instance.add_entity(instance, player_entity)
+      # Add a player to the world instance
+      World.Instance.add_entity({world_id, instance_id}, player_entity)
 
       # Find entities in range
-      Zone.Instance.entities_in_range(instance, {x, y, z}, 100.0)
+      World.Instance.entities_in_range({world_id, instance_id}, {x, y, z}, 100.0)
 
       # Broadcast to all entities
-      Zone.Instance.broadcast(instance, {:chat, sender, message})
+      World.Instance.broadcast({world_id, instance_id}, {:chat, sender, message})
   """
 
   use GenServer
@@ -35,9 +43,9 @@ defmodule BezgelorWorld.Zone.Instance do
   @type instance_id :: non_neg_integer()
 
   @type state :: %{
-          zone_id: non_neg_integer(),
+          world_id: non_neg_integer(),
           instance_id: instance_id(),
-          zone_data: map(),
+          world_data: map(),
           entities: %{non_neg_integer() => Entity.t()},
           spatial_grid: SpatialGrid.t(),
           players: MapSet.t(non_neg_integer()),
@@ -47,44 +55,44 @@ defmodule BezgelorWorld.Zone.Instance do
   # Client API
 
   @doc """
-  Start a zone instance.
+  Start a world instance.
   """
   def start_link(opts) do
-    zone_id = Keyword.fetch!(opts, :zone_id)
+    world_id = Keyword.fetch!(opts, :world_id)
     instance_id = Keyword.fetch!(opts, :instance_id)
 
-    GenServer.start_link(__MODULE__, opts, name: via_tuple(zone_id, instance_id))
+    GenServer.start_link(__MODULE__, opts, name: via_tuple(world_id, instance_id))
   end
 
   @doc """
-  Get the registry name for a zone instance.
+  Get the registry name for a world instance.
   """
-  def via_tuple(zone_id, instance_id) do
-    {:via, Registry, {BezgelorWorld.ZoneRegistry, {zone_id, instance_id}}}
+  def via_tuple(world_id, instance_id) do
+    {:via, Registry, {BezgelorWorld.WorldRegistry, {world_id, instance_id}}}
   end
 
   @doc """
-  Add an entity to the zone.
+  Add an entity to the world.
   """
   @spec add_entity(pid() | {non_neg_integer(), instance_id()}, Entity.t()) :: :ok
   def add_entity(instance, %Entity{} = entity) when is_pid(instance) do
     GenServer.cast(instance, {:add_entity, entity})
   end
 
-  def add_entity({zone_id, instance_id}, %Entity{} = entity) do
-    GenServer.cast(via_tuple(zone_id, instance_id), {:add_entity, entity})
+  def add_entity({world_id, instance_id}, %Entity{} = entity) do
+    GenServer.cast(via_tuple(world_id, instance_id), {:add_entity, entity})
   end
 
   @doc """
-  Remove an entity from the zone.
+  Remove an entity from the world.
   """
   @spec remove_entity(pid() | {non_neg_integer(), instance_id()}, non_neg_integer()) :: :ok
   def remove_entity(instance, guid) when is_pid(instance) do
     GenServer.cast(instance, {:remove_entity, guid})
   end
 
-  def remove_entity({zone_id, instance_id}, guid) do
-    GenServer.cast(via_tuple(zone_id, instance_id), {:remove_entity, guid})
+  def remove_entity({world_id, instance_id}, guid) do
+    GenServer.cast(via_tuple(world_id, instance_id), {:remove_entity, guid})
   end
 
   # Timeout for GenServer calls to prevent deadlocks (10 seconds)
@@ -99,8 +107,8 @@ defmodule BezgelorWorld.Zone.Instance do
     GenServer.call(instance, {:get_entity, guid}, @call_timeout)
   end
 
-  def get_entity({zone_id, instance_id}, guid) do
-    GenServer.call(via_tuple(zone_id, instance_id), {:get_entity, guid}, @call_timeout)
+  def get_entity({world_id, instance_id}, guid) do
+    GenServer.call(via_tuple(world_id, instance_id), {:get_entity, guid}, @call_timeout)
   end
 
   @doc """
@@ -115,9 +123,9 @@ defmodule BezgelorWorld.Zone.Instance do
     GenServer.call(instance, {:get_entity_creature_id, guid}, @call_timeout)
   end
 
-  def get_entity_creature_id({zone_id, instance_id}, guid) do
+  def get_entity_creature_id({world_id, instance_id}, guid) do
     GenServer.call(
-      via_tuple(zone_id, instance_id),
+      via_tuple(world_id, instance_id),
       {:get_entity_creature_id, guid},
       @call_timeout
     )
@@ -136,9 +144,9 @@ defmodule BezgelorWorld.Zone.Instance do
     GenServer.call(instance, {:update_entity, guid, update_fn}, @call_timeout)
   end
 
-  def update_entity({zone_id, instance_id}, guid, update_fn) do
+  def update_entity({world_id, instance_id}, guid, update_fn) do
     GenServer.call(
-      via_tuple(zone_id, instance_id),
+      via_tuple(world_id, instance_id),
       {:update_entity, guid, update_fn},
       @call_timeout
     )
@@ -160,9 +168,9 @@ defmodule BezgelorWorld.Zone.Instance do
     GenServer.call(instance, {:update_entity_position, guid, position}, @call_timeout)
   end
 
-  def update_entity_position({zone_id, instance_id}, guid, position) do
+  def update_entity_position({world_id, instance_id}, guid, position) do
     GenServer.call(
-      via_tuple(zone_id, instance_id),
+      via_tuple(world_id, instance_id),
       {:update_entity_position, guid, position},
       @call_timeout
     )
@@ -177,84 +185,84 @@ defmodule BezgelorWorld.Zone.Instance do
     GenServer.call(instance, {:entities_in_range, position, radius}, @call_timeout)
   end
 
-  def entities_in_range({zone_id, instance_id}, position, radius) do
+  def entities_in_range({world_id, instance_id}, position, radius) do
     GenServer.call(
-      via_tuple(zone_id, instance_id),
+      via_tuple(world_id, instance_id),
       {:entities_in_range, position, radius},
       @call_timeout
     )
   end
 
   @doc """
-  Get all players in the zone.
+  Get all players in the world instance.
   """
   @spec list_players(pid() | {non_neg_integer(), instance_id()}) :: [Entity.t()]
   def list_players(instance) when is_pid(instance) do
     GenServer.call(instance, :list_players, @call_timeout)
   end
 
-  def list_players({zone_id, instance_id}) do
-    GenServer.call(via_tuple(zone_id, instance_id), :list_players, @call_timeout)
+  def list_players({world_id, instance_id}) do
+    GenServer.call(via_tuple(world_id, instance_id), :list_players, @call_timeout)
   end
 
   @doc """
-  Get player count in the zone.
+  Get player count in the world instance.
   """
   @spec player_count(pid() | {non_neg_integer(), instance_id()}) :: non_neg_integer()
   def player_count(instance) when is_pid(instance) do
     GenServer.call(instance, :player_count, @call_timeout)
   end
 
-  def player_count({zone_id, instance_id}) do
-    GenServer.call(via_tuple(zone_id, instance_id), :player_count, @call_timeout)
+  def player_count({world_id, instance_id}) do
+    GenServer.call(via_tuple(world_id, instance_id), :player_count, @call_timeout)
   end
 
   @doc """
-  Broadcast a message to all player entities in the zone.
+  Broadcast a message to all player entities in the world instance.
   """
   @spec broadcast(pid() | {non_neg_integer(), instance_id()}, term()) :: :ok
   def broadcast(instance, message) when is_pid(instance) do
     GenServer.cast(instance, {:broadcast, message})
   end
 
-  def broadcast({zone_id, instance_id}, message) do
-    GenServer.cast(via_tuple(zone_id, instance_id), {:broadcast, message})
+  def broadcast({world_id, instance_id}, message) do
+    GenServer.cast(via_tuple(world_id, instance_id), {:broadcast, message})
   end
 
   @doc """
-  Get zone info.
+  Get world instance info.
   """
   @spec info(pid() | {non_neg_integer(), instance_id()}) :: map()
   def info(instance) when is_pid(instance) do
     GenServer.call(instance, :info, @call_timeout)
   end
 
-  def info({zone_id, instance_id}) do
-    GenServer.call(via_tuple(zone_id, instance_id), :info, @call_timeout)
+  def info({world_id, instance_id}) do
+    GenServer.call(via_tuple(world_id, instance_id), :info, @call_timeout)
   end
 
   # Server Callbacks
 
   @impl true
   def init(opts) do
-    zone_id = Keyword.fetch!(opts, :zone_id)
+    world_id = Keyword.fetch!(opts, :world_id)
     instance_id = Keyword.fetch!(opts, :instance_id)
-    zone_data = Keyword.get(opts, :zone_data, %{})
+    world_data = Keyword.get(opts, :world_data, %{})
 
     # Note: Registration with metadata happens via the :via tuple in start_link
     # The Registry stores metadata as the value during registration
 
     state = %{
-      zone_id: zone_id,
+      world_id: world_id,
       instance_id: instance_id,
-      zone_data: zone_data,
+      world_data: world_data,
       entities: %{},
       spatial_grid: SpatialGrid.new(50.0),
       players: MapSet.new(),
       creatures: MapSet.new()
     }
 
-    Logger.info("Zone instance started: #{zone_data[:name] || zone_id} (instance #{instance_id})")
+    Logger.info("World instance started: #{world_data[:name] || world_id} (instance #{instance_id})")
 
     # Load creature spawns asynchronously after init completes
     {:ok, state, {:continue, :load_spawns}}
@@ -262,10 +270,10 @@ defmodule BezgelorWorld.Zone.Instance do
 
   @impl true
   def handle_continue(:load_spawns, state) do
-    # Load spawns asynchronously - don't block zone startup
+    # Load spawns asynchronously - don't block world startup
     # Managers log results directly
-    CreatureManager.load_zone_spawns_async(state.zone_id)
-    HarvestNodeManager.load_zone_spawns_async(state.zone_id)
+    CreatureManager.load_zone_spawns_async(state.world_id)
+    HarvestNodeManager.load_zone_spawns_async(state.world_id)
 
     {:noreply, state}
   end
@@ -298,7 +306,7 @@ defmodule BezgelorWorld.Zone.Instance do
           %{state | entities: entities, spatial_grid: spatial_grid}
       end
 
-    Logger.debug("Entity #{entity.guid} (#{entity.type}) added to zone #{state.zone_id}")
+    Logger.debug("Entity #{entity.guid} (#{entity.type}) added to world #{state.world_id}")
     {:noreply, state}
   end
 
@@ -334,15 +342,15 @@ defmodule BezgelorWorld.Zone.Instance do
         %{state | entities: entities, spatial_grid: spatial_grid}
       end
 
-    Logger.debug("Entity #{guid} removed from zone #{state.zone_id}")
+    Logger.debug("Entity #{guid} removed from world #{state.world_id}")
     {:noreply, state}
   end
 
   @impl true
   def handle_cast({:broadcast, message}, state) do
-    # Broadcast to all player connection processes in this zone instance
+    # Broadcast to all player connection processes in this world instance
     sessions =
-      BezgelorWorld.WorldManager.get_zone_instance_sessions(state.zone_id, state.instance_id)
+      BezgelorWorld.WorldManager.get_zone_instance_sessions(state.world_id, state.instance_id)
 
     case message do
       # Packet broadcast: {opcode, packet_data}
@@ -362,7 +370,7 @@ defmodule BezgelorWorld.Zone.Instance do
       # Legacy/debug message format
       _ ->
         Logger.debug(
-          "Zone #{state.zone_id} broadcast: #{inspect(message)} to #{length(sessions)} players"
+          "World #{state.world_id} broadcast: #{inspect(message)} to #{length(sessions)} players"
         )
     end
 
@@ -470,9 +478,9 @@ defmodule BezgelorWorld.Zone.Instance do
   @impl true
   def handle_call(:info, _from, state) do
     info = %{
-      zone_id: state.zone_id,
+      world_id: state.world_id,
       instance_id: state.instance_id,
-      zone_name: Map.get(state.zone_data, :name, "Unknown"),
+      world_name: Map.get(state.world_data, :name, "Unknown"),
       player_count: MapSet.size(state.players),
       creature_count: MapSet.size(state.creatures),
       total_entities: map_size(state.entities)
