@@ -2,6 +2,30 @@
 
 A WildStar MMORPG server emulator written in Elixir, ported from [NexusForever](https://github.com/NexusForever/NexusForever) (C#).
 
+## Table of Contents
+
+- [Goal](#goal)
+- [Overview](#overview)
+- [Features](#features)
+- [Architecture](#architecture)
+- [Requirements](#requirements)
+- [Quick Start](#quick-start)
+- [Running the Server](#running-the-server)
+- [Configuration](#configuration)
+- [Testing](#testing)
+- [Development](#development)
+- [Development Capture System](#development-capture-system)
+- [Account Portal](#account-portal)
+- [Data Extraction](#data-extraction)
+- [Development Tools](#development-tools)
+- [License](#license)
+
+## Goal
+
+The present goal is to learn Elixir/OTP and explore AI-assisted development in a project large enough to see how these approaches scale. A game server includes many interesting, interacting systems: networking, concurrency, state management, data modeling - all in a dynamically scaling context.
+
+And hey, I really miss Wildstar so if we end up with a functional server along the way, that would be amazing too!
+
 ## Overview
 
 Bezgelor is an Elixir umbrella application that emulates WildStar game servers using OTP for concurrency and fault tolerance. The project implements the full server stack including authentication, realm selection, and world gameplay. A Phoenix LiveView account portal provides players with a web dashboard for managing characters, inventory, and guilds, while administrators get a real-time console for server monitoring, user management, and event control. The project also includes tools such as a packet capture system enabling efficient reverse engineering of unknown protocol packets.
@@ -311,6 +335,16 @@ mix assets.fetch
 ```
 
 See [docs/asset-extraction.md](docs/asset-extraction.md) for the complete extraction guide.
+
+## Development Tools
+
+This project is built with:
+
+- [Claude Code](https://github.com/anthropics/claude-code) - Anthropic's AI-powered coding assistant
+  - [Superpowers](https://github.com/obra/superpowers) - Skills and workflows by Jesse Vincent
+  - [Beads](https://github.com/steveyegge/beads) - Issue tracking by Steve Yegge
+- [Docker](https://www.docker.com/) - Container runtime for PostgreSQL
+- [PostgreSQL](https://www.postgresql.org/) - Database
 
 ## License
 
