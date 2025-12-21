@@ -58,3 +58,4 @@ Thumbs.db
 /docker/postgres/data/
 logs/
 apps/bezgelor_data/priv/data/extracted/
+TASK.md
