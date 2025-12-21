@@ -681,6 +681,19 @@ defmodule BezgelorPortalWeb.Admin.InstancesLive do
     end
   end
 
+  # Safe conversion of instance type to atom using whitelist
+  @instance_type_atoms %{
+    "raid" => :raid,
+    "dungeon" => :dungeon,
+    "expedition" => :expedition,
+    "adventure" => :adventure
+  }
+  defp safe_instance_type_atom(type) when is_binary(type) do
+    Map.get(@instance_type_atoms, type, :unknown)
+  end
+
+  defp safe_instance_type_atom(_), do: :unknown
+
   defp search_lockouts(search) when byte_size(search) < 2, do: []
 
   defp search_lockouts(search) do
@@ -695,7 +708,7 @@ defmodule BezgelorPortalWeb.Admin.InstancesLive do
             character_id: character.id,
             character_name: character.name,
             instance_name: get_instance_name(lockout.instance_definition_id),
-            type: String.to_atom(lockout.instance_type),
+            type: safe_instance_type_atom(lockout.instance_type),
             difficulty: lockout.difficulty,
             bosses_killed: length(lockout.boss_kills || []),
             total_bosses: get_instance_boss_count(lockout.instance_definition_id),

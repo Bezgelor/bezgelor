@@ -2197,7 +2197,7 @@ defmodule BezgelorData.Store do
       :stale ->
         # Parse JSON and cache to ETF
         with {:ok, content} <- File.read(path),
-             {:ok, data} <- Jason.decode(content, keys: :atoms) do
+             {:ok, data} <- decode_trusted_json(content) do
           cache_to_etf(etf_path, data)
           {:ok, data}
         end
@@ -2223,7 +2223,8 @@ defmodule BezgelorData.Store do
          true <- etf_stat.mtime >= json_stat.mtime,
          {:ok, content} <- File.read(etf_path) do
       try do
-        {:ok, :erlang.binary_to_term(content)}
+        # Use [:safe] to prevent arbitrary code execution from tampered cache files
+        {:ok, :erlang.binary_to_term(content, [:safe])}
       rescue
         _ -> :stale
       end
@@ -2807,7 +2808,8 @@ defmodule BezgelorData.Store do
     case File.read(etf_path) do
       {:ok, content} ->
         try do
-          zone_data_list = :erlang.binary_to_term(content)
+          # Use [:safe] to prevent arbitrary code execution from tampered cache files
+          zone_data_list = :erlang.binary_to_term(content, [:safe])
 
           for {world_id, zone_data} <- zone_data_list do
             :ets.insert(table_name, {world_id, zone_data})
@@ -3502,5 +3504,18 @@ defmodule BezgelorData.Store do
     for table <- @tables, into: %{} do
       {table, count(table)}
     end
+  end
+
+  # Decode trusted game data JSON with atom keys.
+  #
+  # SECURITY NOTE: Uses `keys: :atoms` which creates atoms from JSON keys.
+  # This is acceptable here because:
+  # 1. Game data files are shipped with the application (not user-uploadable)
+  # 2. Files have known, stable structures with predictable keys
+  # 3. Data is loaded once at startup and cached to ETF
+  #
+  # DO NOT use this for user-controlled or external JSON data.
+  defp decode_trusted_json(content) do
+    Jason.decode(content, keys: :atoms)
   end
 end

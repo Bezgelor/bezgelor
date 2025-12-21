@@ -12,6 +12,13 @@ defmodule BezgelorPortalWeb.Admin.BroadcastLive do
   alias BezgelorDb.Authorization
   alias BezgelorWorld.Portal
 
+  # Valid message types - using a whitelist to prevent atom table exhaustion
+  @valid_message_types %{
+    "info" => :info,
+    "warning" => :warning,
+    "alert" => :alert
+  }
+
   @impl true
   def mount(_params, _session, socket) do
     admin = socket.assigns.current_account
@@ -177,8 +184,9 @@ defmodule BezgelorPortalWeb.Admin.BroadcastLive do
 
     socket = assign(socket, sending: true)
 
-    # Send via Portal to world server
-    :ok = Portal.broadcast_message(message, String.to_atom(type))
+    # Send via Portal to world server - use whitelist to prevent atom exhaustion
+    type_atom = Map.get(@valid_message_types, type, :info)
+    :ok = Portal.broadcast_message(message, type_atom)
 
     Authorization.log_action(admin, "broadcast.send", "system", nil, %{
       message: message,

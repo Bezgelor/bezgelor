@@ -13,6 +13,14 @@ defmodule BezgelorDb.Lockouts do
   alias BezgelorDb.Repo
   alias BezgelorDb.Schema.InstanceLockout
 
+  # Valid instance types - using a whitelist to prevent atom table exhaustion
+  @valid_instance_types %{
+    "raid" => :raid,
+    "dungeon" => :dungeon,
+    "expedition" => :expedition,
+    "adventure" => :adventure
+  }
+
   # ============================================================================
   # Lockout Checks
   # ============================================================================
@@ -341,9 +349,12 @@ defmodule BezgelorDb.Lockouts do
   # ============================================================================
 
   defp get_lockout_config(instance_type) do
+    # Use whitelist to convert to atom safely, default to :unknown for invalid types
+    type_atom = Map.get(@valid_instance_types, instance_type, :unknown)
+
     Application.get_env(:bezgelor_world, :lockouts, %{})
     |> Map.get(:rules, %{})
-    |> Map.get(String.to_atom(instance_type), %{})
+    |> Map.get(type_atom, %{})
   end
 
   defp calculate_expiry(instance_type, difficulty) do
