@@ -4,21 +4,40 @@ A WildStar MMORPG server emulator written in Elixir, ported from [NexusForever](
 
 ## Table of Contents
 
-- [Goal](#goal)
-- [Overview](#overview)
-- [Features](#features)
-- [Architecture](#architecture)
-- [Requirements](#requirements)
-- [Quick Start](#quick-start)
-- [Running the Server](#running-the-server)
-- [Configuration](#configuration)
-- [Testing](#testing)
-- [Development](#development)
-- [Development Capture System](#development-capture-system)
-- [Account Portal](#account-portal)
-- [Data Extraction](#data-extraction)
-- [Development Tools](#development-tools)
-- [License](#license)
+- [Bezgelor](#bezgelor)
+  - [Table of Contents](#table-of-contents)
+  - [Goal](#goal)
+  - [Overview](#overview)
+  - [Features](#features)
+  - [Architecture](#architecture)
+    - [Umbrella Apps](#umbrella-apps)
+    - [Key Patterns](#key-patterns)
+  - [Requirements](#requirements)
+  - [Quick Start](#quick-start)
+  - [Running the Server](#running-the-server)
+    - [Services Overview](#services-overview)
+    - [Scripts](#scripts)
+    - [Manual Start Commands](#manual-start-commands)
+    - [Mix Tasks](#mix-tasks)
+    - [Database Management](#database-management)
+    - [Verifying Services](#verifying-services)
+    - [Connecting a Game Client](#connecting-a-game-client)
+  - [Configuration](#configuration)
+    - [Environment Variables](#environment-variables)
+    - [Config Files](#config-files)
+  - [Testing](#testing)
+  - [Development](#development)
+    - [Hot Reloading](#hot-reloading)
+  - [Development Capture System](#development-capture-system)
+  - [Account Portal](#account-portal)
+    - [Player Dashboard](#player-dashboard)
+    - [Admin Console](#admin-console)
+    - [Access Control](#access-control)
+  - [Data Extraction](#data-extraction)
+    - [Game Data Tables](#game-data-tables)
+    - [3D Models \& Textures](#3d-models--textures)
+  - [Development Tools](#development-tools)
+  - [License](#license)
 
 ## Goal
 
@@ -29,6 +48,8 @@ And hey, I really miss Wildstar so if we end up with a functional server along t
 ## Overview
 
 Bezgelor is an Elixir umbrella application that emulates WildStar game servers using OTP for concurrency and fault tolerance. The project implements the full server stack including authentication, realm selection, and world gameplay. A Phoenix LiveView account portal provides players with a web dashboard for managing characters, inventory, and guilds, while administrators get a real-time console for server monitoring, user management, and event control. The project also includes tools such as a packet capture system enabling efficient reverse engineering of unknown protocol packets.
+
+This project is only possible thanks to the groundbreaking work and support of the [NexusForever](https://github.com/NexusForever/NexusForever) community.
 
 ## Features
 
