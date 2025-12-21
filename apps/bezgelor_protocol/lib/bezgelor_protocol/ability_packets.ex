@@ -72,26 +72,26 @@ defmodule BezgelorProtocol.AbilityPackets do
 
     if class_id in [5, 7] do
       class_label = if class_id == 5, do: "Stalker", else: "Spellslinger"
-      Logger.info("#{class_label} ability debug: level=#{character.level} spec=#{active_spec}")
+      Logger.debug("#{class_label} ability debug: level=#{character.level} spec=#{active_spec}")
 
       # Show original Spell4 IDs (for casting/telegraphs)
       original_ids = Enum.map(spellbook_abilities, & &1.spell_id)
-      Logger.info("  spellbook Spell4 IDs (casting): #{inspect(original_ids)}")
+      Logger.debug("  spellbook Spell4 IDs (casting): #{inspect(original_ids)}")
 
       # Show resolved Spell4Base IDs (for icons/display)
       resolved_ids = Enum.map(resolved_abilities, & &1.spell_id)
-      Logger.info("  resolved Spell4Base IDs (icons): #{inspect(resolved_ids)}")
+      Logger.debug("  resolved Spell4Base IDs (icons): #{inspect(resolved_ids)}")
 
       # Show ability item IDs being sent
       item_ids = Enum.map(ability_items, & &1.item_id)
-      Logger.info("  ability item IDs sent: #{inspect(item_ids)}")
+      Logger.debug("  ability item IDs sent: #{inspect(item_ids)}")
     end
 
     ability_book_spells =
       Abilities.build_ability_book_for_specs(spellbook_abilities, spell_shortcuts_by_spec, class_id)
 
     if class_id in [5, 7] do
-      Logger.info("  ability_book_spells=#{inspect(ability_book_spells)}")
+      Logger.debug("  ability_book_spells=#{inspect(ability_book_spells)}")
     end
 
     ability_book_data =
@@ -114,7 +114,7 @@ defmodule BezgelorProtocol.AbilityPackets do
     if class_id in [5, 7] do
       spec0_actions = Map.get(action_set_actions, 0, [])
       object_ids = Enum.map(spec0_actions, & &1.object_id)
-      Logger.info("  action_set object_ids: #{inspect(object_ids)}")
+      Logger.debug("  action_set object_ids: #{inspect(object_ids)}")
     end
 
     action_set_sizes =
@@ -175,7 +175,7 @@ defmodule BezgelorProtocol.AbilityPackets do
           %{spec: spec_index, size: size, actions: count}
         end)
 
-      Logger.info(
+      Logger.debug(
         "Ability packet sizes: class=#{class_id} ability_book=#{byte_size(ability_book_data)} " <>
           "action_sets=#{inspect(action_sizes)}"
       )
