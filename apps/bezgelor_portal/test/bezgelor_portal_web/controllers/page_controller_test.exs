@@ -1,8 +1,8 @@
 defmodule BezgelorPortalWeb.PageControllerTest do
   use BezgelorPortalWeb.ConnCase
 
-  test "GET / redirects to login when not authenticated", %{conn: conn} do
+  test "GET / renders the home page", %{conn: conn} do
     conn = get(conn, ~p"/")
-    assert redirected_to(conn) == ~p"/login"
+    assert html_response(conn, 200) =~ "Bezgelor"
   end
 end
