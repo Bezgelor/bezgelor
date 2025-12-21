@@ -261,24 +261,6 @@ defmodule BezgelorCore.Spell do
     end
   end
 
-  # Try to get spell name from game data texts
-  @compile {:no_warn_undefined, [BezgelorData.Store]}
-  defp get_spell_name(spell_base) do
-    text_id = Map.get(spell_base, :localizedTextIdName) || Map.get(spell_base, "localizedTextIdName") || 0
-    spell_id = Map.get(spell_base, :id) || Map.get(spell_base, "id") || 0
-
-    case BezgelorData.Store.get(:texts, text_id) do
-      {:ok, text} when is_binary(text) ->
-        text
-
-      {:ok, text_data} when is_map(text_data) ->
-        Map.get(text_data, :text) || Map.get(text_data, "text") || "Spell #{spell_id}"
-
-      _ ->
-        "Spell #{spell_id}"
-    end
-  end
-
   @doc """
   Check if a spell exists.
   """

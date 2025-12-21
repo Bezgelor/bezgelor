@@ -5,7 +5,7 @@ defmodule BezgelorApi.Controllers.ZoneController do
 
   import Plug.Conn
 
-  alias BezgelorWorld.Zone.{Instance, InstanceSupervisor}
+  alias BezgelorWorld.World.{Instance, InstanceSupervisor}
 
   @doc """
   GET /api/v1/zones
@@ -73,7 +73,7 @@ defmodule BezgelorApi.Controllers.ZoneController do
   end
 
   defp get_zone_instances(zone_id) do
-    InstanceSupervisor.list_instances_for_zone(zone_id)
+    InstanceSupervisor.list_instances_for_world(zone_id)
     |> Enum.map(fn {instance_id, pid} ->
       info = Instance.info(pid)
 
