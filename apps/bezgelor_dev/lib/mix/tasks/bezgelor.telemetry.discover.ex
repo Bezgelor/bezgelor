@@ -17,7 +17,8 @@ defmodule Mix.Tasks.Bezgelor.Telemetry.Discover do
 
   use Mix.Task
 
-  alias BezgelorCore.TelemetryEvent
+  # Suppress compile-time warning - module is available at runtime after apps are loaded
+  @compile {:no_warn_undefined, BezgelorCore.TelemetryEvent}
 
   @shortdoc "Discover telemetry events across all apps"
 
@@ -74,14 +75,14 @@ defmodule Mix.Tasks.Bezgelor.Telemetry.Discover do
     # Combine and deduplicate
     events = Enum.uniq_by(events_from_known ++ events_from_apps, & &1.event)
 
-    # Validate all events
-    invalid = Enum.reject(events, fn e -> TelemetryEvent.validate(e) == :ok end)
+    # Validate all events (use full module name to avoid compile-time warnings)
+    invalid = Enum.reject(events, fn e -> BezgelorCore.TelemetryEvent.validate(e) == :ok end)
 
     if invalid != [] do
       Mix.shell().error("Invalid telemetry events found:")
 
       Enum.each(invalid, fn e ->
-        {:error, msg} = TelemetryEvent.validate(e)
+        {:error, msg} = BezgelorCore.TelemetryEvent.validate(e)
         Mix.shell().error("  - #{inspect(e.event)}: #{msg}")
       end)
 
