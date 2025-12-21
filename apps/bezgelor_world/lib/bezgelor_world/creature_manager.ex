@@ -31,6 +31,26 @@ defmodule BezgelorWorld.CreatureManager do
 
   require Logger
 
+  @telemetry_events [
+    %{
+      event: [:bezgelor, :combat, :damage],
+      measurements: [:damage_amount],
+      tags: [:attacker_guid, :target_guid, :target_type],
+      description: "Damage dealt in combat",
+      domain: :combat
+    }
+  ]
+
+  def telemetry_events, do: @telemetry_events
+
+  defp emit_combat_damage_telemetry(attacker_guid, target_guid, damage_amount) do
+    :telemetry.execute(
+      [:bezgelor, :combat, :damage],
+      %{damage_amount: damage_amount},
+      %{attacker_guid: attacker_guid, target_guid: target_guid, target_type: :creature}
+    )
+  end
+
   alias BezgelorCore.{AI, CreatureTemplate, Entity, Movement}
   alias BezgelorWorld.{CombatBroadcaster, CreatureDeath, TickScheduler, WorldManager}
   alias BezgelorData.Store
@@ -543,6 +563,9 @@ defmodule BezgelorWorld.CreatureManager do
   defp apply_damage_to_creature(creature_state, attacker_guid, damage, state) do
     entity = Entity.apply_damage(creature_state.entity, damage)
     ai = AI.add_threat(creature_state.ai, attacker_guid, damage)
+
+    # Emit combat telemetry
+    emit_combat_damage_telemetry(attacker_guid, creature_state.entity.guid, damage)
 
     # Enter combat if not already
     ai =

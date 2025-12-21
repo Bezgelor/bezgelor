@@ -121,6 +121,9 @@ mix bezgelor.refresh_action_set_defaults CHARACTER_ID --all-specs
 
 # Delete all characters (soft delete by default, hard delete with --hard)
 mix bezgelor.delete_all_characters --confirm --hard
+
+# Discover telemetry events across all apps
+mix bezgelor.telemetry.discover
 ```
 
 ### Database Management
@@ -262,6 +265,7 @@ The `bezgelor_portal` app provides a full-featured web interface for players and
 ### Admin Console
 
 - **Server Dashboard** - Real-time monitoring of online players, zones, and server health
+- **Live Dashboard** - Phoenix LiveDashboard with Ecto metrics, VM stats, and custom game telemetry
 - **User Management** - Search accounts, view details, suspend/ban, reset passwords
 - **Character Tools** - Grant items/currency, modify stats, teleport, reset lockouts
 - **Economy Monitor** - Track currency distribution, transaction history, grant rewards

@@ -261,6 +261,7 @@ defmodule BezgelorPortalWeb.Layouts do
           permission_set={@permission_set}
           links={[
             %{href: "/admin/server", label: "Server Status", permission: "server.view_logs"},
+            %{href: "/admin/live-dashboard", label: "Live Dashboard", permission: "server.view_logs", external: true},
             %{href: "/admin/server/logs", label: "Logs", permission: "server.view_logs"},
             %{href: "/admin/settings", label: "Server Settings", permission: "server.settings"}
           ]}
@@ -338,7 +339,14 @@ defmodule BezgelorPortalWeb.Layouts do
       </div>
       <ul class="menu menu-xs">
         <li :for={link <- @visible_links}>
-          <.link navigate={link.href}>{link.label}</.link>
+          <%= if Map.get(link, :external) do %>
+            <.link href={link.href} target="_blank" class="flex items-center gap-1">
+              {link.label}
+              <.icon name="hero-arrow-top-right-on-square-mini" class="size-3 opacity-60" />
+            </.link>
+          <% else %>
+            <.link navigate={link.href}>{link.label}</.link>
+          <% end %>
         </li>
       </ul>
     </div>

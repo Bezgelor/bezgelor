@@ -34,6 +34,26 @@ defmodule BezgelorProtocol.Handler.RealmAuthHandler do
 
   @expected_build 16042
 
+  @telemetry_events [
+    %{
+      event: [:bezgelor, :realm, :session_start],
+      measurements: [:count],
+      tags: [:account_id, :success, :failure_reason],
+      description: "Realm session start attempt",
+      domain: :session
+    }
+  ]
+
+  def telemetry_events, do: @telemetry_events
+
+  defp emit_session_telemetry(account_id, success, failure_reason) do
+    :telemetry.execute(
+      [:bezgelor, :realm, :session_start],
+      %{count: 1},
+      %{account_id: account_id, success: success, failure_reason: failure_reason}
+    )
+  end
+
   @impl true
   def handle(payload, state) do
     reader = PacketReader.new(payload)
@@ -73,6 +93,9 @@ defmodule BezgelorProtocol.Handler.RealmAuthHandler do
          :ok <- check_suspension(account),
          {:ok, realm} <- get_realm_config(),
          {:ok, session_key} <- generate_session_key(account) do
+      # Emit success telemetry
+      emit_session_telemetry(account.id, true, nil)
+
       # Build responses
       accepted = %ServerAuthAccepted{}
       messages = %ServerRealmMessages{messages: []}
@@ -93,6 +116,7 @@ defmodule BezgelorProtocol.Handler.RealmAuthHandler do
     else
       {:error, reason} ->
         Logger.warning("Realm authentication failed: #{inspect(reason)}")
+        emit_session_telemetry(nil, false, reason)
         {result, days} = denial_from_reason(reason)
         response = build_denial(result, days)
         {:reply_encrypted, :server_auth_denied_realm, encode_packet(response), state}
