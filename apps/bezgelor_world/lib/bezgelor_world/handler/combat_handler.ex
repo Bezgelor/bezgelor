@@ -26,7 +26,7 @@ defmodule BezgelorWorld.Handler.CombatHandler do
   alias BezgelorProtocol.{PacketReader, PacketWriter}
   alias BezgelorCore.Entity
   alias BezgelorWorld.{CombatBroadcaster, CreatureManager}
-  alias BezgelorWorld.Zone.Instance, as: ZoneInstance
+  alias BezgelorWorld.World.Instance, as: WorldInstance
 
   require Logger
 
@@ -95,22 +95,23 @@ defmodule BezgelorWorld.Handler.CombatHandler do
       {:error, :not_in_world}
     else
       entity_guid = state.session_data[:entity_guid]
-      zone_id = state.session_data[:zone_id] || 1
+      # World.Instance is keyed by world_id, not zone_id
+      world_id = state.session_data[:world_id] || 1
       instance_id = 1
 
-      # Get current player entity from zone
-      case ZoneInstance.get_entity({zone_id, instance_id}, entity_guid) do
+      # Get current player entity from world instance
+      case WorldInstance.get_entity({world_id, instance_id}, entity_guid) do
         {:ok, entity} when entity.health == 0 ->
           Logger.info("Player #{entity_guid} respawning (type: #{packet.respawn_type})")
 
-          # Restore health in zone instance
+          # Restore health in world instance
           :ok =
-            ZoneInstance.update_entity({zone_id, instance_id}, entity_guid, fn e ->
+            WorldInstance.update_entity({world_id, instance_id}, entity_guid, fn e ->
               Entity.respawn(e)
             end)
 
           # Get updated entity for position
-          {:ok, respawned_entity} = ZoneInstance.get_entity({zone_id, instance_id}, entity_guid)
+          {:ok, respawned_entity} = WorldInstance.get_entity({world_id, instance_id}, entity_guid)
           {x, y, z} = respawned_entity.position
 
           # Broadcast respawn to player (and nearby players in future)

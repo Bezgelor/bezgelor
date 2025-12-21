@@ -15,7 +15,7 @@ defmodule BezgelorProtocol.Handler.CharacterSelectHandler do
   """
 
   @behaviour BezgelorProtocol.Handler
-  @compile {:no_warn_undefined, [BezgelorWorld.Zone.Instance]}
+  @compile {:no_warn_undefined, [BezgelorWorld.World.Instance]}
 
   alias BezgelorProtocol.Packets.World.{
     ClientCharacterSelect,
@@ -178,7 +178,7 @@ defmodule BezgelorProtocol.Handler.CharacterSelectHandler do
           position: spawn.position
         }
 
-        BezgelorWorld.Zone.Instance.add_entity({spawn.world_id, 1}, player_entity)
+        BezgelorWorld.World.Instance.add_entity({spawn.world_id, 1}, player_entity)
 
         # Send all initialization packets (order matters!)
         # Order based on NexusForever Player.OnAddToMap() and Player.AddVisible():

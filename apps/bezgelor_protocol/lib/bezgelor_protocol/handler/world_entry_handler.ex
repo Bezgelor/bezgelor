@@ -189,7 +189,11 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
       "Sending #{length(creature_packets)} creature entity packets to player at #{inspect(spawn.position)}"
     )
 
-    ability_packets = BezgelorProtocol.AbilityPackets.build(character)
+    {ability_packets, action_set_shortcuts} = BezgelorProtocol.AbilityPackets.build(character)
+
+    # Store action set shortcuts in session_data for spell casting resolution
+    updated_session_data = Map.put(state.session_data, :action_set_shortcuts, action_set_shortcuts)
+    state = %{state | session_data: updated_session_data}
 
     # Base packets always sent
     base_packets = [

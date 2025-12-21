@@ -23,13 +23,23 @@ defmodule BezgelorWorld.Handler.SpellHandler do
   alias BezgelorProtocol.Packets.World.{
     ClientCastSpell,
     ClientCancelCast,
+    ServerEntityCommand,
     ServerSpellStart,
+    ServerSpellGo,
     ServerSpellFinish,
     ServerSpellEffect,
     ServerCastResult,
     ServerCooldown,
     ServerResurrectOffer
   }
+
+  # Spellslinger Gate spell ID (Spell4 ID)
+  # NOTE: Gate teleport (ForcedMove effect) is NOT WORKING - see GitHub issue #48
+  # The spell visual plays but the player doesn't move. NexusForever never
+  # implemented ForcedMove (effect type 0x0003) either.
+  @gate_spell_id 34355
+  # Gate teleport distance (from telegraph 142 param01)
+  @gate_teleport_distance 30.0
 
   alias BezgelorProtocol.{PacketReader, PacketWriter}
   alias BezgelorCore.{Spell, BuffDebuff}
@@ -48,6 +58,7 @@ defmodule BezgelorWorld.Handler.SpellHandler do
 
   @impl true
   def handle(payload, state) do
+    Logger.info("[SpellHandler] Received spell packet (#{byte_size(payload)} bytes)")
     reader = PacketReader.new(payload)
 
     # Try to parse as cast spell first, then cancel
@@ -55,8 +66,9 @@ defmodule BezgelorWorld.Handler.SpellHandler do
       {:ok, packet, _reader} ->
         handle_cast_request(packet, state)
 
-      {:error, _} ->
-        # Try cancel cast (always succeeds since it's empty)
+      {:error, reason} ->
+        Logger.debug("[SpellHandler] Not a cast spell packet (#{inspect(reason)}), trying cancel")
+        # ClientCancelCast.read always succeeds since it's an empty packet
         {:ok, _packet, _reader} = ClientCancelCast.read(reader)
         handle_cancel_cast(state)
     end
@@ -77,15 +89,29 @@ defmodule BezgelorWorld.Handler.SpellHandler do
 
   defp process_cast(packet, state) do
     player_guid = state.session_data[:entity_guid]
+    character = state.session_data[:character]
 
-    # Look up the spell ID from the character's ability bag using bag_index
-    # The bag_index refers to a slot in the character's LAS (Limited Action Set)
+    Logger.info(
+      "[SpellHandler] Cast request: bag_index=#{packet.bag_index} caster_id=#{packet.caster_id} " <>
+        "button_pressed=#{packet.button_pressed} client_unique_id=#{packet.client_unique_id}"
+    )
+
+    Logger.debug(
+      "[SpellHandler] Player: guid=#{player_guid} character_id=#{character && character.id}"
+    )
+
+    # Look up the spell ID from the character's ability inventory using bag_index
+    # This matches NexusForever: Inventory.GetItem(InventoryLocation.Ability, bagIndex)
     spell_id = resolve_spell_from_bag(packet.bag_index, state)
 
     if spell_id == nil do
-      Logger.warning("No spell found at bag_index #{packet.bag_index}")
+      Logger.warning(
+        "[SpellHandler] No ability item at bag_index #{packet.bag_index} for character #{character && character.id}"
+      )
+
       send_cast_result(:failed, :not_known, 0, state)
     else
+      Logger.info("[SpellHandler] Found spell_id=#{spell_id} at bag_index=#{packet.bag_index}")
       spell = Spell.get(spell_id)
 
       # Get target from player's current target state (stored in session_data)
@@ -103,38 +129,52 @@ defmodule BezgelorWorld.Handler.SpellHandler do
 
       cond do
         spell == nil ->
+          Logger.warning("[SpellHandler] Spell.get(#{spell_id}) returned nil - spell not in data")
           send_cast_result(:failed, :not_known, spell_id, state)
 
         not validate_target(spell, normalized_packet, state) ->
+          Logger.debug("[SpellHandler] Target validation failed for spell #{spell.name}")
           send_cast_result(:failed, :invalid_target, spell_id, state)
 
         not validate_range(spell, normalized_packet, state) ->
+          Logger.debug("[SpellHandler] Range validation failed for spell #{spell.name}")
           send_cast_result(:failed, :out_of_range, spell_id, state)
 
         true ->
+          Logger.info("[SpellHandler] Casting spell: #{spell.name} (#{spell_id})")
           do_cast(spell, normalized_packet, player_guid, state)
       end
     end
   end
 
-  # Resolve spell ID from character's ability bag (action bar slot)
+  # Resolve spell ID from action set shortcuts.
+  # The client sends bag_index which corresponds to a slot in the action set.
+  # We use shortcuts because they store both:
+  #   - object_id = Spell4Base ID (for display/icons)
+  #   - spell_id = Spell4 ID (for casting/effects)
+  # Ability items use Spell4Base IDs for icon display, but we need Spell4 ID for casting.
   defp resolve_spell_from_bag(bag_index, state) do
-    # The bag_index maps to an action set shortcut
-    # Look up from the character's loaded action set
-    action_set = state.session_data[:action_set] || %{}
+    character = state.session_data[:character]
+    active_spec = (character && character.active_spec) || 0
 
-    case Map.get(action_set, bag_index) do
-      nil ->
-        # Fallback: check if we have LAS shortcuts in session
-        shortcuts = state.session_data[:action_set_shortcuts] || []
-        shortcut = Enum.find(shortcuts, fn s -> s.ui_location == bag_index end)
-        shortcut && shortcut.spell4_base_id
+    # Always use shortcuts for spell_id lookup since they have the correct Spell4 ID
+    resolve_from_shortcuts(bag_index, active_spec, state)
+  end
 
-      %{spell4_base_id: spell_id} ->
-        spell_id
+  # Fallback: look up from action_set_shortcuts (for tests and legacy support)
+  defp resolve_from_shortcuts(bag_index, active_spec, state) do
+    shortcuts = state.session_data[:action_set_shortcuts] || []
 
-      spell_id when is_integer(spell_id) ->
-        spell_id
+    shortcut =
+      Enum.find(shortcuts, fn s ->
+        s.slot == bag_index and s.spec_index == active_spec
+      end)
+
+    if shortcut do
+      Logger.debug("[SpellHandler] Found shortcut: slot=#{bag_index} spell_id=#{shortcut.spell_id}")
+      shortcut.spell_id
+    else
+      nil
     end
   end
 
@@ -166,33 +206,97 @@ defmodule BezgelorWorld.Handler.SpellHandler do
     end
   end
 
-  defp handle_instant_cast(spell, packet, player_guid, result, state) do
-    actual_target = if packet.target_guid == 0, do: player_guid, else: packet.target_guid
+  defp handle_instant_cast(spell, _packet, player_guid, result, state) do
+    # Get caster info from session
+    position = state.session_data[:position] || {0.0, 0.0, 0.0}
+    yaw = state.session_data[:yaw] || 0.0
+    # Entity ID is the low 32 bits of the GUID
+    caster_id = player_guid &&& 0xFFFFFFFF
 
-    # Broadcast telegraphs for this spell (if any)
-    # Telegraphs show visual indicators where spell effects will land
-    broadcast_spell_telegraphs(spell.id, player_guid, packet, state)
+    # Generate unique casting ID (simple incrementing counter)
+    casting_id = :erlang.unique_integer([:positive, :monotonic]) &&& 0xFFFFFFFF
 
-    # Send spell finish
-    finish_packet = ServerSpellFinish.new(player_guid, spell.id)
+    Logger.info("Instant cast: player #{player_guid} spell #{spell.name} (#{spell.id})")
 
-    # Apply effects to targets and collect kill info
-    {effect_packets, kill_info} =
-      apply_spell_effects(player_guid, actual_target, spell, result.effects)
-
-    # Send cooldown if applicable
-    cooldown_packet =
-      if spell.cooldown > 0 do
-        ServerCooldown.new(spell.id, spell.cooldown)
+    # Calculate destination for Gate teleport
+    # NOTE: This destination calculation works, but the actual teleport doesn't.
+    # See build_teleport_command/2 for details on what we've tried.
+    destination =
+      if spell.id == @gate_spell_id do
+        calculate_gate_destination(position, yaw)
       else
-        nil
+        position
       end
 
-    Logger.info("Instant cast: player #{player_guid} spell #{spell.name} on #{actual_target}")
+    # Build telegraph position data for Gate
+    # Tried: Including telegraph data in spell packets to hint at teleport destination
+    # Result: No effect on player movement
+    start_telegraph_positions =
+      if spell.id == @gate_spell_id do
+        [
+          %{
+            telegraph_id: 142,
+            attached_unit_id: caster_id,
+            target_flags: 3,
+            position: destination,
+            yaw: yaw,
+            pitch: 0.0
+          }
+        ]
+      else
+        []
+      end
+
+    # Build and send ServerSpellStart
+    spell_start = ServerSpellStart.new(
+      casting_id: casting_id,
+      spell4_id: spell.id,
+      caster_id: caster_id,
+      primary_target_id: caster_id,
+      position: position,
+      yaw: yaw,
+      user_initiated: true,
+      telegraph_positions: start_telegraph_positions
+    )
+
+    # Build ServerSpellGo - set primary_destination to teleport target for Gate
+    # For Gate, include telegraph position at the destination
+    telegraph_positions =
+      if spell.id == @gate_spell_id do
+        [
+          %{
+            # Gate telegraph ID
+            telegraph_id: 142,
+            attached_unit_id: caster_id,
+            target_flags: 3,
+            position: destination,
+            yaw: yaw,
+            pitch: 0.0
+          }
+        ]
+      else
+        []
+      end
+
+    spell_go = ServerSpellGo.new(
+      casting_id: casting_id,
+      caster_id: caster_id,
+      position: position,
+      yaw: yaw,
+      destination: destination,
+      telegraph_positions: telegraph_positions
+    )
+
+    # Apply effects to targets and collect kill info
+    {_effect_packets, kill_info} =
+      apply_spell_effects(player_guid, player_guid, spell, result.effects)
 
     # Broadcast kill rewards if creature was killed
     if kill_info do
-      # For now, broadcast only to the killer (future: nearby players)
+      zone_id = state.session_data[:zone_id] || 1
+      instance_id = state.session_data[:zone_instance_id] || 1
+      participant_ids = kill_info.rewards[:participant_character_ids] || []
+
       CombatBroadcaster.broadcast_entity_death(
         kill_info.creature_guid,
         player_guid,
@@ -204,13 +308,6 @@ defmodule BezgelorWorld.Handler.SpellHandler do
         kill_info.creature_guid,
         kill_info.rewards
       )
-
-      # Notify quest system of the kill - all combat participants receive credit
-      zone_id = state.session_data[:zone_id] || 1
-      instance_id = state.session_data[:zone_instance_id] || 1
-
-      # Use participant_character_ids from death result for group kill credit
-      participant_ids = kill_info.rewards[:participant_character_ids] || []
 
       if participant_ids != [] do
         CombatBroadcaster.notify_creature_kill_multi(
@@ -226,7 +323,105 @@ defmodule BezgelorWorld.Handler.SpellHandler do
       )
     end
 
-    send_spell_packets(finish_packet, effect_packets, cooldown_packet, state)
+    # Apply ForcedMove effect for Gate teleport - update server-side position
+    # NOTE: We update server state even though client teleport doesn't work,
+    # so if/when teleport is fixed, server position will be correct.
+    state =
+      if spell.id == @gate_spell_id do
+        new_session_data = Map.put(state.session_data, :position, destination)
+        %{state | session_data: new_session_data}
+      else
+        state
+      end
+
+    # For Gate, attempt to send teleport command (currently non-functional)
+    # See build_teleport_command/2 for documentation of failed approaches
+    if spell.id == @gate_spell_id do
+      teleport_packets = build_teleport_command(player_guid, destination)
+      send_spell_start_go_and_extra(spell_start, spell_go, teleport_packets, state)
+    else
+      send_spell_start_go_and_extra(spell_start, spell_go, [], state)
+    end
+  end
+
+  # Calculate Gate teleport destination based on yaw (facing direction)
+  # Yaw is in radians, 0 = facing positive X, increases counter-clockwise
+  defp calculate_gate_destination({x, y, z}, yaw) do
+    dx = @gate_teleport_distance * :math.cos(yaw)
+    dz = @gate_teleport_distance * :math.sin(yaw)
+
+    destination = {x + dx, y, z + dz}
+
+    Logger.info(
+      "[SpellHandler] Gate teleport: from #{inspect({x, y, z})} to #{inspect(destination)} (yaw=#{yaw})"
+    )
+
+    destination
+  end
+
+  # Build ServerEntityCommand packet to teleport the player
+  #
+  # WARNING: This does NOT work. The packet is sent but the client ignores it.
+  # See GitHub issue #48 for tracking.
+  #
+  # Approaches tried (all failed):
+  #
+  # 1. ServerEntityCommand with set_position, server_controlled: true
+  #    Result: Client ignores - players control their own movement
+  #
+  # 2. ServerEntityCommand with set_position, server_controlled: false
+  #    Result: No effect
+  #
+  # 3. ServerEntityCommand with set_position_path (current approach)
+  #    Result: No effect - this works for NPCs but not players
+  #
+  # 4. Setting primary_destination in ServerSpellGo to teleport target
+  #    Result: No effect on player position
+  #
+  # 5. Including telegraph position data in spell packets
+  #    Result: No effect
+  #
+  # 6. Sending entity command before vs after spell packets
+  #    Result: No difference
+  #
+  # 7. Various time_reset and blend combinations
+  #    Result: No effect
+  #
+  # The WildStar client appears to handle ForcedMove effects entirely client-side
+  # based on spell effect data, or there's a different packet/mechanism needed.
+  # NexusForever never implemented ForcedMove (effect type 0x0003).
+  #
+  defp build_teleport_command(player_guid, destination) do
+    # Use full GUID, truncated to uint32
+    entity_id = player_guid &&& 0xFFFFFFFF
+
+    teleport_command = %ServerEntityCommand{
+      guid: entity_id,
+      time: System.system_time(:millisecond) &&& 0xFFFFFFFF,
+      time_reset: true,
+      server_controlled: true,
+      commands: [
+        # Using set_position_path with high speed for "instant" movement
+        # This works for NPC movement but not for player self-teleportation
+        %{
+          type: :set_position_path,
+          positions: [destination],
+          speed: 1000.0,
+          spline_type: :linear,
+          spline_mode: :one_shot,
+          offset: 0,
+          blend: false
+        }
+      ]
+    }
+
+    writer = PacketWriter.new()
+    {:ok, writer} = ServerEntityCommand.write(teleport_command, writer)
+    teleport_data = PacketWriter.to_binary(writer)
+
+    Logger.info("[SpellHandler] Sending teleport command: guid=#{entity_id} dest=#{inspect(destination)}")
+
+    [{:server_entity_command, teleport_data}]
   end
 
   # Apply spell effects to targets, calling CreatureManager for damage to creatures
@@ -413,11 +608,25 @@ defmodule BezgelorWorld.Handler.SpellHandler do
 
   defp is_creature_guid?(_), do: false
 
-  defp handle_cast_start(spell, packet, player_guid, cast_time, state) do
-    target_guid = if packet.target_guid == 0, do: player_guid, else: packet.target_guid
+  defp handle_cast_start(spell, _packet, player_guid, cast_time, state) do
+    # Get caster info from session
+    position = state.session_data[:position] || {0.0, 0.0, 0.0}
+    yaw = state.session_data[:yaw] || 0.0
+    caster_id = player_guid &&& 0xFFFFFFFF
 
-    # Send cast start
-    start_packet = ServerSpellStart.new(player_guid, spell.id, cast_time, target_guid)
+    # Generate unique casting ID
+    casting_id = :erlang.unique_integer([:positive, :monotonic]) &&& 0xFFFFFFFF
+
+    # Build ServerSpellStart with proper format
+    start_packet = ServerSpellStart.new(
+      casting_id: casting_id,
+      spell4_id: spell.id,
+      caster_id: caster_id,
+      primary_target_id: caster_id,
+      position: position,
+      yaw: yaw,
+      user_initiated: true
+    )
 
     Logger.info("Cast start: player #{player_guid} spell #{spell.name} (#{cast_time}ms)")
 
@@ -494,15 +703,30 @@ defmodule BezgelorWorld.Handler.SpellHandler do
     send_packet(:server_cast_result, packet, state)
   end
 
-  defp send_spell_packets(finish_packet, _effect_packets, _cooldown_packet, state) do
-    # This is a simplified version - in a full implementation,
-    # we'd send multiple packets
-    # For now, just send the finish packet
-    writer = PacketWriter.new()
-    {:ok, writer} = ServerSpellFinish.write(finish_packet, writer)
-    packet_data = PacketWriter.to_binary(writer)
+  defp send_spell_start_and_go(spell_start, spell_go, state) do
+    send_spell_start_go_and_extra(spell_start, spell_go, [], state)
+  end
 
-    {:reply, :server_spell_finish, packet_data, state}
+  defp send_spell_start_go_and_extra(spell_start, spell_go, extra_packets, state) do
+    # Encode ServerSpellStart
+    start_writer = PacketWriter.new()
+    {:ok, start_writer} = ServerSpellStart.write(spell_start, start_writer)
+    start_data = PacketWriter.to_binary(start_writer)
+
+    # Encode ServerSpellGo
+    go_writer = PacketWriter.new()
+    {:ok, go_writer} = ServerSpellGo.write(spell_go, go_writer)
+    go_data = PacketWriter.to_binary(go_writer)
+
+    # Send extra packets (like teleport) BEFORE spell packets so movement happens first
+    packets =
+      extra_packets ++
+      [
+        {:server_spell_start, start_data},
+        {:server_spell_go, go_data}
+      ]
+
+    {:reply_multi_world_encrypted, packets, state}
   end
 
   defp send_packet(opcode, packet, state) do
@@ -511,6 +735,7 @@ defmodule BezgelorWorld.Handler.SpellHandler do
     {:ok, writer} =
       case opcode do
         :server_spell_start -> ServerSpellStart.write(packet, writer)
+        :server_spell_go -> ServerSpellGo.write(packet, writer)
         :server_spell_finish -> ServerSpellFinish.write(packet, writer)
         :server_spell_effect -> ServerSpellEffect.write(packet, writer)
         :server_cast_result -> ServerCastResult.write(packet, writer)
@@ -518,7 +743,8 @@ defmodule BezgelorWorld.Handler.SpellHandler do
       end
 
     packet_data = PacketWriter.to_binary(writer)
-    {:reply, opcode, packet_data, state}
+    # Use world encrypted for all spell packets on the world server
+    {:reply_world_encrypted, opcode, packet_data, state}
   end
 
   defp build_effect_packet(caster_guid, target_guid, spell_id, effect) do
@@ -580,27 +806,5 @@ defmodule BezgelorWorld.Handler.SpellHandler do
     else
       base_stats
     end
-  end
-
-  # Broadcast telegraphs for a spell (visual damage area indicators)
-  defp broadcast_spell_telegraphs(spell_id, caster_guid, packet, state) do
-    # Get caster position from session data or use target position as fallback
-    caster_position = state.session_data[:position] || packet.target_position || {0.0, 0.0, 0.0}
-
-    # Get caster rotation (default to 0 if not available)
-    caster_rotation = state.session_data[:rotation] || 0.0
-
-    # For now, just broadcast to the caster (future: nearby players in zone)
-    # This ensures the caster sees their own telegraphs
-    recipient_guids = [caster_guid]
-
-    # Call CombatBroadcaster to look up and broadcast any telegraphs for this spell
-    CombatBroadcaster.broadcast_spell_telegraphs(
-      spell_id,
-      caster_guid,
-      caster_position,
-      caster_rotation,
-      recipient_guids
-    )
   end
 end

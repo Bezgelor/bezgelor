@@ -299,7 +299,7 @@ defmodule BezgelorWorld.Handler.NpcHandler do
 
     if zone_instance do
       # Try to get from zone's entity registry
-      case BezgelorWorld.Zone.Instance.get_entity_creature_id(zone_instance, guid) do
+      case BezgelorWorld.World.Instance.get_entity_creature_id(zone_instance, guid) do
         {:ok, creature_id} -> creature_id
         :error -> nil
       end
