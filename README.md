@@ -44,7 +44,7 @@ Bezgelor is an Elixir umbrella application that emulates WildStar game servers u
 - **Contexts** - Domain modules (`BezgelorDb.Accounts`, `BezgelorDb.Characters`, etc.) provide the public API
 - **Packets** - Implement `Readable`/`Writable` behaviours for binary protocol parsing
 - **Handlers** - Process incoming packets and dispatch responses
-- **Zone Instances** - GenServers managing entities, spawns, and broadcasts per zone
+- **World Instances** - GenServers managing entities, spawns, and broadcasts per world
 - **Supervision Trees** - OTP supervision for fault tolerance
 
 ## Requirements

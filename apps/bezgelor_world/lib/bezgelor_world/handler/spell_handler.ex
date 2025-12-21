@@ -58,7 +58,6 @@ defmodule BezgelorWorld.Handler.SpellHandler do
 
   @impl true
   def handle(payload, state) do
-    Logger.info("[SpellHandler] Received spell packet (#{byte_size(payload)} bytes)")
     reader = PacketReader.new(payload)
 
     # Try to parse as cast spell first, then cancel
@@ -66,8 +65,7 @@ defmodule BezgelorWorld.Handler.SpellHandler do
       {:ok, packet, _reader} ->
         handle_cast_request(packet, state)
 
-      {:error, reason} ->
-        Logger.debug("[SpellHandler] Not a cast spell packet (#{inspect(reason)}), trying cancel")
+      {:error, _reason} ->
         # ClientCancelCast.read always succeeds since it's an empty packet
         {:ok, _packet, _reader} = ClientCancelCast.read(reader)
         handle_cancel_cast(state)
@@ -91,27 +89,17 @@ defmodule BezgelorWorld.Handler.SpellHandler do
     player_guid = state.session_data[:entity_guid]
     character = state.session_data[:character]
 
-    Logger.info(
-      "[SpellHandler] Cast request: bag_index=#{packet.bag_index} caster_id=#{packet.caster_id} " <>
-        "button_pressed=#{packet.button_pressed} client_unique_id=#{packet.client_unique_id}"
-    )
-
-    Logger.debug(
-      "[SpellHandler] Player: guid=#{player_guid} character_id=#{character && character.id}"
-    )
-
     # Look up the spell ID from the character's ability inventory using bag_index
     # This matches NexusForever: Inventory.GetItem(InventoryLocation.Ability, bagIndex)
     spell_id = resolve_spell_from_bag(packet.bag_index, state)
 
     if spell_id == nil do
       Logger.warning(
-        "[SpellHandler] No ability item at bag_index #{packet.bag_index} for character #{character && character.id}"
+        "[SpellHandler] No ability at bag_index #{packet.bag_index} for character #{character && character.id}"
       )
 
       send_cast_result(:failed, :not_known, 0, state)
     else
-      Logger.info("[SpellHandler] Found spell_id=#{spell_id} at bag_index=#{packet.bag_index}")
       spell = Spell.get(spell_id)
 
       # Get target from player's current target state (stored in session_data)
@@ -129,19 +117,16 @@ defmodule BezgelorWorld.Handler.SpellHandler do
 
       cond do
         spell == nil ->
-          Logger.warning("[SpellHandler] Spell.get(#{spell_id}) returned nil - spell not in data")
+          Logger.warning("[SpellHandler] Unknown spell_id #{spell_id}")
           send_cast_result(:failed, :not_known, spell_id, state)
 
         not validate_target(spell, normalized_packet, state) ->
-          Logger.debug("[SpellHandler] Target validation failed for spell #{spell.name}")
           send_cast_result(:failed, :invalid_target, spell_id, state)
 
         not validate_range(spell, normalized_packet, state) ->
-          Logger.debug("[SpellHandler] Range validation failed for spell #{spell.name}")
           send_cast_result(:failed, :out_of_range, spell_id, state)
 
         true ->
-          Logger.info("[SpellHandler] Casting spell: #{spell.name} (#{spell_id})")
           do_cast(spell, normalized_packet, player_guid, state)
       end
     end
@@ -161,7 +146,7 @@ defmodule BezgelorWorld.Handler.SpellHandler do
     resolve_from_shortcuts(bag_index, active_spec, state)
   end
 
-  # Fallback: look up from action_set_shortcuts (for tests and legacy support)
+  # Look up from action_set_shortcuts
   defp resolve_from_shortcuts(bag_index, active_spec, state) do
     shortcuts = state.session_data[:action_set_shortcuts] || []
 
@@ -170,12 +155,7 @@ defmodule BezgelorWorld.Handler.SpellHandler do
         s.slot == bag_index and s.spec_index == active_spec
       end)
 
-    if shortcut do
-      Logger.debug("[SpellHandler] Found shortcut: slot=#{bag_index} spell_id=#{shortcut.spell_id}")
-      shortcut.spell_id
-    else
-      nil
-    end
+    shortcut && shortcut.spell_id
   end
 
   defp do_cast(spell, packet, player_guid, state) do
@@ -215,8 +195,6 @@ defmodule BezgelorWorld.Handler.SpellHandler do
 
     # Generate unique casting ID (simple incrementing counter)
     casting_id = :erlang.unique_integer([:positive, :monotonic]) &&& 0xFFFFFFFF
-
-    Logger.info("Instant cast: player #{player_guid} spell #{spell.name} (#{spell.id})")
 
     # Calculate destination for Gate teleport
     # NOTE: This destination calculation works, but the actual teleport doesn't.
@@ -349,14 +327,7 @@ defmodule BezgelorWorld.Handler.SpellHandler do
   defp calculate_gate_destination({x, y, z}, yaw) do
     dx = @gate_teleport_distance * :math.cos(yaw)
     dz = @gate_teleport_distance * :math.sin(yaw)
-
-    destination = {x + dx, y, z + dz}
-
-    Logger.info(
-      "[SpellHandler] Gate teleport: from #{inspect({x, y, z})} to #{inspect(destination)} (yaw=#{yaw})"
-    )
-
-    destination
+    {x + dx, y, z + dz}
   end
 
   # Build ServerEntityCommand packet to teleport the player
@@ -418,8 +389,6 @@ defmodule BezgelorWorld.Handler.SpellHandler do
     writer = PacketWriter.new()
     {:ok, writer} = ServerEntityCommand.write(teleport_command, writer)
     teleport_data = PacketWriter.to_binary(writer)
-
-    Logger.info("[SpellHandler] Sending teleport command: guid=#{entity_id} dest=#{inspect(destination)}")
 
     [{:server_entity_command, teleport_data}]
   end
@@ -628,8 +597,6 @@ defmodule BezgelorWorld.Handler.SpellHandler do
       user_initiated: true
     )
 
-    Logger.info("Cast start: player #{player_guid} spell #{spell.name} (#{cast_time}ms)")
-
     send_packet(:server_spell_start, start_packet, state)
   end
 
@@ -638,9 +605,6 @@ defmodule BezgelorWorld.Handler.SpellHandler do
 
     case SpellManager.cancel_cast(player_guid) do
       :ok ->
-        # Get the spell that was being cast for the result packet
-        # For simplicity, send a generic interrupted result
-        Logger.info("Cast cancelled: player #{player_guid}")
         send_cast_result(:interrupted, :none, 0, state)
 
       {:error, :not_casting} ->

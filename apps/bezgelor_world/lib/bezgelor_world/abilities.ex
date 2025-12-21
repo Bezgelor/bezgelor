@@ -381,37 +381,20 @@ defmodule BezgelorWorld.Abilities do
   """
   @spec resolve_spell4_base_id(non_neg_integer(), non_neg_integer()) :: non_neg_integer()
   def resolve_spell4_base_id(spell4_id, class_id) when is_integer(spell4_id) do
-    result =
-      case BezgelorData.get_spell4_entry(spell4_id) do
-        {:ok, entry} ->
-          base_id = Map.get(entry, :spell4BaseIdBaseSpell, 0)
+    case BezgelorData.get_spell4_entry(spell4_id) do
+      {:ok, entry} ->
+        base_id = Map.get(entry, :spell4BaseIdBaseSpell, 0)
 
-          if base_id > 0 do
-            base_id
-          else
-            # No direct link - find by name matching for proper icon
-            desc = Map.get(entry, :description, "")
-            name = extract_spell_name(desc)
-            candidates_count = length(spell4_base_candidates(name || ""))
-            resolved = resolve_spell4_base_from_description(entry, class_id)
+        if base_id > 0 do
+          base_id
+        else
+          # No direct link - find by name matching for proper icon
+          resolve_spell4_base_from_description(entry, class_id) || spell4_id
+        end
 
-            if class_id == 7 do
-              require Logger
-              Logger.info("resolve_spell4_base_id: spell4_id=#{spell4_id} desc=#{desc} name=#{name} candidates=#{candidates_count} resolved=#{resolved || spell4_id}")
-            end
-
-            resolved || spell4_id
-          end
-
-        :error ->
-          if class_id == 7 do
-            require Logger
-            Logger.info("resolve_spell4_base_id: spell4_id=#{spell4_id} NOT FOUND in spell4_entries")
-          end
-          spell4_id
-      end
-
-    result
+      :error ->
+        spell4_id
+    end
   end
 
   def resolve_spell4_base_id(nil, _class_id), do: nil
@@ -438,20 +421,15 @@ defmodule BezgelorWorld.Abilities do
   defp extract_spell_name(_), do: nil
 
   defp pick_spell4_base_id(name, class_id) do
-    require Logger
-
     candidates =
       name
       |> spell4_base_candidates()
       |> filter_spell_type()
       |> filter_with_icon()
 
-    scored =
+    result =
       candidates
       |> Enum.map(fn entry -> {score_spell4_base(entry, class_id), entry} end)
-
-    result =
-      scored
       |> Enum.max_by(
         fn {score, entry} ->
           {score, Map.get(entry, :weaponSlot, 0), Map.get(entry, :castBarType, 0),
@@ -459,21 +437,6 @@ defmodule BezgelorWorld.Abilities do
         end,
         fn -> nil end
       )
-
-    if class_id == 7 do
-      top_3 =
-        scored
-        |> Enum.sort_by(fn {score, _} -> -score end)
-        |> Enum.take(3)
-        |> Enum.map(fn {score, entry} ->
-          id = Map.get(entry, :id, 0)
-          icon = Map.get(entry, :icon, "")
-          entry_class = Map.get(entry, :classIdPlayer, 0)
-          "#{id}(score=#{score},class=#{entry_class},icon?=#{icon != ""})"
-        end)
-
-      Logger.info("pick_spell4_base_id: name=#{name} top_3=#{inspect(top_3)}")
-    end
 
     case result do
       nil -> nil

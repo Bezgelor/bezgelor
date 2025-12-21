@@ -67,14 +67,14 @@ Database tests use Ecto sandbox mode and are excluded by default (tagged `@modul
 
 **Handlers (bezgelor_protocol)**: Process incoming packets. Located in `lib/bezgelor_protocol/handler/`. Pattern: receive packet → validate → call context → send response packets.
 
-**Zone Instances (bezgelor_world)**: GenServers managing entities, spawns, and broadcasts. One process per active zone.
+**World Instances (bezgelor_world)**: GenServers managing entities, spawns, and broadcasts. One process per active world. Note: `world_id` identifies the map/continent, `zone_id` identifies sub-regions within a world.
 
 **Game Logic (bezgelor_core)**: Pure functions for calculations (damage, XP, loot). State management handled by GenServers in bezgelor_world.
 
 ### Process Model
 
 - Each connected player is a process
-- Each active zone is a process
+- Each active world is a process
 - Communication via message passing, no shared state
 - Supervision trees for fault tolerance
 

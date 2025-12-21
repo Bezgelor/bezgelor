@@ -1,10 +1,10 @@
 # BezgelorWorld
 
-World server managing game state, zones, players, and combat.
+World server managing game state, players, and combat.
 
 ## Features
 
-- Zone instance management (one GenServer per active zone)
+- World instance management (one GenServer per active world)
 - Player session handling
 - Entity spawning and despawning
 - Combat resolution
@@ -16,7 +16,7 @@ World server managing game state, zones, players, and combat.
 ## Architecture
 
 - Each connected player runs as a supervised process
-- Zone instances are GenServers managing entities within that zone
+- World instances are GenServers managing entities within that world
 - Communication via message passing (no shared state)
 - Fault tolerance through supervision trees
 

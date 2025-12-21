@@ -220,7 +220,7 @@ bezgelor/
 | **bezgelor_data** | Static game data | Store (ETS), Compiler |
 | **bezgelor_auth** | Authentication | Sts.Connection, SRP6 handlers |
 | **bezgelor_realm** | Realm management | Session key generation |
-| **bezgelor_world** | Game simulation | WorldManager, ZoneInstance, Handlers |
+| **bezgelor_world** | Game simulation | WorldManager, World.Instance, Handlers |
 
 ---
 

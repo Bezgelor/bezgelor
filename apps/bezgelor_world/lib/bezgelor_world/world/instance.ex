@@ -9,17 +9,34 @@ defmodule BezgelorWorld.World.Instance do
 
   ## Important: world_id vs zone_id
 
-  This module is keyed by `world_id`, NOT `zone_id`. In WildStar:
-  - `world_id` identifies the map/continent (e.g., 1634 = Gambler's Ruin)
-  - `zone_id` identifies a sub-region within a world (e.g., 4844 = Cryo Awakening Protocol)
+  This module is keyed by `world_id`, NOT `zone_id`. Understanding the distinction
+  is critical for correct instance lookup:
 
-  When looking up a World.Instance, always use `world_id` from session_data.
+  | Concept | Description | Example |
+  |---------|-------------|---------|
+  | `world_id` | Map/continent ID from WorldLocation2 table | 1634 = Gambler's Ruin |
+  | `zone_id` | Sub-region within a world from Zone table | 4844 = Cryo Awakening Protocol |
+
+  A single world can contain multiple zones (e.g., Thayd has several sub-zones),
+  but all entities in those zones share the same World.Instance process.
+
+  ### Where to find these IDs
+
+  - `world_id`: `session_data[:world_id]` - set when player enters world
+  - `zone_id`: `session_data[:zone_id]` - updated as player moves between zones
+
+  ### Common pitfalls
+
+  - **Don't use zone_id for instance lookup** - use world_id
+  - **zone_id changes as player moves** - world_id stays constant while in same map
+  - **Dungeons have their own world_id** - not just a zone within an open world
 
   ## Instance Types
 
-  - **Open World**: Shared instances (e.g., main world zones)
-  - **Dungeon**: Private instances per group
+  - **Open World**: Shared instances (e.g., main world zones, cities)
+  - **Dungeon**: Private instances per group (unique instance_id per group)
   - **Housing**: Private instances per player/guild
+  - **Battleground/Arena**: PvP instances with their own lifecycle
 
   ## Usage
 
