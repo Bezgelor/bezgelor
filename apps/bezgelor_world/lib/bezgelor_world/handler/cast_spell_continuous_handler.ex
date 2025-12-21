@@ -5,12 +5,9 @@ defmodule BezgelorWorld.Handler.CastSpellContinuousHandler do
 
   @behaviour BezgelorProtocol.Handler
 
-  alias BezgelorDb.Inventory
   alias BezgelorProtocol.PacketReader
   alias BezgelorProtocol.Packets.World.{ClientCastSpell, ClientCastSpellContinuous}
   alias BezgelorWorld.Handler.SpellHandler
-
-  require Logger
 
   @impl true
   def handle(payload, state) do
@@ -24,23 +21,15 @@ defmodule BezgelorWorld.Handler.CastSpellContinuousHandler do
 
   defp handle_continuous(%ClientCastSpellContinuous{} = packet, state) do
     if packet.button_pressed do
-      character_id = state.session_data[:character_id]
+      # Build a ClientCastSpell with the bag_index - spell resolution happens in SpellHandler
+      cast_packet = %ClientCastSpell{
+        client_unique_id: 0,
+        bag_index: packet.bag_index,
+        caster_id: state.session_data[:entity_id] || 0,
+        button_pressed: true
+      }
 
-      case Inventory.get_item_at(character_id, :ability, packet.bag_index, 0) do
-        nil ->
-          Logger.warning("Continuous cast missing ability item at bag_index=#{packet.bag_index}")
-
-          {:ok, state}
-
-        item ->
-          cast_packet = %ClientCastSpell{
-            spell_id: item.item_id,
-            target_guid: packet.guid || 0,
-            target_position: {0.0, 0.0, 0.0}
-          }
-
-          SpellHandler.handle_cast_request(cast_packet, state)
-      end
+      SpellHandler.handle_cast_request(cast_packet, state)
     else
       {:ok, state}
     end

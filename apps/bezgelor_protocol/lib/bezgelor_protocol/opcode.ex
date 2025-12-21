@@ -107,7 +107,8 @@ defmodule BezgelorProtocol.Opcode do
   @client_unknown_0x07CC 0x07CC
   # 0x00D5: Related to ServerInstanceSettings per NexusForever comments
   @client_unknown_0x00D5 0x00D5
-  # 0x00DE: Unknown, possibly dash/sprint related
+  # 0x00DE: Not in NexusForever GameMessageOpcode.cs (gap between 0x00DD and 0x00E0).
+  # Observed during ability use - possibly dash/sprint/momentum. Logged for research.
   @client_unknown_0x00DE 0x00DE
   # 0x00FB: Unknown, possibly path-related
   @client_unknown_0x00FB 0x00FB
@@ -139,7 +140,8 @@ defmodule BezgelorProtocol.Opcode do
   @server_chat_result 0x0302
 
   # Spell opcodes
-  @client_cast_spell 0x0400
+  # 0x009A per NexusForever GameMessageOpcode.cs
+  @client_cast_spell 0x009A
   @client_cast_spell_continuous 0x04DB
   @server_spell_start 0x0401
   @server_spell_finish 0x0402

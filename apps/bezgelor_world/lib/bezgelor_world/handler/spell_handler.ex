@@ -77,20 +77,64 @@ defmodule BezgelorWorld.Handler.SpellHandler do
 
   defp process_cast(packet, state) do
     player_guid = state.session_data[:entity_guid]
-    spell = Spell.get(packet.spell_id)
 
-    cond do
-      spell == nil ->
-        send_cast_result(:failed, :not_known, packet.spell_id, state)
+    # Look up the spell ID from the character's ability bag using bag_index
+    # The bag_index refers to a slot in the character's LAS (Limited Action Set)
+    spell_id = resolve_spell_from_bag(packet.bag_index, state)
 
-      not validate_target(spell, packet, state) ->
-        send_cast_result(:failed, :invalid_target, packet.spell_id, state)
+    if spell_id == nil do
+      Logger.warning("No spell found at bag_index #{packet.bag_index}")
+      send_cast_result(:failed, :not_known, 0, state)
+    else
+      spell = Spell.get(spell_id)
 
-      not validate_range(spell, packet, state) ->
-        send_cast_result(:failed, :out_of_range, packet.spell_id, state)
+      # Get target from player's current target state (stored in session_data)
+      target_guid = state.session_data[:target_guid] || 0
+      target_position = state.session_data[:position] || {0.0, 0.0, 0.0}
 
-      true ->
-        do_cast(spell, packet, player_guid, state)
+      # Create a normalized packet struct for the rest of the handler
+      normalized_packet = %{
+        spell_id: spell_id,
+        target_guid: target_guid,
+        target_position: target_position,
+        client_unique_id: packet.client_unique_id,
+        button_pressed: packet.button_pressed
+      }
+
+      cond do
+        spell == nil ->
+          send_cast_result(:failed, :not_known, spell_id, state)
+
+        not validate_target(spell, normalized_packet, state) ->
+          send_cast_result(:failed, :invalid_target, spell_id, state)
+
+        not validate_range(spell, normalized_packet, state) ->
+          send_cast_result(:failed, :out_of_range, spell_id, state)
+
+        true ->
+          do_cast(spell, normalized_packet, player_guid, state)
+      end
+    end
+  end
+
+  # Resolve spell ID from character's ability bag (action bar slot)
+  defp resolve_spell_from_bag(bag_index, state) do
+    # The bag_index maps to an action set shortcut
+    # Look up from the character's loaded action set
+    action_set = state.session_data[:action_set] || %{}
+
+    case Map.get(action_set, bag_index) do
+      nil ->
+        # Fallback: check if we have LAS shortcuts in session
+        shortcuts = state.session_data[:action_set_shortcuts] || []
+        shortcut = Enum.find(shortcuts, fn s -> s.ui_location == bag_index end)
+        shortcut && shortcut.spell4_base_id
+
+      %{spell4_base_id: spell_id} ->
+        spell_id
+
+      spell_id when is_integer(spell_id) ->
+        spell_id
     end
   end
 
