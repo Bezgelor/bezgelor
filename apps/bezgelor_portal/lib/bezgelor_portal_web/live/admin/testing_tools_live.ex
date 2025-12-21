@@ -6,26 +6,41 @@ defmodule BezgelorPortalWeb.Admin.TestingToolsLive do
   - Create individual test characters
   - Batch create characters across all classes/races
   - Delete all characters (soft or hard)
+
+  Requires the `testing.manage` permission.
   """
   use BezgelorPortalWeb, :live_view
 
+  alias BezgelorDb.Authorization
   alias BezgelorPortal.GameData
   alias BezgelorWorld.Portal
 
+  import BezgelorPortalWeb.Helpers.FormHelpers
+
   @impl true
   def mount(_params, _session, socket) do
-    {:ok,
-     assign(socket,
-       page_title: "Testing Tools",
-       create_form: build_create_form(),
-       batch_form: build_batch_form(),
-       delete_form: to_form(%{"confirm" => false, "hard" => false}, as: :delete_characters),
-       class_options: class_options(),
-       race_options: race_options(),
-       sex_options: sex_options(),
-       path_options: path_options(),
-       creation_start_options: creation_start_options()
-     ), layout: {BezgelorPortalWeb.Layouts, :admin}}
+    # Check permission - permissions are loaded by require_admin hook
+    if "testing.manage" not in socket.assigns.permissions do
+      {:ok,
+       socket
+       |> put_flash(:error, "You don't have permission to access testing tools.")
+       |> redirect(to: "/admin")}
+    else
+      {:ok,
+       assign(socket,
+         page_title: "Testing Tools",
+         create_form: build_create_form(),
+         batch_form: build_batch_form(),
+         delete_form: to_form(%{"confirm" => false, "hard" => false}, as: :delete_characters),
+         class_options: class_options(),
+         race_options: race_options(),
+         sex_options: sex_options(),
+         path_options: path_options(),
+         creation_start_options: creation_start_options(),
+         batch_in_progress: false,
+         batch_progress: nil
+       ), layout: {BezgelorPortalWeb.Layouts, :admin}}
+    end
   end
 
   @impl true
@@ -68,55 +83,61 @@ defmodule BezgelorPortalWeb.Admin.TestingToolsLive do
   end
 
   def handle_event("batch_create_characters", %{"batch_create" => params}, socket) do
-    account_id = socket.assigns.current_account.id
-    class_ids = batch_ids(params, "class_ids", truthy?(params["all_classes"]), class_options())
-    race_ids = batch_ids(params, "race_ids", truthy?(params["all_races"]), race_options())
-    sexes = batch_sexes(params)
-    path_ids = batch_ids(params, "path_ids", truthy?(params["all_paths"]), path_options())
-
-    if class_ids == [] or race_ids == [] or sexes == [] or path_ids == [] do
-      {:noreply, put_flash(socket, :error, "Select at least one class, race, sex, and path")}
+    if socket.assigns.batch_in_progress do
+      {:noreply, put_flash(socket, :error, "Batch creation already in progress")}
     else
-      creation_start = parse_int_default(params["creation_start"], 4)
-      name_prefix = string_or_default(params["name_prefix"], "Test")
+      account_id = socket.assigns.current_account.id
+      class_ids = batch_ids(params, "class_ids", truthy?(params["all_classes"]), class_options())
+      race_ids = batch_ids(params, "race_ids", truthy?(params["all_races"]), race_options())
+      sexes = batch_sexes(params)
+      path_ids = batch_ids(params, "path_ids", truthy?(params["all_paths"]), path_options())
 
-      {created, failed} =
-        for(
-          class_id <- class_ids,
-          race_id <- race_ids,
-          sex <- sexes,
-          path_id <- path_ids,
-          reduce: {0, 0}
-        ) do
-          {ok_count, error_count} ->
-            opts = [
-              sex: sex,
-              creation_start: creation_start,
-              path: path_id,
-              name_prefix: name_prefix
-            ]
+      if class_ids == [] or race_ids == [] or sexes == [] or path_ids == [] do
+        {:noreply, put_flash(socket, :error, "Select at least one class, race, sex, and path")}
+      else
+        creation_start = parse_int_default(params["creation_start"], 4)
+        name_prefix = string_or_default(params["name_prefix"], "Test")
 
-            case Portal.create_character(account_id, :auto, race_id, class_id, opts) do
-              {:ok, _} -> {ok_count + 1, error_count}
-              {:error, _} -> {ok_count, error_count + 1}
-            end
-        end
+        # Calculate total combinations
+        total = length(class_ids) * length(race_ids) * length(sexes) * length(path_ids)
 
-      {:noreply,
-       socket
-       |> put_flash(
-         :info,
-         "Batch create complete: #{created} created, #{failed} failed on account #{account_id}"
-       )}
+        # Build list of all combinations
+        combinations =
+          for class_id <- class_ids,
+              race_id <- race_ids,
+              sex <- sexes,
+              path_id <- path_ids do
+            {class_id, race_id, sex, path_id}
+          end
+
+        # Start async batch creation
+        opts = [creation_start: creation_start, name_prefix: name_prefix]
+        send(self(), {:start_batch, account_id, combinations, opts})
+
+        {:noreply,
+         socket
+         |> assign(batch_in_progress: true, batch_progress: %{total: total, created: 0, failed: 0})
+         |> put_flash(:info, "Starting batch creation of #{total} characters...")}
+      end
     end
   end
 
   def handle_event("delete_all_characters", %{"delete_characters" => params}, socket) do
     if truthy?(params["confirm"]) do
-      mode = if truthy?(params["hard"]), do: "hard", else: "soft"
+      hard_delete = truthy?(params["hard"])
+      mode = if hard_delete, do: "hard", else: "soft"
 
-      case Portal.delete_all_characters(hard: truthy?(params["hard"])) do
+      case Portal.delete_all_characters(hard: hard_delete) do
         {:ok, count} ->
+          # Log the admin action
+          Authorization.log_action(
+            socket.assigns.current_account,
+            "testing.delete_all_characters",
+            nil,
+            nil,
+            %{mode: mode, count: count}
+          )
+
           {:noreply,
            socket
            |> put_flash(:info, "Deleted #{count} characters (#{mode})")}
@@ -127,6 +148,60 @@ defmodule BezgelorPortalWeb.Admin.TestingToolsLive do
     else
       {:noreply, put_flash(socket, :error, "Confirm deletion to proceed")}
     end
+  end
+
+  @impl true
+  def handle_info({:start_batch, account_id, combinations, opts}, socket) do
+    # Process batch in chunks to allow UI updates
+    chunk_size = 10
+    parent = self()
+
+    Task.start(fn ->
+      combinations
+      |> Enum.chunk_every(chunk_size)
+      |> Enum.reduce({0, 0}, fn chunk, {created, failed} ->
+        {chunk_created, chunk_failed} =
+          Enum.reduce(chunk, {0, 0}, fn {class_id, race_id, sex, path_id}, {ok, err} ->
+            character_opts = [
+              sex: sex,
+              creation_start: opts[:creation_start],
+              path: path_id,
+              name_prefix: opts[:name_prefix]
+            ]
+
+            case Portal.create_character(account_id, :auto, race_id, class_id, character_opts) do
+              {:ok, _} -> {ok + 1, err}
+              {:error, _} -> {ok, err + 1}
+            end
+          end)
+
+        new_created = created + chunk_created
+        new_failed = failed + chunk_failed
+        send(parent, {:batch_progress, new_created, new_failed})
+        {new_created, new_failed}
+      end)
+
+      send(parent, {:batch_complete, account_id})
+    end)
+
+    {:noreply, socket}
+  end
+
+  def handle_info({:batch_progress, created, failed}, socket) do
+    {:noreply,
+     assign(socket, batch_progress: %{socket.assigns.batch_progress | created: created, failed: failed})}
+  end
+
+  def handle_info({:batch_complete, account_id}, socket) do
+    %{total: total, created: created, failed: failed} = socket.assigns.batch_progress
+
+    {:noreply,
+     socket
+     |> assign(batch_in_progress: false, batch_progress: nil)
+     |> put_flash(
+       :info,
+       "Batch complete: #{created}/#{total} created, #{failed} failed on account #{account_id}"
+     )}
   end
 
   @impl true
@@ -260,9 +335,26 @@ defmodule BezgelorPortalWeb.Admin.TestingToolsLive do
                 label="Creation Start"
                 options={@creation_start_options}
               />
-              <button type="submit" class="btn btn-secondary w-full" id="batch-create-submit">
-                Create Batch
-              </button>
+              <%= if @batch_in_progress do %>
+                <div class="space-y-2">
+                  <div class="flex justify-between text-sm">
+                    <span>Progress:</span>
+                    <span>{@batch_progress.created + @batch_progress.failed} / {@batch_progress.total}</span>
+                  </div>
+                  <progress
+                    class="progress progress-secondary w-full"
+                    value={@batch_progress.created + @batch_progress.failed}
+                    max={@batch_progress.total}
+                  />
+                  <div class="text-xs text-base-content/60">
+                    Created: {@batch_progress.created} | Failed: {@batch_progress.failed}
+                  </div>
+                </div>
+              <% else %>
+                <button type="submit" class="btn btn-secondary w-full" id="batch-create-submit">
+                  Create Batch
+                </button>
+              <% end %>
             </.form>
           </div>
         </div>
@@ -373,46 +465,6 @@ defmodule BezgelorPortalWeb.Admin.TestingToolsLive do
       {"Level50 (5)", 5}
     ]
   end
-
-  defp parse_int(nil, label), do: {:error, "#{label} is required"}
-
-  defp parse_int(value, label) do
-    case Integer.parse(to_string(value)) do
-      {int, ""} -> {:ok, int}
-      _ -> {:error, "#{label} is invalid"}
-    end
-  end
-
-  defp parse_int_default(nil, default), do: default
-
-  defp parse_int_default(value, default) when is_integer(default) do
-    case Integer.parse(to_string(value)) do
-      {int, ""} -> int
-      _ -> default
-    end
-  end
-
-  defp truthy?(value) when value in [true, "true", "on", "1"], do: true
-  defp truthy?(_), do: false
-
-  defp string_or_default(value, default) when is_binary(value) do
-    trimmed = String.trim(value)
-    if trimmed == "", do: default, else: trimmed
-  end
-
-  defp string_or_default(_, default), do: default
-
-  defp blank_to_nil(value) when is_binary(value) do
-    case String.trim(value) do
-      "" -> nil
-      trimmed -> trimmed
-    end
-  end
-
-  defp blank_to_nil(_), do: nil
-
-  defp put_opt(opts, _key, nil), do: opts
-  defp put_opt(opts, key, value), do: Keyword.put(opts, key, value)
 
   defp maybe_put_name(opts, true), do: Keyword.put(opts, :name, :auto)
   defp maybe_put_name(opts, _), do: opts

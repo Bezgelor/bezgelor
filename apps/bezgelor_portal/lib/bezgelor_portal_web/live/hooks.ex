@@ -128,7 +128,8 @@ defmodule BezgelorPortalWeb.Live.Hooks do
     "events.broadcast_message",
     "server.view_logs",
     "admin.manage_roles",
-    "admin.view_audit_log"
+    "admin.view_audit_log",
+    "testing.manage"
   ]
 
   defp has_admin_access?(account) do
