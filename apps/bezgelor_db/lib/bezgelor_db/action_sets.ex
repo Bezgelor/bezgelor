@@ -133,12 +133,16 @@ defmodule BezgelorDb.ActionSets do
       |> Enum.reduce(%{}, fn shortcut, acc -> Map.put(acc, shortcut.slot, shortcut) end)
 
     Enum.each(abilities, fn ability ->
+      # Use object_id from ability if provided (Spell4Base ID for icons),
+      # otherwise fall back to spell_id (Spell4 ID)
+      object_id = Map.get(ability, :object_id, ability.spell_id)
+
       attrs = %{
         character_id: character_id,
         spec_index: spec_index,
         slot: ability.slot,
         shortcut_type: 4,
-        object_id: ability.spell_id,
+        object_id: object_id,
         spell_id: ability.spell_id,
         tier: ability.tier || 1
       }

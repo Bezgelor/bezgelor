@@ -26,16 +26,7 @@ defmodule BezgelorWorld.Abilities do
     7 => 55665
   }
 
-  @class_icon_hints %{
-    1 => ["warrior"],
-    2 => ["engineer"],
-    3 => ["esper"],
-    4 => ["medic"],
-    5 => ["stalker", "stlkr", "shadow"],
-    7 => ["spellslinger"]
-  }
-
-  # Spellbook abilities for each class (spell_id = Spell4BaseId)
+  # Spellbook abilities for each class (spell_id = Spell4 ID for telegraph lookup)
   @class_spellbook_abilities %{
     1 => [
       # Warrior: Relentless Strikes (SpellLevel)
@@ -88,11 +79,11 @@ defmodule BezgelorWorld.Abilities do
       %{spell_id: 55198, slot: 3, tier: 1}
     ],
     7 => [
-      # Spellslinger: Quick Draw (Spell4BaseId)
+      # Spellslinger: Quick Draw (Spell4 ID - telegraph lookup uses this)
       %{spell_id: 43468, slot: 0, tier: 1},
-      # Spellslinger: Charged Shot (Spell4BaseId)
+      # Spellslinger: Charged Shot (Spell4 ID)
       %{spell_id: 34718, slot: 1, tier: 1},
-      # Spellslinger: Gate (Spell4BaseId)
+      # Spellslinger: Gate (Spell4 ID - must be 34355, not 20325, for telegraph 142)
       %{spell_id: 34355, slot: 2, tier: 1},
       # Spellslinger: Pistol Shot
       %{spell_id: 55665, slot: 3, tier: 1}
@@ -142,11 +133,11 @@ defmodule BezgelorWorld.Abilities do
       %{spell_id: 38791, slot: 2, tier: 1}
     ],
     7 => [
-      # Spellslinger: Quick Draw (Spell4BaseId)
+      # Spellslinger: Quick Draw (Spell4 ID)
       %{spell_id: 43468, slot: 0, tier: 1},
-      # Spellslinger: Charged Shot (Spell4BaseId)
+      # Spellslinger: Charged Shot (Spell4 ID)
       %{spell_id: 34718, slot: 1, tier: 1},
-      # Spellslinger: Gate (Spell4BaseId)
+      # Spellslinger: Gate (Spell4 ID)
       %{spell_id: 34355, slot: 2, tier: 1}
     ]
   }
@@ -204,17 +195,21 @@ defmodule BezgelorWorld.Abilities do
 
   Returns a list of spell entries suitable for the packet.
   Class abilities need an entry for each spec (0-3).
+  Uses resolve_spell4_base_id to get Spell4Base IDs with icons for display.
   """
   @spec build_ability_book(non_neg_integer()) :: [map()]
   def build_ability_book(class_id) do
     abilities = get_class_spellbook_abilities(class_id)
 
     Enum.flat_map(abilities, fn ability ->
+      # Resolve to Spell4Base ID with icon for display
+      base_id = resolve_spell4_base_id(ability.spell_id, class_id)
+
       ability
       |> ability_spec_indices()
       |> Enum.map(fn spec_index ->
         %{
-          spell4_base_id: ability.spell_id,
+          spell4_base_id: base_id,
           tier: ability.tier,
           spec_index: spec_index
         }
@@ -224,10 +219,17 @@ defmodule BezgelorWorld.Abilities do
 
   @doc """
   Build ability book entries using action set shortcut tiers per spec.
+
+  Uses resolve_spell4_base_id to find Spell4Base entries with proper icons
+  for UI display. The ability.spell_id is the Spell4 ID (for casting/telegraphs),
+  but the ability book needs Spell4Base IDs that have icons.
   """
-  @spec build_ability_book_for_specs([map()], map()) :: [map()]
-  def build_ability_book_for_specs(abilities, shortcuts_by_spec) do
+  @spec build_ability_book_for_specs([map()], map(), non_neg_integer()) :: [map()]
+  def build_ability_book_for_specs(abilities, shortcuts_by_spec, class_id \\ 0) do
     Enum.flat_map(abilities, fn ability ->
+      # Resolve to Spell4Base ID with icon for ability book display
+      base_id = resolve_spell4_base_id(ability.spell_id, class_id)
+
       ability
       |> ability_spec_indices()
       |> Enum.map(fn spec_index ->
@@ -235,7 +237,7 @@ defmodule BezgelorWorld.Abilities do
         tier = if shortcut, do: shortcut.tier, else: ability.tier
 
         %{
-          spell4_base_id: ability.spell_id,
+          spell4_base_id: base_id,
           tier: tier,
           spec_index: spec_index
         }
@@ -359,22 +361,62 @@ defmodule BezgelorWorld.Abilities do
 
   defp resolve_spell_id(nil, _class_id), do: nil
 
-  defp resolve_spell_id(spell4_id, class_id) when is_integer(spell4_id) do
-    case BezgelorData.get_spell4_entry(spell4_id) do
-      {:ok, entry} ->
-        base_id = Map.get(entry, :spell4BaseIdBaseSpell, 0)
-
-        if base_id > 0 do
-          base_id
-        else
-          resolve_spell4_base_from_description(entry, class_id) || spell4_id
-        end
-
-      :error ->
-        spell4_id
-    end
+  defp resolve_spell_id(spell4_id, _class_id) when is_integer(spell4_id) do
+    # Return the Spell4 ID as-is. This is used for ability items and spell packets,
+    # which need the Spell4 ID for telegraph lookup.
+    # For ability book display, use resolve_spell4_base_id/2 to get the ID with icons.
+    spell4_id
   end
 
+  @doc """
+  Resolve a Spell4 ID to its Spell4Base ID for ability book display.
+
+  The ability book needs Spell4Base IDs that have proper icons. Some Spell4 IDs
+  exist as Spell4Base entries but with empty icons. This function finds the
+  correct Spell4Base entry by:
+  1. Checking spell4BaseIdBaseSpell link
+  2. Falling back to name-matching if no link exists
+
+  For casting/telegraphs, use the Spell4 ID directly instead.
+  """
+  @spec resolve_spell4_base_id(non_neg_integer(), non_neg_integer()) :: non_neg_integer()
+  def resolve_spell4_base_id(spell4_id, class_id) when is_integer(spell4_id) do
+    result =
+      case BezgelorData.get_spell4_entry(spell4_id) do
+        {:ok, entry} ->
+          base_id = Map.get(entry, :spell4BaseIdBaseSpell, 0)
+
+          if base_id > 0 do
+            base_id
+          else
+            # No direct link - find by name matching for proper icon
+            desc = Map.get(entry, :description, "")
+            name = extract_spell_name(desc)
+            candidates_count = length(spell4_base_candidates(name || ""))
+            resolved = resolve_spell4_base_from_description(entry, class_id)
+
+            if class_id == 7 do
+              require Logger
+              Logger.info("resolve_spell4_base_id: spell4_id=#{spell4_id} desc=#{desc} name=#{name} candidates=#{candidates_count} resolved=#{resolved || spell4_id}")
+            end
+
+            resolved || spell4_id
+          end
+
+        :error ->
+          if class_id == 7 do
+            require Logger
+            Logger.info("resolve_spell4_base_id: spell4_id=#{spell4_id} NOT FOUND in spell4_entries")
+          end
+          spell4_id
+      end
+
+    result
+  end
+
+  def resolve_spell4_base_id(nil, _class_id), do: nil
+
+  # Name-matching resolution for finding Spell4Base entries with icons
   defp resolve_spell4_base_from_description(entry, class_id) do
     case extract_spell_name(Map.get(entry, :description, "")) do
       nil -> nil
@@ -396,21 +438,44 @@ defmodule BezgelorWorld.Abilities do
   defp extract_spell_name(_), do: nil
 
   defp pick_spell4_base_id(name, class_id) do
+    require Logger
+
     candidates =
       name
       |> spell4_base_candidates()
       |> filter_spell_type()
+      |> filter_with_icon()
 
-    candidates
-    |> Enum.map(fn entry -> {score_spell4_base(entry, class_id), entry} end)
-    |> Enum.max_by(
-      fn {score, entry} ->
-        {score, Map.get(entry, :weaponSlot, 0), Map.get(entry, :castBarType, 0),
-         -Map.get(entry, :id, 0)}
-      end,
-      fn -> nil end
-    )
-    |> case do
+    scored =
+      candidates
+      |> Enum.map(fn entry -> {score_spell4_base(entry, class_id), entry} end)
+
+    result =
+      scored
+      |> Enum.max_by(
+        fn {score, entry} ->
+          {score, Map.get(entry, :weaponSlot, 0), Map.get(entry, :castBarType, 0),
+           -Map.get(entry, :id, 0)}
+        end,
+        fn -> nil end
+      )
+
+    if class_id == 7 do
+      top_3 =
+        scored
+        |> Enum.sort_by(fn {score, _} -> -score end)
+        |> Enum.take(3)
+        |> Enum.map(fn {score, entry} ->
+          id = Map.get(entry, :id, 0)
+          icon = Map.get(entry, :icon, "")
+          entry_class = Map.get(entry, :classIdPlayer, 0)
+          "#{id}(score=#{score},class=#{entry_class},icon?=#{icon != ""})"
+        end)
+
+      Logger.info("pick_spell4_base_id: name=#{name} top_3=#{inspect(top_3)}")
+    end
+
+    case result do
       nil -> nil
       {_score, entry} -> Map.get(entry, :id)
     end
@@ -428,6 +493,16 @@ defmodule BezgelorWorld.Abilities do
       Enum.filter(candidates, fn entry -> Map.get(entry, :spell4SpellTypesIdSpellType) == 5 end)
 
     if class_spells == [], do: candidates, else: class_spells
+  end
+
+  # Only keep entries that have an icon (for proper UI display)
+  defp filter_with_icon(candidates) do
+    with_icon = Enum.filter(candidates, fn entry ->
+      icon = Map.get(entry, :icon, "")
+      icon != "" and icon != nil
+    end)
+
+    if with_icon == [], do: candidates, else: with_icon
   end
 
   defp spell4_base_name_index do
@@ -454,15 +529,48 @@ defmodule BezgelorWorld.Abilities do
     end
   end
 
+  @class_icon_hints %{
+    1 => ["warrior"],
+    2 => ["engineer"],
+    3 => ["esper"],
+    4 => ["medic"],
+    5 => ["stalker", "stlkr", "shadow"],
+    7 => ["spellslinger"]
+  }
+
   defp score_spell4_base(entry, class_id) do
     hints = Map.get(@class_icon_hints, class_id, [])
     icon = Map.get(entry, :icon, "")
+    entry_class = Map.get(entry, :classIdPlayer, 0)
+    spell_class = Map.get(entry, :spellClass, 0)
+    cast_bar_type = Map.get(entry, :castBarType, 0)
+    icon_match = icon_matches?(icon, hints)
 
     score = 0
-    score = if Map.get(entry, :classIdPlayer, 0) > 0, do: score + 4, else: score
-    score = if icon != "", do: score + 2, else: score
-    score = if icon_matches?(icon, hints), do: score + 3, else: score
-    score = if Map.get(entry, :castBarType, 0) > 0, do: score + 1, else: score
+
+    # Icon match is the strongest signal - if icon contains class name, it's likely correct
+    # This overrides most other considerations
+    score = if icon_match, do: score + 20, else: score
+
+    # Class scoring:
+    # - Matching class gets big bonus
+    # - Wrong-class entries are penalized unless icon matches
+    score =
+      cond do
+        entry_class == class_id -> score + 15
+        icon_match -> score + 5
+        entry_class > 0 and spell_class > 0 -> score + 2
+        entry_class > 0 -> score + 0
+        entry_class == 0 -> score - 5
+        true -> score - 10
+      end
+
+    # Data quality bonuses (smaller weight than icon match)
+    score = if spell_class > 0, do: score + 3, else: score
+    score = if cast_bar_type > 0, do: score + 2, else: score
+
+    # Basic bonuses
+    score = if icon != "", do: score + 1, else: score
     score = if Map.get(entry, :weaponSlot, 0) > 0, do: score + 1, else: score
     score
   end

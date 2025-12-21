@@ -2841,13 +2841,13 @@ defmodule BezgelorData.Store do
 
           :from_cache
         rescue
-          e ->
-            Logger.warning("Failed to parse enriched ETF cache: #{inspect(e)}, loading from JSON")
+          _e ->
+            Logger.debug("ETF cache invalid (expected on restart), loading from JSON")
             load_creature_spawns_from_json(table_name)
         end
 
-      {:error, reason} ->
-        Logger.warning("Failed to read enriched ETF cache: #{inspect(reason)}, loading from JSON")
+      {:error, _reason} ->
+        Logger.debug("ETF cache not found, loading from JSON")
         load_creature_spawns_from_json(table_name)
     end
   end

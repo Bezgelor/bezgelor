@@ -198,6 +198,8 @@ defmodule BezgelorCore.Spell do
   @doc """
   Get a spell by ID.
 
+  First checks hardcoded test spells, then falls back to game data from Spell4Base.
+
   ## Examples
 
       iex> BezgelorCore.Spell.get(1)
@@ -208,7 +210,73 @@ defmodule BezgelorCore.Spell do
   """
   @spec get(non_neg_integer()) :: t() | nil
   def get(id) when is_integer(id) do
-    Map.get(build_spells(), id)
+    case Map.get(build_spells(), id) do
+      nil -> get_from_game_data(id)
+      spell -> spell
+    end
+  end
+
+  # Fall back to game data for spells not in hardcoded list
+  @compile {:no_warn_undefined, [BezgelorData, BezgelorData.Store]}
+  defp get_from_game_data(id) do
+    # Look up Spell4 entry (not Spell4Base) since id is a Spell4 ID
+    case BezgelorData.get_spell4_entry(id) do
+      {:ok, spell4} ->
+        # Convert Spell4 to a Spell struct with properties from game data
+        name = get_spell_name_from_spell4(spell4)
+        cast_time = Map.get(spell4, :castTime, 0)
+        cooldown = Map.get(spell4, :spellCoolDown, 0)
+
+        %__MODULE__{
+          id: id,
+          name: name,
+          description: Map.get(spell4, :description, "Game spell #{id}"),
+          cast_time: cast_time,
+          cooldown: cooldown,
+          gcd: true,
+          range: Map.get(spell4, :targetMaxRange, 30.0),
+          resource_cost: 0,
+          resource_type: :none,
+          target_type: :self,
+          aoe_radius: 0.0,
+          effects: [],
+          interrupt_flags: [],
+          spell_school: :magic,
+          hostile: false
+        }
+
+      :error ->
+        nil
+    end
+  end
+
+  # Get spell name from Spell4 entry
+  # Spell4 entries have a description field that often contains the spell name
+  defp get_spell_name_from_spell4(spell4) do
+    # Use description field from Spell4 entry
+    case Map.get(spell4, :description) || Map.get(spell4, "description") do
+      nil -> "Spell #{Map.get(spell4, :id, 0)}"
+      "" -> "Spell #{Map.get(spell4, :id, 0)}"
+      desc when is_binary(desc) -> desc
+    end
+  end
+
+  # Try to get spell name from game data texts
+  @compile {:no_warn_undefined, [BezgelorData.Store]}
+  defp get_spell_name(spell_base) do
+    text_id = Map.get(spell_base, :localizedTextIdName) || Map.get(spell_base, "localizedTextIdName") || 0
+    spell_id = Map.get(spell_base, :id) || Map.get(spell_base, "id") || 0
+
+    case BezgelorData.Store.get(:texts, text_id) do
+      {:ok, text} when is_binary(text) ->
+        text
+
+      {:ok, text_data} when is_map(text_data) ->
+        Map.get(text_data, :text) || Map.get(text_data, "text") || "Spell #{spell_id}"
+
+      _ ->
+        "Spell #{spell_id}"
+    end
   end
 
   @doc """
@@ -216,7 +284,7 @@ defmodule BezgelorCore.Spell do
   """
   @spec exists?(non_neg_integer()) :: boolean()
   def exists?(id) when is_integer(id) do
-    Map.has_key?(build_spells(), id)
+    Map.has_key?(build_spells(), id) or get_from_game_data(id) != nil
   end
 
   @doc """

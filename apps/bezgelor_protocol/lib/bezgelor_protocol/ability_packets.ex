@@ -22,7 +22,7 @@ defmodule BezgelorProtocol.AbilityPackets do
 
   require Logger
 
-  @spec build(map()) :: [{atom(), binary()}]
+  @spec build(map()) :: {[{atom(), binary()}], list()}
   def build(character) do
     class_id = character.class || 1
     active_spec = character.active_spec || 0
@@ -31,7 +31,16 @@ defmodule BezgelorProtocol.AbilityPackets do
     spellbook_abilities = Abilities.get_class_spellbook_abilities(class_id)
     action_set_abilities = Abilities.get_class_action_set_abilities(class_id)
 
-    ActionSets.ensure_default_shortcuts(character.id, action_set_abilities, active_spec,
+    # Resolve action set abilities to have both Spell4 ID (for casting) and Spell4Base ID (for icons)
+    # object_id = Spell4Base ID (for ServerActionSet, matches ability items for icon lookup)
+    # spell_id = Spell4 ID (for casting, telegraph lookup)
+    resolved_action_set_abilities =
+      Enum.map(action_set_abilities, fn ability ->
+        base_id = Abilities.resolve_spell4_base_id(ability.spell_id, class_id)
+        Map.put(ability, :object_id, base_id)
+      end)
+
+    ActionSets.ensure_default_shortcuts(character.id, resolved_action_set_abilities, active_spec,
       force: character.level == 1
     )
 
@@ -39,8 +48,17 @@ defmodule BezgelorProtocol.AbilityPackets do
     shortcuts_by_spec = ActionSets.group_by_spec(shortcuts)
     spell_shortcuts_by_spec = ActionSets.spell_index_by_spec(shortcuts)
 
+    # Resolve Spell4 IDs to Spell4Base IDs for ability items.
+    # Ability items need Spell4Base IDs (with icons) for UI display,
+    # same as the ability book uses.
+    resolved_abilities =
+      Enum.map(spellbook_abilities, fn ability ->
+        base_id = Abilities.resolve_spell4_base_id(ability.spell_id, class_id)
+        %{ability | spell_id: base_id}
+      end)
+
     ability_items =
-      Inventory.ensure_ability_items(character.id, spellbook_abilities)
+      Inventory.ensure_ability_items(character.id, resolved_abilities)
       |> Enum.map(fn item ->
         %ServerItemAdd{
           guid: item.id,
@@ -55,18 +73,30 @@ defmodule BezgelorProtocol.AbilityPackets do
     if class_id in [5, 7] do
       class_label = if class_id == 5, do: "Stalker", else: "Spellslinger"
       Logger.info("#{class_label} ability debug: level=#{character.level} spec=#{active_spec}")
-      Logger.info("  action_set_abilities=#{inspect(action_set_abilities)}")
-      Logger.info("  spellbook_abilities=#{inspect(spellbook_abilities)}")
-      Logger.info("  shortcuts_spec0=#{inspect(Map.get(shortcuts_by_spec, 0, []))}")
-      Logger.info("  ability_items=#{inspect(ability_items)}")
+
+      # Show original Spell4 IDs (for casting/telegraphs)
+      original_ids = Enum.map(spellbook_abilities, & &1.spell_id)
+      Logger.info("  spellbook Spell4 IDs (casting): #{inspect(original_ids)}")
+
+      # Show resolved Spell4Base IDs (for icons/display)
+      resolved_ids = Enum.map(resolved_abilities, & &1.spell_id)
+      Logger.info("  resolved Spell4Base IDs (icons): #{inspect(resolved_ids)}")
+
+      # Show ability item IDs being sent
+      item_ids = Enum.map(ability_items, & &1.item_id)
+      Logger.info("  ability item IDs sent: #{inspect(item_ids)}")
+    end
+
+    ability_book_spells =
+      Abilities.build_ability_book_for_specs(spellbook_abilities, spell_shortcuts_by_spec, class_id)
+
+    if class_id in [5, 7] do
+      Logger.info("  ability_book_spells=#{inspect(ability_book_spells)}")
     end
 
     ability_book_data =
       encode_packet(
-        %ServerAbilityBook{
-          spells:
-            Abilities.build_ability_book_for_specs(spellbook_abilities, spell_shortcuts_by_spec)
-        },
+        %ServerAbilityBook{spells: ability_book_spells},
         ServerAbilityBook
       )
 
@@ -80,6 +110,12 @@ defmodule BezgelorProtocol.AbilityPackets do
       )
 
     action_set_actions = Abilities.build_action_set_from_shortcuts(shortcuts_by_spec)
+
+    if class_id in [5, 7] do
+      spec0_actions = Map.get(action_set_actions, 0, [])
+      object_ids = Enum.map(spec0_actions, & &1.object_id)
+      Logger.info("  action_set object_ids: #{inspect(object_ids)}")
+    end
 
     action_set_sizes =
       for spec_index <- 0..3 do
@@ -145,12 +181,15 @@ defmodule BezgelorProtocol.AbilityPackets do
       )
     end
 
-    ability_item_packets ++
-      [{:server_ability_book, ability_book_data}, {:server_ability_points, ability_points_data}] ++
-      [{:server_action_set_clear_cache, clear_cache_data}] ++
-      action_set_packets ++
-      amp_list_packets ++
-      [{:server_cooldown_list, cooldown_list_data}]
+    packets =
+      ability_item_packets ++
+        [{:server_ability_book, ability_book_data}, {:server_ability_points, ability_points_data}] ++
+        [{:server_action_set_clear_cache, clear_cache_data}] ++
+        action_set_packets ++
+        amp_list_packets ++
+        [{:server_cooldown_list, cooldown_list_data}]
+
+    {packets, shortcuts}
   end
 
   defp encode_packet(packet, module) do
