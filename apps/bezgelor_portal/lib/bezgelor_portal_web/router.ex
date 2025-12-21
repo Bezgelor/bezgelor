@@ -1,5 +1,6 @@
 defmodule BezgelorPortalWeb.Router do
   use BezgelorPortalWeb, :router
+  import Phoenix.LiveDashboard.Router
 
   pipeline :browser do
     plug :accepts, ["html"]
@@ -13,6 +14,19 @@ defmodule BezgelorPortalWeb.Router do
 
   pipeline :api do
     plug :accepts, ["json"]
+  end
+
+  pipeline :require_admin_plug do
+    plug :fetch_session
+    plug :fetch_live_flash
+    plug :protect_from_forgery
+    plug :put_secure_browser_headers
+    plug BezgelorPortalWeb.Plugs.FetchCurrentAccount
+    plug :verify_admin_access
+  end
+
+  defp verify_admin_access(conn, _opts) do
+    BezgelorPortalWeb.Live.Hooks.admins_only(conn)
   end
 
   # Public routes (no auth required)
@@ -129,6 +143,18 @@ defmodule BezgelorPortalWeb.Router do
       # Testing Tools (development only)
       live "/testing", TestingToolsLive, :index
     end
+  end
+
+  # LiveDashboard for admins (outside live_session, uses plug-based auth)
+  scope "/admin" do
+    pipe_through [:require_admin_plug]
+
+    live_dashboard "/live-dashboard",
+      metrics: BezgelorPortalWeb.Telemetry,
+      ecto_repos: [BezgelorDb.Repo],
+      ecto_psql_extras_options: [long_running_queries: [threshold: "200 milliseconds"]],
+      env_keys: ["POSTGRES_HOST", "POSTGRES_PORT", "MIX_ENV"],
+      additional_pages: []
   end
 
   # Development routes - mailbox preview and tracing
