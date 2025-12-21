@@ -966,7 +966,10 @@ defmodule BezgelorWorld.Portal do
 
     case ServerConfig.update_setting(section, key, new_value) do
       :ok ->
-        Logger.info("Admin updated setting #{section}.#{key}: #{inspect(old_value)} -> #{inspect(new_value)}")
+        Logger.info(
+          "Admin updated setting #{section}.#{key}: #{inspect(old_value)} -> #{inspect(new_value)}"
+        )
+
         {:ok, old_value}
 
       {:error, reason} ->
@@ -1000,7 +1003,10 @@ defmodule BezgelorWorld.Portal do
       Task.start(fn ->
         # 1. Countdown warning
         broadcast_system_message("Server restarting in #{delay_seconds} seconds...")
-        Logger.warning("World server restart initiated with #{delay_seconds}s delay, #{player_count} players online")
+
+        Logger.warning(
+          "World server restart initiated with #{delay_seconds}s delay, #{player_count} players online"
+        )
 
         # 2. Wait the configured delay
         Process.sleep(delay_seconds * 1_000)

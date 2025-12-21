@@ -100,7 +100,9 @@ defmodule BezgelorWorld.ServerConfig do
   @spec get_setting(atom(), atom()) :: {:ok, term()} | {:error, :not_found}
   def get_setting(section_name, key) do
     case get_section(section_name) do
-      nil -> {:error, :not_found}
+      nil ->
+        {:error, :not_found}
+
       section ->
         case Map.get(section.settings, key) do
           nil -> {:error, :not_found}
@@ -149,6 +151,7 @@ defmodule BezgelorWorld.ServerConfig do
   defp validate_value(_, %{type: :integer}), do: {:error, :invalid_integer}
 
   defp validate_value(value, %{type: :atom}) when is_atom(value), do: {:ok, value}
+
   defp validate_value(value, %{type: :atom}) when is_binary(value) do
     {:ok, String.to_existing_atom(value)}
   rescue
@@ -224,7 +227,9 @@ defmodule BezgelorWorld.ServerConfig do
     json = Jason.encode!(config, pretty: true)
 
     case File.write(config_path(), json) do
-      :ok -> :ok
+      :ok ->
+        :ok
+
       {:error, reason} ->
         Logger.error("ServerConfig: Failed to persist config: #{inspect(reason)}")
         {:error, reason}

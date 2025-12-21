@@ -116,7 +116,10 @@ defmodule BezgelorPortalWeb.Admin.TestingToolsLive do
 
         {:noreply,
          socket
-         |> assign(batch_in_progress: true, batch_progress: %{total: total, created: 0, failed: 0})
+         |> assign(
+           batch_in_progress: true,
+           batch_progress: %{total: total, created: 0, failed: 0}
+         )
          |> put_flash(:info, "Starting batch creation of #{total} characters...")}
       end
     end
@@ -189,7 +192,9 @@ defmodule BezgelorPortalWeb.Admin.TestingToolsLive do
 
   def handle_info({:batch_progress, created, failed}, socket) do
     {:noreply,
-     assign(socket, batch_progress: %{socket.assigns.batch_progress | created: created, failed: failed})}
+     assign(socket,
+       batch_progress: %{socket.assigns.batch_progress | created: created, failed: failed}
+     )}
   end
 
   def handle_info({:batch_complete, account_id}, socket) do
@@ -210,7 +215,9 @@ defmodule BezgelorPortalWeb.Admin.TestingToolsLive do
     <div class="space-y-6">
       <div>
         <h1 class="text-3xl font-bold">Testing Tools</h1>
-        <p class="text-base-content/60 mt-1">Development utilities for character creation and cleanup</p>
+        <p class="text-base-content/60 mt-1">
+          Development utilities for character creation and cleanup
+        </p>
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
@@ -339,7 +346,9 @@ defmodule BezgelorPortalWeb.Admin.TestingToolsLive do
                 <div class="space-y-2">
                   <div class="flex justify-between text-sm">
                     <span>Progress:</span>
-                    <span>{@batch_progress.created + @batch_progress.failed} / {@batch_progress.total}</span>
+                    <span>
+                      {@batch_progress.created + @batch_progress.failed} / {@batch_progress.total}
+                    </span>
                   </div>
                   <progress
                     class="progress progress-secondary w-full"

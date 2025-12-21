@@ -30,8 +30,7 @@ defmodule BezgelorPortalWeb.Admin.SettingsLive do
        restart_delay: 5,
        player_count: Portal.online_player_count(),
        server_running: Portal.world_server_running?()
-     ),
-     layout: {BezgelorPortalWeb.Layouts, :admin}}
+     ), layout: {BezgelorPortalWeb.Layouts, :admin}}
   end
 
   @impl true
@@ -49,8 +48,8 @@ defmodule BezgelorPortalWeb.Admin.SettingsLive do
           </span>
         </div>
       </div>
-
-      <!-- Section Tabs -->
+      
+    <!-- Section Tabs -->
       <div role="tablist" class="tabs tabs-boxed bg-base-100 p-1 w-fit">
         <button
           :for={{section_key, section} <- @sections}
@@ -63,8 +62,8 @@ defmodule BezgelorPortalWeb.Admin.SettingsLive do
           {section.label}
         </button>
       </div>
-
-      <!-- Settings Card -->
+      
+    <!-- Settings Card -->
       <div class="card bg-base-100 shadow">
         <div class="card-body">
           <h2 class="card-title">{@sections[@active_section].label} Settings</h2>
@@ -88,7 +87,11 @@ defmodule BezgelorPortalWeb.Admin.SettingsLive do
                     </td>
                     <td>
                       <%= if @editing == key do %>
-                        <.edit_input type={setting.type} value={@edit_value} constraints={Map.get(setting, :constraints, %{})} />
+                        <.edit_input
+                          type={setting.type}
+                          value={@edit_value}
+                          constraints={Map.get(setting, :constraints, %{})}
+                        />
                       <% else %>
                         <.value_display value={setting.value} type={setting.type} />
                       <% end %>
@@ -99,7 +102,11 @@ defmodule BezgelorPortalWeb.Admin.SettingsLive do
                     <td>
                       <%= if @editing == key do %>
                         <div class="flex gap-1">
-                          <button type="button" class="btn btn-sm btn-success" phx-click="save_setting">
+                          <button
+                            type="button"
+                            class="btn btn-sm btn-success"
+                            phx-click="save_setting"
+                          >
                             Save
                           </button>
                           <button type="button" class="btn btn-sm btn-ghost" phx-click="cancel_edit">
@@ -126,15 +133,25 @@ defmodule BezgelorPortalWeb.Admin.SettingsLive do
           </div>
         </div>
       </div>
-
-      <!-- Restart Section -->
+      
+    <!-- Restart Section -->
       <div class="card bg-base-100 shadow">
         <div class="card-body">
           <h2 class="card-title">Restart World Server</h2>
 
           <div class="alert alert-warning">
-            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="stroke-current shrink-0 h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
             </svg>
             <div>
               <h3 class="font-bold">Warning</h3>
@@ -175,16 +192,26 @@ defmodule BezgelorPortalWeb.Admin.SettingsLive do
           </div>
         </div>
       </div>
-
-      <!-- Restart Confirmation Modal -->
+      
+    <!-- Restart Confirmation Modal -->
       <%= if @show_restart_modal do %>
         <div class="modal modal-open">
           <div class="modal-box">
             <h3 class="font-bold text-lg">Confirm World Server Restart</h3>
             <div class="py-4 space-y-4">
               <div class="alert alert-error">
-                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="stroke-current shrink-0 h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
                 </svg>
                 <span>This will disconnect <strong>{@player_count}</strong> online players!</span>
               </div>
@@ -389,7 +416,10 @@ defmodule BezgelorPortalWeb.Admin.SettingsLive do
         {:noreply,
          socket
          |> assign(show_restart_modal: false)
-         |> put_flash(:info, "World server restart initiated. #{player_count} players will be disconnected in #{delay} seconds.")}
+         |> put_flash(
+           :info,
+           "World server restart initiated. #{player_count} players will be disconnected in #{delay} seconds."
+         )}
 
       {:error, reason} ->
         {:noreply,
