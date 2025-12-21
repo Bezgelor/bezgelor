@@ -27,8 +27,9 @@ defmodule Mix.Tasks.Bezgelor.Telemetry.Discover do
     format = Keyword.get(opts, :format, "elixir")
     output = Keyword.get(opts, :output)
 
-    # Ensure all apps are compiled
+    # Ensure all apps are compiled and loaded (but not started)
     Mix.Task.run("compile", ["--no-warnings-as-errors"])
+    Mix.Task.run("loadpaths")
 
     # Get all modules from umbrella apps
     apps = [
@@ -41,11 +42,37 @@ defmodule Mix.Tasks.Bezgelor.Telemetry.Discover do
       :bezgelor_portal
     ]
 
-    events =
+    # Load all apps to make modules available (without starting)
+    Enum.each(apps, &Application.load/1)
+
+    # Known modules with telemetry events
+    known_telemetry_modules = [
+      BezgelorAuth.Sts.Handler.AuthHandler,
+      BezgelorProtocol.Handler.RealmAuthHandler,
+      BezgelorProtocol.Handler.WorldEntryHandler,
+      BezgelorWorld.CreatureManager,
+      BezgelorWorld.CreatureDeath,
+      BezgelorWorld.Handler.QuestHandler,
+      BezgelorCore.TelemetryEvent
+    ]
+
+    # Ensure all modules are loaded
+    Enum.each(known_telemetry_modules, &Code.ensure_loaded/1)
+
+    # First try known modules, then fall back to app module scan
+    events_from_known =
+      known_telemetry_modules
+      |> Enum.flat_map(&extract_events_from_module/1)
+      |> Enum.map(&add_source_info/1)
+
+    events_from_apps =
       apps
       |> Enum.flat_map(&get_app_modules/1)
       |> Enum.flat_map(&extract_events_from_module/1)
       |> Enum.map(&add_source_info/1)
+
+    # Combine and deduplicate
+    events = Enum.uniq_by(events_from_known ++ events_from_apps, & &1.event)
 
     # Validate all events
     invalid = Enum.reject(events, fn e -> TelemetryEvent.validate(e) == :ok end)

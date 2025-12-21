@@ -21,6 +21,40 @@ defmodule BezgelorWorld.Handler.QuestHandler do
 
   require Logger
 
+  @telemetry_events [
+    %{
+      event: [:bezgelor, :quest, :accepted],
+      measurements: [:count],
+      tags: [:character_id, :quest_id],
+      description: "Quest accepted by player",
+      domain: :quest
+    },
+    %{
+      event: [:bezgelor, :quest, :completed],
+      measurements: [:count],
+      tags: [:character_id, :quest_id],
+      description: "Quest completed by player",
+      domain: :quest
+    },
+    %{
+      event: [:bezgelor, :quest, :abandoned],
+      measurements: [:count],
+      tags: [:character_id, :quest_id],
+      description: "Quest abandoned by player",
+      domain: :quest
+    }
+  ]
+
+  def telemetry_events, do: @telemetry_events
+
+  defp emit_quest_telemetry(event_type, character_id, quest_id) do
+    :telemetry.execute(
+      [:bezgelor, :quest, event_type],
+      %{count: 1},
+      %{character_id: character_id, quest_id: quest_id}
+    )
+  end
+
   # ============================================================================
   # Handler Behaviour
   # ============================================================================
@@ -62,6 +96,7 @@ defmodule BezgelorWorld.Handler.QuestHandler do
 
         case SessionQuestManager.accept_quest(state.session_data, character_id, packet.quest_id) do
           {:ok, updated_session, {opcode, packet_data}} ->
+            emit_quest_telemetry(:accepted, character_id, packet.quest_id)
             updated_state = %{state | session_data: updated_session}
             {:reply, opcode, packet_data, updated_state}
 
@@ -91,6 +126,7 @@ defmodule BezgelorWorld.Handler.QuestHandler do
 
         case SessionQuestManager.abandon_quest(state.session_data, character_id, packet.quest_id) do
           {:ok, updated_session, {opcode, packet_data}} ->
+            emit_quest_telemetry(:abandoned, character_id, packet.quest_id)
             updated_state = %{state | session_data: updated_session}
             {:reply, opcode, packet_data, updated_state}
 
@@ -120,6 +156,7 @@ defmodule BezgelorWorld.Handler.QuestHandler do
 
         case SessionQuestManager.turn_in_quest(state.session_data, character_id, packet.quest_id) do
           {:ok, updated_session, {opcode, packet_data}} ->
+            emit_quest_telemetry(:completed, character_id, packet.quest_id)
             updated_state = %{state | session_data: updated_session}
 
             # Grant rewards using the RewardHandler

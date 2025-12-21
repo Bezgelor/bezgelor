@@ -13,6 +13,26 @@ defmodule BezgelorWorld.CreatureDeath do
 
   require Logger
 
+  @telemetry_events [
+    %{
+      event: [:bezgelor, :creature, :killed],
+      measurements: [:xp_reward],
+      tags: [:creature_id, :killer_guid, :zone_id, :level],
+      description: "Creature killed by player",
+      domain: :combat
+    }
+  ]
+
+  def telemetry_events, do: @telemetry_events
+
+  defp emit_creature_kill_telemetry(creature_id, killer_guid, zone_id, level, xp_reward) do
+    :telemetry.execute(
+      [:bezgelor, :creature, :killed],
+      %{xp_reward: xp_reward},
+      %{creature_id: creature_id, killer_guid: killer_guid, zone_id: zone_id, level: level}
+    )
+  end
+
   @doc """
   Handle creature death and generate loot/XP rewards.
 
@@ -97,6 +117,15 @@ defmodule BezgelorWorld.CreatureDeath do
     }
 
     log_death(entity, killer_guid, opts)
+
+    # Emit telemetry for creature kill
+    emit_creature_kill_telemetry(
+      creature_id,
+      killer_guid,
+      zone_id,
+      creature_level,
+      xp_reward
+    )
 
     {{:ok, :killed, result_info}, new_creature_state}
   end

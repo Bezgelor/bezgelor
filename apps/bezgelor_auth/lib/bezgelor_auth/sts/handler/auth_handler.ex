@@ -14,6 +14,26 @@ defmodule BezgelorAuth.Sts.Handler.AuthHandler do
   alias BezgelorAuth.Sts.{Packet, Session}
   alias BezgelorDb.Accounts
 
+  @telemetry_events [
+    %{
+      event: [:bezgelor, :auth, :login_complete],
+      measurements: [:duration_ms],
+      tags: [:account_id, :success, :failure_reason],
+      description: "Authentication attempt completed",
+      domain: :auth
+    }
+  ]
+
+  def telemetry_events, do: @telemetry_events
+
+  defp emit_login_telemetry(account_id, success, failure_reason, duration_ms) do
+    :telemetry.execute(
+      [:bezgelor, :auth, :login_complete],
+      %{duration_ms: duration_ms},
+      %{account_id: account_id, success: success, failure_reason: failure_reason}
+    )
+  end
+
   @doc """
   Handle /Auth/LoginStart
 
@@ -37,6 +57,7 @@ defmodule BezgelorAuth.Sts.Handler.AuthHandler do
           case Accounts.get_by_email(email) do
             nil ->
               Logger.debug("[STS] Account not found: #{email}")
+              emit_login_telemetry(nil, false, :account_not_found, 0)
               {:error, 400, "Invalid credentials", session}
 
             account ->
@@ -44,10 +65,12 @@ defmodule BezgelorAuth.Sts.Handler.AuthHandler do
               case Accounts.check_suspension(account) do
                 {:error, :account_banned} ->
                   Logger.debug("[STS] Account is banned: #{email}")
+                  emit_login_telemetry(account.id, false, :account_banned, 0)
                   {:error, 403, "Account banned", session}
 
                 {:error, {:account_suspended, days}} ->
                   Logger.debug("[STS] Account is suspended: #{email} (#{days} days remaining)")
+                  emit_login_telemetry(account.id, false, :account_suspended, 0)
                   {:error, 403, "Account suspended", session}
 
                 :ok ->
@@ -91,6 +114,9 @@ defmodule BezgelorAuth.Sts.Handler.AuthHandler do
                 "[STS] This usually means the password is wrong or the account was created with incompatible SRP6 credentials"
               )
 
+              account_id = if session.account, do: session.account.id, else: nil
+              emit_login_telemetry(account_id, false, :invalid_credentials, 0)
+
               {:error, 401, "Invalid credentials", session}
 
             {:error, reason} ->
@@ -115,6 +141,9 @@ defmodule BezgelorAuth.Sts.Handler.AuthHandler do
   def handle_login_finish(_packet, session) do
     case Session.finish_login(session) do
       {:ok, new_session} ->
+        # Emit success telemetry
+        emit_login_telemetry(new_session.account.id, true, nil, 0)
+
         # Return location and user info
         response = build_login_finish_response(new_session.account)
         {:ok, response, new_session}

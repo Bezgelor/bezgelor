@@ -99,15 +99,108 @@ defmodule BezgelorPortalWeb.Telemetry do
         tags: [:character_name],
         unit: :millisecond,
         description: "Client main loop buffer time (should be ~1000ms)"
+      ),
+
+      # Server Stats (from periodic poller)
+      last_value("bezgelor.server.players.online",
+        description: "Number of players currently online"
+      ),
+      last_value("bezgelor.server.creatures.spawned",
+        description: "Number of creatures currently spawned"
+      ),
+      last_value("bezgelor.server.zones.active",
+        description: "Number of zones with active players"
+      ),
+
+      # Game Telemetry Events
+      counter("bezgelor.auth.login_complete.count",
+        tags: [:success],
+        description: "Login attempts"
+      ),
+      counter("bezgelor.realm.session_start.count",
+        tags: [:success],
+        description: "Realm session starts"
+      ),
+      counter("bezgelor.world.player_entered.count",
+        tags: [:zone_id],
+        description: "Players entering world"
+      ),
+      sum("bezgelor.combat.damage.damage_amount",
+        tags: [:target_type],
+        description: "Total damage dealt"
+      ),
+      counter("bezgelor.quest.accepted.count",
+        description: "Quests accepted"
+      ),
+      counter("bezgelor.quest.completed.count",
+        description: "Quests completed"
+      ),
+      counter("bezgelor.creature.killed.count",
+        tags: [:zone_id],
+        description: "Creatures killed"
+      ),
+      sum("bezgelor.creature.killed.xp_reward",
+        description: "Total XP from kills"
       )
     ]
   end
 
   defp periodic_measurements do
     [
-      # A module, function and arguments to be invoked periodically.
-      # This function must call :telemetry.execute/3 and a metric must be added above.
-      # {BezgelorPortalWeb, :count_users, []}
+      # Server stats - these are measured every 10 seconds
+      {__MODULE__, :measure_server_stats, []}
     ]
+  end
+
+  @doc false
+  def measure_server_stats do
+    # Get player count from WorldManager if available
+    player_count =
+      try do
+        BezgelorWorld.WorldManager.session_count()
+      rescue
+        _ -> 0
+      catch
+        :exit, _ -> 0
+      end
+
+    # Get creature count from CreatureManager if available
+    creature_count =
+      try do
+        BezgelorWorld.CreatureManager.creature_count()
+      rescue
+        _ -> 0
+      catch
+        :exit, _ -> 0
+      end
+
+    # Get active zone count (list_worlds_with_players returns a MapSet)
+    active_zones =
+      try do
+        BezgelorWorld.World.InstanceSupervisor.list_worlds_with_players()
+        |> MapSet.size()
+      rescue
+        _ -> 0
+      catch
+        :exit, _ -> 0
+      end
+
+    :telemetry.execute(
+      [:bezgelor, :server, :players],
+      %{online: player_count},
+      %{}
+    )
+
+    :telemetry.execute(
+      [:bezgelor, :server, :creatures],
+      %{spawned: creature_count},
+      %{}
+    )
+
+    :telemetry.execute(
+      [:bezgelor, :server, :zones],
+      %{active: active_zones},
+      %{}
+    )
   end
 end

@@ -51,6 +51,26 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
   require Logger
   import Bitwise
 
+  @telemetry_events [
+    %{
+      event: [:bezgelor, :world, :player_entered],
+      measurements: [:count],
+      tags: [:character_id, :zone_id, :level],
+      description: "Player entered the world",
+      domain: :world
+    }
+  ]
+
+  def telemetry_events, do: @telemetry_events
+
+  defp emit_world_entry_telemetry(character_id, zone_id, level) do
+    :telemetry.execute(
+      [:bezgelor, :world, :player_entered],
+      %{count: 1},
+      %{character_id: character_id, zone_id: zone_id, level: level}
+    )
+  end
+
   @impl true
   def handle(_payload, state) do
     character = state.session_data[:character]
@@ -151,6 +171,9 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
     state = put_in(state.session_data[:world_id], world_id)
 
     Logger.debug("Loaded #{length(triggers)} trigger volumes for zone #{zone_id}")
+
+    # Emit telemetry for world entry
+    emit_world_entry_telemetry(character.id, zone_id, character.level)
 
     Logger.info(
       "Player '#{character.name}' (GUID: #{guid}, Level: #{character.level}) entered world " <>
