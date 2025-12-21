@@ -1,21 +1,32 @@
 # BezgelorDb
 
-**TODO: Add description**
+Ecto-based database layer for persistent game data.
 
-## Installation
+## Features
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `bezgelor_db` to your list of dependencies in `mix.exs`:
+- Account and character management
+- Guild and social systems
+- Inventory and item storage
+- Quest progress tracking
+- Instance lockouts
 
-```elixir
-def deps do
-  [
-    {:bezgelor_db, "~> 0.1.0"}
-  ]
-end
+## Context Modules
+
+- `BezgelorDb.Accounts` - Account CRUD and authentication
+- `BezgelorDb.Characters` - Character persistence
+- `BezgelorDb.Guilds` - Guild management
+- `BezgelorDb.Inventory` - Item and bag management
+- `BezgelorDb.Quests` - Quest progress
+
+## Database Setup
+
+```bash
+# Create and migrate
+mix ecto.create
+mix ecto.migrate
+
+# Reset (drops and recreates)
+mix ecto.reset
 ```
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at <https://hexdocs.pm/bezgelor_db>.
-
+PostgreSQL on port 5433 (non-standard). Configure via environment variables.

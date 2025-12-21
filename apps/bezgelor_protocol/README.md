@@ -1,21 +1,39 @@
 # BezgelorProtocol
 
-**TODO: Add description**
+WildStar binary protocol implementation - packet parsing, serialization, framing, and handlers.
 
-## Installation
+## Features
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `bezgelor_protocol` to your list of dependencies in `mix.exs`:
+- Binary packet reading/writing with bit-level precision
+- Opcode registry for all WildStar packets
+- Handler behaviour for processing incoming packets
+- TCP listener and connection management
+- Support for both realm and world packet formats
+
+## Key Modules
+
+- `PacketReader` / `PacketWriter` - Bit-packed binary I/O
+- `Opcode` - Packet type enumeration
+- `Handler` - Behaviour for packet processors
+- `Connection` - Client connection state machine
+
+## Packet Implementation
+
+Packets implement `Readable` and/or `Writable` behaviours:
 
 ```elixir
-def deps do
-  [
-    {:bezgelor_protocol, "~> 0.1.0"}
-  ]
+defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
+  @behaviour BezgelorProtocol.Packet.Writable
+
+  @impl true
+  def opcode, do: :server_entity_create
+
+  @impl true
+  def write(%__MODULE__{} = packet, writer) do
+    writer
+    |> PacketWriter.write_u32(packet.entity_id)
+    |> PacketWriter.write_u64(packet.guid)
+    |> PacketWriter.flush_bits()
+  end
 end
 ```
-
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at <https://hexdocs.pm/bezgelor_protocol>.
-

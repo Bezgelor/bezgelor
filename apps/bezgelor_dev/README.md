@@ -1,21 +1,14 @@
 # BezgelorDev
 
-**TODO: Add description**
+Development tools and utilities for the Bezgelor project.
 
-## Installation
+## Features
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `bezgelor_dev` to your list of dependencies in `mix.exs`:
+- Development-time helpers
+- Debug utilities
+- Test data generation
+- Local development configuration
 
-```elixir
-def deps do
-  [
-    {:bezgelor_dev, "~> 0.1.0"}
-  ]
-end
-```
+## Usage
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at <https://hexdocs.pm/bezgelor_dev>.
-
+This application is only included in `:dev` and `:test` environments.

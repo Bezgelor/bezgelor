@@ -1,21 +1,22 @@
 # BezgelorCrypto
 
-**TODO: Add description**
+Cryptographic primitives for WildStar protocol security.
 
-## Installation
+## Features
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `bezgelor_crypto` to your list of dependencies in `mix.exs`:
+- SRP6 authentication protocol implementation
+- Packet encryption/decryption
+- Password hashing and verification
+- Session key generation
+
+## Usage
 
 ```elixir
-def deps do
-  [
-    {:bezgelor_crypto, "~> 0.1.0"}
-  ]
-end
+# Password verification
+BezgelorCrypto.Password.verify(password, stored_hash)
+
+# SRP6 authentication
+{:ok, session} = BezgelorCrypto.SRP6.server_init(username, verifier)
 ```
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at <https://hexdocs.pm/bezgelor_crypto>.
-
+This module provides the security foundation used by auth, realm, and world servers.

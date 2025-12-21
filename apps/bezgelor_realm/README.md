@@ -1,21 +1,18 @@
 # BezgelorRealm
 
-**TODO: Add description**
+Realm server handling character selection and world server routing.
 
-## Installation
+## Features
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `bezgelor_realm` to your list of dependencies in `mix.exs`:
+- Character list display
+- Character creation/deletion
+- Realm status and population tracking
+- World server connection handoff
+- TCP listener on port 23115
 
-```elixir
-def deps do
-  [
-    {:bezgelor_realm, "~> 0.1.0"}
-  ]
-end
-```
+## Flow
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at <https://hexdocs.pm/bezgelor_realm>.
-
+1. Client authenticates via Auth server (BezgelorAuth)
+2. Client connects to Realm server with session token
+3. Player selects/creates character
+4. Realm server provides world server connection details
