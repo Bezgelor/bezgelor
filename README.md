@@ -8,6 +8,8 @@ Bezgelor is an Elixir umbrella application that emulates WildStar game servers u
 
 ## Features
 
+> **Note:** While work has been done on the following components, much of it isn't fully functional due to incomplete implementation or bugs. This project is under active development.
+
 - **Authentication** - SRP6 zero-knowledge authentication with packet encryption
 - **Character Management** - Creation, customization, selection, and deletion
 - **Combat System** - Spells, damage, healing, creature AI with threat tables
