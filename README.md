@@ -211,6 +211,22 @@ mix test apps/bezgelor_core/test/
 mix test --include database
 ```
 
+## Development
+
+### Hot Reloading
+
+Elixir's hot code reloading means server restarts are rarely needed when testing code changes. After modifying a file, simply recompile from the IEx shell:
+
+```elixir
+# Recompile all changed modules
+recompile()
+
+# Recompile a specific module
+r(BezgelorWorld.Handler.SpellHandler)
+```
+
+Changes take effect immediately for new connections and handler calls. Existing player sessions may need to relog for certain changes (like session state modifications), but most gameplay changes work instantly.
+
 ## Development Capture System
 
 The `bezgelor_dev` app provides zero-overhead infrastructure for reverse engineering unknown WildStar protocol packets. When enabled in development mode:

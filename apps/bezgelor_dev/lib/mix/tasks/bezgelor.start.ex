@@ -123,8 +123,6 @@ defmodule Mix.Tasks.Bezgelor.Start do
     # Orange to blue gradient colors (256-color ANSI)
     colors = [208, 214, 220, 184, 148, 112, 76, 45, 39, 33]
 
-    welcome = "    W e l c o m e   t o"
-
     # ASCII art for BEZGELOR - each line is a row
     art = [
       " ██████╗ ███████╗███████╗ ██████╗ ███████╗██╗      ██████╗ ██████╗ ",
@@ -135,16 +133,12 @@ defmodule Mix.Tasks.Bezgelor.Start do
       " ╚═════╝ ╚══════╝╚══════╝ ╚═════╝ ╚══════╝╚══════╝ ╚═════╝ ╚═╝  ╚═╝"
     ]
 
-    # "For science!" right-aligned with same margin as "Welcome to..."
-    # Art width is 68, moved left 12 chars = 40 leading spaces
-    for_science = "                                        F o r   s c i e n c e !"
+    # "For science!" tagline (aligned 2 chars right of center)
+    for_science = "                                          F o r   s c i e n c e !"
 
     # Calculate segment width for gradient
     width = String.length(Enum.at(art, 0))
     segment_width = div(width, length(colors))
-
-    # Apply gradient to welcome text (centered)
-    welcome_colored = apply_gradient(welcome, colors, segment_width)
 
     # Apply gradient to each line of ASCII art
     art_colored =
@@ -157,7 +151,7 @@ defmodule Mix.Tasks.Bezgelor.Start do
 
     reset = "\e[0m"
 
-    ([welcome_colored] ++ art_colored ++ [for_science_colored])
+    (art_colored ++ [for_science_colored])
     |> Enum.join("\n")
     |> Kernel.<>(reset)
   end

@@ -263,17 +263,17 @@ Each connected client gets a dedicated **Connection process**:
 - **Simplicity**: No locks, no shared mutable state
 - **Scalability**: Processes spread across CPU cores automatically
 
-### One Process Per Zone
+### One Process Per World Instance
 
-Each active zone shard runs as its own **Zone.Instance process**:
+Each active world shard runs as its own **World.Instance process**:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    Zone Instance Supervisor                     │
+│                   World Instance Supervisor                     │
 │                    (DynamicSupervisor)                          │
 │                                                                 │
 │  ┌──────────────────┐  ┌──────────────────┐  ┌────────────────┐ │
-│  │ Zone.Instance    │  │ Zone.Instance    │  │ Zone.Instance  │ │
+│  │ World.Instance   │  │ World.Instance   │  │ World.Instance │ │
 │  │ Thayd (1,1)      │  │ Illium (2,1)     │  │ Dungeon (3,5)  │ │
 │  │                  │  │                  │  │                │ │
 │  │ Entities: 150    │  │ Entities: 89     │  │ Entities: 12   │ │
@@ -281,7 +281,7 @@ Each active zone shard runs as its own **Zone.Instance process**:
 │  │ Creatures: 105   │  │ Creatures: 66    │  │ Creatures: 7   │ │
 │  └──────────────────┘  └──────────────────┘  └────────────────┘ │
 │                                                                 │
-│  Registry: {zone_id, instance_id} → pid                         │
+│  Registry: {world_id, instance_id} → pid                        │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -294,41 +294,62 @@ Each active zone shard runs as its own **Zone.Instance process**:
 ```
 BezgelorWorld.Supervisor (one_for_one)
 │
+├── RealmMonitor (GenServer)
+│   └── Marks realm online, monitors health
+│
 ├── WorldManager (GenServer)
 │   └── Central registry for all player sessions
+│
+├── TickScheduler (GenServer)
+│   └── Master periodic game tick (buffs, AI, etc.)
 │
 ├── CreatureManager (GenServer)
 │   └── Spawns and manages NPC creatures
 │
+├── HarvestNodeManager (GenServer)
+│   └── Manages gathering/harvesting nodes
+│
 ├── BuffManager (GenServer)
 │   └── Tracks temporary effects on entities
+│
+├── SpellManager (GenServer)
+│   └── Processes spell casts, cooldowns, cast timers
 │
 ├── CorpseManager (GenServer)
 │   └── Manages lootable corpses
 │
-├── TickScheduler (GenServer)
-│   └── Periodic game updates (buffs, etc.)
+├── WorldRegistry (Registry)
+│   └── Maps {world_id, instance_id} → World.Instance pid
 │
-├── ZoneRegistry (Registry)
-│   └── Maps {zone_id, instance_id} → Zone.Instance pid
-│
-├── Zone.InstanceSupervisor (DynamicSupervisor)
-│   ├── Zone.Instance (Thayd, 1)
-│   ├── Zone.Instance (Illium, 1)
-│   ├── Zone.Instance (Dungeon, 5)
+├── World.InstanceSupervisor (DynamicSupervisor)
+│   ├── World.Instance (Thayd, 1)
+│   ├── World.Instance (Illium, 1)
 │   └── ... (created on demand)
 │
 ├── Instance.Supervisor (DynamicSupervisor)
 │   └── Dungeon/Raid instances
 │
+├── Instance.Registry (GenServer)
+│   └── Tracks active instance processes
+│
 ├── GroupFinder (GenServer)
 │   └── Matchmaking queue
 │
+├── LockoutManager (GenServer)
+│   └── Manages instance lockout resets
+│
+├── MythicManager (GenServer)
+│   └── Mythic+ keystones and affixes
+│
+├── EventScheduler (GenServer)
+│   └── Schedules and spawns world events
+│
 ├── PvP Subsystem
 │   ├── DuelManager
-│   ├── BattlegroundSupervisor
-│   ├── ArenaQueue
-│   └── ...
+│   ├── BattlegroundSupervisor + Queue
+│   ├── ArenaSupervisor + Queue
+│   ├── WarplotManager
+│   └── SeasonScheduler
 │
 └── TcpListener (Ranch)
     └── Spawns Connection processes for each client
@@ -778,7 +799,7 @@ The protocol layer needs to dispatch to world handlers, but the world layer depe
 │      │  ClientEnteredWorld             │                            │
 │      │ ──────────────────────────────► │                            │
 │      │                                 │ Set in_world = true        │
-│      │                                 │ Add to Zone.Instance       │
+│      │                                 │ Add to World.Instance      │
 │      │                                 │ Start quest timer          │
 │      │                                 │                            │
 │      │  ServerEntityCreate (others)    │                            │
@@ -871,7 +892,7 @@ The **bezgelor_portal** application provides a web interface for players and adm
 ┌─────────────────────────────────────────────────────────────────────┐
 │                    bezgelor_world (Port 24000)                       │
 │                                                                      │
-│  WorldManager, CreatureManager, Zone.Instance, BuffManager, etc.    │
+│  WorldManager, CreatureManager, World.Instance, BuffManager, etc.   │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -1206,19 +1227,19 @@ Database access through domain modules:
 
 ### 6. Dynamic Supervisors
 
-Zone instances created on demand:
-- `DynamicSupervisor.start_child(ZoneSupervisor, {Zone.Instance, opts})`
+World instances created on demand:
+- `DynamicSupervisor.start_child(WorldInstanceSupervisor, {World.Instance, opts})`
 - Automatic cleanup when empty
 - Fault tolerance per zone
 
 ### 7. Registry for Named Lookups
 
 ```elixir
-# Register zone instance
-{:via, Registry, {ZoneRegistry, {zone_id, instance_id}}}
+# Register world instance
+{:via, Registry, {WorldRegistry, {world_id, instance_id}}}
 
 # Call by name tuple
-Zone.Instance.add_entity({426, 1}, entity)
+World.Instance.add_entity({426, 1}, entity)
 ```
 
 ---
