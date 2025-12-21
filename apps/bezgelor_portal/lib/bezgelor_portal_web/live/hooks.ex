@@ -23,6 +23,7 @@ defmodule BezgelorPortalWeb.Live.Hooks do
 
   import Phoenix.LiveView
   import Phoenix.Component
+  import Plug.Conn, only: [get_session: 2]
 
   alias BezgelorDb.{Accounts, Authorization}
   alias BezgelorPortal.TOTP
@@ -166,6 +167,34 @@ defmodule BezgelorPortalWeb.Live.Hooks do
       BezgelorWorld.Portal.server_status()
     rescue
       _ -> %{online_players: 0, maintenance_mode: false, uptime_seconds: 0}
+    end
+  end
+
+  @doc """
+  Check if session has admin access for LiveDashboard.
+
+  Used by LiveDashboard's plug pipeline.
+  Returns the conn if admin, halts otherwise.
+  """
+  def admins_only(conn) do
+    account_id = get_session(conn, :current_account_id)
+
+    case account_id && Accounts.get_by_id(account_id) do
+      nil ->
+        conn
+        |> Phoenix.Controller.put_flash(:error, "You must be logged in to access this page.")
+        |> Phoenix.Controller.redirect(to: "/login")
+        |> Plug.Conn.halt()
+
+      account ->
+        if has_admin_access?(account) and TOTP.enabled?(account) do
+          conn
+        else
+          conn
+          |> Phoenix.Controller.put_flash(:error, "Admin access with 2FA required.")
+          |> Phoenix.Controller.redirect(to: "/dashboard")
+          |> Plug.Conn.halt()
+        end
     end
   end
 end
