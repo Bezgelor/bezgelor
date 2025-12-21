@@ -160,7 +160,12 @@ defmodule BezgelorCore.ActiveEffect do
     {state, total_absorbed, 0}
   end
 
-  defp consume_absorb_loop(state, [{buff_id, effect_data} | rest], remaining_damage, total_absorbed) do
+  defp consume_absorb_loop(
+         state,
+         [{buff_id, effect_data} | rest],
+         remaining_damage,
+         total_absorbed
+       ) do
     absorb_amount = effect_data.buff.amount
 
     cond do

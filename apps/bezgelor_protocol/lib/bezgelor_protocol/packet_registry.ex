@@ -122,12 +122,17 @@ defmodule BezgelorProtocol.PacketRegistry do
       # Marketplace/Auction
       client_request_owned_commodity_orders: Handler.CommodityOrdersHandler,
       client_request_owned_item_auctions: Handler.ItemAuctionsHandler,
+      # Resurrection/Respawn
+      client_resurrect_accept: Handler.ResurrectionHandler,
+      client_resurrect_at_bindpoint: Handler.ResurrectionHandler,
       # Unknown opcodes (for investigation)
       client_unknown_0x0269: Handler.Unknown0x0269Handler,
       client_unknown_0x07CC: Handler.Unknown0x07CCHandler,
       client_unknown_0x00D5: Handler.Unknown0x00D5Handler,
+      client_unknown_0x00DE: Handler.Unknown0x00DEHandler,
       client_unknown_0x00FB: Handler.Unknown0x00FBHandler,
       client_unknown_0x0635: Handler.Unknown0x0635Handler,
+      client_unknown_0x00E3: Handler.Unknown0x00E3Handler,
       client_p2p_trading_cancel: Handler.P2PTradingCancelHandler
     }
   end

@@ -1,18 +1,43 @@
 # BezgelorPortal
 
-To start your Phoenix server:
+Phoenix LiveView web interface for players and administrators.
 
-* Run `mix setup` to install and setup dependencies
-* Start Phoenix endpoint with `mix phx.server` or inside IEx with `iex -S mix phx.server`
+## Features
 
-Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
+### Player Dashboard
+- Character overview with stats, gear, and progression
+- Inventory browser (bags, bank, equipped items)
+- Achievement tracker across all categories
+- Guild management and roster viewing
+- Mail center with attachment support
+- Account settings and preferences
 
-Ready to run in production? Please [check our deployment guides](https://hexdocs.pm/phoenix/deployment.html).
+### Admin Console
+- Real-time server monitoring (players, zones, health)
+- User management (search, suspend, ban, password reset)
+- Character tools (grant items/currency, teleport, reset lockouts)
+- Economy monitoring and transaction history
+- Instance management (dungeons, raids)
+- Event control (public events, world bosses)
+- Analytics and player activity trends
+- Audit logs with filtering
 
-## Learn more
+## Access Control
 
-* Official website: https://www.phoenixframework.org/
-* Guides: https://hexdocs.pm/phoenix/overview.html
-* Docs: https://hexdocs.pm/phoenix
-* Forum: https://elixirforum.com/c/phoenix-forum
-* Source: https://github.com/phoenixframework/phoenix
+Role-based permissions (Player, GM, Admin, SuperAdmin) control feature access. All admin actions are logged.
+
+## Running
+
+```bash
+# Start with live reload (development)
+mix phx.server
+
+# Or inside IEx
+iex -S mix phx.server
+```
+
+Visit http://localhost:4000 in your browser.
+
+## Configuration
+
+See `config/dev.exs` for development settings and `config/runtime.exs` for environment variable configuration.

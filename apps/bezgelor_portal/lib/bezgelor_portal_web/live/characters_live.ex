@@ -222,7 +222,10 @@ defmodule BezgelorPortalWeb.CharactersLive do
     assigns = assign(assigns, :faction, faction)
 
     ~H"""
-    <div class={"badge #{badge_class(@size)}"} style={"background-color: #{@faction.color}; color: white"}>
+    <div
+      class={"badge #{badge_class(@size)}"}
+      style={"background-color: #{@faction.color}; color: white"}
+    >
       {@faction.name}
     </div>
     """

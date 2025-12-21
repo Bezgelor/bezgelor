@@ -9,7 +9,7 @@ import Config
 config :bezgelor_portal, BezgelorPortalWeb.Endpoint,
   # Binding to loopback ipv4 address prevents access from other machines.
   # Change to `ip: {0, 0, 0, 0}` to allow access from other machines.
-  #http: [ip: {127, 0, 0, 1}, port: 4000],
+  # http: [ip: {127, 0, 0, 1}, port: 4000],
   http: [ip: {0, 0, 0, 0}, port: 4000],
   server: true,
   check_origin: false,
@@ -70,7 +70,7 @@ config :bezgelor_portal, dev_routes: true
 # Usage:
 #   mix run --no-halt              # Clean console, debug in file
 #   LOG_LEVEL=debug mix run        # Debug on console too
-#   tail -f logs/dev.log           # Monitor debug output in real-time
+#   tail -F logs/dev.log           # Monitor debug output (follows rotation)
 #
 # Configuration:
 #   :logger, :console, level:      Console log level (default: info)
@@ -87,8 +87,10 @@ config :logger, :console,
 config :bezgelor_core,
   file_log: [
     path: "logs/dev.log",
-    max_bytes: 5_000_000,   # 5MB per file
-    max_files: 3            # Keep 3 rotated files
+    # 5MB per file
+    max_bytes: 5_000_000,
+    # Keep 3 rotated files
+    max_files: 3
   ]
 
 # Set a higher stacktrace during development. Avoid configuring such

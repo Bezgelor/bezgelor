@@ -10,15 +10,15 @@ defmodule BezgelorDb.Schema.WorldBossSpawn do
   @states [:waiting, :spawned, :engaged, :killed]
 
   schema "world_boss_spawns" do
-    field :boss_id, :integer
-    field :zone_id, :integer
+    field(:boss_id, :integer)
+    field(:zone_id, :integer)
 
-    field :state, Ecto.Enum, values: @states, default: :waiting
-    field :spawn_window_start, :utc_datetime
-    field :spawn_window_end, :utc_datetime
-    field :spawned_at, :utc_datetime
-    field :killed_at, :utc_datetime
-    field :next_spawn_after, :utc_datetime
+    field(:state, Ecto.Enum, values: @states, default: :waiting)
+    field(:spawn_window_start, :utc_datetime)
+    field(:spawn_window_end, :utc_datetime)
+    field(:spawned_at, :utc_datetime)
+    field(:killed_at, :utc_datetime)
+    field(:next_spawn_after, :utc_datetime)
 
     timestamps(type: :utc_datetime)
   end
@@ -26,8 +26,14 @@ defmodule BezgelorDb.Schema.WorldBossSpawn do
   def changeset(spawn, attrs) do
     spawn
     |> cast(attrs, [
-      :boss_id, :zone_id, :state, :spawn_window_start, :spawn_window_end,
-      :spawned_at, :killed_at, :next_spawn_after
+      :boss_id,
+      :zone_id,
+      :state,
+      :spawn_window_start,
+      :spawn_window_end,
+      :spawned_at,
+      :killed_at,
+      :next_spawn_after
     ])
     |> validate_required([:boss_id, :zone_id])
     |> unique_constraint([:boss_id])

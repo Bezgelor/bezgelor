@@ -143,7 +143,9 @@ defmodule BezgelorWorld.RealmMonitor do
   defp update_realm_status(realm, online) when realm.online != online do
     case Realms.set_online(realm, online) do
       {:ok, _} ->
-        Logger.info("Realm '#{realm.name}' (#{realm.id}) is now #{if online, do: "online", else: "offline"}")
+        Logger.info(
+          "Realm '#{realm.name}' (#{realm.id}) is now #{if online, do: "online", else: "offline"}"
+        )
 
       {:error, reason} ->
         Logger.warning("Failed to update realm '#{realm.name}' status: #{inspect(reason)}")

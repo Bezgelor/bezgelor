@@ -22,17 +22,27 @@ defmodule BezgelorPortalWeb.RegisterLive do
     else
       # Use a simple map for the initial form to avoid changeset issues
       # Include terms_accepted to preserve checkbox state during validation
-      form = to_form(%{"email" => "", "password" => "", "password_confirmation" => "", "terms_accepted" => "false"}, as: :registration)
+      form =
+        to_form(
+          %{
+            "email" => "",
+            "password" => "",
+            "password_confirmation" => "",
+            "terms_accepted" => "false"
+          },
+          as: :registration
+        )
 
       # Store client IP during mount for rate limiting (can only access connect_info in mount)
-      client_ip = if connected?(socket) do
-        case get_connect_info(socket, :peer_data) do
-          %{address: addr} -> format_ip(addr)
-          _ -> "unknown"
+      client_ip =
+        if connected?(socket) do
+          case get_connect_info(socket, :peer_data) do
+            %{address: addr} -> format_ip(addr)
+            _ -> "unknown"
+          end
+        else
+          "unknown"
         end
-      else
-        "unknown"
-      end
 
       {:ok,
        assign(socket,
@@ -108,8 +118,7 @@ defmodule BezgelorPortalWeb.RegisterLive do
     <div class="divider">OR</div>
 
     <p class="text-center text-sm text-base-content/70">
-      Already have an account?
-      <.link href="/login" class="link link-primary">Sign in</.link>
+      Already have an account? <.link href="/login" class="link link-primary">Sign in</.link>
     </p>
     """
   end
@@ -145,13 +154,14 @@ defmodule BezgelorPortalWeb.RegisterLive do
   end
 
   defp strength_color(strength, level) do
-    required = case strength do
-      :weak -> 1
-      :fair -> 2
-      :good -> 3
-      :strong -> 4
-      _ -> 0
-    end
+    required =
+      case strength do
+        :weak -> 1
+        :fair -> 2
+        :good -> 3
+        :strong -> 4
+        _ -> 0
+      end
 
     if level <= required do
       case strength do
@@ -194,15 +204,17 @@ defmodule BezgelorPortalWeb.RegisterLive do
 
     # Only use changeset validation if check_errors is true (after submit attempt)
     # Otherwise just update the form values
-    form = if socket.assigns.check_errors do
-      changeset =
-        params
-        |> registration_changeset()
-        |> Map.put(:action, :validate)
-      to_form(changeset, as: :registration)
-    else
-      to_form(params, as: :registration)
-    end
+    form =
+      if socket.assigns.check_errors do
+        changeset =
+          params
+          |> registration_changeset()
+          |> Map.put(:action, :validate)
+
+        to_form(changeset, as: :registration)
+      else
+        to_form(params, as: :registration)
+      end
 
     password_strength = calculate_password_strength(params["password"] || "")
 

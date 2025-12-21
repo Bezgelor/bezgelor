@@ -34,13 +34,11 @@ defmodule BezgelorProtocol.Packets.World.ServerItemAdd do
     item              : Item (above)
     reason            : 6-bit enum (ItemUpdateReason)
 
-  ## InventoryLocation enum values
+  ## InventoryLocation enum values (NexusForever)
   - 0: Equipped
   - 1: Inventory (bags)
-  - 2: Bank
-  - 5: BuyBack
-  - 6: Ability
-  - 7: SupplySatchel
+  - 2: PlayerBank
+  - 4: Ability
   """
   @behaviour BezgelorProtocol.Packet.Writable
 
@@ -73,6 +71,7 @@ defmodule BezgelorProtocol.Packets.World.ServerItemAdd do
   @location_equipped 0
   @location_inventory 1
   @location_bank 2
+  @location_ability 4
 
   # ItemUpdateReason enum (6 bits)
   @reason_no_reason 0
@@ -147,6 +146,7 @@ defmodule BezgelorProtocol.Packets.World.ServerItemAdd do
 
     # ItemUpdateReason (6 bits)
     writer = PacketWriter.write_bits(writer, reason_to_int(packet.reason), 6)
+    writer = PacketWriter.flush_bits(writer)
 
     {:ok, writer}
   end
@@ -164,7 +164,7 @@ defmodule BezgelorProtocol.Packets.World.ServerItemAdd do
     # Simple GUID generation: combine location type with bag index
     # Real implementation would use database item instance IDs
     location_int = location_to_int(location)
-    (location_int <<< 32) ||| (bag_index || 0)
+    location_int <<< 32 ||| (bag_index || 0)
   end
 
   # Convert durability (0-100 or 0.0-1.0) to float 0.0-1.0
@@ -177,6 +177,7 @@ defmodule BezgelorProtocol.Packets.World.ServerItemAdd do
   defp location_to_int(:inventory), do: @location_inventory
   defp location_to_int(:bag), do: @location_inventory
   defp location_to_int(:bank), do: @location_bank
+  defp location_to_int(:ability), do: @location_ability
   defp location_to_int(loc) when is_integer(loc), do: loc
   defp location_to_int(_), do: @location_inventory
 

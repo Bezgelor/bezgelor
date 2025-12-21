@@ -2,7 +2,9 @@ defmodule BezgelorPortalWeb.ErrorJSONTest do
   use BezgelorPortalWeb.ConnCase, async: true
 
   test "renders 404" do
-    assert BezgelorPortalWeb.ErrorJSON.render("404.json", %{}) == %{errors: %{detail: "Not Found"}}
+    assert BezgelorPortalWeb.ErrorJSON.render("404.json", %{}) == %{
+             errors: %{detail: "Not Found"}
+           }
   end
 
   test "renders 500" do

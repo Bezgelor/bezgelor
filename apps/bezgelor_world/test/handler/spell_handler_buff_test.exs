@@ -27,8 +27,8 @@ defmodule BezgelorWorld.Handler.SpellHandlerBuffTest do
   # Build ClientCastSpell binary payload:
   # spell_id: uint32, target_guid: uint64, x: float32, y: float32, z: float32
   defp build_cast_spell_payload(spell_id, target_guid) do
-    <<spell_id::little-unsigned-32, target_guid::little-unsigned-64,
-      0.0::little-float-32, 0.0::little-float-32, 0.0::little-float-32>>
+    <<spell_id::little-unsigned-32, target_guid::little-unsigned-64, 0.0::little-float-32,
+      0.0::little-float-32, 0.0::little-float-32>>
   end
 
   describe "buff effect application" do
@@ -67,13 +67,14 @@ defmodule BezgelorWorld.Handler.SpellHandlerBuffTest do
       player_guid = 12345
 
       # Apply a short-duration buff directly for testing
-      buff = BezgelorCore.BuffDebuff.new(%{
-        id: 999,
-        spell_id: 999,
-        buff_type: :absorb,
-        amount: 100,
-        duration: 50
-      })
+      buff =
+        BezgelorCore.BuffDebuff.new(%{
+          id: 999,
+          spell_id: 999,
+          buff_type: :absorb,
+          amount: 100,
+          duration: 50
+        })
 
       {:ok, _} = BuffManager.apply_buff(player_guid, buff, player_guid)
       assert BuffManager.has_buff?(player_guid, 999)

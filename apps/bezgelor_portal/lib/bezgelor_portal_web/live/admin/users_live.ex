@@ -22,8 +22,7 @@ defmodule BezgelorPortalWeb.Admin.UsersLive do
        character_results: [],
        page: 1,
        has_more: false
-     ),
-     layout: {BezgelorPortalWeb.Layouts, :admin}}
+     ), layout: {BezgelorPortalWeb.Layouts, :admin}}
   end
 
   @impl true
@@ -50,8 +49,8 @@ defmodule BezgelorPortalWeb.Admin.UsersLive do
           <p class="text-base-content/70">Search and manage user accounts</p>
         </div>
       </div>
-
-      <!-- Search Form -->
+      
+    <!-- Search Form -->
       <div class="card bg-base-100 shadow">
         <div class="card-body">
           <form phx-submit="search" class="flex flex-wrap gap-4 items-end">
@@ -61,7 +60,9 @@ defmodule BezgelorPortalWeb.Admin.UsersLive do
               </label>
               <select name="type" class="select select-bordered" value={@search_type}>
                 <option value="email" selected={@search_type == "email"}>Email</option>
-                <option value="character" selected={@search_type == "character"}>Character Name</option>
+                <option value="character" selected={@search_type == "character"}>
+                  Character Name
+                </option>
                 <option value="id" selected={@search_type == "id"}>Account ID</option>
               </select>
             </div>
@@ -81,18 +82,23 @@ defmodule BezgelorPortalWeb.Admin.UsersLive do
             </div>
 
             <button type="submit" class="btn btn-primary">
-              <.icon name="hero-magnifying-glass" class="size-4" />
-              Search
+              <.icon name="hero-magnifying-glass" class="size-4" /> Search
             </button>
           </form>
         </div>
       </div>
-
-      <!-- Results -->
+      
+    <!-- Results -->
       <%= if @search_type == "character" and length(@character_results) > 0 do %>
         <.character_results_table results={@character_results} />
       <% else %>
-        <.users_table users={@users} has_more={@has_more} page={@page} search_type={@search_type} search_query={@search_query} />
+        <.users_table
+          users={@users}
+          has_more={@has_more}
+          page={@page}
+          search_type={@search_type}
+          search_query={@search_query}
+        />
       <% end %>
     </div>
     """
@@ -132,22 +138,34 @@ defmodule BezgelorPortalWeb.Admin.UsersLive do
               </tr>
             <% else %>
               <tr
-              :for={user <- @users}
-              class="hover cursor-pointer"
-              phx-click="view_user"
-              phx-value-id={user.id}
-            >
+                :for={user <- @users}
+                class="hover cursor-pointer"
+                phx-click="view_user"
+                phx-value-id={user.id}
+              >
                 <td class="font-mono text-sm">{user.id}</td>
                 <td>
                   <div class="flex items-center gap-2">
                     <span>{user.email}</span>
-                    <span :if={user.email_verified_at} class="badge badge-success badge-xs" title="Email verified">
+                    <span
+                      :if={user.email_verified_at}
+                      class="badge badge-success badge-xs"
+                      title="Email verified"
+                    >
                       <.icon name="hero-check-micro" class="size-3" />
                     </span>
-                    <span :if={user.totp_enabled_at} class="badge badge-info badge-xs" title="2FA enabled">
+                    <span
+                      :if={user.totp_enabled_at}
+                      class="badge badge-info badge-xs"
+                      title="2FA enabled"
+                    >
                       <.icon name="hero-shield-check-micro" class="size-3" />
                     </span>
-                    <span :if={user.discord_id} class="badge badge-primary badge-xs" title={"Discord: #{user.discord_username}"}>
+                    <span
+                      :if={user.discord_id}
+                      class="badge badge-primary badge-xs"
+                      title={"Discord: #{user.discord_username}"}
+                    >
                       Discord
                     </span>
                   </div>
@@ -167,8 +185,8 @@ defmodule BezgelorPortalWeb.Admin.UsersLive do
           </tbody>
         </table>
       </div>
-
-      <!-- Pagination -->
+      
+    <!-- Pagination -->
       <div :if={@page > 1 or @has_more} class="card-body pt-0">
         <div class="flex justify-center gap-2">
           <.link
@@ -221,12 +239,13 @@ defmodule BezgelorPortalWeb.Admin.UsersLive do
               <td>
                 <div class="flex gap-2">
                   <.link navigate={~p"/admin/users/#{result.account_id}"} class="btn btn-ghost btn-sm">
-                    <.icon name="hero-user" class="size-4" />
-                    Account
+                    <.icon name="hero-user" class="size-4" /> Account
                   </.link>
-                  <.link navigate={~p"/admin/characters/#{result.character_id}"} class="btn btn-ghost btn-sm">
-                    <.icon name="hero-user-group" class="size-4" />
-                    Character
+                  <.link
+                    navigate={~p"/admin/characters/#{result.character_id}"}
+                    class="btn btn-ghost btn-sm"
+                  >
+                    <.icon name="hero-user-group" class="size-4" /> Character
                   </.link>
                 </div>
               </td>
@@ -267,10 +286,12 @@ defmodule BezgelorPortalWeb.Admin.UsersLive do
     case {type, query} do
       {_, ""} ->
         # Show all users when no search query
-        users = Accounts.list_accounts_with_character_counts(
-          limit: @per_page + 1,
-          offset: offset
-        )
+        users =
+          Accounts.list_accounts_with_character_counts(
+            limit: @per_page + 1,
+            offset: offset
+          )
+
         {users, has_more} = maybe_pop_extra(users, @per_page)
         assign(socket, users: users, character_results: [], has_more: has_more)
 
@@ -279,21 +300,27 @@ defmodule BezgelorPortalWeb.Admin.UsersLive do
           {id, ""} ->
             users =
               case Accounts.get_by_id(id) do
-                nil -> []
+                nil ->
+                  []
+
                 account ->
                   # Convert to map format matching list_accounts_with_character_counts
-                  [%{
-                    id: account.id,
-                    email: account.email,
-                    email_verified_at: account.email_verified_at,
-                    totp_enabled_at: account.totp_enabled_at,
-                    discord_id: account.discord_id,
-                    discord_username: account.discord_username,
-                    deleted_at: account.deleted_at,
-                    inserted_at: account.inserted_at,
-                    character_count: 0  # Will be populated if needed
-                  }]
+                  [
+                    %{
+                      id: account.id,
+                      email: account.email,
+                      email_verified_at: account.email_verified_at,
+                      totp_enabled_at: account.totp_enabled_at,
+                      discord_id: account.discord_id,
+                      discord_username: account.discord_username,
+                      deleted_at: account.deleted_at,
+                      inserted_at: account.inserted_at,
+                      # Will be populated if needed
+                      character_count: 0
+                    }
+                  ]
               end
+
             assign(socket, users: users, character_results: [], has_more: false)
 
           _ ->
@@ -301,17 +328,20 @@ defmodule BezgelorPortalWeb.Admin.UsersLive do
         end
 
       {"email", search} ->
-        users = Accounts.list_accounts_with_character_counts(
-          search: search,
-          limit: @per_page + 1,
-          offset: offset
-        )
+        users =
+          Accounts.list_accounts_with_character_counts(
+            search: search,
+            limit: @per_page + 1,
+            offset: offset
+          )
 
         {users, has_more} = maybe_pop_extra(users, @per_page)
         assign(socket, users: users, character_results: [], has_more: has_more)
 
       {"character", search} ->
-        results = Accounts.search_accounts_by_character(search, limit: @per_page + 1, offset: offset)
+        results =
+          Accounts.search_accounts_by_character(search, limit: @per_page + 1, offset: offset)
+
         {results, has_more} = maybe_pop_extra(results, @per_page)
         assign(socket, users: [], character_results: results, has_more: has_more)
     end
@@ -328,6 +358,7 @@ defmodule BezgelorPortalWeb.Admin.UsersLive do
   defp search_placeholder("id"), do: "Enter account ID..."
 
   defp format_date(nil), do: "-"
+
   defp format_date(datetime) do
     Calendar.strftime(datetime, "%Y-%m-%d")
   end

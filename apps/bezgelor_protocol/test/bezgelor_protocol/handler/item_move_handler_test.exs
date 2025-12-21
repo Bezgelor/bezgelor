@@ -27,7 +27,13 @@ defmodule BezgelorProtocol.Handler.ItemMoveHandlerTest do
     {:ok, character} =
       Characters.create_character(account.id, %{
         name: "ItemMover#{System.unique_integer([:positive])}",
-        sex: 0, race: 1, class: 1, faction_id: 166, world_id: 1, world_zone_id: 1, realm_id: 1
+        sex: 0,
+        race: 1,
+        class: 1,
+        faction_id: 166,
+        world_id: 1,
+        world_zone_id: 1,
+        realm_id: 1
       })
 
     # Initialize bags for the character
@@ -100,7 +106,8 @@ defmodule BezgelorProtocol.Handler.ItemMoveHandlerTest do
       assert ClientItemMove.location_to_atom(1) == :bag
       assert ClientItemMove.location_to_atom(2) == :bank
       assert ClientItemMove.location_to_atom(4) == :ability
-      assert ClientItemMove.location_to_atom(99) == :bag  # Default
+      # Default
+      assert ClientItemMove.location_to_atom(99) == :bag
     end
   end
 

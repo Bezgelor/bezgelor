@@ -24,11 +24,11 @@ defmodule BezgelorDb.Schema.AccountRole do
 
   @primary_key false
   schema "account_roles" do
-    belongs_to :account, BezgelorDb.Schema.Account
-    belongs_to :role, BezgelorDb.Schema.Role
-    belongs_to :assigner, BezgelorDb.Schema.Account, foreign_key: :assigned_by
+    belongs_to(:account, BezgelorDb.Schema.Account)
+    belongs_to(:role, BezgelorDb.Schema.Role)
+    belongs_to(:assigner, BezgelorDb.Schema.Account, foreign_key: :assigned_by)
 
-    field :assigned_at, :utc_datetime
+    field(:assigned_at, :utc_datetime)
   end
 
   @doc """

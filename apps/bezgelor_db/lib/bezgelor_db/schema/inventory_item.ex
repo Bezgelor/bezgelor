@@ -8,6 +8,7 @@ defmodule BezgelorDb.Schema.InventoryItem do
   - `:equipped` - Worn equipment (armor, weapons)
   - `:bag` - Main inventory bags
   - `:bank` - Bank storage
+  - `:ability` - Spellbook inventory (Limited Action Set)
   - `:trade` - Trade window (temporary)
 
   ## Stacking
@@ -21,35 +22,37 @@ defmodule BezgelorDb.Schema.InventoryItem do
 
   @type t :: %__MODULE__{}
 
-  @container_types [:equipped, :bag, :bank, :trade]
+  @container_types [:equipped, :bag, :bank, :ability, :trade]
 
   schema "inventory_items" do
-    belongs_to :character, BezgelorDb.Schema.Character
+    belongs_to(:character, BezgelorDb.Schema.Character)
 
     # Item template reference (from BezgelorData)
-    field :item_id, :integer
+    field(:item_id, :integer)
 
     # Location
-    field :container_type, Ecto.Enum, values: @container_types, default: :bag
-    field :bag_index, :integer, default: 0  # Which bag (0 = backpack, 1-4 = equipped bags)
-    field :slot, :integer                    # Slot within bag/container
+    field(:container_type, Ecto.Enum, values: @container_types, default: :bag)
+    # Which bag (0 = backpack, 1-4 = equipped bags)
+    field(:bag_index, :integer, default: 0)
+    # Slot within bag/container
+    field(:slot, :integer)
 
     # Stack info
-    field :quantity, :integer, default: 1
-    field :max_stack, :integer, default: 1
+    field(:quantity, :integer, default: 1)
+    field(:max_stack, :integer, default: 1)
 
     # Item state
-    field :durability, :integer, default: 100
-    field :max_durability, :integer, default: 100
-    field :bound, :boolean, default: false
+    field(:durability, :integer, default: 100)
+    field(:max_durability, :integer, default: 100)
+    field(:bound, :boolean, default: false)
 
     # Random properties (for randomized gear)
-    field :random_seed, :integer
-    field :enchant_id, :integer
-    field :gem_ids, {:array, :integer}, default: []
+    field(:random_seed, :integer)
+    field(:enchant_id, :integer)
+    field(:gem_ids, {:array, :integer}, default: [])
 
     # Charges for consumables
-    field :charges, :integer
+    field(:charges, :integer)
 
     timestamps(type: :utc_datetime)
   end
@@ -57,9 +60,20 @@ defmodule BezgelorDb.Schema.InventoryItem do
   def changeset(item, attrs) do
     item
     |> cast(attrs, [
-      :character_id, :item_id, :container_type, :bag_index, :slot,
-      :quantity, :max_stack, :durability, :max_durability, :bound,
-      :random_seed, :enchant_id, :gem_ids, :charges
+      :character_id,
+      :item_id,
+      :container_type,
+      :bag_index,
+      :slot,
+      :quantity,
+      :max_stack,
+      :durability,
+      :max_durability,
+      :bound,
+      :random_seed,
+      :enchant_id,
+      :gem_ids,
+      :charges
     ])
     |> validate_required([:character_id, :item_id, :slot])
     |> validate_number(:quantity, greater_than: 0)
@@ -67,7 +81,8 @@ defmodule BezgelorDb.Schema.InventoryItem do
     |> validate_inclusion(:container_type, @container_types)
     |> foreign_key_constraint(:character_id)
     |> unique_constraint([:character_id, :container_type, :bag_index, :slot],
-        name: :inventory_items_location_index)
+      name: :inventory_items_location_index
+    )
   end
 
   def move_changeset(item, attrs) do

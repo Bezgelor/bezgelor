@@ -19,6 +19,7 @@ defmodule BezgelorWorld.Handler.MountHandler do
   alias BezgelorDb.{Collections, Mounts}
   alias BezgelorProtocol.PacketReader
   alias BezgelorProtocol.PacketWriter
+
   alias BezgelorProtocol.Packets.World.{
     ClientMountSummon,
     ClientMountDismiss,
@@ -66,7 +67,10 @@ defmodule BezgelorWorld.Handler.MountHandler do
          broadcast: {:nearby, :server_mount_update, packet_data}}
 
       {:error, :not_owned} ->
-        Logger.warning("Character #{character_id} tried to summon unowned mount #{packet.mount_id}")
+        Logger.warning(
+          "Character #{character_id} tried to summon unowned mount #{packet.mount_id}"
+        )
+
         {:ok, state}
 
       {:error, reason} ->

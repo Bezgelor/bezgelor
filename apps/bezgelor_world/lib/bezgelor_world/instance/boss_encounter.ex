@@ -25,13 +25,21 @@ defmodule BezgelorWorld.Instance.BossEncounter do
 
   alias BezgelorWorld.Instance.Registry, as: InstanceRegistry
   alias BezgelorWorld.{CombatBroadcaster, CreatureManager, WorldManager}
-  alias BezgelorProtocol.Packets.World.{ServerTelegraph, ServerBossEngaged, ServerBossPhase, ServerBossDefeated}
+
+  alias BezgelorProtocol.Packets.World.{
+    ServerTelegraph,
+    ServerBossEngaged,
+    ServerBossPhase,
+    ServerBossDefeated
+  }
+
   alias BezgelorProtocol.PacketWriter
 
   require Logger
   import Bitwise
 
-  @ability_tick_interval 100  # Check abilities every 100ms
+  # Check abilities every 100ms
+  @ability_tick_interval 100
 
   defstruct [
     :instance_guid,
@@ -72,7 +80,10 @@ defmodule BezgelorWorld.Instance.BossEncounter do
   def start_link(opts) do
     instance_guid = Keyword.fetch!(opts, :instance_guid)
     boss_id = Keyword.fetch!(opts, :boss_id)
-    GenServer.start_link(__MODULE__, opts, name: InstanceRegistry.via_boss(instance_guid, boss_id))
+
+    GenServer.start_link(__MODULE__, opts,
+      name: InstanceRegistry.via_boss(instance_guid, boss_id)
+    )
   end
 
   @doc """
@@ -169,7 +180,9 @@ defmodule BezgelorWorld.Instance.BossEncounter do
       true ->
         new_armor = state.interrupt_armor_current - 1
 
-        Logger.debug("Interrupt from #{character_id}, armor: #{state.interrupt_armor_current} -> #{new_armor}")
+        Logger.debug(
+          "Interrupt from #{character_id}, armor: #{state.interrupt_armor_current} -> #{new_armor}"
+        )
 
         if new_armor <= 0 do
           # Moment of Opportunity triggered
@@ -205,7 +218,9 @@ defmodule BezgelorWorld.Instance.BossEncounter do
     state = %{state | health_current: new_health}
     new_health_percent = health_percent(state)
 
-    Logger.debug("Boss #{state.boss_id} took #{modified_amount} damage from #{character_id}, health: #{new_health}/#{state.health_max}")
+    Logger.debug(
+      "Boss #{state.boss_id} took #{modified_amount} damage from #{character_id}, health: #{new_health}/#{state.health_max}"
+    )
 
     # Check for phase transition
     state = check_phase_transition(state, old_health_percent, new_health_percent)
@@ -223,7 +238,11 @@ defmodule BezgelorWorld.Instance.BossEncounter do
 
   def handle_cast({:player_died, character_id}, state) do
     players = update_in(state.players[character_id] || %{}, [:alive], fn _ -> false end)
-    state = %{state | players: Map.put(state.players, character_id, players[character_id] || %{alive: false})}
+
+    state = %{
+      state
+      | players: Map.put(state.players, character_id, players[character_id] || %{alive: false})
+    }
 
     # Check if all players are dead
     if all_players_dead?(state) do
@@ -291,7 +310,9 @@ defmodule BezgelorWorld.Instance.BossEncounter do
   defp initialize_encounter(state) do
     # Get health from definition
     base_health = get_in(state.boss_definition, ["health"]) || 500_000
-    health = scale_health(base_health, state.difficulty, state.mythic_level, map_size(state.players))
+
+    health =
+      scale_health(base_health, state.difficulty, state.mythic_level, map_size(state.players))
 
     # Get interrupt armor
     ia_max = get_in(state.boss_definition, ["interrupt_armor"]) || 2
@@ -303,16 +324,17 @@ defmodule BezgelorWorld.Instance.BossEncounter do
     phases = get_in(state.boss_definition, ["phases"]) || []
     initial_phase = find_phase_for_health(phases, 100)
 
-    state = %{state |
-      health_current: health,
-      health_max: health,
-      interrupt_armor_current: ia_max,
-      interrupt_armor_max: ia_max,
-      enrage_timer: enrage_ms,
-      enrage_time_remaining: enrage_ms,
-      engage_time: System.monotonic_time(:millisecond),
-      current_phase: initial_phase,
-      state: :engaged
+    state = %{
+      state
+      | health_current: health,
+        health_max: health,
+        interrupt_armor_current: ia_max,
+        interrupt_armor_max: ia_max,
+        enrage_timer: enrage_ms,
+        enrage_time_remaining: enrage_ms,
+        engage_time: System.monotonic_time(:millisecond),
+        current_phase: initial_phase,
+        state: :engaged
     }
 
     # Schedule enrage
@@ -326,7 +348,9 @@ defmodule BezgelorWorld.Instance.BossEncounter do
     # Broadcast boss engaged to all players
     broadcast_boss_engaged(state)
 
-    Logger.info("Boss encounter #{state.boss_id} initialized with #{health} health, phase: #{inspect(initial_phase)}")
+    Logger.info(
+      "Boss encounter #{state.boss_id} initialized with #{health} health, phase: #{inspect(initial_phase)}"
+    )
 
     state
   end
@@ -339,7 +363,8 @@ defmodule BezgelorWorld.Instance.BossEncounter do
       health_current: state.health_current,
       health_max: state.health_max,
       phase: get_phase_number(state.current_phase),
-      enrage_timer: div(state.enrage_timer || 0, 1000)  # Convert ms to seconds
+      # Convert ms to seconds
+      enrage_timer: div(state.enrage_timer || 0, 1000)
     }
 
     broadcast_boss_packet(packet, state)
@@ -351,7 +376,7 @@ defmodule BezgelorWorld.Instance.BossEncounter do
         :normal -> 1.0
         :veteran -> 1.5
         :challenge -> 2.0
-        :mythic_plus -> 1.5 + (mythic_level * 0.1)
+        :mythic_plus -> 1.5 + mythic_level * 0.1
       end
 
     player_mult =
@@ -381,7 +406,10 @@ defmodule BezgelorWorld.Instance.BossEncounter do
 
   defp check_phase_condition({:health_above, threshold}, health), do: health > threshold
   defp check_phase_condition({:health_below, threshold}, health), do: health < threshold
-  defp check_phase_condition({:health_between, {low, high}}, health), do: health >= low and health <= high
+
+  defp check_phase_condition({:health_between, {low, high}}, health),
+    do: health >= low and health <= high
+
   defp check_phase_condition(%{"health_above" => threshold}, health), do: health > threshold
   defp check_phase_condition(%{"health_below" => threshold}, health), do: health < threshold
   defp check_phase_condition(:always, _health), do: true
@@ -393,7 +421,10 @@ defmodule BezgelorWorld.Instance.BossEncounter do
     new_phase = find_phase_for_health(phases, new_percent)
 
     if new_phase && new_phase != state.current_phase do
-      Logger.info("Boss #{state.boss_id} transitioning from #{inspect(state.current_phase)} to #{inspect(new_phase)}")
+      Logger.info(
+        "Boss #{state.boss_id} transitioning from #{inspect(state.current_phase)} to #{inspect(new_phase)}"
+      )
+
       transition_to_phase(state, new_phase)
     else
       state
@@ -413,11 +444,12 @@ defmodule BezgelorWorld.Instance.BossEncounter do
     abilities = new_phase["abilities"] || new_phase[:abilities] || []
     cooldowns = initialize_cooldowns(abilities)
 
-    state = %{state |
-      current_phase: new_phase,
-      phase_history: phase_history,
-      ability_cooldowns: cooldowns,
-      damage_modifiers: Map.merge(state.damage_modifiers, modifiers)
+    state = %{
+      state
+      | current_phase: new_phase,
+        phase_history: phase_history,
+        ability_cooldowns: cooldowns,
+        damage_modifiers: Map.merge(state.damage_modifiers, modifiers)
     }
 
     # Broadcast phase transition
@@ -491,9 +523,11 @@ defmodule BezgelorWorld.Instance.BossEncounter do
 
   defp execute_ability(state, ability) when is_atom(ability) do
     abilities = get_phase_abilities(state)
-    ability_def = Enum.find(abilities, fn a ->
-      (a["name"] || a[:name]) == ability
-    end)
+
+    ability_def =
+      Enum.find(abilities, fn a ->
+        (a["name"] || a[:name]) == ability
+      end)
 
     if ability_def do
       execute_ability(state, ability_def)
@@ -547,7 +581,14 @@ defmodule BezgelorWorld.Instance.BossEncounter do
       # Send damage effect to each target
       Enum.each(target_guids, fn target_guid ->
         effect_data = %{type: :damage, amount: amount, damage_type: damage_type}
-        CombatBroadcaster.send_spell_effect(boss_guid, target_guid, spell_id, effect_data, target_guids)
+
+        CombatBroadcaster.send_spell_effect(
+          boss_guid,
+          target_guid,
+          spell_id,
+          effect_data,
+          target_guids
+        )
       end)
 
       Logger.debug("Applied #{amount} #{damage_type} damage to #{length(target_guids)} players")
@@ -564,8 +605,10 @@ defmodule BezgelorWorld.Instance.BossEncounter do
       :random -> Enum.take_random(all_guids, 1)
       :tank -> get_role_guids(state, :tank) |> Enum.take(1)
       :healer -> get_role_guids(state, :healer) |> Enum.take_random(1)
-      :farthest -> all_guids |> Enum.take(1)  # TODO: Calculate actual distance
-      :nearest -> all_guids |> Enum.take(1)   # TODO: Calculate actual distance
+      # TODO: Calculate actual distance
+      :farthest -> all_guids |> Enum.take(1)
+      # TODO: Calculate actual distance
+      :nearest -> all_guids |> Enum.take(1)
       _ -> all_guids
     end
   end
@@ -641,7 +684,18 @@ defmodule BezgelorWorld.Instance.BossEncounter do
           width = effect[:width] || effect["width"] || 3.0
           length = effect[:length] || effect["length"] || 20.0
           rotation = effect[:rotation] || effect["rotation"] || 0.0
-          packet = ServerTelegraph.rectangle(boss_guid, position, width, length, rotation, duration, color)
+
+          packet =
+            ServerTelegraph.rectangle(
+              boss_guid,
+              position,
+              width,
+              length,
+              rotation,
+              duration,
+              color
+            )
+
           CombatBroadcaster.broadcast_telegraph(packet, recipient_guids)
 
         :room_wide ->
@@ -651,6 +705,7 @@ defmodule BezgelorWorld.Instance.BossEncounter do
 
         _ ->
           Logger.warning("Unknown telegraph shape: #{inspect(shape)}, defaulting to circle")
+
           CombatBroadcaster.broadcast_circle_telegraph(
             boss_guid,
             position,
@@ -756,6 +811,7 @@ defmodule BezgelorWorld.Instance.BossEncounter do
     if spread and count > 1 do
       # Spread adds in a circle around the boss
       angle_step = 2 * :math.pi() / count
+
       for i <- 0..(count - 1) do
         angle = i * angle_step
         x = boss_x + spread_radius * :math.cos(angle)
@@ -799,16 +855,18 @@ defmodule BezgelorWorld.Instance.BossEncounter do
     target_type = effect[:target] || effect["target"] || :all
 
     # Create debuff definition
-    debuff = BuffDebuff.new(%{
-      id: buff_id,
-      spell_id: spell_id,
-      buff_type: :stat_modifier,
-      amount: -amount,  # Negative for debuffs
-      duration: duration,
-      is_debuff: true,
-      stacks: stacks,
-      max_stacks: stacks
-    })
+    debuff =
+      BuffDebuff.new(%{
+        id: buff_id,
+        spell_id: spell_id,
+        buff_type: :stat_modifier,
+        # Negative for debuffs
+        amount: -amount,
+        duration: duration,
+        is_debuff: true,
+        stacks: stacks,
+        max_stacks: stacks
+      })
 
     target_guids = get_target_guids(state, target_type)
     boss_guid = state.boss_guid || 0
@@ -842,32 +900,40 @@ defmodule BezgelorWorld.Instance.BossEncounter do
     target = effect[:target] || effect["target"] || :boss
 
     # Track in local state for the boss
-    active_buffs = Map.put(state.active_buffs, name, %{
-      expires_at: System.monotonic_time(:millisecond) + duration,
-      stacks: stacks
-    })
+    active_buffs =
+      Map.put(state.active_buffs, name, %{
+        expires_at: System.monotonic_time(:millisecond) + duration,
+        stacks: stacks
+      })
 
     state = %{state | active_buffs: active_buffs}
 
     # If this is a buff targeting the boss itself (like invulnerability)
     # Also apply via BuffManager if boss has a GUID
     if target == :boss and state.boss_guid do
-      buff = BuffDebuff.new(%{
-        id: buff_id,
-        spell_id: spell_id,
-        buff_type: :stat_modifier,
-        amount: amount,
-        duration: duration,
-        is_debuff: false,
-        stacks: stacks,
-        max_stacks: stacks
-      })
+      buff =
+        BuffDebuff.new(%{
+          id: buff_id,
+          spell_id: spell_id,
+          buff_type: :stat_modifier,
+          amount: amount,
+          duration: duration,
+          is_debuff: false,
+          stacks: stacks,
+          max_stacks: stacks
+        })
 
       BuffManager.apply_buff(state.boss_guid, buff, state.boss_guid)
 
       # Broadcast to players so they see the buff on the boss
       recipient_guids = get_player_entity_guids(state)
-      CombatBroadcaster.broadcast_buff_apply(state.boss_guid, state.boss_guid, buff, recipient_guids)
+
+      CombatBroadcaster.broadcast_buff_apply(
+        state.boss_guid,
+        state.boss_guid,
+        buff,
+        recipient_guids
+      )
     end
 
     Logger.debug("Applied buff #{name} (duration: #{duration}ms)")
@@ -900,10 +966,14 @@ defmodule BezgelorWorld.Instance.BossEncounter do
             # Note: This is simplified - real implementation would need player position
             {vx, vy, vz} =
               case movement_type do
-                :knockback -> {distance * 2.0, 0.0, distance}  # Away + upward
-                :pull -> {-distance * 2.0, 0.0, 0.0}           # Toward
-                :root -> {0.0, 0.0, 0.0}                        # No movement
-                :slow -> {0.0, 0.0, 0.0}                        # Reduced speed
+                # Away + upward
+                :knockback -> {distance * 2.0, 0.0, distance}
+                # Toward
+                :pull -> {-distance * 2.0, 0.0, 0.0}
+                # No movement
+                :root -> {0.0, 0.0, 0.0}
+                # Reduced speed
+                :slow -> {0.0, 0.0, 0.0}
                 _ -> {0.0, 0.0, 0.0}
               end
 
@@ -921,7 +991,8 @@ defmodule BezgelorWorld.Instance.BossEncounter do
                 velocity_x: vx,
                 velocity_y: vy,
                 velocity_z: vz,
-                movement_flags: 0x10,  # Forced movement flag
+                # Forced movement flag
+                movement_flags: 0x10,
                 timestamp: System.system_time(:millisecond) |> band(0xFFFFFFFF)
               }
 
@@ -931,8 +1002,11 @@ defmodule BezgelorWorld.Instance.BossEncounter do
 
               # Find connection for this entity and send
               case find_connection_for_guid(target_guid) do
-                nil -> :ok
-                connection_pid -> WorldManager.send_packet(connection_pid, :server_movement, packet_data)
+                nil ->
+                  :ok
+
+                connection_pid ->
+                  WorldManager.send_packet(connection_pid, :server_movement, packet_data)
               end
             end
         end
@@ -947,7 +1021,8 @@ defmodule BezgelorWorld.Instance.BossEncounter do
   defp get_source_position(state, source) do
     case source do
       :boss -> state.boss_position
-      :center -> {0.0, 0.0, 0.0}  # Room center - would need zone data
+      # Room center - would need zone data
+      :center -> {0.0, 0.0, 0.0}
       {x, y, z} -> {x, y, z}
       _ -> state.boss_position
     end
@@ -989,10 +1064,7 @@ defmodule BezgelorWorld.Instance.BossEncounter do
     modifiers = Map.put(state.damage_modifiers, :vulnerable, 100)
 
     # Reset interrupt armor
-    %{state |
-      interrupt_armor_current: state.interrupt_armor_max,
-      damage_modifiers: modifiers
-    }
+    %{state | interrupt_armor_current: state.interrupt_armor_max, damage_modifiers: modifiers}
   end
 
   defp trigger_enrage(state) do
@@ -1025,7 +1097,8 @@ defmodule BezgelorWorld.Instance.BossEncounter do
 
   defp broadcast_boss_defeated(state, fight_duration) do
     # Check if this is the final boss (would need instance data)
-    is_final = false  # Would check against instance boss list
+    # Would check against instance boss list
+    is_final = false
 
     packet = %ServerBossDefeated{
       boss_id: state.boss_id,
@@ -1047,6 +1120,7 @@ defmodule BezgelorWorld.Instance.BossEncounter do
       case CreatureManager.damage_creature(add.guid, state.boss_guid || 0, 999_999_999) do
         {:ok, :killed, _} ->
           Logger.debug("Despawned add #{add.guid}")
+
         _ ->
           Logger.debug("Add #{add.guid} already dead or not found")
       end
@@ -1076,6 +1150,7 @@ defmodule BezgelorWorld.Instance.BossEncounter do
 
   # Get phase number from phase definition
   defp get_phase_number(nil), do: 0
+
   defp get_phase_number(phase) when is_map(phase) do
     name = phase["name"] || phase[:name] || "unknown"
     # Extract phase number from name like "phase_one" or "one"
@@ -1091,6 +1166,7 @@ defmodule BezgelorWorld.Instance.BossEncounter do
       _ -> length(Map.get(phase, :phase_history, []))
     end
   end
+
   defp get_phase_number(_), do: 0
 
   # Broadcast a boss packet to all players in the encounter

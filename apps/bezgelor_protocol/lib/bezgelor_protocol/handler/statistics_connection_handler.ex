@@ -32,7 +32,7 @@ defmodule BezgelorProtocol.Handler.StatisticsConnectionHandler do
 
         Logger.debug(
           "[Telemetry] #{character_name} - RTT: #{packet.average_rtt_ms}ms, " <>
-          "recv: #{packet.bytes_received_per_sec} B/s, sent: #{packet.bytes_sent_per_sec} B/s"
+            "recv: #{packet.bytes_received_per_sec} B/s, sent: #{packet.bytes_sent_per_sec} B/s"
         )
 
         {:ok, state}

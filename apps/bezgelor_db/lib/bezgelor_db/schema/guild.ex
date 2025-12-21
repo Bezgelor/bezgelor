@@ -30,16 +30,19 @@ defmodule BezgelorDb.Schema.Guild do
   @type t :: %__MODULE__{}
 
   schema "guilds" do
-    field :name, :string
-    field :tag, :string  # 4 character abbreviation
-    field :motd, :string, default: ""  # Message of the day
-    field :influence, :integer, default: 0  # Guild currency
+    field(:name, :string)
+    # 4 character abbreviation
+    field(:tag, :string)
+    # Message of the day
+    field(:motd, :string, default: "")
+    # Guild currency
+    field(:influence, :integer, default: 0)
 
     # Leader character ID
-    field :leader_id, :integer
+    field(:leader_id, :integer)
 
     # Bank tabs unlocked (0-5)
-    field :bank_tabs_unlocked, :integer, default: 1
+    field(:bank_tabs_unlocked, :integer, default: 1)
 
     timestamps(type: :utc_datetime)
   end
@@ -50,7 +53,9 @@ defmodule BezgelorDb.Schema.Guild do
     |> validate_required([:name, :tag, :leader_id])
     |> validate_length(:name, min: 2, max: 32)
     |> validate_length(:tag, is: 4)
-    |> validate_format(:tag, ~r/^[A-Z0-9]+$/, message: "must be uppercase letters and numbers only")
+    |> validate_format(:tag, ~r/^[A-Z0-9]+$/,
+      message: "must be uppercase letters and numbers only"
+    )
     |> validate_number(:bank_tabs_unlocked, greater_than_or_equal_to: 1, less_than_or_equal_to: 6)
     |> unique_constraint(:name)
     |> unique_constraint(:tag)

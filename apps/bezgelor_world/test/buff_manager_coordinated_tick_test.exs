@@ -20,25 +20,27 @@ defmodule BezgelorWorld.BuffManagerCoordinatedTickTest do
       player2_guid = 67890
 
       # Apply periodic buffs to two players
-      buff1 = BuffDebuff.new(%{
-        id: 1,
-        spell_id: 1,
-        buff_type: :periodic,
-        amount: 10,
-        duration: 5000,
-        tick_interval: 1000,
-        is_debuff: true
-      })
+      buff1 =
+        BuffDebuff.new(%{
+          id: 1,
+          spell_id: 1,
+          buff_type: :periodic,
+          amount: 10,
+          duration: 5000,
+          tick_interval: 1000,
+          is_debuff: true
+        })
 
-      buff2 = BuffDebuff.new(%{
-        id: 2,
-        spell_id: 2,
-        buff_type: :periodic,
-        amount: 20,
-        duration: 5000,
-        tick_interval: 1000,
-        is_debuff: false
-      })
+      buff2 =
+        BuffDebuff.new(%{
+          id: 2,
+          spell_id: 2,
+          buff_type: :periodic,
+          amount: 20,
+          duration: 5000,
+          tick_interval: 1000,
+          is_debuff: false
+        })
 
       {:ok, _} = BuffManager.apply_buff(player1_guid, buff1, 99999)
       {:ok, _} = BuffManager.apply_buff(player2_guid, buff2, 99999)
@@ -55,15 +57,16 @@ defmodule BezgelorWorld.BuffManagerCoordinatedTickTest do
       entity_guid = 12345
 
       # Apply a periodic buff
-      buff = BuffDebuff.new(%{
-        id: 100,
-        spell_id: 100,
-        buff_type: :periodic,
-        amount: 50,
-        duration: 3000,
-        tick_interval: 1000,
-        is_debuff: false
-      })
+      buff =
+        BuffDebuff.new(%{
+          id: 100,
+          spell_id: 100,
+          buff_type: :periodic,
+          amount: 50,
+          duration: 3000,
+          tick_interval: 1000,
+          is_debuff: false
+        })
 
       {:ok, _} = BuffManager.apply_buff(entity_guid, buff, 99999)
 

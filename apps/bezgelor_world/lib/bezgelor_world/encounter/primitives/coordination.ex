@@ -185,11 +185,14 @@ defmodule BezgelorWorld.Encounter.Primitives.Coordination do
   """
   defmacro stack_point(opts \\ []) do
     quote do
-      coordination(:stack, [
-        damage: Keyword.fetch!(unquote(opts), :damage),
-        min_players: Keyword.get(unquote(opts), :min_players, 5),
-        telegraph: true
-      ] ++ unquote(opts))
+      coordination(
+        :stack,
+        [
+          damage: Keyword.fetch!(unquote(opts), :damage),
+          min_players: Keyword.get(unquote(opts), :min_players, 5),
+          telegraph: true
+        ] ++ unquote(opts)
+      )
     end
   end
 
@@ -198,10 +201,13 @@ defmodule BezgelorWorld.Encounter.Primitives.Coordination do
   """
   defmacro spread_out(opts \\ []) do
     quote do
-      coordination(:spread, [
-        damage: Keyword.fetch!(unquote(opts), :damage),
-        required_distance: Keyword.get(unquote(opts), :distance, 8)
-      ] ++ unquote(opts))
+      coordination(
+        :spread,
+        [
+          damage: Keyword.fetch!(unquote(opts), :damage),
+          required_distance: Keyword.get(unquote(opts), :distance, 8)
+        ] ++ unquote(opts)
+      )
     end
   end
 

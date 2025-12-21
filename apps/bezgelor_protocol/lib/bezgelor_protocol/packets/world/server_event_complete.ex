@@ -21,7 +21,16 @@ defmodule BezgelorProtocol.Packets.World.ServerEventComplete do
 
   alias BezgelorProtocol.PacketWriter
 
-  defstruct [:instance_id, :event_id, :success, :reward_tier, :contribution, :reward_xp, :reward_gold, rewards: []]
+  defstruct [
+    :instance_id,
+    :event_id,
+    :success,
+    :reward_tier,
+    :contribution,
+    :reward_xp,
+    :reward_gold,
+    rewards: []
+  ]
 
   @impl true
   def opcode, do: 0x0A03

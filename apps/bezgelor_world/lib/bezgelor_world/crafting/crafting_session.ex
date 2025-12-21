@@ -21,20 +21,20 @@ defmodule BezgelorWorld.Crafting.CraftingSession do
   ]
 
   @type t :: %__MODULE__{
-    schematic_id: integer(),
-    cursor_x: float(),
-    cursor_y: float(),
-    additives_used: [additive_record()],
-    overcharge_level: non_neg_integer(),
-    started_at: DateTime.t()
-  }
+          schematic_id: integer(),
+          cursor_x: float(),
+          cursor_y: float(),
+          additives_used: [additive_record()],
+          overcharge_level: non_neg_integer(),
+          started_at: DateTime.t()
+        }
 
   @type additive_record :: %{
-    item_id: integer(),
-    quantity: integer(),
-    vector_x: float(),
-    vector_y: float()
-  }
+          item_id: integer(),
+          quantity: integer(),
+          vector_x: float(),
+          vector_y: float()
+        }
 
   @doc """
   Create a new crafting session for a schematic.
@@ -52,16 +52,18 @@ defmodule BezgelorWorld.Crafting.CraftingSession do
   """
   @spec add_additive(t(), additive_record()) :: t()
   def add_additive(%__MODULE__{} = session, additive) do
-    {new_x, new_y} = CoordinateSystem.apply_additive(
-      {session.cursor_x, session.cursor_y},
-      additive,
-      session.overcharge_level
-    )
+    {new_x, new_y} =
+      CoordinateSystem.apply_additive(
+        {session.cursor_x, session.cursor_y},
+        additive,
+        session.overcharge_level
+      )
 
-    %{session |
-      cursor_x: new_x,
-      cursor_y: new_y,
-      additives_used: session.additives_used ++ [additive]
+    %{
+      session
+      | cursor_x: new_x,
+        cursor_y: new_y,
+        additives_used: session.additives_used ++ [additive]
     }
   end
 

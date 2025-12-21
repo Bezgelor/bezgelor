@@ -32,41 +32,54 @@ defmodule BezgelorDb.Schema.Mail do
 
   schema "mails" do
     # Sender (nil for system mail)
-    field :sender_id, :integer
-    field :sender_name, :string
+    field(:sender_id, :integer)
+    field(:sender_name, :string)
 
     # Recipient
-    belongs_to :recipient, BezgelorDb.Schema.Character
+    belongs_to(:recipient, BezgelorDb.Schema.Character)
 
     # Content
-    field :subject, :string
-    field :body, :string, default: ""
+    field(:subject, :string)
+    field(:body, :string, default: "")
 
     # State
-    field :state, Ecto.Enum, values: [:unread, :read, :returned], default: :unread
+    field(:state, Ecto.Enum, values: [:unread, :read, :returned], default: :unread)
 
     # Currency
-    field :gold_attached, :integer, default: 0
-    field :cod_amount, :integer, default: 0  # Cash on delivery
+    field(:gold_attached, :integer, default: 0)
+    # Cash on delivery
+    field(:cod_amount, :integer, default: 0)
 
     # Flags
-    field :is_system_mail, :boolean, default: false
-    field :has_attachments, :boolean, default: false
+    field(:is_system_mail, :boolean, default: false)
+    field(:has_attachments, :boolean, default: false)
 
     # Expiration
-    field :expires_at, :utc_datetime
+    field(:expires_at, :utc_datetime)
 
     timestamps(type: :utc_datetime)
   end
 
   def changeset(mail, attrs) do
-    default_expiry = DateTime.utc_now()
-                     |> DateTime.add(@default_expiry_days * 24 * 60 * 60, :second)
-                     |> DateTime.truncate(:second)
+    default_expiry =
+      DateTime.utc_now()
+      |> DateTime.add(@default_expiry_days * 24 * 60 * 60, :second)
+      |> DateTime.truncate(:second)
 
     mail
-    |> cast(attrs, [:sender_id, :sender_name, :recipient_id, :subject, :body, :state,
-                    :gold_attached, :cod_amount, :is_system_mail, :has_attachments, :expires_at])
+    |> cast(attrs, [
+      :sender_id,
+      :sender_name,
+      :recipient_id,
+      :subject,
+      :body,
+      :state,
+      :gold_attached,
+      :cod_amount,
+      :is_system_mail,
+      :has_attachments,
+      :expires_at
+    ])
     |> validate_required([:recipient_id, :subject])
     |> validate_length(:subject, min: 1, max: 100)
     |> validate_length(:body, max: 2000)
@@ -82,9 +95,10 @@ defmodule BezgelorDb.Schema.Mail do
   end
 
   def return_changeset(mail) do
-    return_expiry = DateTime.utc_now()
-                    |> DateTime.add(@return_expiry_days * 24 * 60 * 60, :second)
-                    |> DateTime.truncate(:second)
+    return_expiry =
+      DateTime.utc_now()
+      |> DateTime.add(@return_expiry_days * 24 * 60 * 60, :second)
+      |> DateTime.truncate(:second)
 
     mail
     |> change(state: :returned, expires_at: return_expiry)

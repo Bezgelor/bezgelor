@@ -87,7 +87,8 @@ defmodule BezgelorWorld.EventDispatcher do
 
   This is the most common event type and has a dedicated helper.
   """
-  @spec dispatch_kill(session_data(), integer(), integer(), integer()) :: {session_data(), [packet()]}
+  @spec dispatch_kill(session_data(), integer(), integer(), integer()) ::
+          {session_data(), [packet()]}
   def dispatch_kill(session_data, creature_id, creature_type, zone_id) do
     dispatch(session_data, :kill, %{
       creature_id: creature_id,
@@ -121,7 +122,8 @@ defmodule BezgelorWorld.EventDispatcher do
   @doc """
   Dispatch a location reached event (for exploration objectives).
   """
-  @spec dispatch_reach_location(session_data(), integer(), integer(), integer()) :: {session_data(), [packet()]}
+  @spec dispatch_reach_location(session_data(), integer(), integer(), integer()) ::
+          {session_data(), [packet()]}
   def dispatch_reach_location(session_data, location_id, zone_id, world_id) do
     dispatch(session_data, :reach_location, %{
       location_id: location_id,
@@ -209,7 +211,8 @@ defmodule BezgelorWorld.EventDispatcher do
   @doc """
   Dispatch a holdout wave event.
   """
-  @spec dispatch_holdout_wave(session_data(), integer(), integer()) :: {session_data(), [packet()]}
+  @spec dispatch_holdout_wave(session_data(), integer(), integer()) ::
+          {session_data(), [packet()]}
   def dispatch_holdout_wave(session_data, holdout_id, wave_number) do
     dispatch(session_data, :holdout_wave, %{
       holdout_id: holdout_id,
@@ -402,7 +405,9 @@ defmodule BezgelorWorld.EventDispatcher do
     removed_count = map_size(active_missions) - map_size(remaining_missions)
 
     if removed_count > 0 do
-      Logger.debug("Zone exit: removed #{removed_count} incomplete path missions from zone #{zone_id}")
+      Logger.debug(
+        "Zone exit: removed #{removed_count} incomplete path missions from zone #{zone_id}"
+      )
     end
 
     Map.put(session_data, :active_path_missions, remaining_missions)
@@ -428,7 +433,9 @@ defmodule BezgelorWorld.EventDispatcher do
       |> Map.put(:completed_path_mission_ids, completed_mission_ids)
       |> Map.put(:active_path_missions, %{})
 
-    Logger.info("Login: character=#{character_id}, #{MapSet.size(completed_mission_ids)} completed path missions")
+    Logger.info(
+      "Login: character=#{character_id}, #{MapSet.size(completed_mission_ids)} completed path missions"
+    )
 
     {session_data, []}
   end

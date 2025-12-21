@@ -17,17 +17,15 @@ defmodule BezgelorProtocol.Packets.World.ServerMythicPlusComplete do
 
   alias BezgelorProtocol.PacketWriter
 
-  defstruct [
-    success: false,
-    in_time: false,
-    completion_time: 0,
-    time_limit: 0,
-    deaths: 0,
-    time_bonus: 0,
-    score: 0,
-    new_key_level: 2,
-    new_key_dungeon: 0
-  ]
+  defstruct success: false,
+            in_time: false,
+            completion_time: 0,
+            time_limit: 0,
+            deaths: 0,
+            time_bonus: 0,
+            score: 0,
+            new_key_level: 2,
+            new_key_dungeon: 0
 
   @impl true
   def opcode, do: 0x0B31

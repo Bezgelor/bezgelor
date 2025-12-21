@@ -20,7 +20,9 @@ defmodule BezgelorPortal.LogBuffer do
   @doc "Get recent log entries"
   def get_logs(limit \\ 500) do
     case :ets.info(@table) do
-      :undefined -> []
+      :undefined ->
+        []
+
       _ ->
         @table
         |> :ets.tab2list()
@@ -90,9 +92,11 @@ defmodule BezgelorPortal.LogBuffer do
 
   defp prune_if_needed do
     size = :ets.info(@table, :size)
+
     if size > @max_entries do
       # Delete oldest entries
       to_delete = size - @max_entries
+
       @table
       |> :ets.tab2list()
       |> Enum.sort_by(fn {{timestamp, _counter}, _} -> timestamp end, {:asc, DateTime})
@@ -125,12 +129,14 @@ defmodule BezgelorPortal.LogBuffer do
     defp format_message(msg), do: inspect(msg, limit: 200)
 
     defp format_module(nil), do: "system"
+
     defp format_module({module, _fun, _arity}) when is_atom(module) do
       module
       |> Module.split()
       |> Enum.take(-2)
       |> Enum.join(".")
     end
+
     defp format_module(_), do: "system"
   end
 end

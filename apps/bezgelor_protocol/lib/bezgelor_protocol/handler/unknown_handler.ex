@@ -30,6 +30,11 @@ defmodule BezgelorProtocol.Handler.UnknownHandler do
   - Might be path-related (near path opcodes in enum)
   - Purpose unknown
 
+  ### 0x00E3
+  - Falls between ServerDatacubeVolumeUpdate (0xE2) and ClientResurrectRequest (0xE4)
+  - Not present in NexusForever opcode list (gap in enum)
+  - Trigger conditions unknown - log for investigation
+
   ## Investigation Notes
 
   To investigate these opcodes:
@@ -66,9 +71,7 @@ defmodule BezgelorProtocol.Handler.UnknownHandler do
         "(empty)"
       end
 
-    Logger.debug(
-      "[Unknown:0x#{opcode_hex}] Received #{byte_size(payload)} bytes: #{payload_hex}"
-    )
+    Logger.debug("[Unknown:0x#{opcode_hex}] Received #{byte_size(payload)} bytes: #{payload_hex}")
 
     # Don't error - just acknowledge and continue
     {:ok, state}
@@ -99,6 +102,7 @@ defmodule BezgelorProtocol.Handler.Unknown0x07CCHandler do
     if byte_size(payload) > 0 do
       Logger.debug("[Unknown:0x07CC] Periodic packet (#{byte_size(payload)} bytes)")
     end
+
     {:ok, state}
   end
 end
@@ -135,6 +139,37 @@ defmodule BezgelorProtocol.Handler.Unknown0x0635Handler do
   @impl true
   def handle(payload, state) do
     Logger.debug("[Unknown:0x0635] Received #{byte_size(payload)} bytes")
+    {:ok, state}
+  end
+end
+
+defmodule BezgelorProtocol.Handler.Unknown0x00DEHandler do
+  @moduledoc "Handler for unknown opcode 0x00DE (possibly dash/sprint related)"
+  @behaviour BezgelorProtocol.Handler
+  require Logger
+
+  @impl true
+  def handle(payload, state) do
+    payload_hex = if byte_size(payload) > 0, do: Base.encode16(payload), else: "(empty)"
+    Logger.debug("[Unknown:0x00DE] Received #{byte_size(payload)} bytes: #{payload_hex}")
+    {:ok, state}
+  end
+end
+
+defmodule BezgelorProtocol.Handler.Unknown0x00E3Handler do
+  @moduledoc """
+  Handler for unknown opcode 0x00E3.
+
+  This opcode falls between ServerDatacubeVolumeUpdate (0xE2) and
+  ClientResurrectRequest (0xE4). Purpose unknown - logging for investigation.
+  """
+  @behaviour BezgelorProtocol.Handler
+  require Logger
+
+  @impl true
+  def handle(payload, state) do
+    payload_hex = if byte_size(payload) > 0, do: Base.encode16(payload), else: "(empty)"
+    Logger.info("[Unknown:0x00E3] Received #{byte_size(payload)} bytes: #{payload_hex}")
     {:ok, state}
   end
 end

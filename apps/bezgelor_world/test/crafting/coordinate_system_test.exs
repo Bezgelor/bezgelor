@@ -8,8 +8,17 @@ defmodule BezgelorWorld.Crafting.CoordinateSystemTest do
       zones = [
         %{id: 1, x_min: 0, x_max: 30, y_min: 0, y_max: 30, variant_id: 0, quality: :poor},
         %{id: 2, x_min: 40, x_max: 60, y_min: 40, y_max: 60, variant_id: 0, quality: :standard},
-        %{id: 3, x_min: 70, x_max: 90, y_min: 70, y_max: 90, variant_id: 101, quality: :exceptional}
+        %{
+          id: 3,
+          x_min: 70,
+          x_max: 90,
+          y_min: 70,
+          y_max: 90,
+          variant_id: 101,
+          quality: :exceptional
+        }
       ]
+
       {:ok, zones: zones}
     end
 

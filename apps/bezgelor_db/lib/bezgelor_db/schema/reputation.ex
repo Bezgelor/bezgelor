@@ -8,9 +8,10 @@ defmodule BezgelorDb.Schema.Reputation do
   alias BezgelorDb.Schema.Character
 
   schema "reputations" do
-    belongs_to :character, Character
-    field :faction_id, :integer
-    field :standing, :integer, default: 0  # Raw reputation points
+    belongs_to(:character, Character)
+    field(:faction_id, :integer)
+    # Raw reputation points
+    field(:standing, :integer, default: 0)
     timestamps()
   end
 

@@ -16,7 +16,8 @@ defmodule BezgelorWorld.MythicPlus.MythicRun do
 
   alias BezgelorWorld.MythicPlus.{Keystone, Affix}
 
-  @death_penalty 5_000  # 5 second penalty per death
+  # 5 second penalty per death
+  @death_penalty 5_000
 
   defstruct [
     :instance_guid,
@@ -24,7 +25,8 @@ defmodule BezgelorWorld.MythicPlus.MythicRun do
     :time_limit,
     :start_time,
     :end_time,
-    :status,           # :in_progress | :completed | :failed | :abandoned
+    # :in_progress | :completed | :failed | :abandoned
+    :status,
     deaths: 0,
     trash_count: 0,
     trash_required: 0,
@@ -131,9 +133,10 @@ defmodule BezgelorWorld.MythicPlus.MythicRun do
 
   @impl true
   def handle_cast(:start_run, state) do
-    state = %{state |
-      start_time: System.monotonic_time(:millisecond),
-      events: [{:run_started, System.monotonic_time(:millisecond)} | state.events]
+    state = %{
+      state
+      | start_time: System.monotonic_time(:millisecond),
+        events: [{:run_started, System.monotonic_time(:millisecond)} | state.events]
     }
 
     Logger.info("Mythic+ run started: #{state.keystone.dungeon_id} level #{state.keystone.level}")
@@ -142,9 +145,10 @@ defmodule BezgelorWorld.MythicPlus.MythicRun do
   end
 
   def handle_cast({:death, character_id}, state) do
-    state = %{state |
-      deaths: state.deaths + 1,
-      events: [{:death, character_id, System.monotonic_time(:millisecond)} | state.events]
+    state = %{
+      state
+      | deaths: state.deaths + 1,
+        events: [{:death, character_id, System.monotonic_time(:millisecond)} | state.events]
     }
 
     Logger.info("Death recorded in M+ run, total: #{state.deaths}")
@@ -160,21 +164,21 @@ defmodule BezgelorWorld.MythicPlus.MythicRun do
   end
 
   def handle_cast({:boss_kill, boss_id}, state) do
-    state = %{state |
-      bosses_killed: state.bosses_killed + 1,
-      events: [{:boss_kill, boss_id, System.monotonic_time(:millisecond)} | state.events]
+    state = %{
+      state
+      | bosses_killed: state.bosses_killed + 1,
+        events: [{:boss_kill, boss_id, System.monotonic_time(:millisecond)} | state.events]
     }
 
-    Logger.info("Boss killed in M+ run: #{boss_id}, total: #{state.bosses_killed}/#{state.bosses_required}")
+    Logger.info(
+      "Boss killed in M+ run: #{boss_id}, total: #{state.bosses_killed}/#{state.bosses_required}"
+    )
 
     {:noreply, state}
   end
 
   def handle_cast(:abandon, state) do
-    state = %{state |
-      status: :abandoned,
-      end_time: System.monotonic_time(:millisecond)
-    }
+    state = %{state | status: :abandoned, end_time: System.monotonic_time(:millisecond)}
 
     Logger.info("Mythic+ run abandoned")
 
@@ -198,10 +202,7 @@ defmodule BezgelorWorld.MythicPlus.MythicRun do
         keystone: state.keystone
       }
 
-      state = %{state |
-        status: :completed,
-        end_time: end_time
-      }
+      state = %{state | status: :completed, end_time: end_time}
 
       Logger.info("Mythic+ run completed in #{completion_time}ms (limit: #{state.time_limit}ms)")
 
@@ -212,11 +213,12 @@ defmodule BezgelorWorld.MythicPlus.MythicRun do
   end
 
   def handle_call(:get_status, _from, state) do
-    elapsed = if state.start_time do
-      System.monotonic_time(:millisecond) - state.start_time
-    else
-      0
-    end
+    elapsed =
+      if state.start_time do
+        System.monotonic_time(:millisecond) - state.start_time
+      else
+        0
+      end
 
     status = %{
       status: state.status,
@@ -259,12 +261,13 @@ defmodule BezgelorWorld.MythicPlus.MythicRun do
     base_score = state.keystone.level * 100
 
     # Bonus for time
-    time_bonus = cond do
-      completion_time <= state.time_limit * 0.6 -> 50
-      completion_time <= state.time_limit * 0.8 -> 30
-      completion_time <= state.time_limit -> 10
-      true -> 0
-    end
+    time_bonus =
+      cond do
+        completion_time <= state.time_limit * 0.6 -> 50
+        completion_time <= state.time_limit * 0.8 -> 30
+        completion_time <= state.time_limit -> 10
+        true -> 0
+      end
 
     # Penalty for deaths (max -50)
     death_penalty = min(state.deaths * 5, 50)

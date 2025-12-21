@@ -33,7 +33,8 @@ defmodule BezgelorWorld.Loot.LootRules do
   @spec default_method(atom(), atom()) :: loot_method()
   def default_method(instance_type, difficulty) do
     case {instance_type, difficulty} do
-      {:raid, _} -> :personal           # Modern raids use personal loot
+      # Modern raids use personal loot
+      {:raid, _} -> :personal
       {:dungeon, :mythic_plus} -> :personal
       {:expedition, _} -> :personal
       _ -> :need_before_greed
@@ -49,8 +50,10 @@ defmodule BezgelorWorld.Loot.LootRules do
       :personal -> false
       :master_loot -> false
       :round_robin -> false
-      :group_loot -> item.quality >= 3       # Rare or better
-      :need_before_greed -> item.quality >= 2 # Uncommon or better
+      # Rare or better
+      :group_loot -> item.quality >= 3
+      # Uncommon or better
+      :need_before_greed -> item.quality >= 2
     end
   end
 
@@ -59,12 +62,15 @@ defmodule BezgelorWorld.Loot.LootRules do
   """
   @spec determine_winner([roll_result()]) :: roll_result() | nil
   def determine_winner([]), do: nil
+
   def determine_winner(rolls) do
     # Filter out passes
     valid_rolls = Enum.reject(rolls, fn r -> r.roll_type == :pass end)
 
     case valid_rolls do
-      [] -> nil
+      [] ->
+        nil
+
       rolls ->
         # Sort by: 1) roll_type priority (need > greed), 2) roll value
         rolls
@@ -122,12 +128,18 @@ defmodule BezgelorWorld.Loot.LootRules do
     # Engineers: Heavy
     # Espers/Spellslingers/Medics: Light
     case {class_id, armor_type} do
-      {1, :heavy} -> true    # Warrior
-      {2, :light} -> true    # Esper
-      {3, :light} -> true    # Spellslinger
-      {4, :light} -> true    # Medic
-      {5, :medium} -> true   # Stalker
-      {6, :heavy} -> true    # Engineer
+      # Warrior
+      {1, :heavy} -> true
+      # Esper
+      {2, :light} -> true
+      # Spellslinger
+      {3, :light} -> true
+      # Medic
+      {4, :light} -> true
+      # Stalker
+      {5, :medium} -> true
+      # Engineer
+      {6, :heavy} -> true
       _ -> false
     end
   end
@@ -144,7 +156,8 @@ defmodule BezgelorWorld.Loot.LootRules do
   """
   @spec apply_luck_bonus(non_neg_integer(), non_neg_integer()) :: non_neg_integer()
   def apply_luck_bonus(base_chance, luck) do
-    bonus = div(luck, 10)  # 10% bonus per 100 luck
+    # 10% bonus per 100 luck
+    bonus = div(luck, 10)
     min(base_chance + bonus, 100)
   end
 

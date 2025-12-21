@@ -11,24 +11,24 @@ defmodule BezgelorDb.Schema.PromoCode do
   @code_types ~w(discount item currency)
 
   schema "promo_codes" do
-    field :code, :string
-    field :description, :string
-    field :code_type, :string
-    field :discount_percent, :integer
-    field :discount_amount, :integer
-    field :granted_item_id, :integer
-    field :granted_currency_amount, :integer
-    field :granted_currency_type, :string
-    field :max_uses, :integer
-    field :uses_per_account, :integer, default: 1
-    field :current_uses, :integer, default: 0
-    field :starts_at, :utc_datetime
-    field :ends_at, :utc_datetime
-    field :is_active, :boolean, default: true
-    field :min_purchase_amount, :integer
-    field :applies_to, :map, default: %{}
+    field(:code, :string)
+    field(:description, :string)
+    field(:code_type, :string)
+    field(:discount_percent, :integer)
+    field(:discount_amount, :integer)
+    field(:granted_item_id, :integer)
+    field(:granted_currency_amount, :integer)
+    field(:granted_currency_type, :string)
+    field(:max_uses, :integer)
+    field(:uses_per_account, :integer, default: 1)
+    field(:current_uses, :integer, default: 0)
+    field(:starts_at, :utc_datetime)
+    field(:ends_at, :utc_datetime)
+    field(:is_active, :boolean, default: true)
+    field(:min_purchase_amount, :integer)
+    field(:applies_to, :map, default: %{})
 
-    has_many :redemptions, BezgelorDb.Schema.PromoRedemption
+    has_many(:redemptions, BezgelorDb.Schema.PromoRedemption)
 
     timestamps(type: :utc_datetime)
   end
@@ -36,12 +36,22 @@ defmodule BezgelorDb.Schema.PromoCode do
   def changeset(promo_code, attrs) do
     promo_code
     |> cast(attrs, [
-      :code, :description, :code_type,
-      :discount_percent, :discount_amount,
-      :granted_item_id, :granted_currency_amount, :granted_currency_type,
-      :max_uses, :uses_per_account, :current_uses,
-      :starts_at, :ends_at, :is_active,
-      :min_purchase_amount, :applies_to
+      :code,
+      :description,
+      :code_type,
+      :discount_percent,
+      :discount_amount,
+      :granted_item_id,
+      :granted_currency_amount,
+      :granted_currency_type,
+      :max_uses,
+      :uses_per_account,
+      :current_uses,
+      :starts_at,
+      :ends_at,
+      :is_active,
+      :min_purchase_amount,
+      :applies_to
     ])
     |> validate_required([:code, :code_type])
     |> validate_inclusion(:code_type, @code_types)
@@ -68,8 +78,13 @@ defmodule BezgelorDb.Schema.PromoCode do
 
     case code_type do
       "discount" ->
-        if is_nil(get_field(changeset, :discount_percent)) and is_nil(get_field(changeset, :discount_amount)) do
-          add_error(changeset, :discount_percent, "discount codes require discount_percent or discount_amount")
+        if is_nil(get_field(changeset, :discount_percent)) and
+             is_nil(get_field(changeset, :discount_amount)) do
+          add_error(
+            changeset,
+            :discount_percent,
+            "discount codes require discount_percent or discount_amount"
+          )
         else
           changeset
         end
@@ -84,10 +99,18 @@ defmodule BezgelorDb.Schema.PromoCode do
       "currency" ->
         cond do
           is_nil(get_field(changeset, :granted_currency_amount)) ->
-            add_error(changeset, :granted_currency_amount, "currency codes require granted_currency_amount")
+            add_error(
+              changeset,
+              :granted_currency_amount,
+              "currency codes require granted_currency_amount"
+            )
 
           is_nil(get_field(changeset, :granted_currency_type)) ->
-            add_error(changeset, :granted_currency_type, "currency codes require granted_currency_type")
+            add_error(
+              changeset,
+              :granted_currency_type,
+              "currency codes require granted_currency_type"
+            )
 
           true ->
             changeset
@@ -102,7 +125,10 @@ defmodule BezgelorDb.Schema.PromoCode do
 
   @doc "Check if promo code can be used."
   def usable?(%__MODULE__{is_active: false}), do: false
-  def usable?(%__MODULE__{max_uses: max, current_uses: current}) when not is_nil(max) and current >= max, do: false
+
+  def usable?(%__MODULE__{max_uses: max, current_uses: current})
+      when not is_nil(max) and current >= max, do: false
+
   def usable?(%__MODULE__{starts_at: starts_at, ends_at: ends_at}) do
     now = DateTime.utc_now()
     within_start = is_nil(starts_at) or DateTime.compare(now, starts_at) != :lt

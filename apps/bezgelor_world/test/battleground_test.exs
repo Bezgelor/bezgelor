@@ -12,6 +12,7 @@ defmodule BezgelorWorld.BattlegroundTest do
   defp make_team(faction, count, base_guid) do
     for i <- 1..count do
       guid = unique_guid(base_guid + i * 100)
+
       %BattlegroundQueue{
         player_guid: guid,
         player_name: "Player#{guid}",
@@ -37,10 +38,7 @@ defmodule BezgelorWorld.BattlegroundTest do
         :ok
     end
 
-    {:ok,
-     player_guid: player_guid,
-     player_name: player_name,
-     battleground_id: 1}
+    {:ok, player_guid: player_guid, player_name: player_name, battleground_id: 1}
   end
 
   describe "BattlegroundQueue.join_queue/6" do
@@ -98,7 +96,8 @@ defmodule BezgelorWorld.BattlegroundTest do
           :exile,
           50,
           1,
-          99999  # Invalid ID
+          # Invalid ID
+          99999
         )
 
       assert {:error, :invalid_battleground} = result
@@ -195,10 +194,7 @@ defmodule BezgelorWorld.BattlegroundTest do
       exile_team = make_team(:exile, 4, 10000)
       dominion_team = make_team(:dominion, 4, 20000)
 
-      {:ok,
-       match_id: match_id,
-       exile_team: exile_team,
-       dominion_team: dominion_team}
+      {:ok, match_id: match_id, exile_team: exile_team, dominion_team: dominion_team}
     end
 
     test "starts instance and gets state", ctx do
@@ -240,7 +236,9 @@ defmodule BezgelorWorld.BattlegroundTest do
       victim = hd(ctx.dominion_team)
 
       # Match is in preparation state, kills shouldn't count
-      result = BattlegroundInstance.report_kill(ctx.match_id, killer.player_guid, victim.player_guid)
+      result =
+        BattlegroundInstance.report_kill(ctx.match_id, killer.player_guid, victim.player_guid)
+
       assert {:error, :match_not_active} = result
 
       # Cleanup
@@ -326,13 +324,17 @@ defmodule BezgelorWorld.BattlegroundTest do
       killer = hd(ctx.exile_team)
       victim = hd(ctx.dominion_team)
 
-      result = BattlegroundInstance.report_kill(ctx.match_id, killer.player_guid, victim.player_guid)
+      result =
+        BattlegroundInstance.report_kill(ctx.match_id, killer.player_guid, victim.player_guid)
+
       assert :ok = result
 
       {:ok, state} = BattlegroundInstance.get_state(ctx.match_id)
 
       killer_stats = Enum.find(state.exile_team, fn p -> p.player_guid == killer.player_guid end)
-      victim_stats = Enum.find(state.dominion_team, fn p -> p.player_guid == victim.player_guid end)
+
+      victim_stats =
+        Enum.find(state.dominion_team, fn p -> p.player_guid == victim.player_guid end)
 
       assert killer_stats.kills == 1
       assert victim_stats.deaths == 1
@@ -588,17 +590,19 @@ defmodule BezgelorWorld.BattlegroundTest do
     test "center point worth double" do
       base_score = 10
 
-      side_point = ControlPoint.new(1, "Side Point", {0.0, 0.0, 0.0},
-        owner: :exile,
-        capture_progress: 1.0,
-        score_multiplier: 1.0
-      )
+      side_point =
+        ControlPoint.new(1, "Side Point", {0.0, 0.0, 0.0},
+          owner: :exile,
+          capture_progress: 1.0,
+          score_multiplier: 1.0
+        )
 
-      center_point = ControlPoint.new(2, "Center Point", {0.0, 0.0, 0.0},
-        owner: :exile,
-        capture_progress: 1.0,
-        score_multiplier: 2.0
-      )
+      center_point =
+        ControlPoint.new(2, "Center Point", {0.0, 0.0, 0.0},
+          owner: :exile,
+          capture_progress: 1.0,
+          score_multiplier: 2.0
+        )
 
       assert ControlPoint.score_per_tick(side_point, base_score) == 10
       assert ControlPoint.score_per_tick(center_point, base_score) == 20

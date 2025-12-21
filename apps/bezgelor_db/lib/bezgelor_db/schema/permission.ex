@@ -24,11 +24,11 @@ defmodule BezgelorDb.Schema.Permission do
         }
 
   schema "permissions" do
-    field :key, :string
-    field :category, :string
-    field :description, :string
+    field(:key, :string)
+    field(:category, :string)
+    field(:description, :string)
 
-    many_to_many :roles, BezgelorDb.Schema.Role, join_through: "role_permissions"
+    many_to_many(:roles, BezgelorDb.Schema.Role, join_through: "role_permissions")
 
     timestamps(type: :utc_datetime)
   end

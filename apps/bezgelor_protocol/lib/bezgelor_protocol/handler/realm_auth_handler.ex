@@ -146,7 +146,10 @@ defmodule BezgelorProtocol.Handler.RealmAuthHandler do
 
   defp build_realm_info(account, realm, session_key) do
     address_int = ip_to_uint32(realm.address)
-    Logger.debug("[Realm] ServerRealmInfo: address=#{realm.address} (0x#{Integer.to_string(address_int, 16)}), port=#{realm.port}, account_id=#{account.id}, realm_name=#{realm.name}, type=#{inspect(realm.type)}")
+
+    Logger.debug(
+      "[Realm] ServerRealmInfo: address=#{realm.address} (0x#{Integer.to_string(address_int, 16)}), port=#{realm.port}, account_id=#{account.id}, realm_name=#{realm.name}, type=#{inspect(realm.type)}"
+    )
 
     %ServerRealmInfo{
       address: address_int,

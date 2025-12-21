@@ -21,8 +21,7 @@ defmodule BezgelorPortalWeb.Admin.CharactersLive do
        characters: [],
        page: 1,
        has_more: false
-     ),
-     layout: {BezgelorPortalWeb.Layouts, :admin}}
+     ), layout: {BezgelorPortalWeb.Layouts, :admin}}
   end
 
   @impl true
@@ -49,8 +48,8 @@ defmodule BezgelorPortalWeb.Admin.CharactersLive do
           <p class="text-base-content/70">Search and manage characters</p>
         </div>
       </div>
-
-      <!-- Search Form -->
+      
+    <!-- Search Form -->
       <div class="card bg-base-100 shadow">
         <div class="card-body">
           <form phx-submit="search" class="flex flex-wrap gap-4 items-end">
@@ -81,14 +80,13 @@ defmodule BezgelorPortalWeb.Admin.CharactersLive do
             </div>
 
             <button type="submit" class="btn btn-primary">
-              <.icon name="hero-magnifying-glass" class="size-4" />
-              Search
+              <.icon name="hero-magnifying-glass" class="size-4" /> Search
             </button>
           </form>
         </div>
       </div>
-
-      <!-- Results -->
+      
+    <!-- Results -->
       <div class="card bg-base-100 shadow">
         <div class="overflow-x-auto">
           <table class="table">
@@ -158,13 +156,15 @@ defmodule BezgelorPortalWeb.Admin.CharactersLive do
             </tbody>
           </table>
         </div>
-
-        <!-- Pagination -->
+        
+    <!-- Pagination -->
         <div :if={@page > 1 or @has_more} class="card-body pt-0">
           <div class="flex justify-center gap-2">
             <.link
               :if={@page > 1}
-              patch={~p"/admin/characters?#{pagination_params(@search_query, @include_deleted, @page - 1)}"}
+              patch={
+                ~p"/admin/characters?#{pagination_params(@search_query, @include_deleted, @page - 1)}"
+              }
               class="btn btn-sm"
             >
               Previous
@@ -172,7 +172,9 @@ defmodule BezgelorPortalWeb.Admin.CharactersLive do
             <span class="btn btn-sm btn-ghost">Page {@page}</span>
             <.link
               :if={@has_more}
-              patch={~p"/admin/characters?#{pagination_params(@search_query, @include_deleted, @page + 1)}"}
+              patch={
+                ~p"/admin/characters?#{pagination_params(@search_query, @include_deleted, @page + 1)}"
+              }
               class="btn btn-sm"
             >
               Next
@@ -187,7 +189,9 @@ defmodule BezgelorPortalWeb.Admin.CharactersLive do
   @impl true
   def handle_event("search", %{"q" => query} = params, socket) do
     include_deleted = params["deleted"] == "on"
-    {:noreply, push_patch(socket, to: ~p"/admin/characters?#{pagination_params(query, include_deleted, 1)}")}
+
+    {:noreply,
+     push_patch(socket, to: ~p"/admin/characters?#{pagination_params(query, include_deleted, 1)}")}
   end
 
   @impl true

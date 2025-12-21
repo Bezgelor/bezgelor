@@ -1,0 +1,2308 @@
+{
+  "spelllevel": [
+    {
+      "ID": 608,
+      "classId": 4,
+      "characterLevel": 20,
+      "prerequisiteId": 0,
+      "spell4Id": 70953,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 611,
+      "classId": 4,
+      "characterLevel": 12,
+      "prerequisiteId": 0,
+      "spell4Id": 41866,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 614,
+      "classId": 4,
+      "characterLevel": 4,
+      "prerequisiteId": 0,
+      "spell4Id": 41843,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 631,
+      "classId": 4,
+      "characterLevel": 1,
+      "prerequisiteId": 0,
+      "spell4Id": 58832,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 632,
+      "classId": 4,
+      "characterLevel": 8,
+      "prerequisiteId": 0,
+      "spell4Id": 70757,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 633,
+      "classId": 4,
+      "characterLevel": 9,
+      "prerequisiteId": 0,
+      "spell4Id": 41470,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 634,
+      "classId": 4,
+      "characterLevel": 16,
+      "prerequisiteId": 24286,
+      "spell4Id": 42892,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 647,
+      "classId": 3,
+      "characterLevel": 1,
+      "prerequisiteId": 0,
+      "spell4Id": 32893,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 648,
+      "classId": 3,
+      "characterLevel": 4,
+      "prerequisiteId": 0,
+      "spell4Id": 44641,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 722,
+      "classId": 5,
+      "characterLevel": 4,
+      "prerequisiteId": 0,
+      "spell4Id": 38803,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 733,
+      "classId": 5,
+      "characterLevel": 7,
+      "prerequisiteId": 0,
+      "spell4Id": 42676,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 736,
+      "classId": 5,
+      "characterLevel": 8,
+      "prerequisiteId": 0,
+      "spell4Id": 38838,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 748,
+      "classId": 5,
+      "characterLevel": 14,
+      "prerequisiteId": 0,
+      "spell4Id": 38912,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 761,
+      "classId": 5,
+      "characterLevel": 9,
+      "prerequisiteId": 0,
+      "spell4Id": 38841,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 762,
+      "classId": 5,
+      "characterLevel": 12,
+      "prerequisiteId": 0,
+      "spell4Id": 38860,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 766,
+      "classId": 3,
+      "characterLevel": 1,
+      "prerequisiteId": 0,
+      "spell4Id": 32809,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 767,
+      "classId": 3,
+      "characterLevel": 6,
+      "prerequisiteId": 0,
+      "spell4Id": 32820,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 769,
+      "classId": 3,
+      "characterLevel": 22,
+      "prerequisiteId": 0,
+      "spell4Id": 32819,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 770,
+      "classId": 3,
+      "characterLevel": 14,
+      "prerequisiteId": 0,
+      "spell4Id": 32815,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 771,
+      "classId": 3,
+      "characterLevel": 8,
+      "prerequisiteId": 0,
+      "spell4Id": 32814,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 772,
+      "classId": 3,
+      "characterLevel": 7,
+      "prerequisiteId": 0,
+      "spell4Id": 32821,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 773,
+      "classId": 3,
+      "characterLevel": 6,
+      "prerequisiteId": 0,
+      "spell4Id": 32823,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 780,
+      "classId": 5,
+      "characterLevel": 1,
+      "prerequisiteId": 0,
+      "spell4Id": 38765,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 807,
+      "classId": 5,
+      "characterLevel": 1,
+      "prerequisiteId": 0,
+      "spell4Id": 38779,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 808,
+      "classId": 5,
+      "characterLevel": 1,
+      "prerequisiteId": 0,
+      "spell4Id": 38791,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 919,
+      "classId": 1,
+      "characterLevel": 1,
+      "prerequisiteId": 0,
+      "spell4Id": 32078,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 920,
+      "classId": 1,
+      "characterLevel": 1,
+      "prerequisiteId": 0,
+      "spell4Id": 58524,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 921,
+      "classId": 1,
+      "characterLevel": 4,
+      "prerequisiteId": 0,
+      "spell4Id": 32128,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 922,
+      "classId": 1,
+      "characterLevel": 24,
+      "prerequisiteId": 0,
+      "spell4Id": 46935,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 923,
+      "classId": 1,
+      "characterLevel": 20,
+      "prerequisiteId": 0,
+      "spell4Id": 57978,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 924,
+      "classId": 1,
+      "characterLevel": 7,
+      "prerequisiteId": 0,
+      "spell4Id": 32132,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 925,
+      "classId": 1,
+      "characterLevel": 1,
+      "prerequisiteId": 0,
+      "spell4Id": 58591,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 926,
+      "classId": 1,
+      "characterLevel": 22,
+      "prerequisiteId": 0,
+      "spell4Id": 70016,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 927,
+      "classId": 1,
+      "characterLevel": 18,
+      "prerequisiteId": 0,
+      "spell4Id": 30568,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 928,
+      "classId": 1,
+      "characterLevel": 16,
+      "prerequisiteId": 24580,
+      "spell4Id": 53599,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 929,
+      "classId": 1,
+      "characterLevel": 6,
+      "prerequisiteId": 0,
+      "spell4Id": 57694,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 930,
+      "classId": 1,
+      "characterLevel": 22,
+      "prerequisiteId": 0,
+      "spell4Id": 49557,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 931,
+      "classId": 1,
+      "characterLevel": 14,
+      "prerequisiteId": 0,
+      "spell4Id": 32320,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 932,
+      "classId": 1,
+      "characterLevel": 16,
+      "prerequisiteId": 24539,
+      "spell4Id": 36227,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 933,
+      "classId": 1,
+      "characterLevel": 6,
+      "prerequisiteId": 0,
+      "spell4Id": 61053,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 934,
+      "classId": 1,
+      "characterLevel": 5,
+      "prerequisiteId": 0,
+      "spell4Id": 33802,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 935,
+      "classId": 1,
+      "characterLevel": 18,
+      "prerequisiteId": 0,
+      "spell4Id": 47214,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 936,
+      "classId": 1,
+      "characterLevel": 14,
+      "prerequisiteId": 0,
+      "spell4Id": 32342,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 937,
+      "classId": 1,
+      "characterLevel": 16,
+      "prerequisiteId": 24564,
+      "spell4Id": 32345,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 938,
+      "classId": 1,
+      "characterLevel": 10,
+      "prerequisiteId": 0,
+      "spell4Id": 38787,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 939,
+      "classId": 1,
+      "characterLevel": 8,
+      "prerequisiteId": 0,
+      "spell4Id": 38964,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 940,
+      "classId": 1,
+      "characterLevel": 24,
+      "prerequisiteId": 0,
+      "spell4Id": 54395,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 941,
+      "classId": 1,
+      "characterLevel": 7,
+      "prerequisiteId": 0,
+      "spell4Id": 54342,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 942,
+      "classId": 1,
+      "characterLevel": 12,
+      "prerequisiteId": 0,
+      "spell4Id": 32358,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 943,
+      "classId": 1,
+      "characterLevel": 10,
+      "prerequisiteId": 0,
+      "spell4Id": 54475,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 944,
+      "classId": 1,
+      "characterLevel": 6,
+      "prerequisiteId": 0,
+      "spell4Id": 32351,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 945,
+      "classId": 1,
+      "characterLevel": 9,
+      "prerequisiteId": 0,
+      "spell4Id": 32353,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 946,
+      "classId": 1,
+      "characterLevel": 20,
+      "prerequisiteId": 0,
+      "spell4Id": 59080,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 948,
+      "classId": 1,
+      "characterLevel": 9,
+      "prerequisiteId": 0,
+      "spell4Id": 57248,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 982,
+      "classId": 5,
+      "characterLevel": 18,
+      "prerequisiteId": 0,
+      "spell4Id": 38899,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 984,
+      "classId": 5,
+      "characterLevel": 16,
+      "prerequisiteId": 24737,
+      "spell4Id": 39497,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 994,
+      "classId": 2,
+      "characterLevel": 22,
+      "prerequisiteId": 0,
+      "spell4Id": 34426,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 998,
+      "classId": 2,
+      "characterLevel": 7,
+      "prerequisiteId": 0,
+      "spell4Id": 34522,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1003,
+      "classId": 7,
+      "characterLevel": 12,
+      "prerequisiteId": 0,
+      "spell4Id": 35356,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1008,
+      "classId": 2,
+      "characterLevel": 6,
+      "prerequisiteId": 0,
+      "spell4Id": 34658,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1009,
+      "classId": 2,
+      "characterLevel": 24,
+      "prerequisiteId": 0,
+      "spell4Id": 34669,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1011,
+      "classId": 7,
+      "characterLevel": 1,
+      "prerequisiteId": 0,
+      "spell4Id": 43468,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1012,
+      "classId": 7,
+      "characterLevel": 4,
+      "prerequisiteId": 0,
+      "spell4Id": 34756,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1019,
+      "classId": 4,
+      "characterLevel": 22,
+      "prerequisiteId": 0,
+      "spell4Id": 41539,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1021,
+      "classId": 4,
+      "characterLevel": 9,
+      "prerequisiteId": 0,
+      "spell4Id": 29888,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1024,
+      "classId": 4,
+      "characterLevel": 10,
+      "prerequisiteId": 0,
+      "spell4Id": 42338,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1025,
+      "classId": 1,
+      "characterLevel": 12,
+      "prerequisiteId": 0,
+      "spell4Id": 32129,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1029,
+      "classId": 7,
+      "characterLevel": 8,
+      "prerequisiteId": 0,
+      "spell4Id": 34772,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1030,
+      "classId": 7,
+      "characterLevel": 7,
+      "prerequisiteId": 0,
+      "spell4Id": 34353,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1036,
+      "classId": 7,
+      "characterLevel": 1,
+      "prerequisiteId": 0,
+      "spell4Id": 34718,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1039,
+      "classId": 7,
+      "characterLevel": 20,
+      "prerequisiteId": 0,
+      "spell4Id": 30006,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1047,
+      "classId": 3,
+      "characterLevel": 6,
+      "prerequisiteId": 0,
+      "spell4Id": 33181,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1048,
+      "classId": 3,
+      "characterLevel": 12,
+      "prerequisiteId": 0,
+      "spell4Id": 33140,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1049,
+      "classId": 3,
+      "characterLevel": 18,
+      "prerequisiteId": 0,
+      "spell4Id": 33257,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1057,
+      "classId": 3,
+      "characterLevel": 16,
+      "prerequisiteId": 24739,
+      "spell4Id": 36200,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1058,
+      "classId": 3,
+      "characterLevel": 5,
+      "prerequisiteId": 0,
+      "spell4Id": 32936,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1059,
+      "classId": 3,
+      "characterLevel": 18,
+      "prerequisiteId": 0,
+      "spell4Id": 32943,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1060,
+      "classId": 3,
+      "characterLevel": 14,
+      "prerequisiteId": 0,
+      "spell4Id": 32999,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1062,
+      "classId": 3,
+      "characterLevel": 10,
+      "prerequisiteId": 0,
+      "spell4Id": 33359,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1065,
+      "classId": 3,
+      "characterLevel": 16,
+      "prerequisiteId": 24740,
+      "spell4Id": 33366,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1067,
+      "classId": 3,
+      "characterLevel": 24,
+      "prerequisiteId": 0,
+      "spell4Id": 33392,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1069,
+      "classId": 3,
+      "characterLevel": 20,
+      "prerequisiteId": 0,
+      "spell4Id": 33270,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1071,
+      "classId": 3,
+      "characterLevel": 16,
+      "prerequisiteId": 24741,
+      "spell4Id": 33272,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1073,
+      "classId": 4,
+      "characterLevel": 7,
+      "prerequisiteId": 0,
+      "spell4Id": 70975,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1074,
+      "classId": 3,
+      "characterLevel": 10,
+      "prerequisiteId": 0,
+      "spell4Id": 36009,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1082,
+      "classId": 3,
+      "characterLevel": 7,
+      "prerequisiteId": 0,
+      "spell4Id": 36155,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1084,
+      "classId": 3,
+      "characterLevel": 9,
+      "prerequisiteId": 0,
+      "spell4Id": 36233,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1086,
+      "classId": 4,
+      "characterLevel": 1,
+      "prerequisiteId": 0,
+      "spell4Id": 29874,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1087,
+      "classId": 4,
+      "characterLevel": 5,
+      "prerequisiteId": 0,
+      "spell4Id": 41496,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1088,
+      "classId": 4,
+      "characterLevel": 7,
+      "prerequisiteId": 0,
+      "spell4Id": 41551,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1089,
+      "classId": 4,
+      "characterLevel": 1,
+      "prerequisiteId": 0,
+      "spell4Id": 42352,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1090,
+      "classId": 4,
+      "characterLevel": 22,
+      "prerequisiteId": 0,
+      "spell4Id": 41533,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1091,
+      "classId": 3,
+      "characterLevel": 12,
+      "prerequisiteId": 0,
+      "spell4Id": 33081,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1100,
+      "classId": 3,
+      "characterLevel": 9,
+      "prerequisiteId": 0,
+      "spell4Id": 36821,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1101,
+      "classId": 7,
+      "characterLevel": 16,
+      "prerequisiteId": 24725,
+      "spell4Id": 38905,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1107,
+      "classId": 7,
+      "characterLevel": 12,
+      "prerequisiteId": 0,
+      "spell4Id": 58428,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1109,
+      "classId": 3,
+      "characterLevel": 22,
+      "prerequisiteId": 0,
+      "spell4Id": 43568,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1110,
+      "classId": 7,
+      "characterLevel": 20,
+      "prerequisiteId": 0,
+      "spell4Id": 36052,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1111,
+      "classId": 2,
+      "characterLevel": 1,
+      "prerequisiteId": 0,
+      "spell4Id": 42276,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1113,
+      "classId": 2,
+      "characterLevel": 8,
+      "prerequisiteId": 0,
+      "spell4Id": 34836,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1114,
+      "classId": 2,
+      "characterLevel": 16,
+      "prerequisiteId": 24296,
+      "spell4Id": 38036,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1119,
+      "classId": 4,
+      "characterLevel": 12,
+      "prerequisiteId": 0,
+      "spell4Id": 38279,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1131,
+      "classId": 7,
+      "characterLevel": 18,
+      "prerequisiteId": 0,
+      "spell4Id": 38881,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1142,
+      "classId": 7,
+      "characterLevel": 7,
+      "prerequisiteId": 0,
+      "spell4Id": 39068,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1144,
+      "classId": 7,
+      "characterLevel": 6,
+      "prerequisiteId": 0,
+      "spell4Id": 39092,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1145,
+      "classId": 7,
+      "characterLevel": 9,
+      "prerequisiteId": 0,
+      "spell4Id": 35870,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1146,
+      "classId": 7,
+      "characterLevel": 16,
+      "prerequisiteId": 24726,
+      "spell4Id": 39116,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1147,
+      "classId": 7,
+      "characterLevel": 14,
+      "prerequisiteId": 0,
+      "spell4Id": 39134,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1148,
+      "classId": 7,
+      "characterLevel": 6,
+      "prerequisiteId": 0,
+      "spell4Id": 39132,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1150,
+      "classId": 5,
+      "characterLevel": 6,
+      "prerequisiteId": 0,
+      "spell4Id": 39157,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1152,
+      "classId": 7,
+      "characterLevel": 10,
+      "prerequisiteId": 0,
+      "spell4Id": 39121,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1153,
+      "classId": 7,
+      "characterLevel": 22,
+      "prerequisiteId": 0,
+      "spell4Id": 39063,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1154,
+      "classId": 5,
+      "characterLevel": 18,
+      "prerequisiteId": 0,
+      "spell4Id": 39180,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1155,
+      "classId": 7,
+      "characterLevel": 6,
+      "prerequisiteId": 0,
+      "spell4Id": 38507,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1157,
+      "classId": 5,
+      "characterLevel": 10,
+      "prerequisiteId": 0,
+      "spell4Id": 39246,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1158,
+      "classId": 5,
+      "characterLevel": 12,
+      "prerequisiteId": 0,
+      "spell4Id": 39268,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1159,
+      "classId": 5,
+      "characterLevel": 16,
+      "prerequisiteId": 24735,
+      "spell4Id": 38973,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1160,
+      "classId": 5,
+      "characterLevel": 14,
+      "prerequisiteId": 0,
+      "spell4Id": 38825,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1161,
+      "classId": 7,
+      "characterLevel": 14,
+      "prerequisiteId": 0,
+      "spell4Id": 39330,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1163,
+      "classId": 5,
+      "characterLevel": 22,
+      "prerequisiteId": 0,
+      "spell4Id": 39671,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1165,
+      "classId": 5,
+      "characterLevel": 10,
+      "prerequisiteId": 0,
+      "spell4Id": 39361,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1166,
+      "classId": 5,
+      "characterLevel": 6,
+      "prerequisiteId": 0,
+      "spell4Id": 39366,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1167,
+      "classId": 5,
+      "characterLevel": 20,
+      "prerequisiteId": 0,
+      "spell4Id": 39372,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1168,
+      "classId": 5,
+      "characterLevel": 22,
+      "prerequisiteId": 0,
+      "spell4Id": 39371,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1171,
+      "classId": 7,
+      "characterLevel": 24,
+      "prerequisiteId": 0,
+      "spell4Id": 35170,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1172,
+      "classId": 5,
+      "characterLevel": 6,
+      "prerequisiteId": 0,
+      "spell4Id": 39561,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1173,
+      "classId": 5,
+      "characterLevel": 24,
+      "prerequisiteId": 0,
+      "spell4Id": 50184,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1174,
+      "classId": 5,
+      "characterLevel": 16,
+      "prerequisiteId": 24736,
+      "spell4Id": 39642,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1175,
+      "classId": 5,
+      "characterLevel": 24,
+      "prerequisiteId": 0,
+      "spell4Id": 39581,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1177,
+      "classId": 7,
+      "characterLevel": 22,
+      "prerequisiteId": 0,
+      "spell4Id": 39646,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1185,
+      "classId": 2,
+      "characterLevel": 1,
+      "prerequisiteId": 0,
+      "spell4Id": 41276,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1186,
+      "classId": 2,
+      "characterLevel": 14,
+      "prerequisiteId": 0,
+      "spell4Id": 41341,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1187,
+      "classId": 2,
+      "characterLevel": 6,
+      "prerequisiteId": 0,
+      "spell4Id": 41275,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1188,
+      "classId": 2,
+      "characterLevel": 1,
+      "prerequisiteId": 0,
+      "spell4Id": 41438,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1191,
+      "classId": 4,
+      "characterLevel": 6,
+      "prerequisiteId": 0,
+      "spell4Id": 41333,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1192,
+      "classId": 4,
+      "characterLevel": 16,
+      "prerequisiteId": 24295,
+      "spell4Id": 40653,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1193,
+      "classId": 4,
+      "characterLevel": 14,
+      "prerequisiteId": 0,
+      "spell4Id": 78081,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1194,
+      "classId": 4,
+      "characterLevel": 6,
+      "prerequisiteId": 0,
+      "spell4Id": 41382,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1195,
+      "classId": 4,
+      "characterLevel": 18,
+      "prerequisiteId": 0,
+      "spell4Id": 30354,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1197,
+      "classId": 4,
+      "characterLevel": 24,
+      "prerequisiteId": 0,
+      "spell4Id": 41398,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1198,
+      "classId": 4,
+      "characterLevel": 16,
+      "prerequisiteId": 24294,
+      "spell4Id": 41416,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1199,
+      "classId": 4,
+      "characterLevel": 18,
+      "prerequisiteId": 0,
+      "spell4Id": 41420,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1200,
+      "classId": 2,
+      "characterLevel": 6,
+      "prerequisiteId": 0,
+      "spell4Id": 41426,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1201,
+      "classId": 2,
+      "characterLevel": 20,
+      "prerequisiteId": 0,
+      "spell4Id": 41429,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1206,
+      "classId": 2,
+      "characterLevel": 9,
+      "prerequisiteId": 0,
+      "spell4Id": 41477,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1207,
+      "classId": 2,
+      "characterLevel": 7,
+      "prerequisiteId": 0,
+      "spell4Id": 41484,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1211,
+      "classId": 2,
+      "characterLevel": 14,
+      "prerequisiteId": 0,
+      "spell4Id": 41623,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1212,
+      "classId": 4,
+      "characterLevel": 20,
+      "prerequisiteId": 0,
+      "spell4Id": 41603,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1215,
+      "classId": 2,
+      "characterLevel": 12,
+      "prerequisiteId": 0,
+      "spell4Id": 41543,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1216,
+      "classId": 2,
+      "characterLevel": 5,
+      "prerequisiteId": 0,
+      "spell4Id": 41756,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1217,
+      "classId": 2,
+      "characterLevel": 16,
+      "prerequisiteId": 24297,
+      "spell4Id": 41815,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1218,
+      "classId": 2,
+      "characterLevel": 20,
+      "prerequisiteId": 0,
+      "spell4Id": 42572,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1219,
+      "classId": 2,
+      "characterLevel": 9,
+      "prerequisiteId": 0,
+      "spell4Id": 41864,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1220,
+      "classId": 4,
+      "characterLevel": 10,
+      "prerequisiteId": 0,
+      "spell4Id": 41926,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1221,
+      "classId": 4,
+      "characterLevel": 6,
+      "prerequisiteId": 0,
+      "spell4Id": 58841,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1222,
+      "classId": 2,
+      "characterLevel": 24,
+      "prerequisiteId": 0,
+      "spell4Id": 42585,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1224,
+      "classId": 4,
+      "characterLevel": 14,
+      "prerequisiteId": 0,
+      "spell4Id": 42596,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1226,
+      "classId": 4,
+      "characterLevel": 24,
+      "prerequisiteId": 0,
+      "spell4Id": 42241,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1228,
+      "classId": 2,
+      "characterLevel": 12,
+      "prerequisiteId": 0,
+      "spell4Id": 42894,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1229,
+      "classId": 2,
+      "characterLevel": 22,
+      "prerequisiteId": 0,
+      "spell4Id": 42833,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1230,
+      "classId": 2,
+      "characterLevel": 4,
+      "prerequisiteId": 0,
+      "spell4Id": 42814,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1231,
+      "classId": 2,
+      "characterLevel": 16,
+      "prerequisiteId": 24298,
+      "spell4Id": 42810,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1232,
+      "classId": 2,
+      "characterLevel": 18,
+      "prerequisiteId": 0,
+      "spell4Id": 42803,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1235,
+      "classId": 7,
+      "characterLevel": 18,
+      "prerequisiteId": 0,
+      "spell4Id": 43326,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1236,
+      "classId": 7,
+      "characterLevel": 1,
+      "prerequisiteId": 0,
+      "spell4Id": 34355,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1237,
+      "classId": 7,
+      "characterLevel": 24,
+      "prerequisiteId": 0,
+      "spell4Id": 43570,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1238,
+      "classId": 7,
+      "characterLevel": 9,
+      "prerequisiteId": 0,
+      "spell4Id": 43609,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1239,
+      "classId": 3,
+      "characterLevel": 1,
+      "prerequisiteId": 0,
+      "spell4Id": 32812,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1244,
+      "classId": 2,
+      "characterLevel": 10,
+      "prerequisiteId": 0,
+      "spell4Id": 44471,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1254,
+      "classId": 7,
+      "characterLevel": 10,
+      "prerequisiteId": 0,
+      "spell4Id": 46160,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1255,
+      "classId": 3,
+      "characterLevel": 20,
+      "prerequisiteId": 0,
+      "spell4Id": 33345,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1262,
+      "classId": 5,
+      "characterLevel": 9,
+      "prerequisiteId": 0,
+      "spell4Id": 48033,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1263,
+      "classId": 5,
+      "characterLevel": 7,
+      "prerequisiteId": 0,
+      "spell4Id": 48117,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1264,
+      "classId": 5,
+      "characterLevel": 5,
+      "prerequisiteId": 0,
+      "spell4Id": 48584,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1265,
+      "classId": 5,
+      "characterLevel": 20,
+      "prerequisiteId": 0,
+      "spell4Id": 39565,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1266,
+      "classId": 2,
+      "characterLevel": 10,
+      "prerequisiteId": 0,
+      "spell4Id": 51605,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1267,
+      "classId": 3,
+      "characterLevel": 24,
+      "prerequisiteId": 0,
+      "spell4Id": 32818,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1268,
+      "classId": 2,
+      "characterLevel": 18,
+      "prerequisiteId": 0,
+      "spell4Id": 52133,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1269,
+      "classId": 7,
+      "characterLevel": 16,
+      "prerequisiteId": 24727,
+      "spell4Id": 52233,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1270,
+      "classId": 7,
+      "characterLevel": 5,
+      "prerequisiteId": 0,
+      "spell4Id": 46690,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1276,
+      "classId": 1,
+      "characterLevel": 50,
+      "prerequisiteId": 44234,
+      "spell4Id": 87964,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1282,
+      "classId": 1,
+      "characterLevel": 50,
+      "prerequisiteId": 44245,
+      "spell4Id": 88046,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1283,
+      "classId": 1,
+      "characterLevel": 50,
+      "prerequisiteId": 44245,
+      "spell4Id": 88047,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1284,
+      "classId": 1,
+      "characterLevel": 50,
+      "prerequisiteId": 44245,
+      "spell4Id": 88048,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1285,
+      "classId": 1,
+      "characterLevel": 50,
+      "prerequisiteId": 44245,
+      "spell4Id": 88049,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1286,
+      "classId": 1,
+      "characterLevel": 50,
+      "prerequisiteId": 44249,
+      "spell4Id": 88050,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1287,
+      "classId": 1,
+      "characterLevel": 50,
+      "prerequisiteId": 44249,
+      "spell4Id": 88051,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1288,
+      "classId": 1,
+      "characterLevel": 50,
+      "prerequisiteId": 44249,
+      "spell4Id": 88052,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1289,
+      "classId": 1,
+      "characterLevel": 50,
+      "prerequisiteId": 44249,
+      "spell4Id": 88053,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1290,
+      "classId": 1,
+      "characterLevel": 50,
+      "prerequisiteId": 44250,
+      "spell4Id": 88012,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1292,
+      "classId": 1,
+      "characterLevel": 50,
+      "prerequisiteId": 44251,
+      "spell4Id": 88111,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1293,
+      "classId": 1,
+      "characterLevel": 50,
+      "prerequisiteId": 44251,
+      "spell4Id": 88112,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1294,
+      "classId": 1,
+      "characterLevel": 50,
+      "prerequisiteId": 44251,
+      "spell4Id": 88113,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1295,
+      "classId": 1,
+      "characterLevel": 50,
+      "prerequisiteId": 44251,
+      "spell4Id": 88114,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1296,
+      "classId": 1,
+      "characterLevel": 50,
+      "prerequisiteId": 44255,
+      "spell4Id": 88115,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1297,
+      "classId": 1,
+      "characterLevel": 50,
+      "prerequisiteId": 44255,
+      "spell4Id": 88116,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1298,
+      "classId": 1,
+      "characterLevel": 50,
+      "prerequisiteId": 44255,
+      "spell4Id": 88117,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1299,
+      "classId": 1,
+      "characterLevel": 50,
+      "prerequisiteId": 44255,
+      "spell4Id": 88118,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1300,
+      "classId": 2,
+      "characterLevel": 50,
+      "prerequisiteId": 44234,
+      "spell4Id": 87977,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1301,
+      "classId": 2,
+      "characterLevel": 50,
+      "prerequisiteId": 44245,
+      "spell4Id": 87983,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1302,
+      "classId": 2,
+      "characterLevel": 50,
+      "prerequisiteId": 44245,
+      "spell4Id": 87984,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1303,
+      "classId": 2,
+      "characterLevel": 50,
+      "prerequisiteId": 44245,
+      "spell4Id": 87985,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1304,
+      "classId": 2,
+      "characterLevel": 50,
+      "prerequisiteId": 44245,
+      "spell4Id": 87986,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1305,
+      "classId": 2,
+      "characterLevel": 50,
+      "prerequisiteId": 44249,
+      "spell4Id": 87987,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1306,
+      "classId": 2,
+      "characterLevel": 50,
+      "prerequisiteId": 44249,
+      "spell4Id": 87988,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1307,
+      "classId": 2,
+      "characterLevel": 50,
+      "prerequisiteId": 44249,
+      "spell4Id": 87989,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1308,
+      "classId": 2,
+      "characterLevel": 50,
+      "prerequisiteId": 44249,
+      "spell4Id": 87990,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1309,
+      "classId": 2,
+      "characterLevel": 50,
+      "prerequisiteId": 44250,
+      "spell4Id": 88033,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1310,
+      "classId": 2,
+      "characterLevel": 50,
+      "prerequisiteId": 44251,
+      "spell4Id": 88135,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1311,
+      "classId": 2,
+      "characterLevel": 50,
+      "prerequisiteId": 44251,
+      "spell4Id": 88136,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1312,
+      "classId": 2,
+      "characterLevel": 50,
+      "prerequisiteId": 44251,
+      "spell4Id": 88137,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1313,
+      "classId": 2,
+      "characterLevel": 50,
+      "prerequisiteId": 44251,
+      "spell4Id": 88138,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1314,
+      "classId": 2,
+      "characterLevel": 50,
+      "prerequisiteId": 44255,
+      "spell4Id": 88139,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1315,
+      "classId": 2,
+      "characterLevel": 50,
+      "prerequisiteId": 44255,
+      "spell4Id": 88140,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1316,
+      "classId": 2,
+      "characterLevel": 50,
+      "prerequisiteId": 44255,
+      "spell4Id": 88141,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1317,
+      "classId": 2,
+      "characterLevel": 50,
+      "prerequisiteId": 44255,
+      "spell4Id": 88142,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1318,
+      "classId": 3,
+      "characterLevel": 50,
+      "prerequisiteId": 44234,
+      "spell4Id": 87947,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1319,
+      "classId": 3,
+      "characterLevel": 50,
+      "prerequisiteId": 44245,
+      "spell4Id": 88244,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1320,
+      "classId": 3,
+      "characterLevel": 50,
+      "prerequisiteId": 44245,
+      "spell4Id": 88245,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1321,
+      "classId": 3,
+      "characterLevel": 50,
+      "prerequisiteId": 44245,
+      "spell4Id": 88246,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1322,
+      "classId": 3,
+      "characterLevel": 50,
+      "prerequisiteId": 44245,
+      "spell4Id": 88247,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1323,
+      "classId": 3,
+      "characterLevel": 50,
+      "prerequisiteId": 44249,
+      "spell4Id": 88248,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1324,
+      "classId": 3,
+      "characterLevel": 50,
+      "prerequisiteId": 44249,
+      "spell4Id": 88249,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1325,
+      "classId": 3,
+      "characterLevel": 50,
+      "prerequisiteId": 44249,
+      "spell4Id": 88250,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1326,
+      "classId": 3,
+      "characterLevel": 50,
+      "prerequisiteId": 44249,
+      "spell4Id": 88251,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1327,
+      "classId": 3,
+      "characterLevel": 50,
+      "prerequisiteId": 44250,
+      "spell4Id": 88558,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1328,
+      "classId": 3,
+      "characterLevel": 50,
+      "prerequisiteId": 44251,
+      "spell4Id": 88559,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1329,
+      "classId": 3,
+      "characterLevel": 50,
+      "prerequisiteId": 44251,
+      "spell4Id": 88560,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1330,
+      "classId": 3,
+      "characterLevel": 50,
+      "prerequisiteId": 44251,
+      "spell4Id": 88561,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1331,
+      "classId": 3,
+      "characterLevel": 50,
+      "prerequisiteId": 44251,
+      "spell4Id": 88562,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1332,
+      "classId": 3,
+      "characterLevel": 50,
+      "prerequisiteId": 44255,
+      "spell4Id": 88563,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1333,
+      "classId": 3,
+      "characterLevel": 50,
+      "prerequisiteId": 44255,
+      "spell4Id": 88564,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1334,
+      "classId": 3,
+      "characterLevel": 50,
+      "prerequisiteId": 44255,
+      "spell4Id": 88565,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1335,
+      "classId": 3,
+      "characterLevel": 50,
+      "prerequisiteId": 44255,
+      "spell4Id": 88566,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1336,
+      "classId": 4,
+      "characterLevel": 50,
+      "prerequisiteId": 44234,
+      "spell4Id": 88169,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1337,
+      "classId": 4,
+      "characterLevel": 50,
+      "prerequisiteId": 44245,
+      "spell4Id": 88220,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1338,
+      "classId": 4,
+      "characterLevel": 50,
+      "prerequisiteId": 44245,
+      "spell4Id": 88221,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1339,
+      "classId": 4,
+      "characterLevel": 50,
+      "prerequisiteId": 44245,
+      "spell4Id": 88222,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1340,
+      "classId": 4,
+      "characterLevel": 50,
+      "prerequisiteId": 44245,
+      "spell4Id": 88223,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1341,
+      "classId": 4,
+      "characterLevel": 50,
+      "prerequisiteId": 44249,
+      "spell4Id": 88224,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1342,
+      "classId": 4,
+      "characterLevel": 50,
+      "prerequisiteId": 44249,
+      "spell4Id": 88225,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1343,
+      "classId": 4,
+      "characterLevel": 50,
+      "prerequisiteId": 44249,
+      "spell4Id": 88226,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1344,
+      "classId": 4,
+      "characterLevel": 50,
+      "prerequisiteId": 44249,
+      "spell4Id": 88227,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1345,
+      "classId": 4,
+      "characterLevel": 50,
+      "prerequisiteId": 44250,
+      "spell4Id": 88568,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1346,
+      "classId": 4,
+      "characterLevel": 50,
+      "prerequisiteId": 44251,
+      "spell4Id": 88571,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1347,
+      "classId": 4,
+      "characterLevel": 50,
+      "prerequisiteId": 44251,
+      "spell4Id": 88572,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1348,
+      "classId": 4,
+      "characterLevel": 50,
+      "prerequisiteId": 44251,
+      "spell4Id": 88573,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1349,
+      "classId": 4,
+      "characterLevel": 50,
+      "prerequisiteId": 44251,
+      "spell4Id": 88574,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1350,
+      "classId": 4,
+      "characterLevel": 50,
+      "prerequisiteId": 44255,
+      "spell4Id": 88575,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1351,
+      "classId": 4,
+      "characterLevel": 50,
+      "prerequisiteId": 44255,
+      "spell4Id": 88576,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1352,
+      "classId": 4,
+      "characterLevel": 50,
+      "prerequisiteId": 44255,
+      "spell4Id": 88577,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1353,
+      "classId": 4,
+      "characterLevel": 50,
+      "prerequisiteId": 44255,
+      "spell4Id": 88578,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1354,
+      "classId": 5,
+      "characterLevel": 50,
+      "prerequisiteId": 44234,
+      "spell4Id": 88168,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1355,
+      "classId": 5,
+      "characterLevel": 50,
+      "prerequisiteId": 44245,
+      "spell4Id": 88228,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1356,
+      "classId": 5,
+      "characterLevel": 50,
+      "prerequisiteId": 44245,
+      "spell4Id": 88229,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1357,
+      "classId": 5,
+      "characterLevel": 50,
+      "prerequisiteId": 44245,
+      "spell4Id": 88230,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1358,
+      "classId": 5,
+      "characterLevel": 50,
+      "prerequisiteId": 44245,
+      "spell4Id": 88231,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1359,
+      "classId": 5,
+      "characterLevel": 50,
+      "prerequisiteId": 44249,
+      "spell4Id": 88232,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1360,
+      "classId": 5,
+      "characterLevel": 50,
+      "prerequisiteId": 44249,
+      "spell4Id": 88233,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1361,
+      "classId": 5,
+      "characterLevel": 50,
+      "prerequisiteId": 44249,
+      "spell4Id": 88234,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1362,
+      "classId": 5,
+      "characterLevel": 50,
+      "prerequisiteId": 44249,
+      "spell4Id": 88235,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1363,
+      "classId": 5,
+      "characterLevel": 50,
+      "prerequisiteId": 44250,
+      "spell4Id": 88219,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1364,
+      "classId": 5,
+      "characterLevel": 50,
+      "prerequisiteId": 44251,
+      "spell4Id": 88236,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1365,
+      "classId": 5,
+      "characterLevel": 50,
+      "prerequisiteId": 44251,
+      "spell4Id": 88237,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1366,
+      "classId": 5,
+      "characterLevel": 50,
+      "prerequisiteId": 44251,
+      "spell4Id": 88238,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1367,
+      "classId": 5,
+      "characterLevel": 50,
+      "prerequisiteId": 44251,
+      "spell4Id": 88239,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1368,
+      "classId": 5,
+      "characterLevel": 50,
+      "prerequisiteId": 44255,
+      "spell4Id": 88240,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1369,
+      "classId": 5,
+      "characterLevel": 50,
+      "prerequisiteId": 44255,
+      "spell4Id": 88241,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1370,
+      "classId": 5,
+      "characterLevel": 50,
+      "prerequisiteId": 44255,
+      "spell4Id": 88242,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1371,
+      "classId": 5,
+      "characterLevel": 50,
+      "prerequisiteId": 44255,
+      "spell4Id": 88243,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1372,
+      "classId": 7,
+      "characterLevel": 50,
+      "prerequisiteId": 44234,
+      "spell4Id": 88040,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1373,
+      "classId": 7,
+      "characterLevel": 50,
+      "prerequisiteId": 44245,
+      "spell4Id": 88151,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1374,
+      "classId": 7,
+      "characterLevel": 50,
+      "prerequisiteId": 44245,
+      "spell4Id": 88152,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1375,
+      "classId": 7,
+      "characterLevel": 50,
+      "prerequisiteId": 44245,
+      "spell4Id": 88153,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1376,
+      "classId": 7,
+      "characterLevel": 50,
+      "prerequisiteId": 44245,
+      "spell4Id": 88154,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1377,
+      "classId": 7,
+      "characterLevel": 50,
+      "prerequisiteId": 44249,
+      "spell4Id": 88155,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1378,
+      "classId": 7,
+      "characterLevel": 50,
+      "prerequisiteId": 44249,
+      "spell4Id": 88156,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1379,
+      "classId": 7,
+      "characterLevel": 50,
+      "prerequisiteId": 44249,
+      "spell4Id": 88157,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1380,
+      "classId": 7,
+      "characterLevel": 50,
+      "prerequisiteId": 44249,
+      "spell4Id": 88158,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1381,
+      "classId": 7,
+      "characterLevel": 50,
+      "prerequisiteId": 44250,
+      "spell4Id": 88020,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1382,
+      "classId": 7,
+      "characterLevel": 50,
+      "prerequisiteId": 44251,
+      "spell4Id": 88119,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1383,
+      "classId": 7,
+      "characterLevel": 50,
+      "prerequisiteId": 44251,
+      "spell4Id": 88120,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1384,
+      "classId": 7,
+      "characterLevel": 50,
+      "prerequisiteId": 44251,
+      "spell4Id": 88121,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1385,
+      "classId": 7,
+      "characterLevel": 50,
+      "prerequisiteId": 44251,
+      "spell4Id": 88122,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1386,
+      "classId": 7,
+      "characterLevel": 50,
+      "prerequisiteId": 44255,
+      "spell4Id": 88123,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1387,
+      "classId": 7,
+      "characterLevel": 50,
+      "prerequisiteId": 44255,
+      "spell4Id": 88124,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1388,
+      "classId": 7,
+      "characterLevel": 50,
+      "prerequisiteId": 44255,
+      "spell4Id": 88125,
+      "costMultiplier": 1.0
+    },
+    {
+      "ID": 1389,
+      "classId": 7,
+      "characterLevel": 50,
+      "prerequisiteId": 44255,
+      "spell4Id": 88126,
+      "costMultiplier": 1.0
+    }
+  ]
+}

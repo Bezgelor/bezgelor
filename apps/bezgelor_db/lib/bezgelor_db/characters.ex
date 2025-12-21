@@ -292,6 +292,7 @@ defmodule BezgelorDb.Characters do
   """
   @spec total_xp_for_level(non_neg_integer()) :: non_neg_integer()
   def total_xp_for_level(1), do: 0
+
   def total_xp_for_level(level) when level > 1 do
     1..(level - 1)
     |> Enum.map(&xp_for_level/1)
@@ -343,7 +344,7 @@ defmodule BezgelorDb.Characters do
     case Repo.get_by(CharacterCurrency, character_id: character_id) do
       nil ->
         # Check if character exists
-        if Repo.exists?(from c in Character, where: c.id == ^character_id) do
+        if Repo.exists?(from(c in Character, where: c.id == ^character_id)) do
           %CharacterCurrency{}
           |> CharacterCurrency.changeset(%{character_id: character_id})
           |> Repo.insert()
@@ -466,7 +467,8 @@ defmodule BezgelorDb.Characters do
   # Race ID to atom mapping (matches NexusForever Race enum)
   # See: NexusForever/Source/NexusForever.Game.Static/Entity/Race.cs
   defp race_id_to_atom(1), do: :human
-  defp race_id_to_atom(2), do: :cassian     # Eshara in code, Cassian in lore
+  # Eshara in code, Cassian in lore
+  defp race_id_to_atom(2), do: :cassian
   defp race_id_to_atom(3), do: :granok
   defp race_id_to_atom(4), do: :aurin
   defp race_id_to_atom(5), do: :draken
@@ -479,7 +481,8 @@ defmodule BezgelorDb.Characters do
   # See: NexusForever/Source/NexusForever.Game.Static/Reputation/Faction.cs
   # 166 = Dominion, 167 = Exile
   # Note: Race 1 (Human/Cassian) can be either faction - same model, different lore names
-  defp valid_race_faction_atom?(:human, _faction), do: true  # Human model used by both factions
+  # Human model used by both factions
+  defp valid_race_faction_atom?(:human, _faction), do: true
   defp valid_race_faction_atom?(race, 166) when race in @dominion_races, do: true
   defp valid_race_faction_atom?(race, 167) when race in @exile_races, do: true
   defp valid_race_faction_atom?(_, _), do: false

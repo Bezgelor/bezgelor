@@ -55,10 +55,20 @@ defmodule BezgelorWorld.PvP.BattlegroundQueue do
   Join the queue for a specific battleground.
   Returns {:ok, estimated_wait} or {:error, reason}.
   """
-  @spec join_queue(non_neg_integer(), String.t(), :exile | :dominion, non_neg_integer(), non_neg_integer(), non_neg_integer()) ::
+  @spec join_queue(
+          non_neg_integer(),
+          String.t(),
+          :exile | :dominion,
+          non_neg_integer(),
+          non_neg_integer(),
+          non_neg_integer()
+        ) ::
           {:ok, non_neg_integer()} | {:error, atom()}
   def join_queue(player_guid, player_name, faction, level, class_id, battleground_id) do
-    GenServer.call(__MODULE__, {:join_queue, player_guid, player_name, faction, level, class_id, battleground_id})
+    GenServer.call(
+      __MODULE__,
+      {:join_queue, player_guid, player_name, faction, level, class_id, battleground_id}
+    )
   end
 
   @doc """
@@ -128,7 +138,11 @@ defmodule BezgelorWorld.PvP.BattlegroundQueue do
   end
 
   @impl true
-  def handle_call({:join_queue, player_guid, player_name, faction, level, class_id, battleground_id}, _from, state) do
+  def handle_call(
+        {:join_queue, player_guid, player_name, faction, level, class_id, battleground_id},
+        _from,
+        state
+      ) do
     cond do
       Map.has_key?(state.player_queues, player_guid) ->
         {:reply, {:error, :already_in_queue}, state}
@@ -267,7 +281,10 @@ defmodule BezgelorWorld.PvP.BattlegroundQueue do
 
       # Create the match
       match_id = create_battleground_match(battleground_id, exile_team, dominion_team)
-      Logger.info("Created BG match #{match_id} for BG #{battleground_id} (#{team_size}v#{team_size})")
+
+      Logger.info(
+        "Created BG match #{match_id} for BG #{battleground_id} (#{team_size}v#{team_size})"
+      )
 
       # Update queues
       bg_queues = %{exile: remaining_exile, dominion: remaining_dominion}
@@ -275,6 +292,7 @@ defmodule BezgelorWorld.PvP.BattlegroundQueue do
 
       # Remove players from tracking
       all_players = exile_team ++ dominion_team
+
       player_queues =
         Enum.reduce(all_players, state.player_queues, fn entry, acc ->
           case Map.get(acc, entry.player_guid) do

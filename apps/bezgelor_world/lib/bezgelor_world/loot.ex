@@ -78,7 +78,12 @@ defmodule BezgelorWorld.Loot do
 
   List of `{item_id, quantity}` tuples. Item ID 0 represents gold.
   """
-  @spec roll_creature_loot(non_neg_integer(), non_neg_integer(), non_neg_integer(), roll_options()) ::
+  @spec roll_creature_loot(
+          non_neg_integer(),
+          non_neg_integer(),
+          non_neg_integer(),
+          roll_options()
+        ) ::
           [drop()]
   def roll_creature_loot(creature_id, creature_level, killer_level, opts \\ []) do
     # Resolve loot table and modifiers for this creature

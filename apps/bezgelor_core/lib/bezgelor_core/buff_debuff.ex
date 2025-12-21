@@ -26,7 +26,8 @@ defmodule BezgelorCore.BuffDebuff do
   """
 
   @type buff_type :: :absorb | :stat_modifier | :damage_boost | :heal_boost | :periodic
-  @type stat :: :power | :tech | :support | :armor | :magic_resist | :tech_resist | :crit_chance | nil
+  @type stat ::
+          :power | :tech | :support | :armor | :magic_resist | :tech_resist | :crit_chance | nil
 
   defstruct [
     :id,

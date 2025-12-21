@@ -11,16 +11,16 @@ defmodule BezgelorDb.Schema.EventCompletion do
   alias BezgelorDb.Schema.Character
 
   schema "event_completions" do
-    belongs_to :character, Character
-    field :event_id, :integer
+    belongs_to(:character, Character)
+    field(:event_id, :integer)
 
-    field :completion_count, :integer, default: 1
-    field :gold_count, :integer, default: 0
-    field :silver_count, :integer, default: 0
-    field :bronze_count, :integer, default: 0
-    field :best_contribution, :integer, default: 0
-    field :fastest_completion_ms, :integer
-    field :last_completed_at, :utc_datetime
+    field(:completion_count, :integer, default: 1)
+    field(:gold_count, :integer, default: 0)
+    field(:silver_count, :integer, default: 0)
+    field(:bronze_count, :integer, default: 0)
+    field(:best_contribution, :integer, default: 0)
+    field(:fastest_completion_ms, :integer)
+    field(:last_completed_at, :utc_datetime)
 
     timestamps(type: :utc_datetime)
   end
@@ -28,8 +28,15 @@ defmodule BezgelorDb.Schema.EventCompletion do
   def changeset(completion, attrs) do
     completion
     |> cast(attrs, [
-      :character_id, :event_id, :completion_count, :gold_count, :silver_count,
-      :bronze_count, :best_contribution, :fastest_completion_ms, :last_completed_at
+      :character_id,
+      :event_id,
+      :completion_count,
+      :gold_count,
+      :silver_count,
+      :bronze_count,
+      :best_contribution,
+      :fastest_completion_ms,
+      :last_completed_at
     ])
     |> validate_required([:character_id, :event_id])
     |> validate_number(:completion_count, greater_than: 0)

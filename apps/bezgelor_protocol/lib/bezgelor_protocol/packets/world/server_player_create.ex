@@ -212,7 +212,8 @@ defmodule BezgelorProtocol.Packets.World.ServerPlayerCreate do
   defp get_class_proficiencies(5), do: @proficiency_medium_armor ||| @proficiency_claws
   defp get_class_proficiencies(7), do: @proficiency_light_armor ||| @proficiency_pistols
   # Default: allow all armor types if class unknown
-  defp get_class_proficiencies(_), do: @proficiency_heavy_armor ||| @proficiency_medium_armor ||| @proficiency_light_armor
+  defp get_class_proficiencies(_),
+    do: @proficiency_heavy_armor ||| @proficiency_medium_armor ||| @proficiency_light_armor
 
   # Write all inventory items
   defp write_inventory_items(writer, []), do: writer
@@ -229,8 +230,11 @@ defmodule BezgelorProtocol.Packets.World.ServerPlayerCreate do
     # Generate guid from item ID or use database ID
     guid = item[:id] || generate_item_guid(item)
 
+    bag_index = inventory_bag_index(item)
+
     Logger.debug(
-      "WriteItem: guid=#{guid} item_id=#{item[:item_id]} location=#{item[:container_type]} slot=#{item[:slot]}"
+      "WriteItem: guid=#{guid} item_id=#{item[:item_id]} location=#{item[:container_type]} " <>
+        "bag_index=#{bag_index} slot=#{item[:slot]}"
     )
 
     writer
@@ -242,8 +246,8 @@ defmodule BezgelorProtocol.Packets.World.ServerPlayerCreate do
     |> PacketWriter.write_bits(item[:item_id] || 0, 18)
     # Location (9 bits)
     |> PacketWriter.write_bits(location_to_int(item[:container_type]), 9)
-    # Bag index (uint32) - for equipped items, this is the slot number
-    |> PacketWriter.write_u32(item[:slot] || 0)
+    # Bag index (uint32) - use bag_index for bags/ability, slot for equipped
+    |> PacketWriter.write_u32(bag_index)
     # Stack count (uint32)
     |> PacketWriter.write_u32(item[:quantity] || 1)
     # Charges (uint32)
@@ -304,9 +308,17 @@ defmodule BezgelorProtocol.Packets.World.ServerPlayerCreate do
   defp location_to_int(loc) when is_integer(loc), do: loc
   defp location_to_int(_), do: @location_inventory
 
+  # Determine bag index based on container type
+  defp inventory_bag_index(item) do
+    case item[:container_type] do
+      :equipped -> item[:slot] || 0
+      _ -> item[:bag_index] || item[:slot] || 0
+    end
+  end
+
   # Generate a unique item guid from location and slot
   defp generate_item_guid(item) do
     container_int = location_to_int(item[:container_type])
-    (container_int <<< 32) ||| (item[:slot] || 0)
+    container_int <<< 32 ||| inventory_bag_index(item)
   end
 end

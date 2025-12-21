@@ -38,7 +38,8 @@ defmodule BezgelorWorld.GroupFinder.Matcher do
   def find_match(instance_type, difficulty, queue) do
     case instance_type do
       :dungeon -> find_dungeon_match(difficulty, queue)
-      :adventure -> find_dungeon_match(difficulty, queue)  # Same as dungeon
+      # Same as dungeon
+      :adventure -> find_dungeon_match(difficulty, queue)
       :raid -> find_raid_match(difficulty, queue)
       :expedition -> find_expedition_match(difficulty, queue)
     end
@@ -90,7 +91,8 @@ defmodule BezgelorWorld.GroupFinder.Matcher do
         |> Enum.map(fn entry ->
           %{
             character_id: entry.character_id,
-            role: hd(entry.roles)  # Use their primary role
+            # Use their primary role
+            role: hd(entry.roles)
           }
         end)
 
@@ -220,7 +222,8 @@ defmodule BezgelorWorld.GroupFinder.Matcher do
     # Calculate gear score ranges for balance
     gear_scores = Enum.map(queue, & &1.gear_score)
     avg_gs = if length(gear_scores) > 0, do: Enum.sum(gear_scores) / length(gear_scores), else: 0
-    gs_tolerance = 50  # Allow +/- 50 gear score variance
+    # Allow +/- 50 gear score variance
+    gs_tolerance = 50
 
     # Prefer players close to average gear score
     sorted =
@@ -281,9 +284,11 @@ defmodule BezgelorWorld.GroupFinder.Matcher do
 
     # Priority: fill scarce roles first
     roles_to_try =
-      [{:tank, tank_needed, tank_available},
-       {:healer, healer_needed, healer_available},
-       {:dps, dps_needed, dps_available}]
+      [
+        {:tank, tank_needed, tank_available},
+        {:healer, healer_needed, healer_available},
+        {:dps, dps_needed, dps_available}
+      ]
       |> Enum.filter(fn {_role, needed, _} -> needed > 0 end)
       |> Enum.sort_by(fn {_role, needed, available} ->
         if available > 0, do: available / needed, else: 999

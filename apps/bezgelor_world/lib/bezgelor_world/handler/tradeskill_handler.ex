@@ -20,6 +20,7 @@ defmodule BezgelorWorld.Handler.TradeskillHandler do
   alias BezgelorDb.Tradeskills
   alias BezgelorProtocol.PacketReader
   alias BezgelorProtocol.PacketWriter
+
   alias BezgelorProtocol.Packets.World.{
     ClientTradeskillLearn,
     ClientTradeskillTalentAllocate,
@@ -28,6 +29,7 @@ defmodule BezgelorWorld.Handler.TradeskillHandler do
     ServerTradeskillUpdate,
     ServerTradeskillTalentList
   }
+
   alias BezgelorWorld.TradeskillConfig
 
   @impl true
@@ -56,7 +58,11 @@ defmodule BezgelorWorld.Handler.TradeskillHandler do
     # Check profession limits
     case check_profession_limit(character_id, packet.profession_type) do
       :ok ->
-        case Tradeskills.learn_profession(character_id, packet.profession_id, packet.profession_type) do
+        case Tradeskills.learn_profession(
+               character_id,
+               packet.profession_id,
+               packet.profession_type
+             ) do
           {:ok, tradeskill} ->
             Logger.debug("Character #{character_id} learned profession #{packet.profession_id}")
 
@@ -77,16 +83,20 @@ defmodule BezgelorWorld.Handler.TradeskillHandler do
         end
 
       {:error, :limit_reached} ->
-        Logger.debug("Character #{character_id} at profession limit for #{packet.profession_type}")
+        Logger.debug(
+          "Character #{character_id} at profession limit for #{packet.profession_type}"
+        )
+
         {:ok, state}
     end
   end
 
   defp check_profession_limit(character_id, profession_type) do
-    max_allowed = case profession_type do
-      :crafting -> TradeskillConfig.max_crafting_professions()
-      :gathering -> TradeskillConfig.max_gathering_professions()
-    end
+    max_allowed =
+      case profession_type do
+        :crafting -> TradeskillConfig.max_crafting_professions()
+        :gathering -> TradeskillConfig.max_gathering_professions()
+      end
 
     if max_allowed == 0 do
       :ok
@@ -164,9 +174,10 @@ defmodule BezgelorWorld.Handler.TradeskillHandler do
     talents = Tradeskills.get_talents(character_id, profession_id)
     total_points = Tradeskills.count_talent_points(character_id, profession_id)
 
-    talent_data = Enum.map(talents, fn t ->
-      %{talent_id: t.talent_id, points_spent: t.points_spent}
-    end)
+    talent_data =
+      Enum.map(talents, fn t ->
+        %{talent_id: t.talent_id, points_spent: t.points_spent}
+      end)
 
     response = %ServerTradeskillTalentList{
       profession_id: profession_id,
@@ -186,15 +197,16 @@ defmodule BezgelorWorld.Handler.TradeskillHandler do
   def send_tradeskill_data(connection_pid, character_id) do
     professions = Tradeskills.get_professions(character_id)
 
-    profession_data = Enum.map(professions, fn p ->
-      %{
-        profession_id: p.profession_id,
-        profession_type: p.profession_type,
-        skill_level: p.skill_level,
-        skill_xp: p.skill_xp,
-        is_active: p.is_active
-      }
-    end)
+    profession_data =
+      Enum.map(professions, fn p ->
+        %{
+          profession_id: p.profession_id,
+          profession_type: p.profession_type,
+          skill_level: p.skill_level,
+          skill_xp: p.skill_xp,
+          is_active: p.is_active
+        }
+      end)
 
     response = %ServerTradeskillList{professions: profession_data}
 

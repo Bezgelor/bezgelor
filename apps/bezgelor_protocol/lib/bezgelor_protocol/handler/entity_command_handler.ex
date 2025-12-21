@@ -61,9 +61,7 @@ defmodule BezgelorProtocol.Handler.EntityCommandHandler do
     with {:ok, time, reader} <- PacketReader.read_uint32(reader),
          {:ok, command_count, reader} <- PacketReader.read_uint32(reader) do
       if command_count > 0 do
-        Logger.debug(
-          "[EntityCommand] Received #{command_count} commands at time #{time}"
-        )
+        Logger.debug("[EntityCommand] Received #{command_count} commands at time #{time}")
 
         # Parse commands for debugging (simplified - doesn't handle all command types)
         _commands = parse_commands(reader, command_count)
@@ -101,7 +99,12 @@ defmodule BezgelorProtocol.Handler.EntityCommandHandler do
       # This works because ServerEntityCommand has a similar structure
       movement_packet = build_server_entity_command(entity_guid, payload)
 
-      VisibilityBroadcaster.broadcast_player_movement(entity_guid, movement_packet, zone_id, instance_id)
+      VisibilityBroadcaster.broadcast_player_movement(
+        entity_guid,
+        movement_packet,
+        zone_id,
+        instance_id
+      )
     end
   end
 
@@ -118,15 +121,23 @@ defmodule BezgelorProtocol.Handler.EntityCommandHandler do
           {:ok, command_count, _reader} ->
             # Get remaining bytes for commands (after time and count)
             commands_start = 8
-            commands_data = binary_part(client_payload, commands_start, byte_size(client_payload) - commands_start)
+
+            commands_data =
+              binary_part(
+                client_payload,
+                commands_start,
+                byte_size(client_payload) - commands_start
+              )
 
             # Build server packet
             writer =
               PacketWriter.new()
               |> PacketWriter.write_u32(entity_guid)
               |> PacketWriter.write_u32(time)
-              |> PacketWriter.write_bits(0, 1)  # time_reset = false
-              |> PacketWriter.write_bits(0, 1)  # server_controlled = false
+              # time_reset = false
+              |> PacketWriter.write_bits(0, 1)
+              # server_controlled = false
+              |> PacketWriter.write_bits(0, 1)
               |> PacketWriter.write_bits(command_count, 5)
 
             # The command data format is the same between client and server

@@ -388,7 +388,8 @@ defmodule BezgelorDb.Authorization do
   @spec has_permission?(Account.t() | integer(), String.t()) :: boolean()
   def has_permission?(%Account{id: id}, permission_key), do: has_permission?(id, permission_key)
 
-  def has_permission?(account_id, permission_key) when is_integer(account_id) and is_binary(permission_key) do
+  def has_permission?(account_id, permission_key)
+      when is_integer(account_id) and is_binary(permission_key) do
     query =
       from(p in Permission,
         join: rp in RolePermission,
@@ -415,9 +416,11 @@ defmodule BezgelorDb.Authorization do
   `true` if the account has at least one of the permissions, `false` otherwise.
   """
   @spec has_any_permission?(Account.t() | integer(), [String.t()]) :: boolean()
-  def has_any_permission?(%Account{id: id}, permission_keys), do: has_any_permission?(id, permission_keys)
+  def has_any_permission?(%Account{id: id}, permission_keys),
+    do: has_any_permission?(id, permission_keys)
 
-  def has_any_permission?(account_id, permission_keys) when is_integer(account_id) and is_list(permission_keys) do
+  def has_any_permission?(account_id, permission_keys)
+      when is_integer(account_id) and is_list(permission_keys) do
     query =
       from(p in Permission,
         join: rp in RolePermission,
@@ -452,9 +455,23 @@ defmodule BezgelorDb.Authorization do
   - `{:ok, log_entry}` on success
   - `{:error, changeset}` on failure
   """
-  @spec log_action(Account.t(), String.t(), String.t() | nil, integer() | nil, map(), String.t() | nil) ::
+  @spec log_action(
+          Account.t(),
+          String.t(),
+          String.t() | nil,
+          integer() | nil,
+          map(),
+          String.t() | nil
+        ) ::
           {:ok, AdminAuditLog.t()} | {:error, Ecto.Changeset.t()}
-  def log_action(admin, action, target_type \\ nil, target_id \\ nil, details \\ %{}, ip_address \\ nil) do
+  def log_action(
+        admin,
+        action,
+        target_type \\ nil,
+        target_id \\ nil,
+        details \\ %{},
+        ip_address \\ nil
+      ) do
     %AdminAuditLog{}
     |> AdminAuditLog.changeset(%{
       admin_account_id: admin.id,
@@ -508,11 +525,13 @@ defmodule BezgelorDb.Authorization do
   end
 
   defp maybe_filter_by_admin(query, nil), do: query
+
   defp maybe_filter_by_admin(query, admin_id) do
     from(log in query, where: log.admin_account_id == ^admin_id)
   end
 
   defp maybe_filter_by_action(query, nil), do: query
+
   defp maybe_filter_by_action(query, action) do
     if String.ends_with?(action, "*") do
       prefix = String.trim_trailing(action, "*")
@@ -523,22 +542,27 @@ defmodule BezgelorDb.Authorization do
   end
 
   defp maybe_filter_by_target_type(query, nil), do: query
+
   defp maybe_filter_by_target_type(query, target_type) do
     from(log in query, where: log.target_type == ^target_type)
   end
 
   defp maybe_filter_by_target_id(query, nil), do: query
+
   defp maybe_filter_by_target_id(query, target_id) do
     from(log in query, where: log.target_id == ^target_id)
   end
 
   defp maybe_filter_by_date_range(query, nil, nil), do: query
+
   defp maybe_filter_by_date_range(query, from, nil) do
     from(log in query, where: log.inserted_at >= ^from)
   end
+
   defp maybe_filter_by_date_range(query, nil, to) do
     from(log in query, where: log.inserted_at <= ^to)
   end
+
   defp maybe_filter_by_date_range(query, from, to) do
     from(log in query, where: log.inserted_at >= ^from and log.inserted_at <= ^to)
   end

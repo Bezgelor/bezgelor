@@ -16,16 +16,20 @@ defmodule BezgelorWorld.Loot.LootManager do
 
   alias BezgelorWorld.Loot.LootRules
 
-  @roll_timeout 30_000  # 30 seconds to roll
+  # 30 seconds to roll
+  @roll_timeout 30_000
 
   defstruct [
     :instance_guid,
     :group_id,
     :loot_method,
     :master_looter_id,
-    pending_rolls: %{},     # loot_id => pending_roll
-    loot_history: [],       # awarded loot
-    round_robin_index: 0,   # for round robin
+    # loot_id => pending_roll
+    pending_rolls: %{},
+    # awarded loot
+    loot_history: [],
+    # for round robin
+    round_robin_index: 0,
     member_ids: []
   ]
 
@@ -57,13 +61,21 @@ defmodule BezgelorWorld.Loot.LootManager do
   @spec distribute_loot(non_neg_integer(), non_neg_integer(), [map()], [map()]) ::
           {:ok, [map()]} | {:error, term()}
   def distribute_loot(instance_guid, source_id, loot_table, eligible_players) do
-    GenServer.call(via(instance_guid), {:distribute_loot, source_id, loot_table, eligible_players})
+    GenServer.call(
+      via(instance_guid),
+      {:distribute_loot, source_id, loot_table, eligible_players}
+    )
   end
 
   @doc """
   Player submits a roll (need/greed/pass) for pending loot.
   """
-  @spec submit_roll(non_neg_integer(), non_neg_integer(), non_neg_integer(), LootRules.roll_type()) ::
+  @spec submit_roll(
+          non_neg_integer(),
+          non_neg_integer(),
+          non_neg_integer(),
+          LootRules.roll_type()
+        ) ::
           :ok | {:error, term()}
   def submit_roll(instance_guid, loot_id, character_id, roll_type) do
     GenServer.call(via(instance_guid), {:submit_roll, loot_id, character_id, roll_type})
@@ -166,9 +178,10 @@ defmodule BezgelorWorld.Loot.LootManager do
               awarded_at: DateTime.utc_now()
             }
 
-            state = %{state |
-              pending_rolls: Map.delete(state.pending_rolls, loot_id),
-              loot_history: [award | state.loot_history]
+            state = %{
+              state
+              | pending_rolls: Map.delete(state.pending_rolls, loot_id),
+                loot_history: [award | state.loot_history]
             }
 
             broadcast_loot_awarded(state, award)
@@ -258,10 +271,7 @@ defmodule BezgelorWorld.Loot.LootManager do
         {[award | acc], idx + 1}
       end)
 
-    state = %{state |
-      loot_history: awarded ++ state.loot_history,
-      round_robin_index: new_index
-    }
+    state = %{state | loot_history: awarded ++ state.loot_history, round_robin_index: new_index}
 
     {awarded, state}
   end
@@ -360,9 +370,10 @@ defmodule BezgelorWorld.Loot.LootManager do
 
             broadcast_loot_awarded(state, award)
 
-            %{state |
-              pending_rolls: Map.delete(state.pending_rolls, loot_id),
-              loot_history: [award | state.loot_history]
+            %{
+              state
+              | pending_rolls: Map.delete(state.pending_rolls, loot_id),
+                loot_history: [award | state.loot_history]
             }
         end
     end
@@ -373,7 +384,10 @@ defmodule BezgelorWorld.Loot.LootManager do
   end
 
   defp broadcast_loot_awarded(_state, award) do
-    Logger.info("Loot awarded: item #{award.item[:id] || "unknown"} to player #{award.winner_id} (#{award.award_reason})")
+    Logger.info(
+      "Loot awarded: item #{award.item[:id] || "unknown"} to player #{award.winner_id} (#{award.award_reason})"
+    )
+
     # In production: send ServerLootAwarded packet to all group members
     :ok
   end

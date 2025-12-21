@@ -121,7 +121,10 @@ defmodule BezgelorWorld.Zone.InstanceTest do
       assert guids == [1, 2]
     end
 
-    test "returns empty list when no entities in range", %{zone_id: zone_id, instance_id: instance_id} do
+    test "returns empty list when no entities in range", %{
+      zone_id: zone_id,
+      instance_id: instance_id
+    } do
       Instance.add_entity({zone_id, instance_id}, %Entity{
         guid: 1,
         type: :player,
@@ -136,7 +139,9 @@ defmodule BezgelorWorld.Zone.InstanceTest do
   describe "list_players/1" do
     test "returns only player entities", %{zone_id: zone_id, instance_id: instance_id} do
       Instance.add_entity({zone_id, instance_id}, %Entity{guid: 1, type: :player, name: "Player1"})
+
       Instance.add_entity({zone_id, instance_id}, %Entity{guid: 2, type: :creature, name: "Mob"})
+
       Instance.add_entity({zone_id, instance_id}, %Entity{guid: 3, type: :player, name: "Player2"})
 
       players = Instance.list_players({zone_id, instance_id})

@@ -69,7 +69,8 @@ defmodule BezgelorDb.PathsTest do
       {:ok, path, :level_up} = Paths.award_xp(character.id, 2500)
 
       assert path.path_level == 2
-      assert path.path_xp == 500  # 2500 - 2000 for level 2
+      # 2500 - 2000 for level 2
+      assert path.path_xp == 500
     end
 
     test "award_xp can trigger multiple level ups", %{character: character} do

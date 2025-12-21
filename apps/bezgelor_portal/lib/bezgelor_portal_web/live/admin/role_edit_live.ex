@@ -25,15 +25,13 @@ defmodule BezgelorPortalWeb.Admin.RoleEditLive do
            all_permissions: all_permissions,
            form: %{"name" => role.name, "description" => role.description || ""},
            has_changes: false
-         ),
-         layout: {BezgelorPortalWeb.Layouts, :admin}}
+         ), layout: {BezgelorPortalWeb.Layouts, :admin}}
 
       {:error, :not_found} ->
         {:ok,
          socket
          |> put_flash(:error, "Role not found")
-         |> push_navigate(to: ~p"/admin/roles"),
-         layout: {BezgelorPortalWeb.Layouts, :admin}}
+         |> push_navigate(to: ~p"/admin/roles"), layout: {BezgelorPortalWeb.Layouts, :admin}}
     end
   end
 
@@ -44,9 +42,11 @@ defmodule BezgelorPortalWeb.Admin.RoleEditLive do
       <!-- Header -->
       <div class="flex items-center justify-between">
         <div>
-          <.link navigate={~p"/admin/roles"} class="text-sm text-base-content/70 hover:text-primary flex items-center gap-1">
-            <.icon name="hero-arrow-left" class="size-4" />
-            Back to Roles
+          <.link
+            navigate={~p"/admin/roles"}
+            class="text-sm text-base-content/70 hover:text-primary flex items-center gap-1"
+          >
+            <.icon name="hero-arrow-left" class="size-4" /> Back to Roles
           </.link>
           <h1 class="text-2xl font-bold mt-2 flex items-center gap-3">
             Edit Role: {@role.name}
@@ -60,13 +60,12 @@ defmodule BezgelorPortalWeb.Admin.RoleEditLive do
             phx-click="save"
             disabled={!@has_changes}
           >
-            <.icon name="hero-check" class="size-4" />
-            Save Changes
+            <.icon name="hero-check" class="size-4" /> Save Changes
           </button>
         </div>
       </div>
-
-      <!-- Role Info -->
+      
+    <!-- Role Info -->
       <div class="card bg-base-100 shadow">
         <div class="card-body">
           <h2 class="card-title">Role Information</h2>
@@ -99,8 +98,8 @@ defmodule BezgelorPortalWeb.Admin.RoleEditLive do
           </div>
         </div>
       </div>
-
-      <!-- Permissions -->
+      
+    <!-- Permissions -->
       <div class="card bg-base-100 shadow">
         <div class="card-body">
           <div class="flex items-center justify-between mb-4">
@@ -148,8 +147,8 @@ defmodule BezgelorPortalWeb.Admin.RoleEditLive do
           </div>
         </div>
       </div>
-
-      <!-- Save Button (bottom) -->
+      
+    <!-- Save Button (bottom) -->
       <div class="flex justify-end">
         <button
           type="button"
@@ -157,8 +156,7 @@ defmodule BezgelorPortalWeb.Admin.RoleEditLive do
           phx-click="save"
           disabled={!@has_changes}
         >
-          <.icon name="hero-check" class="size-5" />
-          Save Changes
+          <.icon name="hero-check" class="size-5" /> Save Changes
         </button>
       </div>
     </div>
@@ -225,7 +223,10 @@ defmodule BezgelorPortalWeb.Admin.RoleEditLive do
     # Update role info if changed and not protected
     role =
       if !role.protected && (form["name"] != role.name || form["description"] != role.description) do
-        case Authorization.update_role(role, %{name: form["name"], description: form["description"]}) do
+        case Authorization.update_role(role, %{
+               name: form["name"],
+               description: form["description"]
+             }) do
           {:ok, updated} -> updated
           {:error, _} -> role
         end

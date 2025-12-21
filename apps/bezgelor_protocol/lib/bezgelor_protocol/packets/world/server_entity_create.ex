@@ -78,12 +78,13 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
 
   # Stat enum values (from NexusForever)
   @stat_health 0
+  @stat_dash 9
   @stat_level 10
   @stat_sheathed 15
 
   # StatType values
   @stat_type_integer 0
-  # @stat_type_float 1
+  @stat_type_float 1
 
   # Property enum values (from NexusForever)
   @property_base_health 7
@@ -135,7 +136,9 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
 
   @type stat :: {stat_id :: non_neg_integer(), stat_type :: 0 | 1, value :: number()}
   @type property :: {property_id :: non_neg_integer(), base_value :: float(), value :: float()}
-  @type item_visual :: {slot :: non_neg_integer(), display_id :: non_neg_integer(), colour_set_id :: non_neg_integer(), dye_data :: integer()}
+  @type item_visual ::
+          {slot :: non_neg_integer(), display_id :: non_neg_integer(),
+           colour_set_id :: non_neg_integer(), dye_data :: integer()}
 
   @type t :: %__MODULE__{
           guid: non_neg_integer(),
@@ -437,20 +440,22 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
     {_rx, _ry, rz} = spawn.rotation
 
     # Get bones from appearance if available
-    bones = case character do
-      %{appearance: %{bones: bones}} when is_list(bones) -> bones
-      _ -> []
-    end
+    bones =
+      case character do
+        %{appearance: %{bones: bones}} when is_list(bones) -> bones
+        _ -> []
+      end
 
     # Build initial stats for player
     # Health must be > 0 or player spawns dead
     level = character.level || 1
     # Base health calculation - simple formula for now
     # WildStar base health is roughly 200 + (level * 50)
-    max_health = 200 + (level * 50)
+    max_health = 200 + level * 50
 
     stats = [
       {@stat_health, @stat_type_integer, max_health},
+      {@stat_dash, @stat_type_float, 200.0},
       {@stat_level, @stat_type_integer, level},
       {@stat_sheathed, @stat_type_integer, 1}
     ]
@@ -463,18 +468,20 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
 
     # Build visible items from appearance visuals (body parts: face, hair, skin, etc.)
     # Each visual is stored as %{slot: n, display_id: n} or %{"slot" => n, "display_id" => n}
-    appearance_items = case character do
-      %{appearance: %{visuals: visuals}} when is_list(visuals) ->
-        Enum.map(visuals, fn visual ->
-          slot = visual[:slot] || visual["slot"] || 0
-          display_id = visual[:display_id] || visual["display_id"] || 0
-          colour_set_id = visual[:colour_set_id] || visual["colour_set_id"] || 0
-          dye_data = visual[:dye_data] || visual["dye_data"] || 0
-          {slot, display_id, colour_set_id, dye_data}
-        end)
-      _ ->
-        []
-    end
+    appearance_items =
+      case character do
+        %{appearance: %{visuals: visuals}} when is_list(visuals) ->
+          Enum.map(visuals, fn visual ->
+            slot = visual[:slot] || visual["slot"] || 0
+            display_id = visual[:display_id] || visual["display_id"] || 0
+            colour_set_id = visual[:colour_set_id] || visual["colour_set_id"] || 0
+            dye_data = visual[:dye_data] || visual["dye_data"] || 0
+            {slot, display_id, colour_set_id, dye_data}
+          end)
+
+        _ ->
+          []
+      end
 
     # Get gear visuals (equipped items: armor, weapons)
     gear_items = get_gear_visuals(character.id, character.class)
@@ -482,7 +489,9 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
     # Combine appearance and gear visuals
     visible_items = appearance_items ++ gear_items
 
-    Logger.debug("ServerEntityCreate: #{length(appearance_items)} appearance + #{length(gear_items)} gear = #{length(visible_items)} visible items")
+    Logger.debug(
+      "ServerEntityCreate: #{length(appearance_items)} appearance + #{length(gear_items)} gear = #{length(visible_items)} visible items"
+    )
 
     %__MODULE__{
       guid: player_guid,
@@ -527,6 +536,7 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
 
     stats = [
       {@stat_health, @stat_type_integer, health},
+      {@stat_dash, @stat_type_float, 200.0},
       {@stat_level, @stat_type_integer, level},
       {@stat_sheathed, @stat_type_integer, 1}
     ]
@@ -593,7 +603,8 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
       cond do
         spawn_def[:faction1] && spawn_def[:faction1] > 0 -> spawn_def[:faction1]
         entity.faction && entity.faction > 0 -> entity.faction
-        true -> 219  # Default neutral faction
+        # Default neutral faction
+        true -> 219
       end
 
     # Get display_info from spawn_def, entity, or template
@@ -656,7 +667,10 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
 
     # Get all equipped items for this character
     equipped_items = Inventory.get_items(character_id, :equipped)
-    Logger.debug("get_gear_visuals: #{length(equipped_items)} equipped items for character #{character_id}")
+
+    Logger.debug(
+      "get_gear_visuals: #{length(equipped_items)} equipped items for character #{character_id}"
+    )
 
     # Try to get display_ids from inventory items using ItemDisplaySourceEntry lookup
     # Visual slot comes from Item2Type.itemSlotId, NOT from inventory slot
@@ -665,7 +679,10 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
       |> Enum.map(fn item ->
         # Get both display_id and visual_slot from item data
         {display_id, visual_slot} = BezgelorData.Store.get_item_visual_info(item.item_id)
-        Logger.debug("  Item #{item.item_id} inv_slot=#{item.slot} -> visual_slot=#{visual_slot}: display_id=#{display_id}")
+
+        Logger.debug(
+          "  Item #{item.item_id} inv_slot=#{item.slot} -> visual_slot=#{visual_slot}: display_id=#{display_id}"
+        )
 
         if display_id > 0 and visual_slot > 0 do
           {visual_slot, display_id, 0, 0}
@@ -683,11 +700,11 @@ defmodule BezgelorProtocol.Packets.World.ServerEntityCreate do
     else
       # Get default gear visuals based on class
       Logger.debug("get_gear_visuals: falling back to class #{class_id} defaults")
+
       BezgelorData.Store.get_class_gear_visuals(class_id)
       |> Enum.map(fn %{slot: slot, display_id: display_id} ->
         {slot, display_id, 0, 0}
       end)
     end
   end
-
 end

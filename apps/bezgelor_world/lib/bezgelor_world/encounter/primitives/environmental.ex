@@ -27,9 +27,17 @@ defmodule BezgelorWorld.Encounter.Primitives.Environmental do
       end
   """
 
-  @type hazard_type :: :void_zone | :fire | :poison_cloud | :falling_debris
-                     | :terrain_change | :environmental_damage | :lava
-                     | :ice | :lightning_field | :wind
+  @type hazard_type ::
+          :void_zone
+          | :fire
+          | :poison_cloud
+          | :falling_debris
+          | :terrain_change
+          | :environmental_damage
+          | :lava
+          | :ice
+          | :lightning_field
+          | :wind
 
   @doc """
   Creates an environmental hazard.

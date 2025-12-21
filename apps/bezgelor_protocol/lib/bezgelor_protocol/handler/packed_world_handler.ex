@@ -70,7 +70,9 @@ defmodule BezgelorProtocol.Handler.PackedWorldHandler do
         case lookup_handler(inner_opcode) do
           {:ok, handler} ->
             # Log with same format as Connection - shows the actual opcode being handled
-            Logger.debug("[World] Recv: #{Opcode.name(inner_opcode)} (#{byte_size(inner_payload)} bytes)")
+            Logger.debug(
+              "[World] Recv: #{Opcode.name(inner_opcode)} (#{byte_size(inner_payload)} bytes)"
+            )
 
             handler.handle(inner_payload, state)
 
@@ -99,8 +101,18 @@ defmodule BezgelorProtocol.Handler.PackedWorldHandler do
     else
       {:error, :unknown_opcode} ->
         <<opcode_int::little-16, _rest::binary>> = data
-        Logger.warning("PackedWorldHandler: unknown inner opcode 0x#{Integer.to_string(opcode_int, 16)}")
-        {:error, {:unknown_opcode, opcode_int}}
+
+        if opcode_int == 0x00DE do
+          %{data: data, byte_pos: pos} = reader
+          inner_payload = binary_part(data, pos, byte_size(data) - pos)
+          {:ok, :client_unknown_0x00DE, inner_payload}
+        else
+          Logger.warning(
+            "PackedWorldHandler: unknown inner opcode 0x#{Integer.to_string(opcode_int, 16)}"
+          )
+
+          {:error, {:unknown_opcode, opcode_int}}
+        end
 
       error ->
         error

@@ -17,7 +17,15 @@ defmodule BezgelorProtocol.Packets.World.ServerWorldBossSpawn do
 
   alias BezgelorProtocol.PacketWriter
 
-  defstruct [:boss_id, :creature_id, :position, :health_max, :health_current, :phase, :time_limit_ms]
+  defstruct [
+    :boss_id,
+    :creature_id,
+    :position,
+    :health_max,
+    :health_current,
+    :phase,
+    :time_limit_ms
+  ]
 
   @impl true
   def opcode, do: 0x0A10

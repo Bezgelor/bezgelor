@@ -8,10 +8,10 @@ defmodule BezgelorDb.Schema.Friend do
   alias BezgelorDb.Schema.Character
 
   schema "friends" do
-    belongs_to :character, Character
-    belongs_to :friend_character, Character
-    field :note, :string, default: ""
-    field :group_name, :string, default: "Friends"
+    belongs_to(:character, Character)
+    belongs_to(:friend_character, Character)
+    field(:note, :string, default: "")
+    field(:group_name, :string, default: "Friends")
     timestamps()
   end
 

@@ -11,25 +11,33 @@ defmodule BezgelorDb.Schema.GuildMember do
   @type t :: %__MODULE__{}
 
   schema "guild_members" do
-    belongs_to :guild, BezgelorDb.Schema.Guild
-    belongs_to :character, BezgelorDb.Schema.Character
+    belongs_to(:guild, BezgelorDb.Schema.Guild)
+    belongs_to(:character, BezgelorDb.Schema.Character)
 
     # Rank index (0 = Guild Master, higher = lower rank)
-    field :rank_index, :integer, default: 4
+    field(:rank_index, :integer, default: 4)
 
     # Notes (officer/public)
-    field :officer_note, :string, default: ""
-    field :public_note, :string, default: ""
+    field(:officer_note, :string, default: "")
+    field(:public_note, :string, default: "")
 
     # Contribution tracking
-    field :total_influence, :integer, default: 0  # Total influence contributed
+    # Total influence contributed
+    field(:total_influence, :integer, default: 0)
 
     timestamps(type: :utc_datetime)
   end
 
   def changeset(member, attrs) do
     member
-    |> cast(attrs, [:guild_id, :character_id, :rank_index, :officer_note, :public_note, :total_influence])
+    |> cast(attrs, [
+      :guild_id,
+      :character_id,
+      :rank_index,
+      :officer_note,
+      :public_note,
+      :total_influence
+    ])
     |> validate_required([:guild_id, :character_id])
     |> validate_number(:rank_index, greater_than_or_equal_to: 0, less_than_or_equal_to: 9)
     |> validate_length(:officer_note, max: 200)

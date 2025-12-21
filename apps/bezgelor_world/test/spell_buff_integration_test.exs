@@ -55,13 +55,14 @@ defmodule BezgelorWorld.SpellBuffIntegrationTest do
       effect = hd(spell.effects)
 
       # Create buff from spell effect (simulating what SpellHandler would do)
-      buff = BezgelorCore.BuffDebuff.new(%{
-        id: spell.id,
-        spell_id: spell.id,
-        buff_type: effect.buff_type,
-        amount: effect.amount,
-        duration: effect.duration
-      })
+      buff =
+        BezgelorCore.BuffDebuff.new(%{
+          id: spell.id,
+          spell_id: spell.id,
+          buff_type: effect.buff_type,
+          amount: effect.amount,
+          duration: effect.duration
+        })
 
       # Apply via BuffManager
       {:ok, _timer_ref} = BuffManager.apply_buff(player_guid, buff, player_guid)
@@ -86,13 +87,15 @@ defmodule BezgelorWorld.SpellBuffIntegrationTest do
       {:ok, :instant, _result} = SpellManager.cast_spell(player_guid, 4, player_guid, nil, %{})
 
       # 2. Apply buff (simulating what SpellHandler would do)
-      buff = BezgelorCore.BuffDebuff.new(%{
-        id: spell.id,
-        spell_id: spell.id,
-        buff_type: effect.buff_type,
-        amount: effect.amount,
-        duration: 100  # Short duration for test
-      })
+      buff =
+        BezgelorCore.BuffDebuff.new(%{
+          id: spell.id,
+          spell_id: spell.id,
+          buff_type: effect.buff_type,
+          amount: effect.amount,
+          # Short duration for test
+          duration: 100
+        })
 
       {:ok, _timer_ref} = BuffManager.apply_buff(player_guid, buff, player_guid)
       assert BuffManager.has_buff?(player_guid, spell.id)

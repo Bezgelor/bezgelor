@@ -56,7 +56,11 @@ defmodule BezgelorCore.AI do
             | :back_and_forth
             | :back_and_forth_reverse,
           patrol_direction: :forward | :backward,
-          patrol_pause_until: integer() | nil
+          patrol_pause_until: integer() | nil,
+          # Combat chase fields
+          chase_path: [{float(), float(), float()}] | nil,
+          chase_start_time: integer() | nil,
+          chase_duration: non_neg_integer() | nil
         }
 
   defstruct state: :idle,
@@ -83,7 +87,11 @@ defmodule BezgelorCore.AI do
             patrol_speed: 2.0,
             patrol_mode: :cyclic,
             patrol_direction: :forward,
-            patrol_pause_until: nil
+            patrol_pause_until: nil,
+            # Combat chase
+            chase_path: nil,
+            chase_start_time: nil,
+            chase_duration: nil
 
   @doc """
   Create new AI state for a creature.
@@ -130,6 +138,112 @@ defmodule BezgelorCore.AI do
   @spec in_combat?(t()) :: boolean()
   def in_combat?(%__MODULE__{state: :combat}), do: true
   def in_combat?(_), do: false
+
+  @doc """
+  Check for players in aggro range.
+
+  Only checks when creature is idle (not in combat, evading, or dead).
+  Returns the closest player if any are within aggro range.
+
+  ## Parameters
+
+  - `ai` - The AI state
+  - `nearby_players` - List of %{guid: integer, position: {x, y, z}} maps
+  - `aggro_range` - Aggro detection radius
+
+  ## Returns
+
+  - `{:aggro, player_guid}` if a player is detected
+  - `nil` if no players in range or AI is busy
+  """
+  @spec check_aggro(t(), [map()], float()) :: {:aggro, non_neg_integer()} | nil
+  def check_aggro(%__MODULE__{state: state}, _nearby_players, _aggro_range)
+      when state in [:combat, :evade, :dead] do
+    nil
+  end
+
+  def check_aggro(%__MODULE__{spawn_position: spawn_pos}, nearby_players, aggro_range) do
+    nearby_players
+    |> Enum.map(fn player ->
+      dist = distance(spawn_pos, player.position)
+      {dist, player.guid}
+    end)
+    |> Enum.filter(fn {dist, _guid} -> dist <= aggro_range end)
+    |> Enum.min_by(fn {dist, _guid} -> dist end, fn -> nil end)
+    |> case do
+      nil -> nil
+      {_dist, guid} -> {:aggro, guid}
+    end
+  end
+
+  @doc """
+  Check for players in aggro range, filtering by faction hostility.
+
+  Only returns players that are hostile to the creature's faction.
+  """
+  @spec check_aggro_with_faction(t(), [map()], float(), Faction.faction()) ::
+          {:aggro, non_neg_integer()} | nil
+  def check_aggro_with_faction(%__MODULE__{state: state}, _nearby_players, _aggro_range, _faction)
+      when state in [:combat, :evade, :dead] do
+    nil
+  end
+
+  def check_aggro_with_faction(
+        %__MODULE__{spawn_position: spawn_pos},
+        nearby_players,
+        aggro_range,
+        creature_faction
+      ) do
+    alias BezgelorCore.Faction
+
+    nearby_players
+    |> Enum.filter(fn player ->
+      player_faction = Map.get(player, :faction, :exile)
+      Faction.hostile?(creature_faction, player_faction)
+    end)
+    |> Enum.map(fn player ->
+      dist = distance(spawn_pos, player.position)
+      {dist, player.guid}
+    end)
+    |> Enum.filter(fn {dist, _guid} -> dist <= aggro_range end)
+    |> Enum.min_by(fn {dist, _guid} -> dist end, fn -> nil end)
+    |> case do
+      nil -> nil
+      {_dist, guid} -> {:aggro, guid}
+    end
+  end
+
+  @doc """
+  Trigger social aggro - nearby creature joins combat against a target.
+
+  Only affects idle creatures. Combat/evade/dead creatures ignore this.
+  """
+  @spec social_aggro(t(), non_neg_integer()) :: t()
+  def social_aggro(%__MODULE__{state: :idle} = ai, target_guid) do
+    enter_combat(ai, target_guid)
+  end
+
+  def social_aggro(%__MODULE__{} = ai, _target_guid), do: ai
+
+  @doc """
+  Check if creature should leash (return to spawn) based on distance.
+
+  Only triggers when in combat and distance from spawn exceeds leash_range.
+  """
+  @spec check_leash(t(), {float(), float(), float()}, float()) :: :evade | :ok
+  def check_leash(
+        %__MODULE__{state: :combat, spawn_position: spawn_pos},
+        current_pos,
+        leash_range
+      ) do
+    if distance(spawn_pos, current_pos) > leash_range do
+      :evade
+    else
+      :ok
+    end
+  end
+
+  def check_leash(%__MODULE__{}, _current_pos, _leash_range), do: :ok
 
   @doc """
   Check if creature is dead.
@@ -285,6 +399,92 @@ defmodule BezgelorCore.AI do
   end
 
   @doc """
+  Determine combat action based on target distance.
+
+  Returns what the creature should do during its combat tick:
+  - `{:chase, target_position}` - Move toward target
+  - `{:attack, target_guid}` - Attack the target
+  - `:none` - Not in combat
+
+  ## Parameters
+
+  - `ai` - The AI state (must be in combat)
+  - `target_position` - Current position of the target
+  - `attack_range` - Range at which creature can attack
+  """
+  @spec combat_action(t(), {float(), float(), float()}, float()) ::
+          {:chase, {float(), float(), float()}} | {:attack, non_neg_integer()} | :wait | :none
+  def combat_action(%__MODULE__{state: :combat} = ai, target_pos, attack_range) do
+    # If already chasing, wait for movement to complete
+    if chasing?(ai) do
+      :wait
+    else
+      current_pos = get_chase_position(ai) || ai.spawn_position
+      dist = distance(current_pos, target_pos)
+
+      if dist <= attack_range do
+        {:attack, ai.target_guid}
+      else
+        {:chase, target_pos}
+      end
+    end
+  end
+
+  def combat_action(%__MODULE__{}, _target_pos, _attack_range), do: :none
+
+  @doc """
+  Start chasing a target with a given path.
+  """
+  @spec start_chase(t(), [{float(), float(), float()}], non_neg_integer()) :: t()
+  def start_chase(%__MODULE__{state: :combat} = ai, path, duration) do
+    %{
+      ai
+      | chase_path: path,
+        chase_start_time: System.monotonic_time(:millisecond),
+        chase_duration: duration
+    }
+  end
+
+  def start_chase(%__MODULE__{} = ai, _path, _duration), do: ai
+
+  @doc """
+  Check if currently in a chase movement.
+  """
+  @spec chasing?(t()) :: boolean()
+  def chasing?(%__MODULE__{chase_path: path, chase_start_time: start, chase_duration: duration})
+      when is_list(path) and is_integer(start) and is_integer(duration) do
+    elapsed = System.monotonic_time(:millisecond) - start
+    elapsed < duration
+  end
+
+  def chasing?(%__MODULE__{}), do: false
+
+  @doc """
+  Complete chase movement (reached destination or target moved).
+  """
+  @spec complete_chase(t()) :: t()
+  def complete_chase(%__MODULE__{} = ai) do
+    %{ai | chase_path: nil, chase_start_time: nil, chase_duration: nil}
+  end
+
+  @doc """
+  Get current position along chase path.
+  """
+  @spec get_chase_position(t()) :: {float(), float(), float()} | nil
+  def get_chase_position(%__MODULE__{
+        chase_path: path,
+        chase_start_time: start,
+        chase_duration: duration
+      })
+      when is_list(path) and is_integer(start) and is_integer(duration) do
+    elapsed = System.monotonic_time(:millisecond) - start
+    progress = min(elapsed / duration, 1.0)
+    BezgelorCore.Movement.interpolate_path(path, progress)
+  end
+
+  def get_chase_position(%__MODULE__{}), do: nil
+
+  @doc """
   Check if creature can attack (attack speed cooldown).
   """
   @spec can_attack?(t(), non_neg_integer()) :: boolean()
@@ -389,7 +589,10 @@ defmodule BezgelorCore.AI do
   Check if wandering movement is complete.
   """
   @spec wander_complete?(t(), integer()) :: boolean()
-  def wander_complete?(%__MODULE__{state: :wandering, movement_start_time: start, movement_duration: duration}, now) do
+  def wander_complete?(
+        %__MODULE__{state: :wandering, movement_start_time: start, movement_duration: duration},
+        now
+      ) do
     now - start >= duration
   end
 

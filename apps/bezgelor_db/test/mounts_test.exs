@@ -20,7 +20,12 @@ defmodule BezgelorDb.MountsTest do
     {:ok, character} =
       Characters.create_character(account.id, %{
         name: "Rider#{System.unique_integer([:positive])}",
-        sex: 0, race: 0, class: 0, faction_id: 166, world_id: 1, world_zone_id: 1
+        sex: 0,
+        race: 0,
+        class: 0,
+        faction_id: 166,
+        world_id: 1,
+        world_zone_id: 1
       })
 
     # Unlock a mount for tests
@@ -55,10 +60,12 @@ defmodule BezgelorDb.MountsTest do
   describe "customization" do
     test "update_customization changes mount look", %{account: account, character: character} do
       {:ok, _} = Mounts.set_active_mount(character.id, account.id, 1001)
-      {:ok, mount} = Mounts.update_customization(character.id, %{
-        "dyes" => [1, 2, 3],
-        "flair" => ["flag_01"]
-      })
+
+      {:ok, mount} =
+        Mounts.update_customization(character.id, %{
+          "dyes" => [1, 2, 3],
+          "flair" => ["flag_01"]
+        })
 
       assert mount.customization["dyes"] == [1, 2, 3]
     end

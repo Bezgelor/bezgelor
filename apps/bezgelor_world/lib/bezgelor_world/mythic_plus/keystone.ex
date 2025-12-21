@@ -65,11 +65,12 @@ defmodule BezgelorWorld.MythicPlus.Keystone do
     new_level = keystone.level + time_bonus
     new_dungeon_id = random_dungeon_id()
 
-    %{keystone |
-      dungeon_id: new_dungeon_id,
-      level: new_level,
-      affix_ids: get_affixes_for_level(new_level),
-      depleted: false
+    %{
+      keystone
+      | dungeon_id: new_dungeon_id,
+        level: new_level,
+        affix_ids: get_affixes_for_level(new_level),
+        depleted: false
     }
   end
 
@@ -78,10 +79,7 @@ defmodule BezgelorWorld.MythicPlus.Keystone do
   """
   @spec deplete(t()) :: t()
   def deplete(%__MODULE__{} = keystone) do
-    %{keystone |
-      level: max(2, keystone.level - 1),
-      depleted: true
-    }
+    %{keystone | level: max(2, keystone.level - 1), depleted: true}
   end
 
   @doc """
@@ -97,6 +95,7 @@ defmodule BezgelorWorld.MythicPlus.Keystone do
   """
   @spec get_affixes_for_level(non_neg_integer()) :: [non_neg_integer()]
   def get_affixes_for_level(level) when level < 2, do: []
+
   def get_affixes_for_level(level) do
     try do
       case Store.get_affixes_for_level(level) do
@@ -124,10 +123,14 @@ defmodule BezgelorWorld.MythicPlus.Keystone do
   @spec calculate_time_bonus(non_neg_integer(), non_neg_integer()) :: non_neg_integer()
   def calculate_time_bonus(time_limit_ms, completion_time_ms) do
     cond do
-      completion_time_ms <= time_limit_ms * 0.6 -> 3  # Under 60%: +3 levels
-      completion_time_ms <= time_limit_ms * 0.8 -> 2  # Under 80%: +2 levels
-      completion_time_ms <= time_limit_ms -> 1        # Under limit: +1 level
-      true -> 0                                       # Over limit: depleted
+      # Under 60%: +3 levels
+      completion_time_ms <= time_limit_ms * 0.6 -> 3
+      # Under 80%: +2 levels
+      completion_time_ms <= time_limit_ms * 0.8 -> 2
+      # Under limit: +1 level
+      completion_time_ms <= time_limit_ms -> 1
+      # Over limit: depleted
+      true -> 0
     end
   end
 
@@ -147,11 +150,14 @@ defmodule BezgelorWorld.MythicPlus.Keystone do
 
   defp default_affixes_for_level(level) do
     # Tier 1 affixes (level 2+)
-    tier1 = [1, 2, 3]  # Example: Fortified, Tyrannical, Bolstering
+    # Example: Fortified, Tyrannical, Bolstering
+    tier1 = [1, 2, 3]
     # Tier 2 affixes (level 4+)
-    tier2 = [4, 5, 6]  # Example: Raging, Sanguine, Inspiring
+    # Example: Raging, Sanguine, Inspiring
+    tier2 = [4, 5, 6]
     # Tier 3 affixes (level 7+)
-    tier3 = [7, 8, 9]  # Example: Explosive, Quaking, Grievous
+    # Example: Explosive, Quaking, Grievous
+    tier3 = [7, 8, 9]
     # Seasonal affix (level 10+)
     seasonal = [10]
 
@@ -199,7 +205,8 @@ defmodule BezgelorWorld.MythicPlus.Keystone do
         instance["mythic_time_limit"] || 30 * 60 * 1000
 
       _ ->
-        30 * 60 * 1000  # Default 30 minutes
+        # Default 30 minutes
+        30 * 60 * 1000
     end
   end
 end

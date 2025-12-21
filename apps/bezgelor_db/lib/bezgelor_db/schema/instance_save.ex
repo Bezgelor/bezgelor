@@ -27,18 +27,24 @@ defmodule BezgelorDb.Schema.InstanceSave do
   @difficulties ~w(normal veteran)
 
   schema "instance_saves" do
-    field :instance_guid, :binary
-    field :instance_definition_id, :integer
-    field :difficulty, :string
-    field :boss_kills, {:array, :integer}, default: []
-    field :trash_cleared, {:array, :string}, default: []
-    field :created_at, :utc_datetime
-    field :expires_at, :utc_datetime
+    field(:instance_guid, :binary)
+    field(:instance_definition_id, :integer)
+    field(:difficulty, :string)
+    field(:boss_kills, {:array, :integer}, default: [])
+    field(:trash_cleared, {:array, :string}, default: [])
+    field(:created_at, :utc_datetime)
+    field(:expires_at, :utc_datetime)
 
     timestamps()
   end
 
-  @required_fields [:instance_guid, :instance_definition_id, :difficulty, :created_at, :expires_at]
+  @required_fields [
+    :instance_guid,
+    :instance_definition_id,
+    :difficulty,
+    :created_at,
+    :expires_at
+  ]
   @optional_fields [:boss_kills, :trash_cleared]
 
   @doc """

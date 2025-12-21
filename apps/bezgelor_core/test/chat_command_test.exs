@@ -103,7 +103,8 @@ defmodule BezgelorCore.ChatCommandTest do
 
   describe "parse/1 unknown commands" do
     test "unknown command returns error" do
-      assert {:error, {:unknown_command, "unknowncommand"}} == ChatCommand.parse("/unknowncommand")
+      assert {:error, {:unknown_command, "unknowncommand"}} ==
+               ChatCommand.parse("/unknowncommand")
     end
 
     test "unknown command with args returns error" do

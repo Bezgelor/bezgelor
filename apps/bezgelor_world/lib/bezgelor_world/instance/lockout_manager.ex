@@ -100,7 +100,10 @@ defmodule BezgelorWorld.Instance.LockoutManager do
       last_weekly_reset: nil
     }
 
-    Logger.info("LockoutManager started - Daily reset at #{state.daily_reset_hour}:00, Weekly reset on #{state.weekly_reset_day}")
+    Logger.info(
+      "LockoutManager started - Daily reset at #{state.daily_reset_hour}:00, Weekly reset on #{state.weekly_reset_day}"
+    )
+
     {:ok, state}
   end
 

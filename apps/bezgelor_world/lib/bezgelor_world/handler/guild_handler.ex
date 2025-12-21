@@ -20,6 +20,7 @@ defmodule BezgelorWorld.Handler.GuildHandler do
 
   alias BezgelorProtocol.PacketReader
   alias BezgelorProtocol.PacketWriter
+
   alias BezgelorProtocol.Packets.World.{
     ClientGuildCreate,
     ClientGuildInvite,
@@ -35,6 +36,7 @@ defmodule BezgelorWorld.Handler.GuildHandler do
     ServerGuildMemberUpdate,
     ServerGuildResult
   }
+
   alias BezgelorDb.{Guilds, Characters}
   alias BezgelorWorld.WorldManager
 
@@ -240,7 +242,13 @@ defmodule BezgelorWorld.Handler.GuildHandler do
         case Guilds.promote_member(membership.guild_id, packet.target_id, character_id) do
           {:ok, updated_member} ->
             Logger.debug("Character #{character_id} promoted #{packet.target_id}")
-            broadcast_rank_change(membership.guild_id, packet.target_id, updated_member.rank_index)
+
+            broadcast_rank_change(
+              membership.guild_id,
+              packet.target_id,
+              updated_member.rank_index
+            )
+
             send_result(:ok, :promote, state)
 
           {:error, :no_permission} ->
@@ -272,7 +280,13 @@ defmodule BezgelorWorld.Handler.GuildHandler do
         case Guilds.demote_member(membership.guild_id, packet.target_id, character_id) do
           {:ok, updated_member} ->
             Logger.debug("Character #{character_id} demoted #{packet.target_id}")
-            broadcast_rank_change(membership.guild_id, packet.target_id, updated_member.rank_index)
+
+            broadcast_rank_change(
+              membership.guild_id,
+              packet.target_id,
+              updated_member.rank_index
+            )
+
             send_result(:ok, :demote, state)
 
           {:error, :no_permission} ->

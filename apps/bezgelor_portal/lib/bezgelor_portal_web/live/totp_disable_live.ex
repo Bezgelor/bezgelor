@@ -86,8 +86,7 @@ defmodule BezgelorPortalWeb.TotpDisableLive do
                 Cancel
               </.link>
               <button type="submit" class="btn btn-error flex-1">
-                <.icon name="hero-shield-exclamation" class="size-4 mr-2" />
-                Disable 2FA
+                <.icon name="hero-shield-exclamation" class="size-4 mr-2" /> Disable 2FA
               </button>
             </div>
           </.form>

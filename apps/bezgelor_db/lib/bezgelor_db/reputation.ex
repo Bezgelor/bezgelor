@@ -34,7 +34,8 @@ defmodule BezgelorDb.Reputation do
     |> RepCore.standing_to_level()
   end
 
-  @spec modify_reputation(integer(), integer(), integer()) :: {:ok, RepSchema.t()} | {:error, term()}
+  @spec modify_reputation(integer(), integer(), integer()) ::
+          {:ok, RepSchema.t()} | {:error, term()}
   def modify_reputation(character_id, faction_id, delta) do
     case get_reputation(character_id, faction_id) do
       nil ->

@@ -32,28 +32,34 @@ defmodule BezgelorDb.Schema.Warplot do
   @base_energy 500
 
   schema "warplots" do
-    belongs_to :guild, Guild
+    belongs_to(:guild, Guild)
 
-    field :name, :string
-    field :war_coins, :integer, default: 0
-    field :rating, :integer, default: 0
-    field :season_high, :integer, default: 0
-    field :battles_played, :integer, default: 0
-    field :battles_won, :integer, default: 0
-    field :energy, :integer, default: @base_energy
-    field :max_energy, :integer, default: @max_energy
-    field :layout_id, :integer, default: 1
-    field :created_at, :utc_datetime
+    field(:name, :string)
+    field(:war_coins, :integer, default: 0)
+    field(:rating, :integer, default: 0)
+    field(:season_high, :integer, default: 0)
+    field(:battles_played, :integer, default: 0)
+    field(:battles_won, :integer, default: 0)
+    field(:energy, :integer, default: @base_energy)
+    field(:max_energy, :integer, default: @max_energy)
+    field(:layout_id, :integer, default: 1)
+    field(:created_at, :utc_datetime)
 
-    has_many :plugs, WarplotPlug
+    has_many(:plugs, WarplotPlug)
 
     timestamps()
   end
 
   @required_fields [:guild_id, :name, :created_at]
   @optional_fields [
-    :war_coins, :rating, :season_high, :battles_played, :battles_won,
-    :energy, :max_energy, :layout_id
+    :war_coins,
+    :rating,
+    :season_high,
+    :battles_played,
+    :battles_won,
+    :energy,
+    :max_energy,
+    :layout_id
   ]
 
   @doc """
@@ -107,7 +113,8 @@ defmodule BezgelorDb.Schema.Warplot do
   @doc """
   Spends war coins from the warplot.
   """
-  @spec spend_war_coins(t(), integer()) :: {:ok, Ecto.Changeset.t()} | {:error, :insufficient_funds}
+  @spec spend_war_coins(t(), integer()) ::
+          {:ok, Ecto.Changeset.t()} | {:error, :insufficient_funds}
   def spend_war_coins(warplot, amount) when amount > 0 do
     if warplot.war_coins >= amount do
       {:ok, change(warplot, war_coins: warplot.war_coins - amount)}
@@ -149,6 +156,7 @@ defmodule BezgelorDb.Schema.Warplot do
   """
   @spec win_rate(t()) :: float()
   def win_rate(%__MODULE__{battles_played: 0}), do: 0.0
+
   def win_rate(%__MODULE__{battles_won: won, battles_played: played}) do
     Float.round(won / played * 100, 1)
   end
@@ -158,7 +166,8 @@ defmodule BezgelorDb.Schema.Warplot do
   """
   @spec can_battle?(t()) :: boolean()
   def can_battle?(%__MODULE__{energy: energy}) do
-    energy >= 100  # Minimum energy to queue
+    # Minimum energy to queue
+    energy >= 100
   end
 
   @doc """

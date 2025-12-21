@@ -7,8 +7,10 @@ defmodule BezgelorCore.CharacterStatsTest do
     test "computes combat stats from base character data" do
       character = %{
         level: 10,
-        class: 1,  # Warrior
-        race: 0    # Human
+        # Warrior
+        class: 1,
+        # Human
+        race: 0
       }
 
       stats = CharacterStats.compute_combat_stats(character)
@@ -29,8 +31,10 @@ defmodule BezgelorCore.CharacterStatsTest do
     end
 
     test "assault classes favor power" do
-      warrior = CharacterStats.compute_combat_stats(%{level: 10, class: 1, race: 0})  # Warrior
-      esper = CharacterStats.compute_combat_stats(%{level: 10, class: 4, race: 0})    # Esper/healer
+      # Warrior
+      warrior = CharacterStats.compute_combat_stats(%{level: 10, class: 1, race: 0})
+      # Esper/healer
+      esper = CharacterStats.compute_combat_stats(%{level: 10, class: 4, race: 0})
 
       assert warrior.power >= esper.power
     end

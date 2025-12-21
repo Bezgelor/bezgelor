@@ -35,7 +35,9 @@ defmodule BezgelorDb.Mounts do
   @spec clear_active_mount(integer()) :: :ok
   def clear_active_mount(character_id) do
     case get_active_mount(character_id) do
-      nil -> :ok
+      nil ->
+        :ok
+
       mount ->
         Repo.delete(mount)
         :ok
@@ -51,6 +53,7 @@ defmodule BezgelorDb.Mounts do
 
       mount ->
         new_customization = Map.merge(mount.customization, customization)
+
         mount
         |> ActiveMount.customization_changeset(new_customization)
         |> Repo.update()

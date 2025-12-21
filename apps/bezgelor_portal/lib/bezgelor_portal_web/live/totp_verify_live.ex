@@ -10,7 +10,8 @@ defmodule BezgelorPortalWeb.TotpVerifyLive do
   alias BezgelorDb.Accounts
   alias BezgelorPortal.TOTP
 
-  @session_timeout_seconds 300  # 5 minutes to enter TOTP code
+  # 5 minutes to enter TOTP code
+  @session_timeout_seconds 300
 
   def mount(params, _session, socket) do
     # Get the pending token from params
@@ -57,7 +58,9 @@ defmodule BezgelorPortalWeb.TotpVerifyLive do
   defp verify_pending_token(nil), do: {:error, :missing_token}
 
   defp verify_pending_token(token) do
-    case Phoenix.Token.verify(BezgelorPortalWeb.Endpoint, "totp_pending", token, max_age: @session_timeout_seconds) do
+    case Phoenix.Token.verify(BezgelorPortalWeb.Endpoint, "totp_pending", token,
+           max_age: @session_timeout_seconds
+         ) do
       {:ok, {account_id, timestamp}} -> {:ok, {account_id, timestamp}}
       {:error, reason} -> {:error, reason}
     end
@@ -108,15 +111,16 @@ defmodule BezgelorPortalWeb.TotpVerifyLive do
           Use a backup code
         </button>
         <p :if={@remaining_backup_codes > 0} class="text-xs text-base-content/50 mt-1">
-          {if @remaining_backup_codes == 1, do: "1 backup code remaining", else: "#{@remaining_backup_codes} backup codes remaining"}
+          {if @remaining_backup_codes == 1,
+            do: "1 backup code remaining",
+            else: "#{@remaining_backup_codes} backup codes remaining"}
         </p>
       <% end %>
     </div>
 
     <p class="text-center text-sm text-base-content/70 mt-6">
       <.link href={~p"/login"} class="link link-primary">
-        <.icon name="hero-arrow-left" class="size-3 inline" />
-        Back to login
+        <.icon name="hero-arrow-left" class="size-3 inline" /> Back to login
       </.link>
     </p>
     """
@@ -139,7 +143,10 @@ defmodule BezgelorPortalWeb.TotpVerifyLive do
           # Verification successful - redirect to auth callback to complete login
           {:noreply,
            socket
-           |> push_navigate(to: ~p"/auth/callback?totp_verified=#{account_id}&token=#{generate_login_token(account)}")}
+           |> push_navigate(
+             to:
+               ~p"/auth/callback?totp_verified=#{account_id}&token=#{generate_login_token(account)}"
+           )}
 
         {:error, :invalid_code} ->
           {:noreply, assign(socket, error: "Invalid code. Please try again.")}

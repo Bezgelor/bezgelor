@@ -18,9 +18,10 @@ defmodule BezgelorDb.Vendors do
   @spec get_stock(integer(), integer()) :: integer() | nil
   def get_stock(vendor_id, item_id) do
     query =
-      from s in VendorStock,
+      from(s in VendorStock,
         where: s.vendor_id == ^vendor_id and s.item_id == ^item_id,
         select: s.quantity_remaining
+      )
 
     Repo.one(query)
   end
@@ -51,8 +52,11 @@ defmodule BezgelorDb.Vendors do
   @spec purchase_item(integer(), integer(), integer()) :: {:ok, integer()} | {:error, atom()}
   def purchase_item(vendor_id, item_id, quantity \\ 1) do
     query =
-      from s in VendorStock,
-        where: s.vendor_id == ^vendor_id and s.item_id == ^item_id and s.quantity_remaining >= ^quantity
+      from(s in VendorStock,
+        where:
+          s.vendor_id == ^vendor_id and s.item_id == ^item_id and
+            s.quantity_remaining >= ^quantity
+      )
 
     case Repo.update_all(query, inc: [quantity_remaining: -quantity]) do
       {1, _} ->
@@ -98,7 +102,8 @@ defmodule BezgelorDb.Vendors do
   @spec in_stock?(integer(), integer()) :: boolean()
   def in_stock?(vendor_id, item_id) do
     case get_stock(vendor_id, item_id) do
-      nil -> true  # Not tracked = unlimited
+      # Not tracked = unlimited
+      nil -> true
       qty -> qty > 0
     end
   end

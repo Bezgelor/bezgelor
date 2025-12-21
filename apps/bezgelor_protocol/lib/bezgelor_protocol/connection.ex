@@ -1,5 +1,11 @@
 defmodule BezgelorProtocol.Connection do
-  @compile {:no_warn_undefined, [BezgelorWorld.Quest.SessionQuestManager, BezgelorWorld.Quest.QuestPersistence, BezgelorWorld.WorldManager, BezgelorWorld.VisibilityBroadcaster]}
+  @compile {:no_warn_undefined,
+            [
+              BezgelorWorld.Quest.SessionQuestManager,
+              BezgelorWorld.Quest.QuestPersistence,
+              BezgelorWorld.WorldManager,
+              BezgelorWorld.VisibilityBroadcaster
+            ]}
 
   @moduledoc """
   GenServer handling a single client TCP connection.
@@ -147,22 +153,29 @@ defmodule BezgelorProtocol.Connection do
   end
 
   def handle_info({:tcp_closed, socket}, %{socket: socket} = state) do
-    Logger.debug("[#{server_name(state.connection_type)}] Connection closed by client (#{state.session_data[:client_addr]})")
+    Logger.debug(
+      "[#{server_name(state.connection_type)}] Connection closed by client (#{state.session_data[:client_addr]})"
+    )
+
     {:stop, :normal, %{state | state: :disconnected}}
   end
 
   def handle_info({:tcp_error, socket, reason}, %{socket: socket} = state) do
-    Logger.warning("[#{server_name(state.connection_type)}] TCP error: #{inspect(reason)} (#{state.session_data[:client_addr]})")
+    Logger.warning(
+      "[#{server_name(state.connection_type)}] TCP error: #{inspect(reason)} (#{state.session_data[:client_addr]})"
+    )
+
     {:stop, :normal, %{state | state: :disconnected}}
   end
 
   # Handle game events for quest progress tracking
   def handle_info({:game_event, event_type, event_data}, state) do
-    {session_data, packets} = SessionQuestManager.process_game_event(
-      state.session_data,
-      event_type,
-      event_data
-    )
+    {session_data, packets} =
+      SessionQuestManager.process_game_event(
+        state.session_data,
+        event_type,
+        event_data
+      )
 
     # Send any generated packets to client
     state = %{state | session_data: session_data}
@@ -208,12 +221,15 @@ defmodule BezgelorProtocol.Connection do
   end
 
   # Handle packets sent as {opcode, payload} from broadcasters (CombatBroadcaster, etc.)
-  def handle_info({:send_packet, opcode, payload}, state) when is_atom(opcode) and is_binary(payload) do
-    state = if state.connection_type == :world do
-      do_send_encrypted_world_packet(state, opcode, payload)
-    else
-      do_send_packet(state, opcode, payload)
-    end
+  def handle_info({:send_packet, opcode, payload}, state)
+      when is_atom(opcode) and is_binary(payload) do
+    state =
+      if state.connection_type == :world do
+        do_send_encrypted_world_packet(state, opcode, payload)
+      else
+        do_send_packet(state, opcode, payload)
+      end
+
     {:noreply, state}
   end
 
@@ -228,11 +244,13 @@ defmodule BezgelorProtocol.Connection do
   @impl GenServer
   def handle_cast({:send_packet, opcode, payload}, state) do
     # World server uses encrypted packets, other servers use plain
-    state = if state.connection_type == :world do
-      do_send_encrypted_world_packet(state, opcode, payload)
-    else
-      do_send_packet(state, opcode, payload)
-    end
+    state =
+      if state.connection_type == :world do
+        do_send_encrypted_world_packet(state, opcode, payload)
+      else
+        do_send_packet(state, opcode, payload)
+      end
+
     {:noreply, state}
   end
 
@@ -246,19 +264,26 @@ defmodule BezgelorProtocol.Connection do
       if state.connection_type == :world, do: @connection_type_world, else: @connection_type_auth
 
     # Write all fields as bits to match NexusForever's GamePacketWriter behavior
-    writer = PacketWriter.new()
-    |> PacketWriter.write_bits(@auth_version, 32)
-    |> PacketWriter.write_bits(@default_realm_id, 32)
-    |> PacketWriter.write_bits(@default_realm_group_id, 32)
-    |> PacketWriter.write_bits(0, 32)         # RealmGroupEnum (unused)
-    |> PacketWriter.write_bits(0, 64)         # StartupTime (unused)
-    |> PacketWriter.write_bits(0, 16)         # ListenPort (unused)
-    |> PacketWriter.write_bits(connection_type_value, 5)
-    |> PacketWriter.write_bits(@auth_message, 32)
-    |> PacketWriter.write_bits(0, 32)         # ProcessId (unused)
-    |> PacketWriter.write_bits(0, 64)         # ProcessCreationTime (unused)
-    |> PacketWriter.write_bits(0, 32)         # Unused
-    |> PacketWriter.flush_bits()
+    writer =
+      PacketWriter.new()
+      |> PacketWriter.write_bits(@auth_version, 32)
+      |> PacketWriter.write_bits(@default_realm_id, 32)
+      |> PacketWriter.write_bits(@default_realm_group_id, 32)
+      # RealmGroupEnum (unused)
+      |> PacketWriter.write_bits(0, 32)
+      # StartupTime (unused)
+      |> PacketWriter.write_bits(0, 64)
+      # ListenPort (unused)
+      |> PacketWriter.write_bits(0, 16)
+      |> PacketWriter.write_bits(connection_type_value, 5)
+      |> PacketWriter.write_bits(@auth_message, 32)
+      # ProcessId (unused)
+      |> PacketWriter.write_bits(0, 32)
+      # ProcessCreationTime (unused)
+      |> PacketWriter.write_bits(0, 64)
+      # Unused
+      |> PacketWriter.write_bits(0, 32)
+      |> PacketWriter.flush_bits()
 
     payload = PacketWriter.to_binary(writer)
 
@@ -271,13 +296,20 @@ defmodule BezgelorProtocol.Connection do
     end
   end
 
-  defp do_send_packet(%{socket: socket, transport: transport, connection_type: conn_type} = state, opcode, payload) do
+  defp do_send_packet(
+         %{socket: socket, transport: transport, connection_type: conn_type} = state,
+         opcode,
+         payload
+       ) do
     opcode_int = if is_atom(opcode), do: Opcode.to_integer(opcode), else: opcode
     packet = Framing.frame_packet(opcode_int, payload)
 
     case transport.send(socket, packet) do
       :ok ->
-        Logger.debug("[#{server_name(conn_type)}] Sent: #{Opcode.name(opcode)} (#{byte_size(payload)} bytes)")
+        Logger.debug(
+          "[#{server_name(conn_type)}] Sent: #{Opcode.name(opcode)} (#{byte_size(payload)} bytes)"
+        )
+
         state
 
       {:error, reason} ->
@@ -288,33 +320,49 @@ defmodule BezgelorProtocol.Connection do
 
   # Send an encrypted packet wrapped in ServerRealmEncrypted (world server).
   # Uses opcode 0x03DC instead of 0x0076.
-  defp do_send_encrypted_world_packet(%{state: :disconnected} = state, _opcode, _payload), do: state
+  defp do_send_encrypted_world_packet(%{state: :disconnected} = state, _opcode, _payload),
+    do: state
 
-  defp do_send_encrypted_world_packet(%{socket: socket, transport: transport, connection_type: conn_type, encryption: encryption} = state, opcode, payload) do
+  defp do_send_encrypted_world_packet(
+         %{
+           socket: socket,
+           transport: transport,
+           connection_type: conn_type,
+           encryption: encryption
+         } = state,
+         opcode,
+         payload
+       ) do
     opcode_int = if is_atom(opcode), do: Opcode.to_integer(opcode), else: opcode
 
     # Build inner packet: opcode (16 bits) + payload
-    inner = PacketWriter.new()
-    |> PacketWriter.write_bits(opcode_int, 16)
-    |> PacketWriter.write_bytes_flush(payload)
-    |> PacketWriter.to_binary()
+    inner =
+      PacketWriter.new()
+      |> PacketWriter.write_bits(opcode_int, 16)
+      |> PacketWriter.write_bytes_flush(payload)
+      |> PacketWriter.to_binary()
 
     # Encrypt the inner packet
     case PacketCrypt.encrypt(encryption, inner) do
       {:ok, encrypted} ->
         # Build ServerRealmEncrypted payload: size (data length + 4) + encrypted data
-        encrypted_payload = PacketWriter.new()
-        |> PacketWriter.write_bits(byte_size(encrypted) + 4, 32)
-        |> PacketWriter.write_bytes_flush(encrypted)
-        |> PacketWriter.flush_bits()
-        |> PacketWriter.to_binary()
+        encrypted_payload =
+          PacketWriter.new()
+          |> PacketWriter.write_bits(byte_size(encrypted) + 4, 32)
+          |> PacketWriter.write_bytes_flush(encrypted)
+          |> PacketWriter.flush_bits()
+          |> PacketWriter.to_binary()
 
         # Frame with ServerRealmEncrypted opcode (0x03DC) for world server
-        packet = Framing.frame_packet(Opcode.to_integer(:server_realm_encrypted), encrypted_payload)
+        packet =
+          Framing.frame_packet(Opcode.to_integer(:server_realm_encrypted), encrypted_payload)
 
         case transport.send(socket, packet) do
           :ok ->
-            Logger.debug("[#{server_name(conn_type)}] Sent encrypted (world): #{Opcode.name(opcode)} (#{byte_size(payload)} bytes)")
+            Logger.debug(
+              "[#{server_name(conn_type)}] Sent encrypted (world): #{Opcode.name(opcode)} (#{byte_size(payload)} bytes)"
+            )
+
             state
 
           {:error, reason} ->
@@ -322,7 +370,10 @@ defmodule BezgelorProtocol.Connection do
         end
 
       {:error, reason} ->
-        Logger.error("[#{server_name(conn_type)}] Encryption failed for #{Opcode.name(opcode)}: #{inspect(reason)}")
+        Logger.error(
+          "[#{server_name(conn_type)}] Encryption failed for #{Opcode.name(opcode)}: #{inspect(reason)}"
+        )
+
         state
     end
   end
@@ -333,32 +384,47 @@ defmodule BezgelorProtocol.Connection do
   # then wrapped in a ServerAuthEncrypted container.
   defp do_send_encrypted_packet(%{state: :disconnected} = state, _opcode, _payload), do: state
 
-  defp do_send_encrypted_packet(%{socket: socket, transport: transport, connection_type: conn_type, encryption: encryption} = state, opcode, payload) do
+  defp do_send_encrypted_packet(
+         %{
+           socket: socket,
+           transport: transport,
+           connection_type: conn_type,
+           encryption: encryption
+         } = state,
+         opcode,
+         payload
+       ) do
     opcode_int = if is_atom(opcode), do: Opcode.to_integer(opcode), else: opcode
 
     # Build inner packet: opcode (16 bits) + payload
-    inner = PacketWriter.new()
-    |> PacketWriter.write_bits(opcode_int, 16)
-    |> PacketWriter.write_bytes_flush(payload)
-    |> PacketWriter.to_binary()
+    inner =
+      PacketWriter.new()
+      |> PacketWriter.write_bits(opcode_int, 16)
+      |> PacketWriter.write_bytes_flush(payload)
+      |> PacketWriter.to_binary()
 
     # Encrypt the inner packet
     case PacketCrypt.encrypt(encryption, inner) do
       {:ok, encrypted} ->
         # Build ServerAuthEncrypted payload: size (data length + 4) + encrypted data
         # The +4 accounts for the size field itself
-        encrypted_payload = PacketWriter.new()
-        |> PacketWriter.write_bits(byte_size(encrypted) + 4, 32)
-        |> PacketWriter.write_bytes_flush(encrypted)
-        |> PacketWriter.flush_bits()
-        |> PacketWriter.to_binary()
+        encrypted_payload =
+          PacketWriter.new()
+          |> PacketWriter.write_bits(byte_size(encrypted) + 4, 32)
+          |> PacketWriter.write_bytes_flush(encrypted)
+          |> PacketWriter.flush_bits()
+          |> PacketWriter.to_binary()
 
         # Frame with ServerAuthEncrypted opcode (0x0076)
-        packet = Framing.frame_packet(Opcode.to_integer(:server_auth_encrypted), encrypted_payload)
+        packet =
+          Framing.frame_packet(Opcode.to_integer(:server_auth_encrypted), encrypted_payload)
 
         case transport.send(socket, packet) do
           :ok ->
-            Logger.debug("[#{server_name(conn_type)}] Sent encrypted: #{Opcode.name(opcode)} (#{byte_size(payload)} bytes)")
+            Logger.debug(
+              "[#{server_name(conn_type)}] Sent encrypted: #{Opcode.name(opcode)} (#{byte_size(payload)} bytes)"
+            )
+
             state
 
           {:error, reason} ->
@@ -366,7 +432,10 @@ defmodule BezgelorProtocol.Connection do
         end
 
       {:error, reason} ->
-        Logger.error("[#{server_name(conn_type)}] Encryption failed for #{Opcode.name(opcode)}: #{inspect(reason)}")
+        Logger.error(
+          "[#{server_name(conn_type)}] Encryption failed for #{Opcode.name(opcode)}: #{inspect(reason)}"
+        )
+
         state
     end
   end
@@ -379,6 +448,7 @@ defmodule BezgelorProtocol.Connection do
         if state.state != :disconnected do
           Logger.warning("[#{server_name(conn_type)}] Connection lost: #{inspect(reason)}")
         end
+
         %{state | state: :disconnected}
 
       _ ->
@@ -414,13 +484,19 @@ defmodule BezgelorProtocol.Connection do
       {:ok, opcode_atom} ->
         # Skip logging outer encrypted packet wrapper - inner handler logs the actual opcode
         unless opcode_atom in [:client_encrypted, :client_packed_world] do
-          Logger.debug("[#{server_name(state.connection_type)}] Recv: #{Opcode.name(opcode_atom)} (#{byte_size(payload)} bytes)")
+          Logger.debug(
+            "[#{server_name(state.connection_type)}] Recv: #{Opcode.name(opcode_atom)} (#{byte_size(payload)} bytes)"
+          )
         end
+
         result = dispatch_to_handler(opcode_atom, payload, state, start_time)
         result
 
       {:error, :unknown_opcode} ->
-        Logger.warning("[#{server_name(state.connection_type)}] Unknown opcode: 0x#{Integer.to_string(opcode, 16)}")
+        Logger.warning(
+          "[#{server_name(state.connection_type)}] Unknown opcode: 0x#{Integer.to_string(opcode, 16)}"
+        )
+
         {:ok, state}
     end
   end
@@ -433,7 +509,10 @@ defmodule BezgelorProtocol.Connection do
 
     case PacketRegistry.lookup(opcode_atom) do
       nil ->
-        Logger.debug("[#{server_name(state.connection_type)}] No handler for #{Opcode.name(opcode_atom)}")
+        Logger.debug(
+          "[#{server_name(state.connection_type)}] No handler for #{Opcode.name(opcode_atom)}"
+        )
+
         {:ok, state}
 
       handler ->
@@ -447,56 +526,101 @@ defmodule BezgelorProtocol.Connection do
         case result do
           {:ok, new_state} ->
             if log_handler_result? do
-              Logger.debug("[#{server_name(state.connection_type)}] Handled #{Opcode.name(opcode_atom)} in #{Float.round(elapsed_ms, 2)}ms")
+              Logger.debug(
+                "[#{server_name(state.connection_type)}] Handled #{Opcode.name(opcode_atom)} in #{Float.round(elapsed_ms, 2)}ms"
+              )
             end
+
             {:ok, new_state}
 
           {:reply, reply_opcode, reply_payload, new_state} ->
-            do_send_packet(%{state | session_data: new_state.session_data}, reply_opcode, reply_payload)
-            Logger.debug("[#{server_name(state.connection_type)}] #{Opcode.name(opcode_atom)} -> #{Opcode.name(reply_opcode)} in #{Float.round(elapsed_ms, 2)}ms")
+            do_send_packet(
+              %{state | session_data: new_state.session_data},
+              reply_opcode,
+              reply_payload
+            )
+
+            Logger.debug(
+              "[#{server_name(state.connection_type)}] #{Opcode.name(opcode_atom)} -> #{Opcode.name(reply_opcode)} in #{Float.round(elapsed_ms, 2)}ms"
+            )
+
             {:ok, new_state}
 
           {:reply_encrypted, reply_opcode, reply_payload, new_state} ->
             # Send encrypted packet (for realm server)
-            do_send_encrypted_packet(%{state | session_data: new_state.session_data}, reply_opcode, reply_payload)
-            Logger.debug("[#{server_name(state.connection_type)}] #{Opcode.name(opcode_atom)} -> #{Opcode.name(reply_opcode)} (encrypted) in #{Float.round(elapsed_ms, 2)}ms")
+            do_send_encrypted_packet(
+              %{state | session_data: new_state.session_data},
+              reply_opcode,
+              reply_payload
+            )
+
+            Logger.debug(
+              "[#{server_name(state.connection_type)}] #{Opcode.name(opcode_atom)} -> #{Opcode.name(reply_opcode)} (encrypted) in #{Float.round(elapsed_ms, 2)}ms"
+            )
+
             {:ok, new_state}
 
           {:reply_multi, responses, new_state} ->
             # Send multiple packets in sequence
             updated_state = %{state | session_data: new_state.session_data}
+
             Enum.each(responses, fn {op, pl} ->
               do_send_packet(updated_state, op, pl)
             end)
-            Logger.debug("[#{server_name(state.connection_type)}] #{Opcode.name(opcode_atom)} -> #{length(responses)} packets in #{Float.round(elapsed_ms, 2)}ms")
+
+            Logger.debug(
+              "[#{server_name(state.connection_type)}] #{Opcode.name(opcode_atom)} -> #{length(responses)} packets in #{Float.round(elapsed_ms, 2)}ms"
+            )
+
             {:ok, new_state}
 
           {:reply_multi_encrypted, responses, new_state} ->
             # Send multiple encrypted packets in sequence (for realm server)
             updated_state = %{state | session_data: new_state.session_data}
+
             Enum.each(responses, fn {op, pl} ->
               do_send_encrypted_packet(updated_state, op, pl)
             end)
-            Logger.debug("[#{server_name(state.connection_type)}] #{Opcode.name(opcode_atom)} -> #{length(responses)} encrypted packets in #{Float.round(elapsed_ms, 2)}ms")
+
+            Logger.debug(
+              "[#{server_name(state.connection_type)}] #{Opcode.name(opcode_atom)} -> #{length(responses)} encrypted packets in #{Float.round(elapsed_ms, 2)}ms"
+            )
+
             {:ok, new_state}
 
           {:reply_world_encrypted, reply_opcode, reply_payload, new_state} ->
             # Send encrypted packet using ServerRealmEncrypted (for world server)
-            do_send_encrypted_world_packet(%{state | session_data: new_state.session_data}, reply_opcode, reply_payload)
-            Logger.debug("[#{server_name(state.connection_type)}] #{Opcode.name(opcode_atom)} -> #{Opcode.name(reply_opcode)} (world encrypted) in #{Float.round(elapsed_ms, 2)}ms")
+            do_send_encrypted_world_packet(
+              %{state | session_data: new_state.session_data},
+              reply_opcode,
+              reply_payload
+            )
+
+            Logger.debug(
+              "[#{server_name(state.connection_type)}] #{Opcode.name(opcode_atom)} -> #{Opcode.name(reply_opcode)} (world encrypted) in #{Float.round(elapsed_ms, 2)}ms"
+            )
+
             {:ok, new_state}
 
           {:reply_multi_world_encrypted, responses, new_state} ->
             # Send multiple encrypted packets using ServerRealmEncrypted (for world server)
             updated_state = %{state | session_data: new_state.session_data}
+
             Enum.each(responses, fn {op, pl} ->
               do_send_encrypted_world_packet(updated_state, op, pl)
             end)
-            Logger.debug("[#{server_name(state.connection_type)}] #{Opcode.name(opcode_atom)} -> #{length(responses)} world encrypted packets in #{Float.round(elapsed_ms, 2)}ms")
+
+            Logger.debug(
+              "[#{server_name(state.connection_type)}] #{Opcode.name(opcode_atom)} -> #{length(responses)} world encrypted packets in #{Float.round(elapsed_ms, 2)}ms"
+            )
+
             {:ok, new_state}
 
           {:error, reason} ->
-            Logger.warning("[#{server_name(state.connection_type)}] Handler error for #{Opcode.name(opcode_atom)}: #{inspect(reason)} (#{Float.round(elapsed_ms, 2)}ms)")
+            Logger.warning(
+              "[#{server_name(state.connection_type)}] Handler error for #{Opcode.name(opcode_atom)}: #{inspect(reason)} (#{Float.round(elapsed_ms, 2)}ms)"
+            )
+
             {:error, reason}
         end
     end
@@ -595,11 +719,17 @@ defmodule BezgelorProtocol.Connection do
 
       case Characters.update_position(character, position_attrs) do
         {:ok, _} ->
-          Logger.debug("Saved position for character #{character.id} at logout: #{inspect({x, y, z})}")
+          Logger.debug(
+            "Saved position for character #{character.id} at logout: #{inspect({x, y, z})}"
+          )
+
           :ok
 
         {:error, reason} ->
-          Logger.error("Failed to save position for character #{character.id}: #{inspect(reason)}")
+          Logger.error(
+            "Failed to save position for character #{character.id}: #{inspect(reason)}"
+          )
+
           :ok
       end
     else

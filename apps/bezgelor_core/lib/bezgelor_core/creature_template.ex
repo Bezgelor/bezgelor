@@ -24,6 +24,16 @@ defmodule BezgelorCore.CreatureTemplate do
 
   @type reputation_reward :: {faction_id :: non_neg_integer(), amount :: integer()}
 
+  # Default social aggro range in meters
+  @social_aggro_range 10.0
+
+  # Default attack ranges
+  @melee_attack_range 5.0
+  @ranged_attack_range 30.0
+
+  # Default movement speed in units per second
+  @default_movement_speed 4.0
+
   @type t :: %__MODULE__{
           id: non_neg_integer(),
           name: String.t(),
@@ -34,12 +44,16 @@ defmodule BezgelorCore.CreatureTemplate do
           ai_type: ai_type(),
           aggro_range: float(),
           leash_range: float(),
+          social_aggro_range: float() | nil,
           respawn_time: non_neg_integer(),
           xp_reward: non_neg_integer(),
           loot_table_id: non_neg_integer() | nil,
           damage_min: non_neg_integer(),
           damage_max: non_neg_integer(),
           attack_speed: non_neg_integer(),
+          attack_range: float() | nil,
+          is_ranged: boolean(),
+          movement_speed: float() | nil,
           reputation_rewards: [reputation_reward()]
         }
 
@@ -53,12 +67,16 @@ defmodule BezgelorCore.CreatureTemplate do
     ai_type: :passive,
     aggro_range: 10.0,
     leash_range: 40.0,
+    social_aggro_range: nil,
     respawn_time: 30_000,
     xp_reward: 50,
     loot_table_id: nil,
     damage_min: 5,
     damage_max: 10,
     attack_speed: 2000,
+    attack_range: nil,
+    is_ranged: false,
+    movement_speed: nil,
     reputation_rewards: []
   ]
 
@@ -101,6 +119,46 @@ defmodule BezgelorCore.CreatureTemplate do
   @spec hostile?(t()) :: boolean()
   def hostile?(%__MODULE__{faction: :hostile}), do: true
   def hostile?(_), do: false
+
+  @doc """
+  Calculate movement duration in milliseconds for a given distance.
+  """
+  @spec movement_duration(t(), float()) :: non_neg_integer()
+  def movement_duration(%__MODULE__{movement_speed: speed}, distance)
+      when is_number(speed) and speed > 0 do
+    round(distance / speed * 1000)
+  end
+
+  def movement_duration(%__MODULE__{}, distance) do
+    round(distance / @default_movement_speed * 1000)
+  end
+
+  @doc """
+  Get movement speed in units per second.
+  """
+  @spec movement_speed(t()) :: float()
+  def movement_speed(%__MODULE__{movement_speed: speed}) when is_number(speed), do: speed
+  def movement_speed(_), do: @default_movement_speed
+
+  @doc """
+  Get attack range with appropriate default.
+
+  Melee creatures default to 5.0, ranged creatures default to 30.0.
+  """
+  @spec attack_range(t()) :: float()
+  def attack_range(%__MODULE__{attack_range: range}) when is_number(range), do: range
+  def attack_range(%__MODULE__{is_ranged: true}), do: @ranged_attack_range
+  def attack_range(_), do: @melee_attack_range
+
+  @doc """
+  Get social aggro range, with default fallback.
+
+  Social aggro is the range within which nearby creatures of the same
+  faction will join combat when one is attacked.
+  """
+  @spec social_aggro_range(t()) :: float()
+  def social_aggro_range(%__MODULE__{social_aggro_range: range}) when is_number(range), do: range
+  def social_aggro_range(_), do: @social_aggro_range
 
   @doc """
   Calculate damage for an attack.
@@ -200,6 +258,25 @@ defmodule BezgelorCore.CreatureTemplate do
         damage_min: 0,
         damage_max: 0,
         attack_speed: 0
+      },
+      6 => %__MODULE__{
+        id: 6,
+        name: "Goblin Archer",
+        level: 4,
+        max_health: 100,
+        faction: :hostile,
+        display_info: 1006,
+        ai_type: :aggressive,
+        aggro_range: 20.0,
+        leash_range: 45.0,
+        respawn_time: 30_000,
+        xp_reward: 80,
+        loot_table_id: 3,
+        damage_min: 10,
+        damage_max: 18,
+        attack_speed: 2500,
+        is_ranged: true,
+        attack_range: 25.0
       }
     }
   end

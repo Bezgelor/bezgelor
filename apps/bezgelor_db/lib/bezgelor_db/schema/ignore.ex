@@ -8,8 +8,8 @@ defmodule BezgelorDb.Schema.Ignore do
   alias BezgelorDb.Schema.Character
 
   schema "ignores" do
-    belongs_to :character, Character
-    belongs_to :ignored_character, Character
+    belongs_to(:character, Character)
+    belongs_to(:ignored_character, Character)
     timestamps()
   end
 

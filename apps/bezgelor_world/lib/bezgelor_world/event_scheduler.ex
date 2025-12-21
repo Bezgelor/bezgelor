@@ -41,7 +41,8 @@ defmodule BezgelorWorld.EventScheduler do
   end
 
   @doc "Manually trigger an event in a zone."
-  @spec trigger_event(non_neg_integer(), non_neg_integer()) :: {:ok, non_neg_integer()} | {:error, term()}
+  @spec trigger_event(non_neg_integer(), non_neg_integer()) ::
+          {:ok, non_neg_integer()} | {:error, term()}
   def trigger_event(event_id, zone_id) do
     GenServer.call(__MODULE__, {:trigger_event, event_id, zone_id})
   end
@@ -143,7 +144,9 @@ defmodule BezgelorWorld.EventScheduler do
   defp trigger_scheduled_event(schedule) do
     case do_trigger_event(schedule.event_id, schedule.zone_id) do
       {:ok, instance_id} ->
-        Logger.info("Triggered scheduled event #{schedule.event_id} in zone #{schedule.zone_id}, instance #{instance_id}")
+        Logger.info(
+          "Triggered scheduled event #{schedule.event_id} in zone #{schedule.zone_id}, instance #{instance_id}"
+        )
 
       {:error, reason} ->
         Logger.warning("Failed to trigger event #{schedule.event_id}: #{inspect(reason)}")
@@ -234,7 +237,8 @@ defmodule BezgelorWorld.EventScheduler do
       case PublicEvents.spawn_boss(boss_spawn.boss_id) do
         {:ok, _} ->
           Logger.info("World boss #{boss_spawn.boss_id} spawned in zone #{boss_spawn.zone_id}")
-          # TODO: Notify EventManager to create boss entity
+
+        # TODO: Notify EventManager to create boss entity
 
         {:error, reason} ->
           Logger.warning("Failed to spawn world boss #{boss_spawn.boss_id}: #{inspect(reason)}")

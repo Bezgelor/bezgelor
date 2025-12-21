@@ -68,14 +68,20 @@ defmodule BezgelorWorld.Creature.ZoneManager do
   end
 
   @doc "Spawn a creature in a zone instance."
-  @spec spawn_creature(non_neg_integer(), non_neg_integer(), non_neg_integer(), {float(), float(), float()}) ::
+  @spec spawn_creature(
+          non_neg_integer(),
+          non_neg_integer(),
+          non_neg_integer(),
+          {float(), float(), float()}
+        ) ::
           {:ok, non_neg_integer()} | {:error, term()}
   def spawn_creature(zone_id, instance_id, template_id, position) do
     GenServer.call(via_tuple(zone_id, instance_id), {:spawn_creature, template_id, position})
   end
 
   @doc "Get a creature by GUID from a zone instance."
-  @spec get_creature(non_neg_integer(), non_neg_integer(), non_neg_integer()) :: creature_state() | nil
+  @spec get_creature(non_neg_integer(), non_neg_integer(), non_neg_integer()) ::
+          creature_state() | nil
   def get_creature(zone_id, instance_id, guid) do
     GenServer.call(via_tuple(zone_id, instance_id), {:get_creature, guid})
   end
@@ -87,23 +93,45 @@ defmodule BezgelorWorld.Creature.ZoneManager do
   end
 
   @doc "Get creatures within range of a position in a zone instance."
-  @spec get_creatures_in_range(non_neg_integer(), non_neg_integer(), {float(), float(), float()}, float()) ::
+  @spec get_creatures_in_range(
+          non_neg_integer(),
+          non_neg_integer(),
+          {float(), float(), float()},
+          float()
+        ) ::
           [creature_state()]
   def get_creatures_in_range(zone_id, instance_id, position, range) do
     GenServer.call(via_tuple(zone_id, instance_id), {:get_creatures_in_range, position, range})
   end
 
   @doc "Apply damage to a creature in a zone instance."
-  @spec damage_creature(non_neg_integer(), non_neg_integer(), non_neg_integer(), non_neg_integer(), non_neg_integer()) ::
+  @spec damage_creature(
+          non_neg_integer(),
+          non_neg_integer(),
+          non_neg_integer(),
+          non_neg_integer(),
+          non_neg_integer()
+        ) ::
           {:ok, :damaged | :killed, map()} | {:error, term()}
   def damage_creature(zone_id, instance_id, creature_guid, attacker_guid, damage) do
-    GenServer.call(via_tuple(zone_id, instance_id), {:damage_creature, creature_guid, attacker_guid, damage})
+    GenServer.call(
+      via_tuple(zone_id, instance_id),
+      {:damage_creature, creature_guid, attacker_guid, damage}
+    )
   end
 
   @doc "Set creature's target (for player targeting creature)."
-  @spec creature_enter_combat(non_neg_integer(), non_neg_integer(), non_neg_integer(), non_neg_integer()) :: :ok
+  @spec creature_enter_combat(
+          non_neg_integer(),
+          non_neg_integer(),
+          non_neg_integer(),
+          non_neg_integer()
+        ) :: :ok
   def creature_enter_combat(zone_id, instance_id, creature_guid, target_guid) do
-    GenServer.cast(via_tuple(zone_id, instance_id), {:creature_enter_combat, creature_guid, target_guid})
+    GenServer.cast(
+      via_tuple(zone_id, instance_id),
+      {:creature_enter_combat, creature_guid, target_guid}
+    )
   end
 
   @doc "Check if a creature is alive and targetable."
@@ -119,7 +147,8 @@ defmodule BezgelorWorld.Creature.ZoneManager do
   end
 
   @doc "Load all creature spawns for the zone from static data."
-  @spec load_zone_spawns(non_neg_integer(), non_neg_integer()) :: {:ok, non_neg_integer()} | {:error, term()}
+  @spec load_zone_spawns(non_neg_integer(), non_neg_integer()) ::
+          {:ok, non_neg_integer()} | {:error, term()}
   def load_zone_spawns(zone_id, instance_id) do
     GenServer.call(via_tuple(zone_id, instance_id), :load_zone_spawns, 30_000)
   end
@@ -163,10 +192,15 @@ defmodule BezgelorWorld.Creature.ZoneManager do
     # In tests, TickScheduler may not be running, so we handle that gracefully
     try do
       TickScheduler.register_listener(self())
-      Logger.info("Creature.ZoneManager started for zone #{zone_id} instance #{instance_id}, registered with TickScheduler")
+
+      Logger.info(
+        "Creature.ZoneManager started for zone #{zone_id} instance #{instance_id}, registered with TickScheduler"
+      )
     catch
       :exit, _ ->
-        Logger.info("Creature.ZoneManager started for zone #{zone_id} instance #{instance_id} (TickScheduler not available)")
+        Logger.info(
+          "Creature.ZoneManager started for zone #{zone_id} instance #{instance_id} (TickScheduler not available)"
+        )
     end
 
     {:ok, state}
@@ -440,7 +474,8 @@ defmodule BezgelorWorld.Creature.ZoneManager do
 
     # Process the filtered creatures
     creatures =
-      Enum.reduce(creatures_needing_update, state.creatures, fn {guid, creature_state}, creatures ->
+      Enum.reduce(creatures_needing_update, state.creatures, fn {guid, creature_state},
+                                                                creatures ->
         case process_creature_ai(creature_state, state, now) do
           {:no_change, _} ->
             creatures
@@ -462,7 +497,11 @@ defmodule BezgelorWorld.Creature.ZoneManager do
       map_size(ai.threat_table) > 0
   end
 
-  defp process_creature_ai(%{ai: ai, template: template, entity: entity} = creature_state, state, now) do
+  defp process_creature_ai(
+         %{ai: ai, template: template, entity: entity} = creature_state,
+         state,
+         now
+       ) do
     # Check for combat timeout
     ai =
       if ai.state == :combat and ai.combat_start_time do

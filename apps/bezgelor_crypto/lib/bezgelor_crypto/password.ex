@@ -57,7 +57,7 @@ defmodule BezgelorCrypto.Password do
   @spec verify_password(String.t(), String.t(), String.t(), String.t()) :: boolean()
   def verify_password(email, password, stored_salt, stored_verifier)
       when is_binary(email) and is_binary(password) and
-           is_binary(stored_salt) and is_binary(stored_verifier) do
+             is_binary(stored_salt) and is_binary(stored_verifier) do
     # Decode the stored hex salt
     salt = Base.decode16!(stored_salt, case: :mixed)
 

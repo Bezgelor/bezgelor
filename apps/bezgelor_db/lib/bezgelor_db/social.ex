@@ -24,11 +24,19 @@ defmodule BezgelorDb.Social do
     count = Repo.aggregate(from(f in Friend, where: f.character_id == ^character_id), :count)
 
     cond do
-      count >= @max_friends -> {:error, :friend_list_full}
-      character_id == friend_id -> {:error, :cannot_friend_self}
+      count >= @max_friends ->
+        {:error, :friend_list_full}
+
+      character_id == friend_id ->
+        {:error, :cannot_friend_self}
+
       true ->
         %Friend{}
-        |> Friend.changeset(%{character_id: character_id, friend_character_id: friend_id, note: note})
+        |> Friend.changeset(%{
+          character_id: character_id,
+          friend_character_id: friend_id,
+          note: note
+        })
         |> Repo.insert()
     end
   end
@@ -43,10 +51,15 @@ defmodule BezgelorDb.Social do
 
   @spec is_friend?(integer(), integer()) :: boolean()
   def is_friend?(character_id, friend_id) do
-    Repo.exists?(from f in Friend, where: f.character_id == ^character_id and f.friend_character_id == ^friend_id)
+    Repo.exists?(
+      from(f in Friend,
+        where: f.character_id == ^character_id and f.friend_character_id == ^friend_id
+      )
+    )
   end
 
-  @spec update_friend_note(integer(), integer(), String.t()) :: {:ok, Friend.t()} | {:error, term()}
+  @spec update_friend_note(integer(), integer(), String.t()) ::
+          {:ok, Friend.t()} | {:error, term()}
   def update_friend_note(character_id, friend_id, note) do
     case Repo.get_by(Friend, character_id: character_id, friend_character_id: friend_id) do
       nil -> {:error, :not_found}
@@ -69,8 +82,12 @@ defmodule BezgelorDb.Social do
     count = Repo.aggregate(from(i in Ignore, where: i.character_id == ^character_id), :count)
 
     cond do
-      count >= @max_ignores -> {:error, :ignore_list_full}
-      character_id == ignored_id -> {:error, :cannot_ignore_self}
+      count >= @max_ignores ->
+        {:error, :ignore_list_full}
+
+      character_id == ignored_id ->
+        {:error, :cannot_ignore_self}
+
       true ->
         %Ignore{}
         |> Ignore.changeset(%{character_id: character_id, ignored_character_id: ignored_id})
@@ -88,7 +105,11 @@ defmodule BezgelorDb.Social do
 
   @spec is_ignored?(integer(), integer()) :: boolean()
   def is_ignored?(character_id, ignored_id) do
-    Repo.exists?(from i in Ignore, where: i.character_id == ^character_id and i.ignored_character_id == ^ignored_id)
+    Repo.exists?(
+      from(i in Ignore,
+        where: i.character_id == ^character_id and i.ignored_character_id == ^ignored_id
+      )
+    )
   end
 
   # Bidirectional ignore check (for chat filtering)

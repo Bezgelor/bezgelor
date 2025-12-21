@@ -29,34 +29,57 @@ defmodule BezgelorProtocol.ItemSlots do
   # ItemSlot (client enum) -> EquippedItem (internal slot) mapping
   # Used when creating characters or equipping items from client data
   @item_slot_to_equipped %{
-    1 => 0,    # ArmorChest -> Chest
-    2 => 1,    # ArmorLegs -> Legs
-    3 => 2,    # ArmorHead -> Head
-    4 => 3,    # ArmorShoulder -> Shoulder
-    5 => 4,    # ArmorFeet -> Feet
-    6 => 5,    # ArmorHands -> Hands
-    7 => 6,    # WeaponTool -> WeaponTool
-    20 => 16,  # WeaponPrimary -> WeaponPrimary
-    43 => 15,  # ArmorShields -> Shields
-    46 => 11,  # ArmorGadget -> Gadget
-    57 => 7,   # ArmorWeaponAttachment -> WeaponAttachment
-    58 => 8,   # ArmorSystem -> System
-    59 => 9,   # ArmorAugment -> Augment
-    60 => 10   # ArmorImplant -> Implant
+    # ArmorChest -> Chest
+    1 => 0,
+    # ArmorLegs -> Legs
+    2 => 1,
+    # ArmorHead -> Head
+    3 => 2,
+    # ArmorShoulder -> Shoulder
+    4 => 3,
+    # ArmorFeet -> Feet
+    5 => 4,
+    # ArmorHands -> Hands
+    6 => 5,
+    # WeaponTool -> WeaponTool
+    7 => 6,
+    # WeaponPrimary -> WeaponPrimary
+    20 => 16,
+    # ArmorShields -> Shields
+    43 => 15,
+    # ArmorGadget -> Gadget
+    46 => 11,
+    # ArmorWeaponAttachment -> WeaponAttachment
+    57 => 7,
+    # ArmorSystem -> System
+    58 => 8,
+    # ArmorAugment -> Augment
+    59 => 9,
+    # ArmorImplant -> Implant
+    60 => 10
   }
 
   # EquippedItem (internal slot) -> ItemSlot (client enum) mapping
   # Used when sending visual update packets to client
   @equipped_to_item_slot %{
-    0 => 1,    # Chest -> ArmorChest
-    1 => 2,    # Legs -> ArmorLegs
-    2 => 3,    # Head -> ArmorHead
-    3 => 4,    # Shoulder -> ArmorShoulder
-    4 => 5,    # Feet -> ArmorFeet
-    5 => 6,    # Hands -> ArmorHands
-    6 => 7,    # WeaponTool -> WeaponTool
-    15 => 43,  # Shields -> ArmorShields
-    16 => 20   # WeaponPrimary -> WeaponPrimary
+    # Chest -> ArmorChest
+    0 => 1,
+    # Legs -> ArmorLegs
+    1 => 2,
+    # Head -> ArmorHead
+    2 => 3,
+    # Shoulder -> ArmorShoulder
+    3 => 4,
+    # Feet -> ArmorFeet
+    4 => 5,
+    # Hands -> ArmorHands
+    5 => 6,
+    # WeaponTool -> WeaponTool
+    6 => 7,
+    # Shields -> ArmorShields
+    15 => 43,
+    # WeaponPrimary -> WeaponPrimary
+    16 => 20
   }
 
   # Visible equipment slots (EquippedItem numbers) that affect character appearance

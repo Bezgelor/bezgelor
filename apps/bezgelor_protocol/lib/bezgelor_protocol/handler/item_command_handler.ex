@@ -123,7 +123,11 @@ defmodule BezgelorProtocol.Handler.ItemCommandHandler do
         case Inventory.add_item(character_id, item_id, quantity, %{max_stack: max_stack}) do
           {:ok, items} ->
             item_name = Map.get(item, :name, "Unknown Item")
-            Logger.info("GM: Added #{quantity}x #{item_name} (#{item_id}) to character #{character_id}")
+
+            Logger.info(
+              "GM: Added #{quantity}x #{item_name} (#{item_id}) to character #{character_id}"
+            )
+
             {:ok, "Added #{quantity}x #{item_name} (#{item_id}) to inventory", items}
 
           {:error, :inventory_full} ->

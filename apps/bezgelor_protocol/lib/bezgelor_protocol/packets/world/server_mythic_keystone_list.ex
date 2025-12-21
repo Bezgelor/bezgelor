@@ -18,7 +18,7 @@ defmodule BezgelorProtocol.Packets.World.ServerMythicKeystoneList do
 
   alias BezgelorProtocol.PacketWriter
 
-  defstruct [keystones: []]
+  defstruct keystones: []
 
   @impl true
   def opcode, do: 0x0B33
@@ -29,7 +29,8 @@ defmodule BezgelorProtocol.Packets.World.ServerMythicKeystoneList do
 
     writer =
       Enum.reduce(packet.keystones, writer, fn keystone, w ->
-        w = w
+        w =
+          w
           |> PacketWriter.write_u64(keystone.keystone_id)
           |> PacketWriter.write_u32(keystone.instance_id)
           |> PacketWriter.write_u8(keystone.level)

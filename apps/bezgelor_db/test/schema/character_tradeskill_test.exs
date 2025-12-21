@@ -53,7 +53,10 @@ defmodule BezgelorDb.Schema.CharacterTradeskillTest do
   describe "progress_changeset/2" do
     test "updates skill_level and skill_xp" do
       tradeskill = %CharacterTradeskill{skill_level: 5, skill_xp: 100}
-      changeset = CharacterTradeskill.progress_changeset(tradeskill, %{skill_level: 6, skill_xp: 150})
+
+      changeset =
+        CharacterTradeskill.progress_changeset(tradeskill, %{skill_level: 6, skill_xp: 150})
+
       assert changeset.valid?
       assert Ecto.Changeset.get_change(changeset, :skill_level) == 6
       assert Ecto.Changeset.get_change(changeset, :skill_xp) == 150

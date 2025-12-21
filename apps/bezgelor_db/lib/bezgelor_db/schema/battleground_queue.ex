@@ -35,26 +35,31 @@ defmodule BezgelorDb.Schema.BattlegroundQueue do
   @roles ~w(tank healer dps any)
 
   schema "battleground_queue" do
-    belongs_to :character, Character
-    belongs_to :account, Account
+    belongs_to(:character, Character)
+    belongs_to(:account, Account)
 
-    field :queue_type, :string
-    field :battleground_id, :integer
-    field :is_rated, :boolean, default: false
-    field :group_id, :string
-    field :group_size, :integer, default: 1
-    field :role, :string, default: "any"
-    field :mmr, :integer, default: 1500
-    field :queued_at, :utc_datetime
-    field :estimated_wait_seconds, :integer
+    field(:queue_type, :string)
+    field(:battleground_id, :integer)
+    field(:is_rated, :boolean, default: false)
+    field(:group_id, :string)
+    field(:group_size, :integer, default: 1)
+    field(:role, :string, default: "any")
+    field(:mmr, :integer, default: 1500)
+    field(:queued_at, :utc_datetime)
+    field(:estimated_wait_seconds, :integer)
 
     timestamps()
   end
 
   @required_fields [:character_id, :account_id, :queue_type, :queued_at]
   @optional_fields [
-    :battleground_id, :is_rated, :group_id, :group_size,
-    :role, :mmr, :estimated_wait_seconds
+    :battleground_id,
+    :is_rated,
+    :group_id,
+    :group_size,
+    :role,
+    :mmr,
+    :estimated_wait_seconds
   ]
 
   @doc """

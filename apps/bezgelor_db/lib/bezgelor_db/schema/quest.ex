@@ -34,28 +34,36 @@ defmodule BezgelorDb.Schema.Quest do
   @states [:accepted, :complete, :failed]
 
   schema "quests" do
-    belongs_to :character, BezgelorDb.Schema.Character
+    belongs_to(:character, BezgelorDb.Schema.Character)
 
     # Quest template reference (from BezgelorData)
-    field :quest_id, :integer
+    field(:quest_id, :integer)
 
     # Quest state
-    field :state, Ecto.Enum, values: @states, default: :accepted
+    field(:state, Ecto.Enum, values: @states, default: :accepted)
 
     # Flexible progress storage (JSON)
-    field :progress, :map, default: %{}
+    field(:progress, :map, default: %{})
 
     # Tracking
-    field :accepted_at, :utc_datetime
-    field :completed_at, :utc_datetime
-    field :expires_at, :utc_datetime
+    field(:accepted_at, :utc_datetime)
+    field(:completed_at, :utc_datetime)
+    field(:expires_at, :utc_datetime)
 
     timestamps(type: :utc_datetime)
   end
 
   def changeset(quest, attrs) do
     quest
-    |> cast(attrs, [:character_id, :quest_id, :state, :progress, :accepted_at, :completed_at, :expires_at])
+    |> cast(attrs, [
+      :character_id,
+      :quest_id,
+      :state,
+      :progress,
+      :accepted_at,
+      :completed_at,
+      :expires_at
+    ])
     |> validate_required([:character_id, :quest_id])
     |> validate_inclusion(:state, @states)
     |> foreign_key_constraint(:character_id)

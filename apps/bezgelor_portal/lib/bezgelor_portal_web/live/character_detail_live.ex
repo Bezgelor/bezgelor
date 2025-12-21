@@ -61,8 +61,8 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
           <li>{@character.name}</li>
         </ul>
       </nav>
-
-      <!-- Header -->
+      
+    <!-- Header -->
       <div class="flex items-center gap-4 mb-6">
         <.character_avatar character={@character} size="lg" />
         <div class="flex-1">
@@ -74,18 +74,18 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
             <span style={"color: #{GameData.class_color(@character.class)}"}>
               {GameData.class_name(@character.class)}
             </span>
-            &bull; {GameData.race_name(@character.race)}
-            &bull; {GameData.faction_name(GameData.faction_id_for_race(@character.race))}
+            &bull; {GameData.race_name(@character.race)} &bull; {GameData.faction_name(
+              GameData.faction_id_for_race(@character.race)
+            )}
           </p>
         </div>
 
         <button type="button" class="btn btn-error btn-outline btn-sm" phx-click="show_delete_modal">
-          <.icon name="hero-trash" class="size-4" />
-          Delete
+          <.icon name="hero-trash" class="size-4" /> Delete
         </button>
       </div>
-
-      <!-- Tabs -->
+      
+    <!-- Tabs -->
       <div class="tabs tabs-boxed mb-6">
         <button
           :for={tab <- @tabs}
@@ -97,13 +97,13 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
           {tab_label(tab)}
         </button>
       </div>
-
-      <!-- Tab Content -->
+      
+    <!-- Tab Content -->
       <div class="space-y-6">
         {render_tab_content(assigns)}
       </div>
-
-      <!-- Delete Confirmation Modal -->
+      
+    <!-- Delete Confirmation Modal -->
       <.delete_modal
         :if={@show_delete_modal}
         character={@character}
@@ -126,7 +126,6 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
 
   # Overview Tab
   defp render_overview(assigns) do
-
     ~H"""
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <!-- 3D Character Viewer & Equipment -->
@@ -138,51 +137,60 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
         />
         <.equipment_grid equipped_items={@equipped_items} />
       </div>
-
-      <!-- Info Cards -->
+      
+    <!-- Info Cards -->
       <div class="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- Basic Info Card -->
         <div class="card bg-base-100 shadow-xl">
           <div class="card-body">
             <h2 class="card-title">
-              <.icon name="hero-user" class="size-5" />
-              Basic Info
+              <.icon name="hero-user" class="size-5" /> Basic Info
             </h2>
             <div class="grid grid-cols-2 gap-4 mt-4">
               <.info_row label="Name" value={@character.name} />
               <.info_row label="Level" value={@character.level} />
               <.info_row label="Class" value={GameData.class_name(@character.class)} />
               <.info_row label="Race" value={GameData.race_name(@character.race)} />
-              <.info_row label="Faction" value={GameData.faction_name(GameData.faction_id_for_race(@character.race))} />
+              <.info_row
+                label="Faction"
+                value={GameData.faction_name(GameData.faction_id_for_race(@character.race))}
+              />
               <.info_row label="Path" value={GameData.path_name(@character.active_path)} />
               <.info_row label="Title" value={title_display(@character.title)} />
               <.info_row label="Active Spec" value={"Spec #{@character.active_spec + 1}"} />
             </div>
           </div>
         </div>
-
-        <!-- Play Time Card -->
+        
+    <!-- Play Time Card -->
         <div class="card bg-base-100 shadow-xl">
           <div class="card-body">
             <h2 class="card-title">
-              <.icon name="hero-clock" class="size-5" />
-              Play Time
+              <.icon name="hero-clock" class="size-5" /> Play Time
             </h2>
             <div class="grid grid-cols-2 gap-4 mt-4">
-              <.info_row label="Total Time" value={GameData.format_play_time(@character.time_played_total)} />
-              <.info_row label="This Level" value={GameData.format_play_time(@character.time_played_level)} />
-              <.info_row label="Last Online" value={GameData.format_relative_time(@character.last_online)} />
+              <.info_row
+                label="Total Time"
+                value={GameData.format_play_time(@character.time_played_total)}
+              />
+              <.info_row
+                label="This Level"
+                value={GameData.format_play_time(@character.time_played_level)}
+              />
+              <.info_row
+                label="Last Online"
+                value={GameData.format_relative_time(@character.last_online)}
+              />
               <.info_row label="Created" value={format_date(@character.inserted_at)} />
             </div>
           </div>
         </div>
-
-        <!-- Location Card -->
+        
+    <!-- Location Card -->
         <div class="card bg-base-100 shadow-xl">
           <div class="card-body">
             <h2 class="card-title">
-              <.icon name="hero-map-pin" class="size-5" />
-              Location
+              <.icon name="hero-map-pin" class="size-5" /> Location
             </h2>
             <div class="grid grid-cols-2 gap-4 mt-4">
               <.info_row label="World" value={GameData.world_name(@character.world_id)} />
@@ -190,13 +198,12 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
             </div>
           </div>
         </div>
-
-        <!-- Experience Card -->
+        
+    <!-- Experience Card -->
         <div class="card bg-base-100 shadow-xl">
           <div class="card-body">
             <h2 class="card-title">
-              <.icon name="hero-chart-bar" class="size-5" />
-              Experience
+              <.icon name="hero-chart-bar" class="size-5" /> Experience
             </h2>
             <div class="grid grid-cols-2 gap-4 mt-4">
               <.info_row label="Total XP" value={format_number(@character.total_xp)} />
@@ -219,8 +226,7 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
         <div class="card-body py-3 px-4">
           <div class="flex items-center justify-between">
             <h2 class="card-title text-base">
-              <.icon name="hero-currency-dollar" class="size-4" />
-              Currencies
+              <.icon name="hero-currency-dollar" class="size-4" /> Currencies
             </h2>
             <span class="text-xs text-base-content/50">Coming soon</span>
           </div>
@@ -232,13 +238,12 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
           </div>
         </div>
       </div>
-
-      <!-- Bag Contents -->
+      
+    <!-- Bag Contents -->
       <div class="card bg-base-100 shadow-xl">
         <div class="card-body py-4">
           <h2 class="card-title">
-            <.icon name="hero-archive-box" class="size-5" />
-            Bags
+            <.icon name="hero-archive-box" class="size-5" /> Bags
           </h2>
           <%= if Enum.empty?(@inventory_items) do %>
             <div class="text-center py-6 text-base-content/50">
@@ -269,7 +274,11 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
                       <.durability_bar current={item.durability} max={item.max_durability} />
                     </td>
                     <td>
-                      <span class={if item.bound, do: "badge badge-warning badge-sm", else: "text-base-content/50"}>
+                      <span class={
+                        if item.bound,
+                          do: "badge badge-warning badge-sm",
+                          else: "text-base-content/50"
+                      }>
                         {if item.bound, do: "Yes", else: "No"}
                       </span>
                     </td>
@@ -283,13 +292,12 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
           <% end %>
         </div>
       </div>
-
-      <!-- Bank Storage -->
+      
+    <!-- Bank Storage -->
       <div class="card bg-base-100 shadow-xl">
         <div class="card-body py-4">
           <h2 class="card-title">
-            <.icon name="hero-building-library" class="size-5" />
-            Bank Storage
+            <.icon name="hero-building-library" class="size-5" /> Bank Storage
           </h2>
           <%= if Enum.empty?(@bank_items) do %>
             <div class="text-center py-6 text-base-content/50">
@@ -320,7 +328,11 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
                       <.durability_bar current={item.durability} max={item.max_durability} />
                     </td>
                     <td>
-                      <span class={if item.bound, do: "badge badge-warning badge-sm", else: "text-base-content/50"}>
+                      <span class={
+                        if item.bound,
+                          do: "badge badge-warning badge-sm",
+                          else: "text-base-content/50"
+                      }>
                         {if item.bound, do: "Yes", else: "No"}
                       </span>
                     </td>
@@ -340,13 +352,11 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
 
   # Guild Tab
   defp render_guild(assigns) do
-
     ~H"""
     <div class="card bg-base-100 shadow-xl">
       <div class="card-body">
         <h2 class="card-title">
-          <.icon name="hero-user-group" class="size-5" />
-          Guild
+          <.icon name="hero-user-group" class="size-5" /> Guild
         </h2>
         <%= if @guild do %>
           <div class="grid grid-cols-2 gap-4 mt-4">
@@ -368,13 +378,11 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
 
   # Tradeskills Tab
   defp render_tradeskills(assigns) do
-
     ~H"""
     <div class="card bg-base-100 shadow-xl">
       <div class="card-body">
         <h2 class="card-title">
-          <.icon name="hero-wrench-screwdriver" class="size-5" />
-          Tradeskills
+          <.icon name="hero-wrench-screwdriver" class="size-5" /> Tradeskills
         </h2>
         <%= if Enum.empty?(@tradeskills) do %>
           <div class="text-center py-8 text-base-content/50">
@@ -560,8 +568,7 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
     <div class="card bg-base-100 shadow-xl">
       <div class="card-body">
         <h2 class="card-title">
-          <.icon name="hero-shield-check" class="size-5" />
-          Equipment
+          <.icon name="hero-shield-check" class="size-5" /> Equipment
         </h2>
         <div class="grid grid-cols-2 gap-2 mt-4">
           <.equipment_slot

@@ -27,12 +27,20 @@ defmodule BezgelorWorld.Handler.SpellHandler do
     ServerSpellFinish,
     ServerSpellEffect,
     ServerCastResult,
-    ServerCooldown
+    ServerCooldown,
+    ServerResurrectOffer
   }
 
   alias BezgelorProtocol.{PacketReader, PacketWriter}
   alias BezgelorCore.{Spell, BuffDebuff}
-  alias BezgelorWorld.{BuffManager, CombatBroadcaster, CreatureManager, SpellManager}
+
+  alias BezgelorWorld.{
+    BuffManager,
+    CombatBroadcaster,
+    CreatureManager,
+    DeathManager,
+    SpellManager
+  }
 
   import Bitwise
 
@@ -45,7 +53,7 @@ defmodule BezgelorWorld.Handler.SpellHandler do
     # Try to parse as cast spell first, then cancel
     case ClientCastSpell.read(reader) do
       {:ok, packet, _reader} ->
-        handle_cast_spell(packet, state)
+        handle_cast_request(packet, state)
 
       {:error, _} ->
         # Try cancel cast (always succeeds since it's empty)
@@ -54,7 +62,11 @@ defmodule BezgelorWorld.Handler.SpellHandler do
     end
   end
 
-  defp handle_cast_spell(packet, state) do
+  @doc """
+  Handle a parsed cast request packet.
+  """
+  @spec handle_cast_request(ClientCastSpell.t(), map()) :: term()
+  def handle_cast_request(packet, state) do
     unless state.session_data[:in_world] do
       Logger.warning("Spell cast received before player entered world")
       {:error, :not_in_world}
@@ -65,20 +77,64 @@ defmodule BezgelorWorld.Handler.SpellHandler do
 
   defp process_cast(packet, state) do
     player_guid = state.session_data[:entity_guid]
-    spell = Spell.get(packet.spell_id)
 
-    cond do
-      spell == nil ->
-        send_cast_result(:failed, :not_known, packet.spell_id, state)
+    # Look up the spell ID from the character's ability bag using bag_index
+    # The bag_index refers to a slot in the character's LAS (Limited Action Set)
+    spell_id = resolve_spell_from_bag(packet.bag_index, state)
 
-      not validate_target(spell, packet, state) ->
-        send_cast_result(:failed, :invalid_target, packet.spell_id, state)
+    if spell_id == nil do
+      Logger.warning("No spell found at bag_index #{packet.bag_index}")
+      send_cast_result(:failed, :not_known, 0, state)
+    else
+      spell = Spell.get(spell_id)
 
-      not validate_range(spell, packet, state) ->
-        send_cast_result(:failed, :out_of_range, packet.spell_id, state)
+      # Get target from player's current target state (stored in session_data)
+      target_guid = state.session_data[:target_guid] || 0
+      target_position = state.session_data[:position] || {0.0, 0.0, 0.0}
 
-      true ->
-        do_cast(spell, packet, player_guid, state)
+      # Create a normalized packet struct for the rest of the handler
+      normalized_packet = %{
+        spell_id: spell_id,
+        target_guid: target_guid,
+        target_position: target_position,
+        client_unique_id: packet.client_unique_id,
+        button_pressed: packet.button_pressed
+      }
+
+      cond do
+        spell == nil ->
+          send_cast_result(:failed, :not_known, spell_id, state)
+
+        not validate_target(spell, normalized_packet, state) ->
+          send_cast_result(:failed, :invalid_target, spell_id, state)
+
+        not validate_range(spell, normalized_packet, state) ->
+          send_cast_result(:failed, :out_of_range, spell_id, state)
+
+        true ->
+          do_cast(spell, normalized_packet, player_guid, state)
+      end
+    end
+  end
+
+  # Resolve spell ID from character's ability bag (action bar slot)
+  defp resolve_spell_from_bag(bag_index, state) do
+    # The bag_index maps to an action set shortcut
+    # Look up from the character's loaded action set
+    action_set = state.session_data[:action_set] || %{}
+
+    case Map.get(action_set, bag_index) do
+      nil ->
+        # Fallback: check if we have LAS shortcuts in session
+        shortcuts = state.session_data[:action_set_shortcuts] || []
+        shortcut = Enum.find(shortcuts, fn s -> s.ui_location == bag_index end)
+        shortcut && shortcut.spell4_base_id
+
+      %{spell4_base_id: spell_id} ->
+        spell_id
+
+      spell_id when is_integer(spell_id) ->
+        spell_id
     end
   end
 
@@ -112,6 +168,10 @@ defmodule BezgelorWorld.Handler.SpellHandler do
 
   defp handle_instant_cast(spell, packet, player_guid, result, state) do
     actual_target = if packet.target_guid == 0, do: player_guid, else: packet.target_guid
+
+    # Broadcast telegraphs for this spell (if any)
+    # Telegraphs show visual indicators where spell effects will land
+    broadcast_spell_telegraphs(spell.id, player_guid, packet, state)
 
     # Send spell finish
     finish_packet = ServerSpellFinish.new(player_guid, spell.id)
@@ -209,6 +269,10 @@ defmodule BezgelorWorld.Handler.SpellHandler do
         # DoT is a harmful periodic effect
         apply_periodic_buff(caster_guid, target_guid, spell, effect, true)
 
+      :resurrect ->
+        # Resurrection effect - offer resurrection to dead target
+        apply_resurrect_effect(caster_guid, target_guid, spell, effect)
+
       _ ->
         :ok
     end
@@ -220,18 +284,22 @@ defmodule BezgelorWorld.Handler.SpellHandler do
     buff_type = (original_effect && original_effect.buff_type) || :absorb
     duration = (original_effect && original_effect.duration) || effect.duration || 10_000
 
-    buff = BuffDebuff.new(%{
-      id: spell.id,
-      spell_id: spell.id,
-      buff_type: buff_type,
-      amount: effect.amount,
-      duration: duration,
-      is_debuff: is_debuff
-    })
+    buff =
+      BuffDebuff.new(%{
+        id: spell.id,
+        spell_id: spell.id,
+        buff_type: buff_type,
+        amount: effect.amount,
+        duration: duration,
+        is_debuff: is_debuff
+      })
 
     case BuffManager.apply_buff(target_guid, buff, caster_guid) do
       {:ok, _timer_ref} ->
-        Logger.debug("Applied #{if is_debuff, do: "debuff", else: "buff"} #{spell.id} to #{target_guid}")
+        Logger.debug(
+          "Applied #{if is_debuff, do: "debuff", else: "buff"} #{spell.id} to #{target_guid}"
+        )
+
         # Broadcast buff apply to the target
         CombatBroadcaster.send_buff_apply(target_guid, caster_guid, buff)
         :ok
@@ -249,15 +317,16 @@ defmodule BezgelorWorld.Handler.SpellHandler do
     duration = (original_effect && original_effect.duration) || effect.duration || 10_000
 
     # For periodic effects, we use :periodic buff type
-    buff = BuffDebuff.new(%{
-      id: spell.id,
-      spell_id: spell.id,
-      buff_type: :periodic,
-      amount: effect.amount,
-      duration: duration,
-      tick_interval: tick_interval,
-      is_debuff: is_debuff
-    })
+    buff =
+      BuffDebuff.new(%{
+        id: spell.id,
+        spell_id: spell.id,
+        buff_type: :periodic,
+        amount: effect.amount,
+        duration: duration,
+        tick_interval: tick_interval,
+        is_debuff: is_debuff
+      })
 
     case BuffManager.apply_buff(target_guid, buff, caster_guid) do
       {:ok, _timer_ref} ->
@@ -269,6 +338,56 @@ defmodule BezgelorWorld.Handler.SpellHandler do
       {:error, reason} ->
         Logger.warning("Failed to apply periodic effect #{spell.id}: #{inspect(reason)}")
         :error
+    end
+  end
+
+  defp apply_resurrect_effect(caster_guid, target_guid, spell, effect) do
+    # Get health percent from effect amount (e.g., 35 for 35%)
+    health_percent = effect.amount || 35.0
+
+    case DeathManager.offer_resurrection(target_guid, caster_guid, spell.id, health_percent) do
+      :ok ->
+        # Get caster name for the offer packet (would normally come from session)
+        # TODO: Look up from WorldManager session
+        caster_name = "Player"
+
+        # Send resurrection offer to target
+        offer_packet =
+          ServerResurrectOffer.new(
+            caster_guid,
+            caster_name,
+            spell.id,
+            health_percent,
+            # 60 second timeout
+            60_000
+          )
+
+        # Send to target player
+        send_resurrect_offer_to_target(target_guid, offer_packet)
+
+        Logger.info("Player #{caster_guid} offered resurrection to #{target_guid}")
+        :ok
+
+      {:error, :not_dead} ->
+        Logger.debug("Resurrection failed: target #{target_guid} is not dead")
+        :error
+    end
+  end
+
+  defp send_resurrect_offer_to_target(target_guid, packet) do
+    # Look up target's connection and send the packet
+    alias BezgelorWorld.WorldManager
+
+    case WorldManager.get_session_by_entity_guid(target_guid) do
+      nil ->
+        Logger.warning("Cannot send resurrect offer: no session for #{target_guid}")
+
+      session ->
+        writer = PacketWriter.new()
+        {:ok, writer} = ServerResurrectOffer.write(packet, writer)
+        payload = PacketWriter.to_binary(writer)
+
+        send(session.connection_pid, {:send_packet, :server_resurrect_offer, payload})
     end
   end
 
@@ -405,7 +524,13 @@ defmodule BezgelorWorld.Handler.SpellHandler do
   defp build_effect_packet(caster_guid, target_guid, spell_id, effect) do
     case effect.type do
       :damage ->
-        ServerSpellEffect.damage(caster_guid, target_guid, spell_id, effect.amount, effect.is_crit)
+        ServerSpellEffect.damage(
+          caster_guid,
+          target_guid,
+          spell_id,
+          effect.amount,
+          effect.is_crit
+        )
 
       :heal ->
         ServerSpellEffect.heal(caster_guid, target_guid, spell_id, effect.amount, effect.is_crit)
@@ -414,7 +539,13 @@ defmodule BezgelorWorld.Handler.SpellHandler do
         ServerSpellEffect.buff(caster_guid, target_guid, spell_id, effect.amount)
 
       _ ->
-        ServerSpellEffect.damage(caster_guid, target_guid, spell_id, effect.amount, effect.is_crit)
+        ServerSpellEffect.damage(
+          caster_guid,
+          target_guid,
+          spell_id,
+          effect.amount,
+          effect.is_crit
+        )
     end
   end
 
@@ -449,5 +580,27 @@ defmodule BezgelorWorld.Handler.SpellHandler do
     else
       base_stats
     end
+  end
+
+  # Broadcast telegraphs for a spell (visual damage area indicators)
+  defp broadcast_spell_telegraphs(spell_id, caster_guid, packet, state) do
+    # Get caster position from session data or use target position as fallback
+    caster_position = state.session_data[:position] || packet.target_position || {0.0, 0.0, 0.0}
+
+    # Get caster rotation (default to 0 if not available)
+    caster_rotation = state.session_data[:rotation] || 0.0
+
+    # For now, just broadcast to the caster (future: nearby players in zone)
+    # This ensures the caster sees their own telegraphs
+    recipient_guids = [caster_guid]
+
+    # Call CombatBroadcaster to look up and broadcast any telegraphs for this spell
+    CombatBroadcaster.broadcast_spell_telegraphs(
+      spell_id,
+      caster_guid,
+      caster_position,
+      caster_rotation,
+      recipient_guids
+    )
   end
 end

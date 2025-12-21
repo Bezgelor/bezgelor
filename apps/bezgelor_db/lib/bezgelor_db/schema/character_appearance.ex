@@ -70,46 +70,46 @@ defmodule BezgelorDb.Schema.CharacterAppearance do
         }
 
   schema "character_appearances" do
-    belongs_to :character, Character
+    belongs_to(:character, Character)
 
     # Body
-    field :body_type, :integer, default: 0
-    field :body_height, :integer, default: 0
-    field :body_weight, :integer, default: 0
+    field(:body_type, :integer, default: 0)
+    field(:body_height, :integer, default: 0)
+    field(:body_weight, :integer, default: 0)
 
     # Face
-    field :face_type, :integer, default: 0
-    field :eye_type, :integer, default: 0
-    field :eye_color, :integer, default: 0
-    field :nose_type, :integer, default: 0
-    field :mouth_type, :integer, default: 0
-    field :ear_type, :integer, default: 0
+    field(:face_type, :integer, default: 0)
+    field(:eye_type, :integer, default: 0)
+    field(:eye_color, :integer, default: 0)
+    field(:nose_type, :integer, default: 0)
+    field(:mouth_type, :integer, default: 0)
+    field(:ear_type, :integer, default: 0)
 
     # Hair
-    field :hair_style, :integer, default: 0
-    field :hair_color, :integer, default: 0
-    field :facial_hair, :integer, default: 0
+    field(:hair_style, :integer, default: 0)
+    field(:hair_color, :integer, default: 0)
+    field(:facial_hair, :integer, default: 0)
 
     # Skin
-    field :skin_color, :integer, default: 0
+    field(:skin_color, :integer, default: 0)
 
     # Race-specific features
-    field :feature_1, :integer, default: 0
-    field :feature_2, :integer, default: 0
-    field :feature_3, :integer, default: 0
-    field :feature_4, :integer, default: 0
+    field(:feature_1, :integer, default: 0)
+    field(:feature_2, :integer, default: 0)
+    field(:feature_3, :integer, default: 0)
+    field(:feature_4, :integer, default: 0)
 
     # Bone customization sliders
-    field :bones, {:array, :float}, default: []
+    field(:bones, {:array, :float}, default: [])
 
     # Raw customization label/value pairs (sent back to client in character list)
-    field :labels, {:array, :integer}, default: []
-    field :values, {:array, :integer}, default: []
+    field(:labels, {:array, :integer}, default: [])
+    field(:values, {:array, :integer}, default: [])
 
     # Computed ItemVisual entries for body appearance (head, hands, feet, etc.)
     # Each entry is a map with :slot and :display_id
     # Computed from labels/values using CharacterCustomization table
-    field :visuals, {:array, :map}, default: []
+    field(:visuals, {:array, :map}, default: [])
 
     timestamps(type: :utc_datetime)
   end

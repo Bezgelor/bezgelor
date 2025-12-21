@@ -16,8 +16,11 @@ defmodule BezgelorDb.RealmsTest do
     end
 
     test "returns all realms" do
-      {:ok, _} = Realms.create_realm(%{name: "Realm1", address: "127.0.0.1", port: 24000, type: :pve})
-      {:ok, _} = Realms.create_realm(%{name: "Realm2", address: "127.0.0.2", port: 24001, type: :pvp})
+      {:ok, _} =
+        Realms.create_realm(%{name: "Realm1", address: "127.0.0.1", port: 24000, type: :pve})
+
+      {:ok, _} =
+        Realms.create_realm(%{name: "Realm2", address: "127.0.0.2", port: 24001, type: :pvp})
 
       realms = Realms.list_realms()
       assert length(realms) == 2
@@ -26,8 +29,23 @@ defmodule BezgelorDb.RealmsTest do
 
   describe "list_online_realms/0" do
     test "returns only online realms" do
-      {:ok, _} = Realms.create_realm(%{name: "Online", address: "127.0.0.1", port: 24000, type: :pve, online: true})
-      {:ok, _} = Realms.create_realm(%{name: "Offline", address: "127.0.0.2", port: 24001, type: :pve, online: false})
+      {:ok, _} =
+        Realms.create_realm(%{
+          name: "Online",
+          address: "127.0.0.1",
+          port: 24000,
+          type: :pve,
+          online: true
+        })
+
+      {:ok, _} =
+        Realms.create_realm(%{
+          name: "Offline",
+          address: "127.0.0.2",
+          port: 24001,
+          type: :pve,
+          online: false
+        })
 
       realms = Realms.list_online_realms()
       assert length(realms) == 1
@@ -37,13 +55,27 @@ defmodule BezgelorDb.RealmsTest do
 
   describe "get_first_online_realm/0" do
     test "returns nil when no online realms" do
-      {:ok, _} = Realms.create_realm(%{name: "Offline", address: "127.0.0.1", port: 24000, type: :pve, online: false})
+      {:ok, _} =
+        Realms.create_realm(%{
+          name: "Offline",
+          address: "127.0.0.1",
+          port: 24000,
+          type: :pve,
+          online: false
+        })
 
       assert Realms.get_first_online_realm() == nil
     end
 
     test "returns an online realm" do
-      {:ok, realm} = Realms.create_realm(%{name: "Online", address: "127.0.0.1", port: 24000, type: :pve, online: true})
+      {:ok, realm} =
+        Realms.create_realm(%{
+          name: "Online",
+          address: "127.0.0.1",
+          port: 24000,
+          type: :pve,
+          online: true
+        })
 
       result = Realms.get_first_online_realm()
       assert result.id == realm.id
@@ -52,7 +84,8 @@ defmodule BezgelorDb.RealmsTest do
 
   describe "get_realm/1" do
     test "returns realm by id" do
-      {:ok, realm} = Realms.create_realm(%{name: "Test", address: "127.0.0.1", port: 24000, type: :pve})
+      {:ok, realm} =
+        Realms.create_realm(%{name: "Test", address: "127.0.0.1", port: 24000, type: :pve})
 
       result = Realms.get_realm(realm.id)
       assert result.name == "Test"
@@ -65,7 +98,8 @@ defmodule BezgelorDb.RealmsTest do
 
   describe "get_realm_by_name/1" do
     test "returns realm by name" do
-      {:ok, realm} = Realms.create_realm(%{name: "Nexus", address: "127.0.0.1", port: 24000, type: :pve})
+      {:ok, realm} =
+        Realms.create_realm(%{name: "Nexus", address: "127.0.0.1", port: 24000, type: :pve})
 
       result = Realms.get_realm_by_name("Nexus")
       assert result.id == realm.id
@@ -123,7 +157,8 @@ defmodule BezgelorDb.RealmsTest do
 
   describe "update_realm/2" do
     test "updates realm attributes" do
-      {:ok, realm} = Realms.create_realm(%{name: "Original", address: "127.0.0.1", port: 24000, type: :pve})
+      {:ok, realm} =
+        Realms.create_realm(%{name: "Original", address: "127.0.0.1", port: 24000, type: :pve})
 
       assert {:ok, updated} = Realms.update_realm(realm, %{name: "Updated", port: 24001})
       assert updated.name == "Updated"
@@ -133,7 +168,8 @@ defmodule BezgelorDb.RealmsTest do
 
   describe "delete_realm/1" do
     test "deletes a realm" do
-      {:ok, realm} = Realms.create_realm(%{name: "ToDelete", address: "127.0.0.1", port: 24000, type: :pve})
+      {:ok, realm} =
+        Realms.create_realm(%{name: "ToDelete", address: "127.0.0.1", port: 24000, type: :pve})
 
       assert {:ok, _} = Realms.delete_realm(realm)
       assert Realms.get_realm(realm.id) == nil
@@ -142,14 +178,28 @@ defmodule BezgelorDb.RealmsTest do
 
   describe "set_online/2" do
     test "sets realm online" do
-      {:ok, realm} = Realms.create_realm(%{name: "Offline", address: "127.0.0.1", port: 24000, type: :pve, online: false})
+      {:ok, realm} =
+        Realms.create_realm(%{
+          name: "Offline",
+          address: "127.0.0.1",
+          port: 24000,
+          type: :pve,
+          online: false
+        })
 
       assert {:ok, updated} = Realms.set_online(realm, true)
       assert updated.online == true
     end
 
     test "sets realm offline" do
-      {:ok, realm} = Realms.create_realm(%{name: "Online", address: "127.0.0.1", port: 24000, type: :pve, online: true})
+      {:ok, realm} =
+        Realms.create_realm(%{
+          name: "Online",
+          address: "127.0.0.1",
+          port: 24000,
+          type: :pve,
+          online: true
+        })
 
       assert {:ok, updated} = Realms.set_online(realm, false)
       assert updated.online == false

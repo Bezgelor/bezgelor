@@ -73,7 +73,10 @@ defmodule BezgelorProtocol.Handler.EncryptedHandler do
            {:ok, handler} <- lookup_handler(inner_opcode) do
         # Log with same format as Connection - shows the actual opcode being handled
         server_name = server_name_from_state(state)
-        Logger.debug("[#{server_name}] Recv: #{Opcode.name(inner_opcode)} (#{byte_size(inner_payload)} bytes)")
+
+        Logger.debug(
+          "[#{server_name}] Recv: #{Opcode.name(inner_opcode)} (#{byte_size(inner_payload)} bytes)"
+        )
 
         handler.handle(inner_payload, state)
       end
@@ -95,7 +98,10 @@ defmodule BezgelorProtocol.Handler.EncryptedHandler do
     encrypted_data_size = length - 4
 
     if byte_size(rest) < encrypted_data_size do
-      Logger.warning("EncryptedHandler: payload too short. Expected #{encrypted_data_size} bytes, got #{byte_size(rest)}")
+      Logger.warning(
+        "EncryptedHandler: payload too short. Expected #{encrypted_data_size} bytes, got #{byte_size(rest)}"
+      )
+
       {:error, :payload_too_short}
     else
       encrypted_data = binary_part(rest, 0, encrypted_data_size)
@@ -133,7 +139,11 @@ defmodule BezgelorProtocol.Handler.EncryptedHandler do
       {:error, :unknown_opcode} ->
         # Try to extract opcode for logging
         <<opcode_int::little-16, _rest::binary>> = decrypted
-        Logger.warning("EncryptedHandler: unknown inner opcode 0x#{Integer.to_string(opcode_int, 16)}")
+
+        Logger.warning(
+          "EncryptedHandler: unknown inner opcode 0x#{Integer.to_string(opcode_int, 16)}"
+        )
+
         {:error, {:unknown_opcode, opcode_int}}
 
       error ->

@@ -105,7 +105,12 @@ Static data lives in `apps/bezgelor_data/priv/data/` as JSON, loaded into ETS on
 Phases 1-6 complete. Phase 7 (Game Systems) in progress: Social, Reputation, Inventory, Quests, Achievements, Paths, Guilds, Mail complete. Mounts/Pets/Storefront next.
 
 Plans and design docs in `docs/plans/`.
-NexusForever source is at ../nexusforever/
+NexusForever source is at ../nexusforever/ and database extract at ../NexusForever.WorldDatabase
+
+## Misc. Notes & Requirements
+- Architecture, design, and code should be Elixir idiomatic, such as message passing
+- Adopt existing implementation patterns, such as the master tick supplier, before implementing basic bespoke services. If that's necessary ask about creating a platform service rather than something specific to functional domain.
+- When loading JSON game data files use the ETF caching system via the load_json_raw/1 function
 
 ## Packet Writing (CRITICAL)
 

@@ -84,7 +84,17 @@ defmodule BezgelorWorld.Handler.ReputationHandler do
 
   # Check if reputation level increased (for title unlocks)
   defp level_increased?(old_level, new_level) do
-    level_order = [:hated, :hostile, :unfriendly, :neutral, :friendly, :honored, :revered, :exalted]
+    level_order = [
+      :hated,
+      :hostile,
+      :unfriendly,
+      :neutral,
+      :friendly,
+      :honored,
+      :revered,
+      :exalted
+    ]
+
     old_idx = Enum.find_index(level_order, &(&1 == old_level)) || 0
     new_idx = Enum.find_index(level_order, &(&1 == new_level)) || 0
     new_idx > old_idx

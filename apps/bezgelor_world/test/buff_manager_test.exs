@@ -10,6 +10,7 @@ defmodule BezgelorWorld.BuffManagerTest do
       nil -> start_supervised!(BuffManager)
       _pid -> :already_running
     end
+
     # Clear any existing state from previous tests
     BuffManager.clear_entity(12345)
     BuffManager.clear_entity(67890)
@@ -19,7 +20,8 @@ defmodule BezgelorWorld.BuffManagerTest do
 
   describe "apply_buff/3" do
     test "applies buff to entity and returns expiration timer ref" do
-      buff = BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 100, duration: 10_000})
+      buff =
+        BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 100, duration: 10_000})
 
       {:ok, timer_ref} = BuffManager.apply_buff(12345, buff, 67890)
 
@@ -30,7 +32,8 @@ defmodule BezgelorWorld.BuffManagerTest do
 
   describe "remove_buff/2" do
     test "removes buff from entity" do
-      buff = BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 100, duration: 10_000})
+      buff =
+        BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 100, duration: 10_000})
 
       {:ok, _} = BuffManager.apply_buff(12345, buff, 67890)
       :ok = BuffManager.remove_buff(12345, 1)
@@ -45,7 +48,8 @@ defmodule BezgelorWorld.BuffManagerTest do
 
   describe "has_buff?/2" do
     test "returns true if entity has buff" do
-      buff = BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 100, duration: 10_000})
+      buff =
+        BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 100, duration: 10_000})
 
       {:ok, _} = BuffManager.apply_buff(12345, buff, 67890)
 
@@ -59,8 +63,18 @@ defmodule BezgelorWorld.BuffManagerTest do
 
   describe "get_entity_buffs/1" do
     test "returns list of active buffs" do
-      buff1 = BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 100, duration: 10_000})
-      buff2 = BuffDebuff.new(%{id: 2, spell_id: 5, buff_type: :stat_modifier, stat: :power, amount: 50, duration: 10_000})
+      buff1 =
+        BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 100, duration: 10_000})
+
+      buff2 =
+        BuffDebuff.new(%{
+          id: 2,
+          spell_id: 5,
+          buff_type: :stat_modifier,
+          stat: :power,
+          amount: 50,
+          duration: 10_000
+        })
 
       {:ok, _} = BuffManager.apply_buff(12345, buff1, 67890)
       {:ok, _} = BuffManager.apply_buff(12345, buff2, 67890)
@@ -76,8 +90,25 @@ defmodule BezgelorWorld.BuffManagerTest do
 
   describe "get_stat_modifier/2" do
     test "returns total stat modifier" do
-      buff1 = BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :stat_modifier, stat: :power, amount: 50, duration: 10_000})
-      buff2 = BuffDebuff.new(%{id: 2, spell_id: 5, buff_type: :stat_modifier, stat: :power, amount: 25, duration: 10_000})
+      buff1 =
+        BuffDebuff.new(%{
+          id: 1,
+          spell_id: 4,
+          buff_type: :stat_modifier,
+          stat: :power,
+          amount: 50,
+          duration: 10_000
+        })
+
+      buff2 =
+        BuffDebuff.new(%{
+          id: 2,
+          spell_id: 5,
+          buff_type: :stat_modifier,
+          stat: :power,
+          amount: 25,
+          duration: 10_000
+        })
 
       {:ok, _} = BuffManager.apply_buff(12345, buff1, 67890)
       {:ok, _} = BuffManager.apply_buff(12345, buff2, 67890)
@@ -88,7 +119,8 @@ defmodule BezgelorWorld.BuffManagerTest do
 
   describe "consume_absorb/2" do
     test "consumes absorb shields" do
-      buff = BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 100, duration: 10_000})
+      buff =
+        BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 100, duration: 10_000})
 
       {:ok, _} = BuffManager.apply_buff(12345, buff, 67890)
       {absorbed, remaining} = BuffManager.consume_absorb(12345, 30)
@@ -100,8 +132,18 @@ defmodule BezgelorWorld.BuffManagerTest do
 
   describe "clear_entity/1" do
     test "removes all buffs from entity" do
-      buff1 = BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 100, duration: 10_000})
-      buff2 = BuffDebuff.new(%{id: 2, spell_id: 5, buff_type: :stat_modifier, stat: :power, amount: 50, duration: 10_000})
+      buff1 =
+        BuffDebuff.new(%{id: 1, spell_id: 4, buff_type: :absorb, amount: 100, duration: 10_000})
+
+      buff2 =
+        BuffDebuff.new(%{
+          id: 2,
+          spell_id: 5,
+          buff_type: :stat_modifier,
+          stat: :power,
+          amount: 50,
+          duration: 10_000
+        })
 
       {:ok, _} = BuffManager.apply_buff(12345, buff1, 67890)
       {:ok, _} = BuffManager.apply_buff(12345, buff2, 67890)

@@ -91,7 +91,13 @@ defmodule BezgelorWorld.CombatParticipants do
 
   List of character IDs including group members within range.
   """
-  @spec resolve_with_groups(AI.t(), non_neg_integer(), non_neg_integer(), {float(), float(), float()}, float()) ::
+  @spec resolve_with_groups(
+          AI.t(),
+          non_neg_integer(),
+          non_neg_integer(),
+          {float(), float(), float()},
+          float()
+        ) ::
           [non_neg_integer()]
   def resolve_with_groups(ai, zone_id, instance_id, _creature_position, _credit_range \\ 100.0) do
     # Start with direct participants

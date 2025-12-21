@@ -25,13 +25,13 @@ defmodule BezgelorDb.Schema.Role do
         }
 
   schema "roles" do
-    field :name, :string
-    field :description, :string
-    field :protected, :boolean, default: false
+    field(:name, :string)
+    field(:description, :string)
+    field(:protected, :boolean, default: false)
 
-    has_many :role_permissions, BezgelorDb.Schema.RolePermission
-    many_to_many :permissions, BezgelorDb.Schema.Permission, join_through: "role_permissions"
-    many_to_many :accounts, BezgelorDb.Schema.Account, join_through: "account_roles"
+    has_many(:role_permissions, BezgelorDb.Schema.RolePermission)
+    many_to_many(:permissions, BezgelorDb.Schema.Permission, join_through: "role_permissions")
+    many_to_many(:accounts, BezgelorDb.Schema.Account, join_through: "account_roles")
 
     timestamps(type: :utc_datetime)
   end

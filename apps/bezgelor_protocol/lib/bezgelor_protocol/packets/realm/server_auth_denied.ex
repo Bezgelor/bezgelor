@@ -41,11 +41,9 @@ defmodule BezgelorProtocol.Packets.Realm.ServerAuthDenied do
     account_suspended: 21
   }
 
-  defstruct [
-    result: :unknown,
-    error_value: 0,
-    suspended_days: 0.0
-  ]
+  defstruct result: :unknown,
+            error_value: 0,
+            suspended_days: 0.0
 
   @type result ::
           :unknown

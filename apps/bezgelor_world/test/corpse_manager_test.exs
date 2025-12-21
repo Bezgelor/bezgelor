@@ -50,7 +50,7 @@ defmodule BezgelorWorld.CorpseManagerTest do
     end
 
     test "returns error for non-existent corpse" do
-      assert {:error, :not_found} = CorpseManager.get_corpse(999999)
+      assert {:error, :not_found} = CorpseManager.get_corpse(999_999)
     end
   end
 
@@ -89,7 +89,7 @@ defmodule BezgelorWorld.CorpseManagerTest do
     end
 
     test "returns error for non-existent corpse" do
-      assert {:error, :not_found} = CorpseManager.take_loot(888888, 12345)
+      assert {:error, :not_found} = CorpseManager.take_loot(888_888, 12345)
     end
   end
 
@@ -104,7 +104,7 @@ defmodule BezgelorWorld.CorpseManagerTest do
     end
 
     test "returns ok even for non-existent corpse" do
-      assert :ok = CorpseManager.despawn_corpse(777777)
+      assert :ok = CorpseManager.despawn_corpse(777_777)
     end
   end
 
@@ -156,7 +156,7 @@ defmodule BezgelorWorld.CorpseManagerTest do
     end
 
     test "returns false for non-existent corpse" do
-      assert CorpseManager.has_loot_for?(555555, 12345) == false
+      assert CorpseManager.has_loot_for?(555_555, 12345) == false
     end
   end
 end

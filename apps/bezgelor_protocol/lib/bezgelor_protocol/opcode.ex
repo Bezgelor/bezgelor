@@ -68,6 +68,8 @@ defmodule BezgelorProtocol.Opcode do
   @client_character_delete 0x0352
   @server_character_delete_result 0x00E6
   @client_entered_world 0x00F2
+  @client_request_action_set_changes 0x00B1
+  @server_action_set_clear_cache 0x00B2
 
   # Logout opcodes
   @server_logout_update 0x0092
@@ -105,13 +107,19 @@ defmodule BezgelorProtocol.Opcode do
   @client_unknown_0x07CC 0x07CC
   # 0x00D5: Related to ServerInstanceSettings per NexusForever comments
   @client_unknown_0x00D5 0x00D5
+  # 0x00DE: Not in NexusForever GameMessageOpcode.cs (gap between 0x00DD and 0x00E0).
+  # Observed during ability use - possibly dash/sprint/momentum. Logged for research.
+  @client_unknown_0x00DE 0x00DE
   # 0x00FB: Unknown, possibly path-related
   @client_unknown_0x00FB 0x00FB
   # 0x0635: Unknown, labeled Server0635 in NexusForever but sent by client
   @client_unknown_0x0635 0x0635
+  # 0x00E3: Unknown, between datacube volume update and resurrect request
+  @client_unknown_0x00E3 0x00E3
   # 0x018F: ClientP2PTradingCancelTrade - player canceling a trade
   @client_p2p_trading_cancel 0x018F
-  @server_world_enter 0x00AD    # ServerChangeWorld in NexusForever
+  # ServerChangeWorld in NexusForever
+  @server_world_enter 0x00AD
   @server_instance_settings 0x00F1
   @server_housing_neighbors 0x0507
   @server_entity_create 0x0262
@@ -132,7 +140,9 @@ defmodule BezgelorProtocol.Opcode do
   @server_chat_result 0x0302
 
   # Spell opcodes
-  @client_cast_spell 0x0400
+  # 0x009A per NexusForever GameMessageOpcode.cs
+  @client_cast_spell 0x009A
+  @client_cast_spell_continuous 0x04DB
   @server_spell_start 0x0401
   @server_spell_finish 0x0402
   @server_spell_effect 0x0403
@@ -149,13 +159,19 @@ defmodule BezgelorProtocol.Opcode do
   @server_entity_death 0x0510
   @client_respawn 0x0511
   @server_respawn 0x0512
+  @server_player_death 0x0513
+  @server_resurrect_offer 0x0514
+  @client_resurrect_accept 0x0515
+  @client_resurrect_at_bindpoint 0x0516
+  @server_resurrect 0x0517
 
   # XP/Level opcodes
   @server_xp_gain 0x0520
   @server_level_up 0x0521
 
   # Achievement opcodes
-  @server_achievement_list 0x00AE   # ServerAchievementInit in NexusForever
+  # ServerAchievementInit in NexusForever
+  @server_achievement_list 0x00AE
   @server_achievement_update 0x00AF
 
   # Loot opcodes
@@ -240,7 +256,15 @@ defmodule BezgelorProtocol.Opcode do
 
   # Quest opcodes
   @server_quest_offer 0x0351
-  @server_quest_list 0x035F   # ServerQuestInit in NexusForever
+  # ServerQuestInit in NexusForever
+  @server_quest_list 0x035F
+
+  # Ability/Action set opcodes
+  @server_ability_points 0x0169
+  @server_cooldown_list 0x091B
+  @server_action_set 0x019D
+  @server_amp_list 0x019E
+  @server_ability_book 0x01A0
 
   # Item/Inventory opcodes
   @server_generic_error 0x0106
@@ -252,6 +276,8 @@ defmodule BezgelorProtocol.Opcode do
   @server_item_visual_update 0x0933
   @server_entity_visual_update 0x0905
   @client_item_move 0x0182
+  @client_non_spell_action_set_changes 0x016A
+  @client_ability_book_activate_spell 0x017A
 
   # Cinematic opcodes
   @server_cinematic_complete 0x0210
@@ -316,6 +342,8 @@ defmodule BezgelorProtocol.Opcode do
     client_character_delete: @client_character_delete,
     server_character_delete_result: @server_character_delete_result,
     client_entered_world: @client_entered_world,
+    client_request_action_set_changes: @client_request_action_set_changes,
+    server_action_set_clear_cache: @server_action_set_clear_cache,
     # Logout
     server_logout_update: @server_logout_update,
     client_logout_request: @client_logout_request,
@@ -344,8 +372,10 @@ defmodule BezgelorProtocol.Opcode do
     client_unknown_0x0269: @client_unknown_0x0269,
     client_unknown_0x07CC: @client_unknown_0x07CC,
     client_unknown_0x00D5: @client_unknown_0x00D5,
+    client_unknown_0x00DE: @client_unknown_0x00DE,
     client_unknown_0x00FB: @client_unknown_0x00FB,
     client_unknown_0x0635: @client_unknown_0x0635,
+    client_unknown_0x00E3: @client_unknown_0x00E3,
     client_p2p_trading_cancel: @client_p2p_trading_cancel,
     server_world_enter: @server_world_enter,
     server_instance_settings: @server_instance_settings,
@@ -367,6 +397,7 @@ defmodule BezgelorProtocol.Opcode do
     server_chat_result: @server_chat_result,
     # Spells
     client_cast_spell: @client_cast_spell,
+    client_cast_spell_continuous: @client_cast_spell_continuous,
     server_spell_start: @server_spell_start,
     server_spell_finish: @server_spell_finish,
     server_spell_effect: @server_spell_effect,
@@ -381,6 +412,11 @@ defmodule BezgelorProtocol.Opcode do
     server_entity_death: @server_entity_death,
     client_respawn: @client_respawn,
     server_respawn: @server_respawn,
+    server_player_death: @server_player_death,
+    server_resurrect_offer: @server_resurrect_offer,
+    client_resurrect_accept: @client_resurrect_accept,
+    client_resurrect_at_bindpoint: @client_resurrect_at_bindpoint,
+    server_resurrect: @server_resurrect,
     # XP/Level
     server_xp_gain: @server_xp_gain,
     server_level_up: @server_level_up,
@@ -461,6 +497,12 @@ defmodule BezgelorProtocol.Opcode do
     # Quests
     server_quest_offer: @server_quest_offer,
     server_quest_list: @server_quest_list,
+    # Abilities
+    server_ability_points: @server_ability_points,
+    server_cooldown_list: @server_cooldown_list,
+    server_action_set: @server_action_set,
+    server_amp_list: @server_amp_list,
+    server_ability_book: @server_ability_book,
     # Items/Inventory
     server_generic_error: @server_generic_error,
     server_item_add: @server_item_add,
@@ -471,6 +513,8 @@ defmodule BezgelorProtocol.Opcode do
     server_item_visual_update: @server_item_visual_update,
     server_entity_visual_update: @server_entity_visual_update,
     client_item_move: @client_item_move,
+    client_non_spell_action_set_changes: @client_non_spell_action_set_changes,
+    client_ability_book_activate_spell: @client_ability_book_activate_spell,
     # Cinematics
     server_cinematic_complete: @server_cinematic_complete,
     server_cinematic_actor_attach: @server_cinematic_actor_attach,
@@ -532,6 +576,8 @@ defmodule BezgelorProtocol.Opcode do
     client_character_delete: "ClientCharacterDelete",
     server_character_delete_result: "ServerCharacterDeleteResult",
     client_entered_world: "ClientEnteredWorld",
+    client_request_action_set_changes: "ClientRequestActionSetChanges",
+    server_action_set_clear_cache: "ServerActionSetClearCache",
     server_logout_update: "ServerLogoutUpdate",
     client_logout_request: "ClientLogoutRequest",
     client_logout_confirm: "ClientLogoutConfirm",
@@ -558,6 +604,7 @@ defmodule BezgelorProtocol.Opcode do
     client_unknown_0x0269: "ClientUnknown0x0269",
     client_unknown_0x07CC: "ClientUnknown0x07CC",
     client_unknown_0x00D5: "ClientUnknown0x00D5",
+    client_unknown_0x00DE: "ClientUnknown0x00DE",
     client_unknown_0x00FB: "ClientUnknown0x00FB",
     client_unknown_0x0635: "ClientUnknown0x0635",
     client_p2p_trading_cancel: "ClientP2PTradingCancel",
@@ -579,6 +626,7 @@ defmodule BezgelorProtocol.Opcode do
     server_chat: "ServerChat",
     server_chat_result: "ServerChatResult",
     client_cast_spell: "ClientCastSpell",
+    client_cast_spell_continuous: "ClientCastSpellContinuous",
     server_spell_start: "ServerSpellStart",
     server_spell_finish: "ServerSpellFinish",
     server_spell_effect: "ServerSpellEffect",
@@ -591,6 +639,11 @@ defmodule BezgelorProtocol.Opcode do
     server_entity_death: "ServerEntityDeath",
     client_respawn: "ClientRespawn",
     server_respawn: "ServerRespawn",
+    server_player_death: "ServerPlayerDeath",
+    server_resurrect_offer: "ServerResurrectOffer",
+    client_resurrect_accept: "ClientResurrectAccept",
+    client_resurrect_at_bindpoint: "ClientResurrectAtBindpoint",
+    server_resurrect: "ServerResurrect",
     server_xp_gain: "ServerXPGain",
     server_level_up: "ServerLevelUp",
     server_achievement_list: "ServerAchievementList",
@@ -665,6 +718,12 @@ defmodule BezgelorProtocol.Opcode do
     # Quests
     server_quest_offer: "ServerQuestOffer",
     server_quest_list: "ServerQuestList",
+    # Abilities
+    server_ability_points: "ServerAbilityPoints",
+    server_cooldown_list: "ServerCooldownList",
+    server_action_set: "ServerActionSet",
+    server_amp_list: "ServerAmpList",
+    server_ability_book: "ServerAbilityBook",
     # Items/Inventory
     server_generic_error: "ServerGenericError",
     server_item_add: "ServerItemAdd",
@@ -675,6 +734,8 @@ defmodule BezgelorProtocol.Opcode do
     server_item_visual_update: "ServerItemVisualUpdate",
     server_entity_visual_update: "ServerEntityVisualUpdate",
     client_item_move: "ClientItemMove",
+    client_non_spell_action_set_changes: "ClientNonSpellActionSetChanges",
+    client_ability_book_activate_spell: "ClientAbilityBookActivateSpell",
     # Cinematics
     server_cinematic_complete: "ServerCinematicComplete",
     server_cinematic_actor_attach: "ServerCinematicActorAttach",

@@ -10,7 +10,8 @@ defmodule BezgelorAuth.Sts.Handler.GameAccountHandler do
 
   Returns the list of game accounts (characters) for the authenticated user.
   """
-  @spec handle_list_accounts(Packet.t(), Session.t()) :: {:ok, binary(), Session.t()} | {:error, integer(), String.t(), Session.t()}
+  @spec handle_list_accounts(Packet.t(), Session.t()) ::
+          {:ok, binary(), Session.t()} | {:error, integer(), String.t(), Session.t()}
   def handle_list_accounts(_packet, session) do
     if session.state != :authenticated do
       {:error, 401, "Unauthorized", session}

@@ -69,9 +69,9 @@ defmodule BezgelorProtocol.Packets.World.ServerCharacterListTest do
       assert name == "TestChar"
 
       # Parse numeric fields
-      <<sex::little-32, race::little-32, class::little-32, path::little-32,
-        faction::little-32, level::little-32, world_id::little-32, zone_id::little-32,
-        last_login::little-64, _rest::binary>> = rest
+      <<sex::little-32, race::little-32, class::little-32, path::little-32, faction::little-32,
+        level::little-32, world_id::little-32, zone_id::little-32, last_login::little-64,
+        _rest::binary>> = rest
 
       assert sex == 0
       assert race == 0

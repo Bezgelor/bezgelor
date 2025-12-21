@@ -69,7 +69,8 @@ defmodule BezgelorCore.SpellEffectTest do
 
       caster_stats = %{crit_chance: 0}
 
-      {damage, is_crit} = SpellEffect.calculate_damage(effect, caster_stats, %{}, force_crit: true)
+      {damage, is_crit} =
+        SpellEffect.calculate_damage(effect, caster_stats, %{}, force_crit: true)
 
       # 100 * 1.5 = 150
       assert damage == 150

@@ -43,8 +43,10 @@ defmodule BezgelorProtocol.Handler.LogoutHandler do
       # Format: Requested (1 bit), Reason (5 bits)
       writer =
         PacketWriter.new()
-        |> PacketWriter.write_bits(1, 1)  # Requested = true
-        |> PacketWriter.write_bits(@logout_reason_none, 5)  # Reason = None
+        # Requested = true
+        |> PacketWriter.write_bits(1, 1)
+        # Reason = None
+        |> PacketWriter.write_bits(@logout_reason_none, 5)
         |> PacketWriter.flush_bits()
 
       payload = PacketWriter.to_binary(writer)

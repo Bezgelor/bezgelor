@@ -132,6 +132,7 @@ These opcodes have been observed from the client but are not documented in Nexus
 | 0x0269 | 0269 | C→S | Sent after world entry | ~4 bytes payload, purpose unknown |
 | 0x07CC | 07CC | C→S | Sent periodically | ~6 bytes payload, possibly heartbeat |
 | 0x00D5 | 00D5 | C→S | After instance settings | Related to ServerInstanceSettings |
+| 0x00DE | 00DE | C→S | Triggered on ability use | Not in NexusForever (gap 0x00DD→0x00E0), possibly dash/momentum |
 | 0x00FB | 00FB | C→S | Occasional | Near path opcodes in enum, may be path-related |
 
 ### Investigation Status
@@ -139,6 +140,7 @@ These opcodes have been observed from the client but are not documented in Nexus
 - **0x0269**: No NexusForever handler, no documentation. Payload analysis needed.
 - **0x07CC**: Sent frequently, likely client state. Does not appear in NexusForever.
 - **0x00D5**: NexusForever comment mentions this with ServerInstanceSettings.
+- **0x00DE**: Confirmed NOT in NexusForever GameMessageOpcode.cs (0x00DD→0x00E0 gap). Observed during ability use, possibly dash/sprint/momentum. Handler logs payloads for research.
 - **0x00FB**: Near ServerPathExplorerPowerMapWaiting (0x00FA), may be path-related.
 
 ## EntityCommand Types

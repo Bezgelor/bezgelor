@@ -29,13 +29,18 @@ defmodule BezgelorWorld.GroupFinder.GroupFinder do
 
   require Logger
 
-  @match_interval 5_000      # Check for matches every 5 seconds
-  @confirm_timeout 30_000    # 30 seconds to accept/decline
+  # Check for matches every 5 seconds
+  @match_interval 5_000
+  # 30 seconds to accept/decline
+  @confirm_timeout 30_000
 
   defstruct [
-    queues: %{},           # instance_type => [queue_entry]
-    pending_matches: %{},  # match_id => pending_match
-    player_queue: %{},     # character_id => queue_info
+    # instance_type => [queue_entry]
+    queues: %{},
+    # match_id => pending_match
+    pending_matches: %{},
+    # character_id => queue_info
+    player_queue: %{},
     stats: %{
       total_queued: 0,
       matches_formed: 0,
@@ -117,7 +122,8 @@ defmodule BezgelorWorld.GroupFinder.GroupFinder do
   @doc """
   Responds to a match confirmation (accept/decline).
   """
-  @spec respond_to_match(non_neg_integer(), non_neg_integer(), boolean()) :: :ok | {:error, term()}
+  @spec respond_to_match(non_neg_integer(), non_neg_integer(), boolean()) ::
+          :ok | {:error, term()}
   def respond_to_match(match_id, character_id, accepted) do
     GenServer.call(__MODULE__, {:respond_to_match, match_id, character_id, accepted})
   end
@@ -170,10 +176,11 @@ defmodule BezgelorWorld.GroupFinder.GroupFinder do
       queues = Map.update!(state.queues, queue_key, &[entry | &1])
 
       # Track player
-      player_queue = Map.put(state.player_queue, character_id, %{
-        instance_type: queue_key,
-        entry: entry
-      })
+      player_queue =
+        Map.put(state.player_queue, character_id, %{
+          instance_type: queue_key,
+          entry: entry
+        })
 
       stats = Map.update!(state.stats, :total_queued, &(&1 + 1))
 
@@ -199,6 +206,7 @@ defmodule BezgelorWorld.GroupFinder.GroupFinder do
 
       %{instance_type: queue_key, entry: entry} ->
         new_entry = Map.merge(entry, updates)
+
         queues =
           Map.update!(state.queues, queue_key, fn queue ->
             Enum.map(queue, fn e ->
@@ -350,9 +358,11 @@ defmodule BezgelorWorld.GroupFinder.GroupFinder do
       {:ok, match} ->
         state = create_pending_match(state, instance_type, difficulty, match)
         # Remove matched players from queue and try again
-        remaining = Enum.reject(entries, fn e ->
-          Enum.any?(match.members, &(&1.character_id == e.character_id))
-        end)
+        remaining =
+          Enum.reject(entries, fn e ->
+            Enum.any?(match.members, &(&1.character_id == e.character_id))
+          end)
+
         if length(remaining) >= required_group_size(instance_type) do
           try_form_groups(state, instance_type, difficulty, remaining)
         else
@@ -373,9 +383,10 @@ defmodule BezgelorWorld.GroupFinder.GroupFinder do
       instance_id: match.instance_id,
       instance_type: instance_type,
       difficulty: difficulty,
-      members: Enum.map(match.members, fn m ->
-        Map.put(m, :accepted, nil)
-      end),
+      members:
+        Enum.map(match.members, fn m ->
+          Map.put(m, :accepted, nil)
+        end),
       created_at: now,
       expires_at: now + @confirm_timeout
     }
@@ -398,10 +409,7 @@ defmodule BezgelorWorld.GroupFinder.GroupFinder do
 
     Logger.info("Match #{match_id} formed for #{instance_type} (#{difficulty})")
 
-    %{state |
-      pending_matches: Map.put(state.pending_matches, match_id, pending),
-      stats: stats
-    }
+    %{state | pending_matches: Map.put(state.pending_matches, match_id, pending), stats: stats}
   end
 
   defp update_match_response(state, match_id, character_id, accepted) do
@@ -448,12 +456,12 @@ defmodule BezgelorWorld.GroupFinder.GroupFinder do
     leader_id = hd(match.members).character_id
 
     case InstanceSupervisor.start_instance(
-      instance_guid,
-      match.instance_id,
-      match.difficulty,
-      group_id: group_id,
-      leader_id: leader_id
-    ) do
+           instance_guid,
+           match.instance_id,
+           match.difficulty,
+           group_id: group_id,
+           leader_id: leader_id
+         ) do
       {:ok, _pid} ->
         # Notify players of success
         Enum.each(match.members, fn m ->
@@ -462,9 +470,10 @@ defmodule BezgelorWorld.GroupFinder.GroupFinder do
 
         stats = Map.update!(state.stats, :matches_completed, &(&1 + 1))
 
-        %{state |
-          pending_matches: Map.delete(state.pending_matches, match.match_id),
-          stats: stats
+        %{
+          state
+          | pending_matches: Map.delete(state.pending_matches, match.match_id),
+            stats: stats
         }
 
       {:error, reason} ->
@@ -553,13 +562,17 @@ defmodule BezgelorWorld.GroupFinder.GroupFinder do
     queue = Map.get(state.queues, entry.instance_type, [])
 
     # Simple estimation based on queue depth and role scarcity
-    base_wait = length(queue) * 30_000  # 30s per person ahead
+    # 30s per person ahead
+    base_wait = length(queue) * 30_000
 
     role_factor =
       cond do
-        :tank in entry.roles -> 0.5   # Tanks queue faster
-        :healer in entry.roles -> 0.7 # Healers queue faster
-        true -> 1.5                    # DPS queue slower
+        # Tanks queue faster
+        :tank in entry.roles -> 0.5
+        # Healers queue faster
+        :healer in entry.roles -> 0.7
+        # DPS queue slower
+        true -> 1.5
       end
 
     round(base_wait * role_factor)
@@ -567,6 +580,7 @@ defmodule BezgelorWorld.GroupFinder.GroupFinder do
 
   defp queue_position(state, entry) do
     queue = Map.get(state.queues, entry.instance_type, [])
+
     case Enum.find_index(queue, &(&1.character_id == entry.character_id)) do
       nil -> length(queue)
       idx -> idx + 1

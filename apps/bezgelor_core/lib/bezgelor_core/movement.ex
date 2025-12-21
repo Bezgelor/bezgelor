@@ -241,7 +241,11 @@ defmodule BezgelorCore.Movement do
 
   defp find_position_at_distance([current], _target, _accumulated), do: current
 
-  defp find_position_at_distance([{x1, y1, z1} = _current, {x2, y2, z2} = next | rest], target, accumulated) do
+  defp find_position_at_distance(
+         [{x1, y1, z1} = _current, {x2, y2, z2} = next | rest],
+         target,
+         accumulated
+       ) do
     v1 = %Vector3{x: x1, y: y1, z: z1}
     v2 = %Vector3{x: x2, y: y2, z: z2}
     segment_length = Vector3.distance(v1, v2)
@@ -254,6 +258,153 @@ defmodule BezgelorCore.Movement do
     else
       find_position_at_distance([next | rest], target, accumulated + segment_length)
     end
+  end
+
+  @doc """
+  Generate a chase path toward a target, stopping at attack range.
+
+  ## Parameters
+
+  - `current_pos` - Current position of the chaser
+  - `target_pos` - Position of the target
+  - `attack_range` - Distance at which to stop (attack range)
+  - `opts` - Options:
+    - `:step_size` - Distance between waypoints (default 2.0)
+
+  ## Returns
+
+  List of waypoints from current position to attack range distance from target.
+  Returns empty list if already in range.
+  """
+  @spec chase_path(position(), position(), float(), keyword()) :: path()
+  def chase_path(current_pos, target_pos, attack_range, opts \\ []) do
+    step_size = Keyword.get(opts, :step_size, @step_size)
+
+    {cx, cy, cz} = current_pos
+    {tx, ty, tz} = target_pos
+
+    dx = tx - cx
+    dy = ty - cy
+    dz = tz - cz
+    total_distance = :math.sqrt(dx * dx + dy * dy + dz * dz)
+
+    # Already in range
+    if total_distance <= attack_range do
+      []
+    else
+      # Calculate stop point (attack_range distance from target)
+      stop_distance = total_distance - attack_range
+
+      # Normalize direction
+      nx = dx / total_distance
+      ny = dy / total_distance
+      nz = dz / total_distance
+
+      # Generate waypoints
+      num_steps = ceil(stop_distance / step_size)
+
+      0..num_steps
+      |> Enum.map(fn step ->
+        progress = min(step * step_size / stop_distance, 1.0)
+
+        {
+          cx + nx * stop_distance * progress,
+          cy + ny * stop_distance * progress,
+          cz + nz * stop_distance * progress
+        }
+      end)
+    end
+  end
+
+  @doc """
+  Generate path for ranged creature to maintain optimal distance.
+
+  Moves to the middle of the min/max range to maintain safe attack distance.
+  Will move backward if too close to target, forward if too far.
+
+  ## Parameters
+
+  - `current_pos` - Current position
+  - `target_pos` - Target position
+  - `min_range` - Minimum safe distance
+  - `max_range` - Maximum attack range
+
+  ## Returns
+
+  Path to optimal position (middle of min/max range from target).
+  Returns empty list if already in optimal range.
+  """
+  @spec ranged_position_path(position(), position(), float(), float()) :: path()
+  def ranged_position_path(current_pos, target_pos, min_range, max_range) do
+    {cx, cy, cz} = current_pos
+    {tx, ty, tz} = target_pos
+
+    dx = tx - cx
+    dy = ty - cy
+    dz = tz - cz
+    current_distance = :math.sqrt(dx * dx + dy * dy + dz * dz)
+
+    optimal_distance = (min_range + max_range) / 2
+
+    cond do
+      # Already in optimal zone
+      current_distance >= min_range and current_distance <= max_range ->
+        []
+
+      # Too close - back away from target
+      current_distance < min_range ->
+        # Normalize direction AWAY from target
+        nx = -dx / current_distance
+        ny = -dy / current_distance
+        nz = -dz / current_distance
+
+        # Move to optimal distance
+        move_distance = optimal_distance - current_distance
+
+        generate_path_direction({cx, cy, cz}, {nx, ny, nz}, move_distance)
+
+      # Too far - move closer (use chase_path logic)
+      current_distance > max_range ->
+        chase_path(current_pos, target_pos, optimal_distance)
+    end
+  end
+
+  # Generate path in a specific direction for a given distance
+  defp generate_path_direction({cx, cy, cz}, {nx, ny, nz}, distance) do
+    num_steps = ceil(distance / @step_size)
+
+    0..num_steps
+    |> Enum.map(fn step ->
+      progress = min(step * @step_size / distance, 1.0)
+
+      {
+        cx + nx * distance * progress,
+        cy + ny * distance * progress,
+        cz + nz * distance * progress
+      }
+    end)
+  end
+
+  @doc """
+  Calculate rotation to face a target position.
+
+  Returns rotation in radians (yaw around Y axis).
+  Uses atan2(dx, dz) convention where +Z is 0, +X is PI/2.
+
+  ## Parameters
+
+  - `current` - Current position as {x, y, z}
+  - `target` - Target position as {x, y, z}
+
+  ## Returns
+
+  Rotation in radians.
+  """
+  @spec rotation_toward(position(), position()) :: float()
+  def rotation_toward({cx, _cy, cz}, {tx, _ty, tz}) do
+    dx = tx - cx
+    dz = tz - cz
+    :math.atan2(dx, dz)
   end
 
   @doc """

@@ -48,15 +48,13 @@ defmodule BezgelorPortalWeb.Admin.CharacterDetailLive do
            currency_form: %{"type" => "money", "amount" => ""},
            item_form: %{"item_id" => "", "quantity" => "1"}
          )
-         |> load_tab_data(:overview),
-         layout: {BezgelorPortalWeb.Layouts, :admin}}
+         |> load_tab_data(:overview), layout: {BezgelorPortalWeb.Layouts, :admin}}
 
       {:error, :not_found} ->
         {:ok,
          socket
          |> put_flash(:error, "Character not found")
-         |> push_navigate(to: ~p"/admin/characters"),
-         layout: {BezgelorPortalWeb.Layouts, :admin}}
+         |> push_navigate(to: ~p"/admin/characters"), layout: {BezgelorPortalWeb.Layouts, :admin}}
     end
   end
 
@@ -69,22 +67,28 @@ defmodule BezgelorPortalWeb.Admin.CharacterDetailLive do
         <div>
           <h1 class="text-2xl font-bold flex items-center gap-3">
             {@character.name}
-            <span class="badge badge-lg" style={"background-color: #{GameData.class_color(@character.class)}; color: white"}>
+            <span
+              class="badge badge-lg"
+              style={"background-color: #{GameData.class_color(@character.class)}; color: white"}
+            >
               {GameData.class_name(@character.class)}
             </span>
             <.faction_badge race_id={@character.race} />
           </h1>
           <p class="text-base-content/70">
             Level {@character.level} {GameData.race_name(@character.race)} •
-            Owner: <.link navigate={~p"/admin/users/#{@character.account_id}"} class="link link-primary">{@character.account.email}</.link>
+            Owner:
+            <.link navigate={~p"/admin/users/#{@character.account_id}"} class="link link-primary">
+              {@character.account.email}
+            </.link>
           </p>
         </div>
         <%= if @character.deleted_at do %>
           <span class="badge badge-error badge-lg">Deleted</span>
         <% end %>
       </div>
-
-      <!-- Actions Card -->
+      
+    <!-- Actions Card -->
       <div class="card bg-base-100 shadow">
         <div class="card-body">
           <h2 class="card-title">Admin Actions</h2>
@@ -95,8 +99,7 @@ defmodule BezgelorPortalWeb.Admin.CharacterDetailLive do
               class="btn btn-outline btn-sm"
               phx-click="show_level_modal"
             >
-              <.icon name="hero-arrow-trending-up" class="size-4" />
-              Set Level
+              <.icon name="hero-arrow-trending-up" class="size-4" /> Set Level
             </button>
 
             <button
@@ -105,8 +108,7 @@ defmodule BezgelorPortalWeb.Admin.CharacterDetailLive do
               class="btn btn-outline btn-sm"
               phx-click="show_teleport_modal"
             >
-              <.icon name="hero-map-pin" class="size-4" />
-              Teleport
+              <.icon name="hero-map-pin" class="size-4" /> Teleport
             </button>
 
             <button
@@ -115,8 +117,7 @@ defmodule BezgelorPortalWeb.Admin.CharacterDetailLive do
               class="btn btn-outline btn-sm"
               phx-click="show_rename_modal"
             >
-              <.icon name="hero-pencil" class="size-4" />
-              Rename
+              <.icon name="hero-pencil" class="size-4" /> Rename
             </button>
 
             <button
@@ -125,8 +126,7 @@ defmodule BezgelorPortalWeb.Admin.CharacterDetailLive do
               class="btn btn-outline btn-sm"
               phx-click="show_currency_modal"
             >
-              <.icon name="hero-currency-dollar" class="size-4" />
-              Grant Currency
+              <.icon name="hero-currency-dollar" class="size-4" /> Grant Currency
             </button>
 
             <button
@@ -135,8 +135,7 @@ defmodule BezgelorPortalWeb.Admin.CharacterDetailLive do
               class="btn btn-outline btn-sm"
               phx-click="show_item_modal"
             >
-              <.icon name="hero-gift" class="size-4" />
-              Grant Item
+              <.icon name="hero-gift" class="size-4" /> Grant Item
             </button>
 
             <%= if @character.deleted_at do %>
@@ -147,8 +146,7 @@ defmodule BezgelorPortalWeb.Admin.CharacterDetailLive do
                 phx-click="restore_character"
                 data-confirm="Are you sure you want to restore this character?"
               >
-                <.icon name="hero-arrow-uturn-left" class="size-4" />
-                Restore
+                <.icon name="hero-arrow-uturn-left" class="size-4" /> Restore
               </button>
             <% else %>
               <button
@@ -158,15 +156,14 @@ defmodule BezgelorPortalWeb.Admin.CharacterDetailLive do
                 phx-click="delete_character"
                 data-confirm="Are you sure you want to delete this character?"
               >
-                <.icon name="hero-trash" class="size-4" />
-                Delete
+                <.icon name="hero-trash" class="size-4" /> Delete
               </button>
             <% end %>
           </div>
         </div>
       </div>
-
-      <!-- Tabs -->
+      
+    <!-- Tabs -->
       <div role="tablist" class="tabs tabs-boxed bg-base-100 p-1 w-fit">
         <button
           :for={tab <- [:overview, :inventory, :currencies]}
@@ -179,8 +176,8 @@ defmodule BezgelorPortalWeb.Admin.CharacterDetailLive do
           {tab_label(tab)}
         </button>
       </div>
-
-      <!-- Tab Content -->
+      
+    <!-- Tab Content -->
       <div class="card bg-base-100 shadow">
         <div class="card-body">
           <%= case @active_tab do %>
@@ -197,8 +194,8 @@ defmodule BezgelorPortalWeb.Admin.CharacterDetailLive do
           <% end %>
         </div>
       </div>
-
-      <!-- Modals -->
+      
+    <!-- Modals -->
       <.level_modal
         :if={@show_level_modal}
         form={@level_form}
@@ -280,9 +277,10 @@ defmodule BezgelorPortalWeb.Admin.CharacterDetailLive do
           <div class="flex justify-between">
             <span class="text-base-content/70">Position</span>
             <span class="font-mono text-xs">
-              {Float.round(@character.location_x, 2)},
-              {Float.round(@character.location_y, 2)},
-              {Float.round(@character.location_z, 2)}
+              {Float.round(@character.location_x, 2)}, {Float.round(@character.location_y, 2)}, {Float.round(
+                @character.location_z,
+                2
+              )}
             </span>
           </div>
         </div>
@@ -333,8 +331,13 @@ defmodule BezgelorPortalWeb.Admin.CharacterDetailLive do
               </thead>
               <tbody>
                 <tr :for={item <- @equipped_items}>
-                  <td>{slot_name(item.slot)} <span class="text-base-content/50">({item.slot})</span></td>
-                  <td>{item_name(item.item_id)} <span class="text-base-content/50">({item.item_id})</span></td>
+                  <td>
+                    {slot_name(item.slot)} <span class="text-base-content/50">({item.slot})</span>
+                  </td>
+                  <td>
+                    {item_name(item.item_id)}
+                    <span class="text-base-content/50">({item.item_id})</span>
+                  </td>
                   <td>{item.quantity}</td>
                   <td :if={@can_modify_items}>
                     <button
@@ -374,7 +377,10 @@ defmodule BezgelorPortalWeb.Admin.CharacterDetailLive do
                 <tr :for={item <- @inventory_items}>
                   <td>{item.container_type}</td>
                   <td>{item.bag_index}</td>
-                  <td>{item_name(item.item_id)} <span class="text-base-content/50">({item.item_id})</span></td>
+                  <td>
+                    {item_name(item.item_id)}
+                    <span class="text-base-content/50">({item.item_id})</span>
+                  </td>
                   <td>{item.quantity}</td>
                   <td :if={@can_modify_items}>
                     <button
@@ -480,15 +486,33 @@ defmodule BezgelorPortalWeb.Admin.CharacterDetailLive do
         <div class="grid grid-cols-3 gap-2">
           <div class="form-control">
             <label class="label"><span class="label-text">X</span></label>
-            <input type="text" name="x" value={@form["x"]} placeholder={Float.to_string(@character.location_x)} class="input input-bordered" />
+            <input
+              type="text"
+              name="x"
+              value={@form["x"]}
+              placeholder={Float.to_string(@character.location_x)}
+              class="input input-bordered"
+            />
           </div>
           <div class="form-control">
             <label class="label"><span class="label-text">Y</span></label>
-            <input type="text" name="y" value={@form["y"]} placeholder={Float.to_string(@character.location_y)} class="input input-bordered" />
+            <input
+              type="text"
+              name="y"
+              value={@form["y"]}
+              placeholder={Float.to_string(@character.location_y)}
+              class="input input-bordered"
+            />
           </div>
           <div class="form-control">
             <label class="label"><span class="label-text">Z</span></label>
-            <input type="text" name="z" value={@form["z"]} placeholder={Float.to_string(@character.location_z)} class="input input-bordered" />
+            <input
+              type="text"
+              name="z"
+              value={@form["z"]}
+              placeholder={Float.to_string(@character.location_z)}
+              class="input input-bordered"
+            />
           </div>
         </div>
         <p class="text-sm text-base-content/70">
@@ -652,16 +676,35 @@ defmodule BezgelorPortalWeb.Admin.CharacterDetailLive do
 
   # Modal show/hide handlers
   @impl true
-  def handle_event("show_level_modal", _, socket), do: {:noreply, assign(socket, show_level_modal: true)}
-  def handle_event("hide_level_modal", _, socket), do: {:noreply, assign(socket, show_level_modal: false)}
-  def handle_event("show_teleport_modal", _, socket), do: {:noreply, assign(socket, show_teleport_modal: true)}
-  def handle_event("hide_teleport_modal", _, socket), do: {:noreply, assign(socket, show_teleport_modal: false)}
-  def handle_event("show_rename_modal", _, socket), do: {:noreply, assign(socket, show_rename_modal: true)}
-  def handle_event("hide_rename_modal", _, socket), do: {:noreply, assign(socket, show_rename_modal: false)}
-  def handle_event("show_currency_modal", _, socket), do: {:noreply, assign(socket, show_currency_modal: true)}
-  def handle_event("hide_currency_modal", _, socket), do: {:noreply, assign(socket, show_currency_modal: false)}
-  def handle_event("show_item_modal", _, socket), do: {:noreply, assign(socket, show_item_modal: true)}
-  def handle_event("hide_item_modal", _, socket), do: {:noreply, assign(socket, show_item_modal: false)}
+  def handle_event("show_level_modal", _, socket),
+    do: {:noreply, assign(socket, show_level_modal: true)}
+
+  def handle_event("hide_level_modal", _, socket),
+    do: {:noreply, assign(socket, show_level_modal: false)}
+
+  def handle_event("show_teleport_modal", _, socket),
+    do: {:noreply, assign(socket, show_teleport_modal: true)}
+
+  def handle_event("hide_teleport_modal", _, socket),
+    do: {:noreply, assign(socket, show_teleport_modal: false)}
+
+  def handle_event("show_rename_modal", _, socket),
+    do: {:noreply, assign(socket, show_rename_modal: true)}
+
+  def handle_event("hide_rename_modal", _, socket),
+    do: {:noreply, assign(socket, show_rename_modal: false)}
+
+  def handle_event("show_currency_modal", _, socket),
+    do: {:noreply, assign(socket, show_currency_modal: true)}
+
+  def handle_event("hide_currency_modal", _, socket),
+    do: {:noreply, assign(socket, show_currency_modal: false)}
+
+  def handle_event("show_item_modal", _, socket),
+    do: {:noreply, assign(socket, show_item_modal: true)}
+
+  def handle_event("hide_item_modal", _, socket),
+    do: {:noreply, assign(socket, show_item_modal: false)}
 
   @impl true
   def handle_event("set_level", %{"level" => level_str}, socket) do
@@ -760,10 +803,16 @@ defmodule BezgelorPortalWeb.Admin.CharacterDetailLive do
          currency_type when not is_nil(currency_type) <- currency_id_to_atom(currency_id) do
       case Inventory.modify_currency(character.id, currency_type, amount) do
         {:ok, _} ->
-          Authorization.log_action(admin, "character.grant_currency", "character", character.id, %{
-            currency_type: currency_type,
-            amount: amount
-          })
+          Authorization.log_action(
+            admin,
+            "character.grant_currency",
+            "character",
+            character.id,
+            %{
+              currency_type: currency_type,
+              amount: amount
+            }
+          )
 
           {:noreply,
            socket
@@ -794,7 +843,12 @@ defmodule BezgelorPortalWeb.Admin.CharacterDetailLive do
     with {item_id, ""} <- Integer.parse(item_id_str),
          {quantity, ""} <- Integer.parse(qty_str) do
       # Send via mail system
-      case BezgelorDb.Mail.send_system_mail(character.id, "Admin Item Grant", "You have received an item from an administrator.", attachments: [{item_id, quantity}]) do
+      case BezgelorDb.Mail.send_system_mail(
+             character.id,
+             "Admin Item Grant",
+             "You have received an item from an administrator.",
+             attachments: [{item_id, quantity}]
+           ) do
         {:ok, _} ->
           Authorization.log_action(admin, "character.grant_item", "character", character.id, %{
             item_id: item_id,
@@ -935,6 +989,7 @@ defmodule BezgelorPortalWeb.Admin.CharacterDetailLive do
   defp format_datetime(datetime), do: Calendar.strftime(datetime, "%Y-%m-%d %H:%M")
 
   defp format_number(nil), do: "0"
+
   defp format_number(n) when is_integer(n) do
     n
     |> Integer.to_string()
@@ -957,6 +1012,7 @@ defmodule BezgelorPortalWeb.Admin.CharacterDetailLive do
 
   defp maybe_put_float(map, _key, ""), do: map
   defp maybe_put_float(map, _key, nil), do: map
+
   defp maybe_put_float(map, key, value) do
     case Float.parse(value) do
       {f, _} -> Map.put(map, key, f)
@@ -966,6 +1022,7 @@ defmodule BezgelorPortalWeb.Admin.CharacterDetailLive do
 
   defp maybe_put_int(map, _key, ""), do: map
   defp maybe_put_int(map, _key, nil), do: map
+
   defp maybe_put_int(map, key, value) do
     case Integer.parse(value) do
       {i, ""} -> Map.put(map, key, i)

@@ -12,13 +12,13 @@ defmodule BezgelorDb.Schema.HousingFabkit do
   @type t :: %__MODULE__{}
 
   schema "housing_fabkits" do
-    belongs_to :plot, BezgelorDb.Schema.HousingPlot
+    belongs_to(:plot, BezgelorDb.Schema.HousingPlot)
 
-    field :socket_index, :integer
-    field :fabkit_id, :integer
-    field :state, :map, default: %{}
+    field(:socket_index, :integer)
+    field(:fabkit_id, :integer)
+    field(:state, :map, default: %{})
 
-    field :installed_at, :utc_datetime
+    field(:installed_at, :utc_datetime)
   end
 
   def changeset(fabkit, attrs) do

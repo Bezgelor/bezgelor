@@ -136,7 +136,8 @@ defmodule BezgelorProtocol.Packets.World.ServerNewRealm do
   end
 
   defp realm_address_to_uint32(address) when is_integer(address), do: address
-  defp realm_address_to_uint32(_), do: 0x7F000001  # 127.0.0.1
+  # 127.0.0.1
+  defp realm_address_to_uint32(_), do: 0x7F000001
 
   # Convert realm type atom to integer
   defp realm_type_to_int(:pve), do: @realm_type_pve

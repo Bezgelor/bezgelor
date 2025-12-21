@@ -58,7 +58,9 @@ defmodule BezgelorWorld.Cinematic.Cinematics.NoviceTutorialOnEnter do
     race = get_race(session)
 
     state
-    |> CinematicBase.set_start_transition(Transition.new(delay: 0, flags: 1, end_tran: 2, start: 1500, mid: 0, end_duration: 1500))
+    |> CinematicBase.set_start_transition(
+      Transition.new(delay: 0, flags: 1, end_tran: 2, start: 1500, mid: 0, end_duration: 1500)
+    )
     |> CinematicBase.set_end_transition(Transition.new(delay: 48_500, flags: 0, end_tran: 0))
     |> add_universal_actors(faction)
     |> add_faction_actor(faction)
@@ -157,7 +159,8 @@ defmodule BezgelorWorld.Cinematic.Cinematics.NoviceTutorialOnEnter do
         position: pos
       )
 
-    state = CinematicBase.add_actor(state, head_actor, [%{visual_effect_id: @vfx_ambient, delay: 0}])
+    state =
+      CinematicBase.add_actor(state, head_actor, [%{visual_effect_id: @vfx_ambient, delay: 0}])
 
     # Add faction holo actor with visibility flickering
     holo_actor =

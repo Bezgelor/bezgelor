@@ -27,7 +27,8 @@ defmodule BezgelorCore.Reputation do
     {:exalted, 42000, :infinity}
   ]
 
-  @type level :: :hated | :hostile | :unfriendly | :neutral | :friendly | :honored | :revered | :exalted
+  @type level ::
+          :hated | :hostile | :unfriendly | :neutral | :friendly | :honored | :revered | :exalted
 
   @doc "Convert raw standing points to a reputation level."
   @spec standing_to_level(integer()) :: level()
@@ -65,10 +66,14 @@ defmodule BezgelorCore.Reputation do
   def vendor_discount(:hostile), do: 0.0
   def vendor_discount(:unfriendly), do: 0.0
   def vendor_discount(:neutral), do: 0.0
-  def vendor_discount(:friendly), do: 0.05      # 5% discount
-  def vendor_discount(:honored), do: 0.10       # 10% discount
-  def vendor_discount(:revered), do: 0.15       # 15% discount
-  def vendor_discount(:exalted), do: 0.20       # 20% discount
+  # 5% discount
+  def vendor_discount(:friendly), do: 0.05
+  # 10% discount
+  def vendor_discount(:honored), do: 0.10
+  # 15% discount
+  def vendor_discount(:revered), do: 0.15
+  # 20% discount
+  def vendor_discount(:exalted), do: 0.20
 
   @doc "Get vendor discount for a standing value."
   @spec vendor_discount_for_standing(integer()) :: float()

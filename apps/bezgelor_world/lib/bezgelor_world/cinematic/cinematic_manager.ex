@@ -36,7 +36,8 @@ defmodule BezgelorWorld.Cinematic.CinematicManager do
   @doc """
   Play a specific cinematic by ID for a player.
   """
-  @spec play_cinematic(map(), non_neg_integer()) :: {:ok, map(), list()} | {:error, :unknown_cinematic}
+  @spec play_cinematic(map(), non_neg_integer()) ::
+          {:ok, map(), list()} | {:error, :unknown_cinematic}
   def play_cinematic(session_data, cinematic_id) do
     case get_cinematic_module(cinematic_id) do
       nil ->

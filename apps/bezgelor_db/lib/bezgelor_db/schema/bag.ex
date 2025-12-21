@@ -18,16 +18,16 @@ defmodule BezgelorDb.Schema.Bag do
   @type t :: %__MODULE__{}
 
   schema "bags" do
-    belongs_to :character, BezgelorDb.Schema.Character
+    belongs_to(:character, BezgelorDb.Schema.Character)
 
     # Bag position (0 = backpack, 1-4 = equipped bags, 10+ = bank bags)
-    field :bag_index, :integer
+    field(:bag_index, :integer)
 
     # Bag item template (nil for backpack)
-    field :item_id, :integer
+    field(:item_id, :integer)
 
     # Bag capacity
-    field :size, :integer, default: 12
+    field(:size, :integer, default: 12)
 
     timestamps(type: :utc_datetime)
   end

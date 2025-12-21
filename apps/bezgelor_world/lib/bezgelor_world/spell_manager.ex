@@ -64,10 +64,19 @@ defmodule BezgelorWorld.SpellManager do
   - `{:ok, :casting, cast_time}` - Cast started with given duration
   - `{:error, reason}` - Cast failed with reason
   """
-  @spec cast_spell(non_neg_integer(), non_neg_integer(), non_neg_integer() | nil, tuple() | nil, map()) ::
+  @spec cast_spell(
+          non_neg_integer(),
+          non_neg_integer(),
+          non_neg_integer() | nil,
+          tuple() | nil,
+          map()
+        ) ::
           {:ok, :instant, map()} | {:ok, :casting, non_neg_integer()} | {:error, atom()}
   def cast_spell(player_guid, spell_id, target_guid, target_position, caster_stats) do
-    GenServer.call(__MODULE__, {:cast_spell, player_guid, spell_id, target_guid, target_position, caster_stats})
+    GenServer.call(
+      __MODULE__,
+      {:cast_spell, player_guid, spell_id, target_guid, target_position, caster_stats}
+    )
   end
 
   @doc """
@@ -132,7 +141,9 @@ defmodule BezgelorWorld.SpellManager do
   - `position` - Center position for the telegraph
   - `recipient_guids` - List of player GUIDs who should see the telegraph
   """
-  @spec emit_telegraph(non_neg_integer(), Spell.t(), {float(), float(), float()}, [non_neg_integer()]) :: :ok
+  @spec emit_telegraph(non_neg_integer(), Spell.t(), {float(), float(), float()}, [
+          non_neg_integer()
+        ]) :: :ok
   def emit_telegraph(caster_guid, spell, position, recipient_guids) do
     if Spell.aoe?(spell) and spell.aoe_radius > 0 do
       # AoE spells show a circle telegraph
@@ -168,7 +179,11 @@ defmodule BezgelorWorld.SpellManager do
   end
 
   @impl true
-  def handle_call({:cast_spell, player_guid, spell_id, target_guid, target_position, caster_stats}, _from, state) do
+  def handle_call(
+        {:cast_spell, player_guid, spell_id, target_guid, target_position, caster_stats},
+        _from,
+        state
+      ) do
     player = get_player_state(state, player_guid)
 
     case validate_cast(spell_id, player) do
@@ -180,7 +195,9 @@ defmodule BezgelorWorld.SpellManager do
           {:reply, {:ok, :instant, result}, state}
         else
           # Cast time spell - start casting
-          {player, _timer_ref} = start_cast(spell, target_guid, target_position, player, player_guid)
+          {player, _timer_ref} =
+            start_cast(spell, target_guid, target_position, player, player_guid)
+
           state = put_player_state(state, player_guid, player)
           {:reply, {:ok, :casting, spell.cast_time}, state}
         end
@@ -257,13 +274,14 @@ defmodule BezgelorWorld.SpellManager do
         spell = Spell.get(spell_id)
 
         # Apply cooldowns
-        cooldowns = Cooldown.apply_cast(
-          player.cooldowns,
-          spell_id,
-          spell.cooldown,
-          spell.gcd,
-          Spell.global_cooldown()
-        )
+        cooldowns =
+          Cooldown.apply_cast(
+            player.cooldowns,
+            spell_id,
+            spell.cooldown,
+            spell.gcd,
+            Spell.global_cooldown()
+          )
 
         player = %{player | cast: nil, cooldowns: cooldowns}
         state = put_player_state(state, player_guid, player)
@@ -310,13 +328,14 @@ defmodule BezgelorWorld.SpellManager do
 
   defp do_instant_cast(spell, player, caster_stats) do
     # Apply cooldowns
-    cooldowns = Cooldown.apply_cast(
-      player.cooldowns,
-      spell.id,
-      spell.cooldown,
-      spell.gcd,
-      Spell.global_cooldown()
-    )
+    cooldowns =
+      Cooldown.apply_cast(
+        player.cooldowns,
+        spell.id,
+        spell.cooldown,
+        spell.gcd,
+        Spell.global_cooldown()
+      )
 
     player = %{player | cooldowns: cooldowns}
 
@@ -335,7 +354,8 @@ defmodule BezgelorWorld.SpellManager do
 
   defp start_cast(spell, target_guid, target_position, player, player_guid) do
     # Schedule cast completion
-    timer_ref = Process.send_after(self(), {:cast_complete, player_guid, spell.id}, spell.cast_time)
+    timer_ref =
+      Process.send_after(self(), {:cast_complete, player_guid, spell.id}, spell.cast_time)
 
     cast = %{
       spell_id: spell.id,

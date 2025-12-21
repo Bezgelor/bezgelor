@@ -28,7 +28,9 @@ defmodule BezgelorProtocol.Handler.ItemAuctionsHandler do
   def handle(_payload, state) do
     # Verify session has an authenticated character
     account_id = state.session_data[:account_id]
-    character_id = state.session_data[:character_id] || get_in(state.session_data, [:character, :id])
+
+    character_id =
+      state.session_data[:character_id] || get_in(state.session_data, [:character, :id])
 
     cond do
       is_nil(account_id) ->
@@ -40,7 +42,9 @@ defmodule BezgelorProtocol.Handler.ItemAuctionsHandler do
         {:ok, state}
 
       true ->
-        Logger.debug("[ItemAuctions] Player requested owned item auctions for character #{character_id}")
+        Logger.debug(
+          "[ItemAuctions] Player requested owned item auctions for character #{character_id}"
+        )
 
         # TODO: Fetch player's auctions from database using character_id
         # The character_id is used to ensure we only return auctions owned

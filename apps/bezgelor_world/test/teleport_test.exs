@@ -49,7 +49,11 @@ defmodule BezgelorWorld.TeleportTest do
       assert {:error, :invalid_world} = Teleport.to_position(fake_session, 0, {0.0, 0.0, 0.0})
     end
 
-    test "teleports player to new position in same zone", %{zone_id: zone_id, instance_id: instance_id, world_id: world_id} do
+    test "teleports player to new position in same zone", %{
+      zone_id: zone_id,
+      instance_id: instance_id,
+      world_id: world_id
+    } do
       player_guid = System.unique_integer([:positive])
 
       # Add player entity to zone
@@ -76,7 +80,8 @@ defmodule BezgelorWorld.TeleportTest do
       new_position = {100.0, 50.0, 200.0}
       new_rotation = {0.0, 0.0, 1.57}
 
-      assert {:ok, updated_session} = Teleport.to_position(session, world_id, new_position, new_rotation)
+      assert {:ok, updated_session} =
+               Teleport.to_position(session, world_id, new_position, new_rotation)
 
       # Verify session was updated
       assert updated_session.session_data.spawn_location.position == new_position

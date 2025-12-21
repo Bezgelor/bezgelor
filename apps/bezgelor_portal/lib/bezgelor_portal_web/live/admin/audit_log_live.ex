@@ -30,15 +30,19 @@ defmodule BezgelorPortalWeb.Admin.AuditLogLive do
        date_to: nil,
        # UI state
        expanded_entry: nil
-     ),
-     layout: {BezgelorPortalWeb.Layouts, :admin}}
+     ), layout: {BezgelorPortalWeb.Layouts, :admin}}
   end
 
   @impl true
   def handle_params(params, _uri, socket) do
     admin_id = parse_int(params["admin_id"])
     action_filter = params["action"] || ""
-    target_type = if params["target_type"] && params["target_type"] != "", do: params["target_type"], else: nil
+
+    target_type =
+      if params["target_type"] && params["target_type"] != "",
+        do: params["target_type"],
+        else: nil
+
     date_from = parse_date(params["from"])
     date_to = parse_date(params["to"])
     page = String.to_integer(params["page"] || "1")
@@ -69,17 +73,15 @@ defmodule BezgelorPortalWeb.Admin.AuditLogLive do
         </div>
         <div class="flex gap-2">
           <button type="button" class="btn btn-outline btn-sm" phx-click="export_csv">
-            <.icon name="hero-document-arrow-down" class="size-4" />
-            Export CSV
+            <.icon name="hero-document-arrow-down" class="size-4" /> Export CSV
           </button>
           <button type="button" class="btn btn-outline btn-sm" phx-click="export_json">
-            <.icon name="hero-code-bracket" class="size-4" />
-            Export JSON
+            <.icon name="hero-code-bracket" class="size-4" /> Export JSON
           </button>
         </div>
       </div>
-
-      <!-- Filters -->
+      
+    <!-- Filters -->
       <div class="card bg-base-100 shadow">
         <div class="card-body">
           <form phx-submit="filter" class="flex flex-wrap gap-4 items-end">
@@ -147,8 +149,7 @@ defmodule BezgelorPortalWeb.Admin.AuditLogLive do
             </div>
 
             <button type="submit" class="btn btn-primary btn-sm">
-              <.icon name="hero-funnel" class="size-4" />
-              Filter
+              <.icon name="hero-funnel" class="size-4" /> Filter
             </button>
 
             <.link
@@ -161,8 +162,8 @@ defmodule BezgelorPortalWeb.Admin.AuditLogLive do
           </form>
         </div>
       </div>
-
-      <!-- Results -->
+      
+    <!-- Results -->
       <div class="card bg-base-100 shadow">
         <div class="overflow-x-auto">
           <table class="table">
@@ -188,7 +189,11 @@ defmodule BezgelorPortalWeb.Admin.AuditLogLive do
                   <tr class="hover cursor-pointer" phx-click="toggle_expand" phx-value-id={entry.id}>
                     <td>
                       <.icon
-                        name={if @expanded_entry == entry.id, do: "hero-chevron-down", else: "hero-chevron-right"}
+                        name={
+                          if @expanded_entry == entry.id,
+                            do: "hero-chevron-down",
+                            else: "hero-chevron-right"
+                        }
                         class="size-4"
                       />
                     </td>
@@ -199,7 +204,7 @@ defmodule BezgelorPortalWeb.Admin.AuditLogLive do
                       <.link
                         navigate={~p"/admin/users/#{entry.admin_account_id}"}
                         class="link link-primary"
-                                             >
+                      >
                         {entry.admin_account.email}
                       </.link>
                     </td>
@@ -235,8 +240,8 @@ defmodule BezgelorPortalWeb.Admin.AuditLogLive do
             </tbody>
           </table>
         </div>
-
-        <!-- Pagination -->
+        
+    <!-- Pagination -->
         <div :if={@page > 1 or @has_more} class="card-body pt-0">
           <div class="flex justify-center gap-2">
             <.link
@@ -385,6 +390,7 @@ defmodule BezgelorPortalWeb.Admin.AuditLogLive do
 
   defp parse_int(nil), do: nil
   defp parse_int(""), do: nil
+
   defp parse_int(str) do
     case Integer.parse(str) do
       {i, ""} -> i
@@ -394,6 +400,7 @@ defmodule BezgelorPortalWeb.Admin.AuditLogLive do
 
   defp parse_date(nil), do: nil
   defp parse_date(""), do: nil
+
   defp parse_date(str) do
     case Date.from_iso8601(str) do
       {:ok, date} -> date
@@ -470,6 +477,7 @@ defmodule BezgelorPortalWeb.Admin.AuditLogLive do
 
   defp csv_escape(nil), do: ""
   defp csv_escape(value) when is_integer(value), do: Integer.to_string(value)
+
   defp csv_escape(value) when is_binary(value) do
     if String.contains?(value, [",", "\"", "\n"]) do
       "\"#{String.replace(value, "\"", "\"\"")}\""

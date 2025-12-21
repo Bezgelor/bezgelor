@@ -92,6 +92,61 @@ defmodule BezgelorCore.CreatureTemplateTest do
     end
   end
 
+  describe "movement_duration/2" do
+    test "calculates duration based on distance and speed" do
+      # 5 units/second
+      template = %CreatureTemplate{movement_speed: 5.0}
+
+      # 10 unit path = 2 seconds = 2000ms
+      duration = CreatureTemplate.movement_duration(template, 10.0)
+
+      assert duration == 2000
+    end
+
+    test "uses default speed when not specified" do
+      template = %CreatureTemplate{}
+
+      duration = CreatureTemplate.movement_duration(template, 10.0)
+
+      # Default 4.0 units/sec -> 2500ms for 10 units
+      assert duration == 2500
+    end
+  end
+
+  describe "movement_speed/1" do
+    test "returns specified speed" do
+      template = %CreatureTemplate{movement_speed: 7.5}
+
+      assert CreatureTemplate.movement_speed(template) == 7.5
+    end
+
+    test "returns default speed when not specified" do
+      template = %CreatureTemplate{}
+
+      assert CreatureTemplate.movement_speed(template) == 4.0
+    end
+  end
+
+  describe "attack_range/1" do
+    test "returns specified attack range" do
+      template = %CreatureTemplate{attack_range: 8.0}
+
+      assert CreatureTemplate.attack_range(template) == 8.0
+    end
+
+    test "returns melee default for non-ranged creatures" do
+      template = %CreatureTemplate{is_ranged: false}
+
+      assert CreatureTemplate.attack_range(template) == 5.0
+    end
+
+    test "returns ranged default for ranged creatures" do
+      template = %CreatureTemplate{is_ranged: true}
+
+      assert CreatureTemplate.attack_range(template) == 30.0
+    end
+  end
+
   describe "creature properties" do
     test "training dummy is passive with no damage" do
       dummy = CreatureTemplate.get(1)

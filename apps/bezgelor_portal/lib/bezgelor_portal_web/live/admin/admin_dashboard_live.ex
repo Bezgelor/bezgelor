@@ -34,8 +34,7 @@ defmodule BezgelorPortalWeb.Admin.AdminDashboardLive do
        permissions: permission_keys,
        stats: stats,
        recent_actions: recent_actions
-     ),
-     layout: {BezgelorPortalWeb.Layouts, :admin}}
+     ), layout: {BezgelorPortalWeb.Layouts, :admin}}
   end
 
   @impl true
@@ -45,8 +44,8 @@ defmodule BezgelorPortalWeb.Admin.AdminDashboardLive do
       <div>
         <h1 class="text-3xl font-bold">Admin Dashboard</h1>
       </div>
-
-      <!-- Stats Cards -->
+      
+    <!-- Stats Cards -->
       <div class="stats shadow w-full bg-base-100">
         <div class="stat">
           <div class="stat-figure text-primary">
@@ -139,8 +138,8 @@ defmodule BezgelorPortalWeb.Admin.AdminDashboardLive do
             />
           </div>
         </div>
-
-        <!-- Recent Admin Actions -->
+        
+    <!-- Recent Admin Actions -->
         <div class="space-y-4">
           <div class="flex items-center justify-between">
             <h2 class="text-xl font-semibold">Recent Activity</h2>

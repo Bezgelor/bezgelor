@@ -31,7 +31,7 @@ defmodule BezgelorWorld.CreatureManager do
 
   require Logger
 
-  alias BezgelorCore.{AI, CreatureTemplate, Entity}
+  alias BezgelorCore.{AI, CreatureTemplate, Entity, Movement}
   alias BezgelorWorld.{CombatBroadcaster, CreatureDeath, TickScheduler, WorldManager}
   alias BezgelorData.Store
   alias BezgelorWorld.Zone.Instance, as: ZoneInstance
@@ -42,7 +42,9 @@ defmodule BezgelorWorld.CreatureManager do
           template: CreatureTemplate.t(),
           ai: AI.t(),
           spawn_position: {float(), float(), float()},
-          respawn_timer: reference() | nil
+          respawn_timer: reference() | nil,
+          # Target position for combat (testing/simulation)
+          target_position: {float(), float(), float()} | nil
         }
 
   @type state :: %{
@@ -53,9 +55,6 @@ defmodule BezgelorWorld.CreatureManager do
   # NOTE: Removed @max_creatures_per_tick - the needs_ai_processing? filter
   # already limits to creatures that actually need updates. Batching with
   # Enum.take() was causing most creatures to never get processed.
-
-  # Combat timeout - creatures exit combat after this many ms without activity
-  @combat_timeout_ms 30_000
 
   ## Client API
 
@@ -100,6 +99,18 @@ defmodule BezgelorWorld.CreatureManager do
   @spec creature_enter_combat(non_neg_integer(), non_neg_integer()) :: :ok
   def creature_enter_combat(creature_guid, target_guid) do
     GenServer.cast(__MODULE__, {:creature_enter_combat, creature_guid, target_guid})
+  end
+
+  @doc "Update creature's position (for testing leash behavior)."
+  @spec update_creature_position(non_neg_integer(), {float(), float(), float()}) :: :ok
+  def update_creature_position(creature_guid, position) do
+    GenServer.cast(__MODULE__, {:update_creature_position, creature_guid, position})
+  end
+
+  @doc "Set target position for a creature (for testing chase behavior)."
+  @spec set_target_position(non_neg_integer(), {float(), float(), float()}) :: :ok
+  def set_target_position(creature_guid, position) do
+    GenServer.cast(__MODULE__, {:set_target_position, creature_guid, position})
   end
 
   @doc "Check if a creature is alive and targetable."
@@ -156,6 +167,25 @@ defmodule BezgelorWorld.CreatureManager do
   @spec get_spawn_definitions() :: [map()]
   def get_spawn_definitions do
     GenServer.call(__MODULE__, :get_spawn_definitions)
+  end
+
+  @doc """
+  Check aggro for a specific creature against nearby players.
+  If a player is within aggro range, the creature will enter combat.
+  """
+  @spec check_aggro_for_creature(non_neg_integer(), [map()]) :: :ok
+  def check_aggro_for_creature(creature_guid, nearby_players) do
+    GenServer.cast(__MODULE__, {:check_aggro, creature_guid, nearby_players})
+  end
+
+  @doc """
+  Get the current state of a creature by GUID.
+  Returns {:ok, creature_state} if found, :error if not found.
+  Useful for testing and debugging.
+  """
+  @spec get_creature_state(non_neg_integer()) :: {:ok, creature_state()} | :error
+  def get_creature_state(creature_guid) do
+    GenServer.call(__MODULE__, {:get_creature_state, creature_guid})
   end
 
   ## Server Callbacks
@@ -216,7 +246,8 @@ defmodule BezgelorWorld.CreatureManager do
           template: template,
           ai: ai,
           spawn_position: position,
-          respawn_timer: nil
+          respawn_timer: nil,
+          target_position: nil
         }
 
         creatures = Map.put(state.creatures, guid, creature_state)
@@ -286,7 +317,9 @@ defmodule BezgelorWorld.CreatureManager do
   def handle_call({:load_zone_spawns, world_id}, _from, state) do
     case Store.get_creature_spawns(world_id) do
       {:ok, zone_data} ->
-        {spawned_count, new_state} = spawn_from_definitions(zone_data.creature_spawns, world_id, state)
+        {spawned_count, new_state} =
+          spawn_from_definitions(zone_data.creature_spawns, world_id, state)
+
         Logger.info("Loaded #{spawned_count} creature spawns for world #{world_id}")
         {:reply, {:ok, spawned_count}, new_state}
 
@@ -326,10 +359,38 @@ defmodule BezgelorWorld.CreatureManager do
   end
 
   @impl true
+  def handle_call({:get_creature_state, creature_guid}, _from, state) do
+    case Map.get(state.creatures, creature_guid) do
+      nil -> {:reply, :error, state}
+      creature_state -> {:reply, {:ok, creature_state}, state}
+    end
+  end
+
+  @impl true
+  def handle_cast({:check_aggro, creature_guid, nearby_players}, state) do
+    case Map.get(state.creatures, creature_guid) do
+      nil ->
+        {:noreply, state}
+
+      creature_state ->
+        case check_and_enter_combat(creature_state, nearby_players) do
+          {:entered_combat, new_creature_state} ->
+            creatures = Map.put(state.creatures, creature_guid, new_creature_state)
+            {:noreply, %{state | creatures: creatures}}
+
+          :no_aggro ->
+            {:noreply, state}
+        end
+    end
+  end
+
+  @impl true
   def handle_cast({:load_zone_spawns_async, world_id}, state) do
     case Store.get_creature_spawns(world_id) do
       {:ok, zone_data} ->
-        {spawned_count, new_state} = spawn_from_definitions(zone_data.creature_spawns, world_id, state)
+        {spawned_count, new_state} =
+          spawn_from_definitions(zone_data.creature_spawns, world_id, state)
+
         Logger.info("Loaded #{spawned_count} creature spawns for world #{world_id}")
         {:noreply, new_state}
 
@@ -351,12 +412,70 @@ defmodule BezgelorWorld.CreatureManager do
           state
 
         creature_state ->
+          # Enter combat
           ai = AI.enter_combat(creature_state.ai, target_guid)
           new_creature_state = %{creature_state | ai: ai}
+
+          # Trigger social aggro for nearby same-faction creatures
+          state = trigger_social_aggro(creature_state, target_guid, state)
+
           %{state | creatures: Map.put(state.creatures, creature_guid, new_creature_state)}
       end
 
     {:noreply, state}
+  end
+
+  @impl true
+  def handle_cast({:update_creature_position, creature_guid, position}, state) do
+    state =
+      case Map.get(state.creatures, creature_guid) do
+        nil ->
+          state
+
+        creature_state ->
+          new_entity = %{creature_state.entity | position: position}
+          new_creature_state = %{creature_state | entity: new_entity}
+          %{state | creatures: Map.put(state.creatures, creature_guid, new_creature_state)}
+      end
+
+    {:noreply, state}
+  end
+
+  @impl true
+  def handle_cast({:set_target_position, creature_guid, position}, state) do
+    state =
+      case Map.get(state.creatures, creature_guid) do
+        nil ->
+          state
+
+        creature_state ->
+          new_creature_state = %{creature_state | target_position: position}
+          %{state | creatures: Map.put(state.creatures, creature_guid, new_creature_state)}
+      end
+
+    {:noreply, state}
+  end
+
+  # Trigger social aggro for nearby creatures of the same faction
+  defp trigger_social_aggro(aggressor_state, target_guid, state) do
+    aggressor_faction = aggressor_state.template.faction
+    aggressor_pos = aggressor_state.entity.position
+    social_range = CreatureTemplate.social_aggro_range(aggressor_state.template)
+
+    # Find nearby creatures of same faction that are idle
+    state.creatures
+    |> Enum.filter(fn {guid, cs} ->
+      guid != aggressor_state.entity.guid and
+        cs.template.faction == aggressor_faction and
+        cs.ai.state == :idle and
+        AI.distance(aggressor_pos, cs.entity.position) <= social_range
+    end)
+    |> Enum.reduce(state, fn {guid, cs}, acc_state ->
+      new_ai = AI.social_aggro(cs.ai, target_guid)
+      Logger.debug("Social aggro: #{cs.entity.name} joining combat against #{target_guid}")
+      new_cs = %{cs | ai: new_ai}
+      %{acc_state | creatures: Map.put(acc_state.creatures, guid, new_cs)}
+    end)
   end
 
   @impl true
@@ -399,6 +518,27 @@ defmodule BezgelorWorld.CreatureManager do
   end
 
   ## Private Functions
+
+  # Check aggro and enter combat if player detected
+  defp check_and_enter_combat(creature_state, nearby_players) do
+    template = creature_state.template
+    aggro_range = template.aggro_range || 0.0
+
+    # Only aggressive creatures auto-aggro
+    if template.ai_type == :aggressive and aggro_range > 0 do
+      case AI.check_aggro(creature_state.ai, nearby_players, aggro_range) do
+        {:aggro, player_guid} ->
+          new_ai = AI.enter_combat(creature_state.ai, player_guid)
+          Logger.info("Creature #{creature_state.entity.name} aggro'd on player #{player_guid}")
+          {:entered_combat, %{creature_state | ai: new_ai}}
+
+        nil ->
+          :no_aggro
+      end
+    else
+      :no_aggro
+    end
+  end
 
   defp apply_damage_to_creature(creature_state, attacker_guid, damage, state) do
     entity = Entity.apply_damage(creature_state.entity, damage)
@@ -476,10 +616,10 @@ defmodule BezgelorWorld.CreatureManager do
         needs_ai_processing?(creature_state, now)
       end)
 
-
     # Process the filtered creatures
     creatures =
-      Enum.reduce(creatures_needing_update, state.creatures, fn {guid, creature_state}, creatures ->
+      Enum.reduce(creatures_needing_update, state.creatures, fn {guid, creature_state},
+                                                                creatures ->
         case process_creature_ai(creature_state, now) do
           {:no_change, _} ->
             creatures
@@ -499,18 +639,19 @@ defmodule BezgelorWorld.CreatureManager do
     ai = creature_state.ai
 
     # Always process creatures in combat or evading
+    # Process creatures in zones with players
     ai.state == :combat or ai.state == :evade or
-      # Process creatures in zones with players
       MapSet.member?(active_zones, world_id)
   end
 
   # Determine if a creature needs AI processing this tick
-  defp needs_ai_processing?(%{ai: ai}, now) do
+  defp needs_ai_processing?(%{ai: ai, template: template}, now) do
     # Process if:
     # - In combat (needs to attack/check threat)
     # - Evading (needs to return to spawn)
     # - Has targets in threat table (should be in combat)
     # - Idle with patrol enabled (always needs processing to start patrol)
+    # - Idle aggressive creature (needs aggro checking)
     # - Idle and can wander (for ambient movement)
     # - Currently wandering (need to check completion)
     # - Currently patrolling (need to check segment completion)
@@ -520,24 +661,224 @@ defmodule BezgelorWorld.CreatureManager do
       ai.state == :patrol or
       map_size(ai.threat_table) > 0 or
       (ai.state == :idle and ai.patrol_enabled) or
+      (ai.state == :idle and template.ai_type == :aggressive and (template.aggro_range || 0.0) > 0) or
       (ai.state == :idle and AI.can_wander?(ai, now))
   end
 
   defp process_creature_ai(%{ai: ai, template: template, entity: entity} = creature_state, now) do
-    # Check for combat timeout - exit combat if no activity for too long
-    ai =
-      if ai.state == :combat and ai.combat_start_time do
-        combat_duration = now - ai.combat_start_time
+    # For idle aggressive creatures, check for nearby players to aggro
+    if ai.state == :idle and template.ai_type == :aggressive and (template.aggro_range || 0.0) > 0 do
+      case check_aggro_nearby_players(creature_state) do
+        {:aggro, player_guid} ->
+          new_ai = AI.enter_combat(ai, player_guid)
+          Logger.debug("Creature #{entity.name} auto-aggro'd player #{player_guid}")
+          {:updated, %{creature_state | ai: new_ai}}
 
-        if combat_duration > @combat_timeout_ms and map_size(ai.threat_table) == 0 do
-          AI.exit_combat(ai)
-        else
-          ai
-        end
-      else
-        ai
+        nil ->
+          # No aggro, continue with normal idle behavior
+          process_creature_ai_tick(creature_state, ai, template, entity, now)
       end
+    else
+      process_creature_ai_tick(creature_state, ai, template, entity, now)
+    end
+  end
 
+  # Helper to get nearby players and check aggro (with faction filtering)
+  defp check_aggro_nearby_players(creature_state) do
+    world_id = Map.get(creature_state, :world_id)
+    creature_pos = creature_state.entity.position
+    aggro_range = creature_state.template.aggro_range || 15.0
+
+    # Get creature faction from template (already an atom like :hostile, :neutral, :friendly)
+    creature_faction = creature_state.template.faction || :hostile
+
+    # Get nearby players from zone instance (including their faction)
+    nearby_players = get_nearby_players(world_id, creature_pos, aggro_range)
+
+    # Use AI.check_aggro_with_faction to find closest hostile player in range
+    AI.check_aggro_with_faction(creature_state.ai, nearby_players, aggro_range, creature_faction)
+  end
+
+  # Get nearby player entities from zone instance (including faction)
+  defp get_nearby_players(world_id, position, range) do
+    # Assuming instance 1
+    zone_key = {world_id, 1}
+
+    case ZoneInstance.entities_in_range(zone_key, position, range) do
+      {:ok, entities} ->
+        entities
+        |> Enum.filter(fn e -> e.type == :player end)
+        |> Enum.map(fn e ->
+          %{
+            guid: e.guid,
+            position: e.position,
+            # Default to exile for players
+            faction: Map.get(e, :faction, :exile)
+          }
+        end)
+
+      _ ->
+        []
+    end
+  end
+
+  defp process_creature_ai_tick(creature_state, ai, template, entity, now) do
+    # Check for leash distance first (only in combat)
+    if ai.state == :combat do
+      current_pos = entity.position
+      leash_range = template.leash_range || 40.0
+
+      case AI.check_leash(ai, current_pos, leash_range) do
+        :evade ->
+          # Start evading back to spawn
+          new_ai = AI.start_evade(ai)
+          Logger.info("Creature #{entity.name} leashing back to spawn")
+          {:updated, %{creature_state | ai: new_ai}}
+
+        :ok ->
+          # Continue with normal combat processing
+          process_combat_ai_tick(creature_state, ai, template, entity, now)
+      end
+    else
+      # Non-combat processing
+      process_normal_ai_tick(creature_state, ai, template, entity, now)
+    end
+  end
+
+  defp process_combat_ai_tick(creature_state, ai, template, entity, _now) do
+    # Get target position (from stored test position or try zone lookup)
+    target_pos = get_target_position(creature_state)
+
+    # Get attack range from template
+    attack_range = CreatureTemplate.attack_range(template)
+
+    # Determine combat action based on distance to target
+    case AI.combat_action(ai, target_pos, attack_range) do
+      :none ->
+        {:no_change, creature_state}
+
+      :wait ->
+        # Chase in progress, wait for movement to complete
+        {:no_change, creature_state}
+
+      {:attack, target_guid} ->
+        # In range - check if ranged creature needs to back away first
+        current_pos = entity.position
+        {tx, ty, tz} = target_pos
+        {cx, cy, cz} = current_pos
+
+        current_distance =
+          :math.sqrt((tx - cx) * (tx - cx) + (ty - cy) * (ty - cy) + (tz - cz) * (tz - cz))
+
+        min_range = if template.is_ranged, do: attack_range * 0.5, else: 0.0
+
+        if template.is_ranged and current_distance < min_range do
+          # Too close for ranged creature - need to reposition
+          path = Movement.ranged_position_path(current_pos, target_pos, min_range, attack_range)
+
+          if length(path) > 1 do
+            path_length = Movement.path_length(path)
+            duration = CreatureTemplate.movement_duration(template, path_length)
+            new_ai = AI.start_chase(ai, path, duration)
+            world_id = Map.get(creature_state, :world_id)
+            speed = CreatureTemplate.movement_speed(template)
+            broadcast_creature_movement(entity.guid, path, speed, world_id)
+            end_pos = List.last(path)
+            new_entity = %{entity | position: end_pos}
+
+            Logger.debug(
+              "Ranged creature #{entity.name} backing away, too close at #{current_distance}"
+            )
+
+            {:updated, %{creature_state | ai: new_ai, entity: new_entity}}
+          else
+            {:no_change, creature_state}
+          end
+        else
+          # Attack!
+          # Stop movement animation if was chasing
+          if AI.chasing?(ai) do
+            world_id = Map.get(creature_state, :world_id)
+            broadcast_creature_stop(entity.guid, world_id)
+          end
+
+          new_ai = AI.record_attack(ai) |> AI.complete_chase()
+          apply_creature_attack(entity, template, target_guid)
+          {:updated, %{creature_state | ai: new_ai}}
+        end
+
+      {:chase, chase_target_pos} ->
+        # Out of range - start chasing (or repositioning for ranged)
+        current_pos = entity.position
+
+        # Ranged creatures maintain optimal distance, melee close to attack range
+        path =
+          if template.is_ranged do
+            # Ranged: maintain 50-100% of max range
+            min_range = attack_range * 0.5
+            Movement.ranged_position_path(current_pos, chase_target_pos, min_range, attack_range)
+          else
+            # Melee: close to attack range
+            Movement.chase_path(current_pos, chase_target_pos, attack_range)
+          end
+
+        if length(path) > 1 do
+          # Calculate movement duration
+          path_length = Movement.path_length(path)
+          duration = CreatureTemplate.movement_duration(template, path_length)
+
+          # Start chase in AI
+          new_ai = AI.start_chase(ai, path, duration)
+
+          # Broadcast movement to players in zone
+          world_id = Map.get(creature_state, :world_id)
+          speed = CreatureTemplate.movement_speed(template)
+          broadcast_creature_movement(entity.guid, path, speed, world_id)
+
+          # Update entity position to end of path
+          end_pos = List.last(path)
+          new_entity = %{entity | position: end_pos}
+
+          Logger.debug("Creature #{entity.name} chasing target, path length: #{length(path)}")
+          {:updated, %{creature_state | ai: new_ai, entity: new_entity}}
+        else
+          # Already at target, no chase needed
+          {:no_change, creature_state}
+        end
+    end
+  end
+
+  # Get target position for combat - uses stored test position or zone lookup
+  defp get_target_position(creature_state) do
+    # First check for manually set target position (testing)
+    case Map.get(creature_state, :target_position) do
+      nil ->
+        # Try to look up target in zone
+        target_guid = creature_state.ai.target_guid
+        world_id = Map.get(creature_state, :world_id, 1)
+
+        case get_entity_position(world_id, target_guid) do
+          {:ok, pos} -> pos
+          # Fallback to own position
+          :error -> creature_state.entity.position
+        end
+
+      pos ->
+        pos
+    end
+  end
+
+  # Look up entity position from zone instance
+  defp get_entity_position(world_id, entity_guid) do
+    zone_key = {world_id, 1}
+
+    case ZoneInstance.get_entity(zone_key, entity_guid) do
+      {:ok, entity} -> {:ok, entity.position}
+      _ -> :error
+    end
+  end
+
+  defp process_normal_ai_tick(creature_state, ai, template, entity, _now) do
     context = %{
       attack_speed: template.attack_speed,
       position: entity.position
@@ -545,45 +886,46 @@ defmodule BezgelorWorld.CreatureManager do
 
     case AI.tick(ai, context) do
       :none ->
-        # Check for evade completion
-        if ai.state == :evade do
-          distance = AI.distance(entity.position, ai.spawn_position)
+        {:no_change, creature_state}
 
-          if distance < 1.0 do
-            # Reached spawn, complete evade and restore health
+      {:move_to, target_pos} ->
+        # Moving to a position (used during evade)
+        current_pos = entity.position
+        dist_to_target = AI.distance(current_pos, target_pos)
+
+        if dist_to_target < 2.0 do
+          # Reached target - if evading, complete evade
+          if ai.state == :evade do
             new_ai = AI.complete_evade(ai)
 
             new_entity = %{
               entity
               | health: template.max_health,
-                position: ai.spawn_position
+                position: target_pos
             }
 
+            Logger.debug("Creature #{entity.name} completed evade, resetting")
             {:updated, %{creature_state | ai: new_ai, entity: new_entity}}
           else
             {:no_change, creature_state}
           end
         else
-          {:no_change, creature_state}
+          # Move toward target (5 units per tick)
+          new_pos = move_toward(current_pos, target_pos, 5.0)
+          new_entity = %{entity | position: new_pos}
+          {:updated, %{creature_state | entity: new_entity}}
         end
-
-      {:attack, target_guid} ->
-        # Record attack time
-        new_ai = AI.record_attack(ai)
-
-        # Apply damage to target (if player)
-        apply_creature_attack(entity, template, target_guid)
-
-        {:updated, %{creature_state | ai: new_ai}}
-
-      {:move_to, _position} ->
-        # Movement would be handled here
-        {:no_change, creature_state}
 
       {:start_wander, new_ai} ->
         # Creature is starting to wander - broadcast movement to players in zone
         world_id = Map.get(creature_state, :world_id)
-        broadcast_creature_movement(entity.guid, new_ai.movement_path, new_ai.wander_speed, world_id)
+
+        broadcast_creature_movement(
+          entity.guid,
+          new_ai.movement_path,
+          new_ai.wander_speed,
+          world_id
+        )
 
         # Update entity position to path end (client will animate the movement)
         end_position = List.last(new_ai.movement_path) || entity.position
@@ -598,7 +940,13 @@ defmodule BezgelorWorld.CreatureManager do
       {:start_patrol, new_ai} ->
         # Creature is starting a patrol segment - broadcast movement to players in zone
         world_id = Map.get(creature_state, :world_id)
-        broadcast_creature_movement(entity.guid, new_ai.movement_path, new_ai.patrol_speed, world_id)
+
+        broadcast_creature_movement(
+          entity.guid,
+          new_ai.movement_path,
+          new_ai.patrol_speed,
+          world_id
+        )
 
         # Update entity position to path end (client will animate the movement)
         end_position = List.last(new_ai.movement_path) || entity.position
@@ -609,6 +957,26 @@ defmodule BezgelorWorld.CreatureManager do
       {:patrol_segment_complete, new_ai} ->
         # Patrol segment finished, creature may be pausing or continuing
         {:updated, %{creature_state | ai: new_ai}}
+
+      _ ->
+        # Handle any unexpected results
+        {:no_change, creature_state}
+    end
+  end
+
+  # Helper to move position toward target by a fixed distance
+  defp move_toward({x1, y1, z1}, {x2, y2, z2}, step_distance) do
+    dx = x2 - x1
+    dy = y2 - y1
+    dz = z2 - z1
+    length = :math.sqrt(dx * dx + dy * dy + dz * dz)
+
+    if length <= step_distance do
+      # Already close enough, snap to target
+      {x2, y2, z2}
+    else
+      ratio = step_distance / length
+      {x1 + dx * ratio, y1 + dy * ratio, z1 + dz * ratio}
     end
   end
 
@@ -1002,7 +1370,8 @@ defmodule BezgelorWorld.CreatureManager do
     # Armor reduces damage (capped at 75% mitigation)
     mitigation = min(armor, 0.75)
     final_damage = round(base_damage * (1 - mitigation))
-    max(final_damage, 1)  # Always deal at least 1 damage
+    # Always deal at least 1 damage
+    max(final_damage, 1)
   end
 
   # Get defensive stats for a player target
@@ -1094,8 +1463,40 @@ defmodule BezgelorWorld.CreatureManager do
     # Zone.Instance.broadcast routes via WorldManager's zone_index
     ZoneInstance.broadcast({world_id, 1}, {:server_entity_command, packet_data})
 
-    Logger.debug("Broadcast movement for creature #{creature_guid} in zone #{world_id}, path length: #{length(path)}")
+    Logger.debug(
+      "Broadcast movement for creature #{creature_guid} in zone #{world_id}, path length: #{length(path)}"
+    )
   end
 
   defp broadcast_creature_movement(_creature_guid, _path, _speed, _world_id), do: :ok
+
+  # Broadcast creature stop to players in the same zone
+  defp broadcast_creature_stop(creature_guid, world_id) do
+    alias BezgelorProtocol.Packets.World.ServerEntityCommand
+    alias BezgelorProtocol.PacketWriter
+    alias BezgelorWorld.Zone.Instance, as: ZoneInstance
+
+    # Clear move state (0x00 = stopped)
+    state_command = %{type: :set_state, state: 0x00}
+
+    # Reset move direction to defaults
+    move_defaults = %{type: :set_move_defaults, blend: false}
+
+    packet = %ServerEntityCommand{
+      guid: creature_guid,
+      time: System.monotonic_time(:millisecond) |> rem(0xFFFFFFFF),
+      time_reset: false,
+      server_controlled: true,
+      commands: [state_command, move_defaults]
+    }
+
+    # Serialize and broadcast
+    writer = PacketWriter.new()
+    {:ok, writer} = ServerEntityCommand.write(packet, writer)
+    packet_data = PacketWriter.to_binary(writer)
+
+    ZoneInstance.broadcast({world_id, 1}, {:server_entity_command, packet_data})
+
+    Logger.debug("Broadcast stop for creature #{creature_guid} in zone #{world_id}")
+  end
 end

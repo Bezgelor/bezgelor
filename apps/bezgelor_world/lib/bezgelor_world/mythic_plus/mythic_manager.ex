@@ -116,7 +116,10 @@ defmodule BezgelorWorld.MythicPlus.MythicManager do
       affix_week: current_week
     }
 
-    Logger.info("MythicManager started - Season #{@current_season}, Week #{current_week}, Affixes: #{inspect(affixes)}")
+    Logger.info(
+      "MythicManager started - Season #{@current_season}, Week #{current_week}, Affixes: #{inspect(affixes)}"
+    )
+
     {:ok, state}
   end
 
@@ -238,7 +241,7 @@ defmodule BezgelorWorld.MythicPlus.MythicManager do
 
   defp calculate_scaling(level) do
     # Exponential scaling for health and damage
-    base_multiplier = 1.0 + (level * 0.1)
+    base_multiplier = 1.0 + level * 0.1
     health_multiplier = :math.pow(base_multiplier, 1.2)
     damage_multiplier = :math.pow(base_multiplier, 1.1)
 

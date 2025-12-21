@@ -1,21 +1,20 @@
 # BezgelorAuth
 
-**TODO: Add description**
+Authentication server (STS) for WildStar client connections. Handles initial client authentication using SRP6 protocol and issues session tokens for realm/world server access.
 
-## Installation
+## Features
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `bezgelor_auth` to your list of dependencies in `mix.exs`:
+- SRP6 authentication protocol implementation
+- Session token generation and validation
+- TCP listener on port 6600
+- Integration with BezgelorCrypto for cryptographic operations
+
+## Usage
+
+This application is part of the Bezgelor umbrella and starts automatically. Configure the listen port via environment variables or application config.
 
 ```elixir
-def deps do
-  [
-    {:bezgelor_auth, "~> 0.1.0"}
-  ]
-end
+# In config/config.exs
+config :bezgelor_auth,
+  port: 6600
 ```
-
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at <https://hexdocs.pm/bezgelor_auth>.
-

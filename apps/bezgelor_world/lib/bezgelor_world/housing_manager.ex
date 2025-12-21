@@ -28,6 +28,7 @@ defmodule BezgelorWorld.HousingManager do
   use GenServer
 
   alias BezgelorDb.Housing
+
   alias BezgelorProtocol.Packets.World.{
     ServerHousingEnter,
     ServerHousingData,
@@ -258,6 +259,7 @@ defmodule BezgelorWorld.HousingManager do
 
     # Build entry packets
     plot = instance.plot
+
     packets = [
       ServerHousingEnter.success(plot_id, plot.character_id),
       ServerHousingData.from_plot(plot),

@@ -13,10 +13,13 @@ defmodule BezgelorCore.EntityCorpseTest do
         display_info: 1001
       }
 
-      corpse = Entity.create_corpse(creature, [
-        {1001, 1},  # item_id, quantity
-        {0, 500}    # gold (item_id 0)
-      ])
+      corpse =
+        Entity.create_corpse(creature, [
+          # item_id, quantity
+          {1001, 1},
+          # gold (item_id 0)
+          {0, 500}
+        ])
 
       assert corpse.type == :corpse
       assert corpse.loot == [{1001, 1}, {0, 500}]

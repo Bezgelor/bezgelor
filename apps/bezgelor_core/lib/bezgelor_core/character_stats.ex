@@ -15,15 +15,15 @@ defmodule BezgelorCore.CharacterStats do
   """
 
   @type combat_stats :: %{
-    power: non_neg_integer(),
-    tech: non_neg_integer(),
-    support: non_neg_integer(),
-    crit_chance: non_neg_integer(),
-    armor: float(),
-    magic_resist: float(),
-    tech_resist: float(),
-    max_health: non_neg_integer()
-  }
+          power: non_neg_integer(),
+          tech: non_neg_integer(),
+          support: non_neg_integer(),
+          crit_chance: non_neg_integer(),
+          armor: float(),
+          magic_resist: float(),
+          tech_resist: float(),
+          max_health: non_neg_integer()
+        }
 
   # Base stat per level (WildStar-authentic scaling)
   @base_stat_per_level 10
@@ -32,12 +32,18 @@ defmodule BezgelorCore.CharacterStats do
 
   # Class stat multipliers (class_id => {power_mult, tech_mult, support_mult})
   @class_multipliers %{
-    1 => {1.2, 0.8, 0.9},   # Warrior - assault focused
-    2 => {1.0, 1.0, 1.0},   # Spellslinger - balanced
-    3 => {1.1, 0.9, 1.0},   # Stalker - assault/balanced
-    4 => {0.8, 1.2, 1.1},   # Esper - support focused
-    5 => {0.9, 1.1, 1.1},   # Medic - support focused
-    6 => {1.15, 0.85, 0.9}  # Engineer - assault focused
+    # Warrior - assault focused
+    1 => {1.2, 0.8, 0.9},
+    # Spellslinger - balanced
+    2 => {1.0, 1.0, 1.0},
+    # Stalker - assault/balanced
+    3 => {1.1, 0.9, 1.0},
+    # Esper - support focused
+    4 => {0.8, 1.2, 1.1},
+    # Medic - support focused
+    5 => {0.9, 1.1, 1.1},
+    # Engineer - assault focused
+    6 => {1.15, 0.85, 0.9}
   }
 
   @doc """
@@ -75,12 +81,12 @@ defmodule BezgelorCore.CharacterStats do
   @spec apply_buff_modifiers(combat_stats(), map()) :: combat_stats()
   def apply_buff_modifiers(stats, modifiers) do
     %{
-      stats |
-      power: stats.power + Map.get(modifiers, :power, 0),
-      tech: stats.tech + Map.get(modifiers, :tech, 0),
-      support: stats.support + Map.get(modifiers, :support, 0),
-      crit_chance: stats.crit_chance + Map.get(modifiers, :crit_chance, 0),
-      armor: stats.armor + Map.get(modifiers, :armor, 0)
+      stats
+      | power: stats.power + Map.get(modifiers, :power, 0),
+        tech: stats.tech + Map.get(modifiers, :tech, 0),
+        support: stats.support + Map.get(modifiers, :support, 0),
+        crit_chance: stats.crit_chance + Map.get(modifiers, :crit_chance, 0),
+        armor: stats.armor + Map.get(modifiers, :armor, 0)
     }
   end
 end

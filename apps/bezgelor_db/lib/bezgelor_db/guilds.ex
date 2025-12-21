@@ -141,7 +141,7 @@ defmodule BezgelorDb.Guilds do
   def disband_guild(guild_id, requester_id) do
     with {:ok, _guild, _member, rank} <- get_member_with_rank(guild_id, requester_id),
          true <- GuildRank.can_disband?(rank) || {:error, :no_permission} do
-      Repo.delete_all(from g in Guild, where: g.id == ^guild_id)
+      Repo.delete_all(from(g in Guild, where: g.id == ^guild_id))
       :ok
     else
       {:error, reason} -> {:error, reason}
@@ -173,7 +173,8 @@ defmodule BezgelorDb.Guilds do
   @doc "Remove a member from the guild."
   @spec remove_member(integer(), integer(), integer()) :: :ok | {:error, term()}
   def remove_member(guild_id, target_id, requester_id) do
-    with {:ok, guild, requester_member, requester_rank} <- get_member_with_rank(guild_id, requester_id),
+    with {:ok, guild, requester_member, requester_rank} <-
+           get_member_with_rank(guild_id, requester_id),
          {:ok, target_member} <- get_guild_member(guild_id, target_id) do
       cond do
         # Cannot kick yourself (use leave_guild)
@@ -218,9 +219,11 @@ defmodule BezgelorDb.Guilds do
   end
 
   @doc "Promote a member (lower rank number)."
-  @spec promote_member(integer(), integer(), integer()) :: {:ok, GuildMember.t()} | {:error, term()}
+  @spec promote_member(integer(), integer(), integer()) ::
+          {:ok, GuildMember.t()} | {:error, term()}
   def promote_member(guild_id, target_id, requester_id) do
-    with {:ok, _guild, requester_member, requester_rank} <- get_member_with_rank(guild_id, requester_id),
+    with {:ok, _guild, requester_member, requester_rank} <-
+           get_member_with_rank(guild_id, requester_id),
          {:ok, target_member} <- get_guild_member(guild_id, target_id) do
       new_rank = target_member.rank_index - 1
 
@@ -246,11 +249,14 @@ defmodule BezgelorDb.Guilds do
   end
 
   @doc "Demote a member (higher rank number)."
-  @spec demote_member(integer(), integer(), integer()) :: {:ok, GuildMember.t()} | {:error, term()}
+  @spec demote_member(integer(), integer(), integer()) ::
+          {:ok, GuildMember.t()} | {:error, term()}
   def demote_member(guild_id, target_id, requester_id) do
-    with {:ok, _guild, requester_member, requester_rank} <- get_member_with_rank(guild_id, requester_id),
+    with {:ok, _guild, requester_member, requester_rank} <-
+           get_member_with_rank(guild_id, requester_id),
          {:ok, target_member} <- get_guild_member(guild_id, target_id) do
-      max_rank = 4  # Lowest rank
+      # Lowest rank
+      max_rank = 4
       new_rank = target_member.rank_index + 1
 
       cond do
@@ -272,7 +278,8 @@ defmodule BezgelorDb.Guilds do
   end
 
   @doc "Transfer guild leadership."
-  @spec transfer_leadership(integer(), integer(), integer()) :: {:ok, Guild.t()} | {:error, term()}
+  @spec transfer_leadership(integer(), integer(), integer()) ::
+          {:ok, Guild.t()} | {:error, term()}
   def transfer_leadership(guild_id, new_leader_id, current_leader_id) do
     with {:ok, guild, current_member, _rank} <- get_member_with_rank(guild_id, current_leader_id),
          {:ok, new_leader_member} <- get_guild_member(guild_id, new_leader_id) do
@@ -383,7 +390,8 @@ defmodule BezgelorDb.Guilds do
   def bank_withdraw(guild_id, tab_index, slot_index, requester_id) do
     with {:ok, _guild, _member, rank} <- get_member_with_rank(guild_id, requester_id),
          true <- GuildRank.can_bank_withdraw?(rank) || {:error, :no_permission},
-         %GuildBankItem{} = item <- get_bank_item(guild_id, tab_index, slot_index) || {:error, :slot_empty} do
+         %GuildBankItem{} = item <-
+           get_bank_item(guild_id, tab_index, slot_index) || {:error, :slot_empty} do
       Repo.delete(item)
       {:ok, item}
     end
@@ -396,7 +404,8 @@ defmodule BezgelorDb.Guilds do
     with {:ok, guild, _member, rank} <- get_member_with_rank(guild_id, requester_id),
          true <- GuildRank.can_bank_withdraw?(rank) || {:error, :no_permission},
          true <- to_tab < guild.bank_tabs_unlocked || {:error, :tab_not_unlocked},
-         %GuildBankItem{} = item <- get_bank_item(guild_id, from_tab, from_slot) || {:error, :slot_empty},
+         %GuildBankItem{} = item <-
+           get_bank_item(guild_id, from_tab, from_slot) || {:error, :slot_empty},
          nil <- get_bank_item(guild_id, to_tab, to_slot) do
       item
       |> GuildBankItem.move_changeset(to_tab, to_slot)

@@ -140,13 +140,15 @@ defmodule BezgelorWorld.EventManager do
   end
 
   @doc "Get specific event state."
-  @spec get_event(pid() | tuple(), non_neg_integer()) :: {:ok, event_state()} | {:error, :not_found}
+  @spec get_event(pid() | tuple(), non_neg_integer()) ::
+          {:ok, event_state()} | {:error, :not_found}
   def get_event(manager, instance_id) do
     GenServer.call(manager, {:get_event, instance_id})
   end
 
   @doc "Player joins an event."
-  @spec join_event(pid() | tuple(), non_neg_integer(), non_neg_integer()) :: :ok | {:error, term()}
+  @spec join_event(pid() | tuple(), non_neg_integer(), non_neg_integer()) ::
+          :ok | {:error, term()}
   def join_event(manager, instance_id, character_id) do
     GenServer.call(manager, {:join_event, instance_id, character_id})
   end
@@ -158,7 +160,12 @@ defmodule BezgelorWorld.EventManager do
   end
 
   @doc "Track contribution to an event objective."
-  @spec track_contribution(pid() | tuple(), non_neg_integer(), non_neg_integer(), non_neg_integer()) ::
+  @spec track_contribution(
+          pid() | tuple(),
+          non_neg_integer(),
+          non_neg_integer(),
+          non_neg_integer()
+        ) ::
           {:ok, map()} | {:error, term()}
   def track_contribution(manager, instance_id, character_id, amount) do
     GenServer.call(manager, {:track_contribution, instance_id, character_id, amount})
@@ -179,14 +186,25 @@ defmodule BezgelorWorld.EventManager do
   end
 
   @doc "Record a collection for collect-type objectives."
-  @spec record_collection(pid() | tuple(), non_neg_integer(), non_neg_integer(), non_neg_integer(), non_neg_integer()) ::
+  @spec record_collection(
+          pid() | tuple(),
+          non_neg_integer(),
+          non_neg_integer(),
+          non_neg_integer(),
+          non_neg_integer()
+        ) ::
           {:ok, map()} | {:error, term()}
   def record_collection(manager, instance_id, character_id, item_id, amount) do
     GenServer.call(manager, {:record_collection, instance_id, character_id, item_id, amount})
   end
 
   @doc "Record an interaction for interact-type objectives."
-  @spec record_interaction(pid() | tuple(), non_neg_integer(), non_neg_integer(), non_neg_integer()) ::
+  @spec record_interaction(
+          pid() | tuple(),
+          non_neg_integer(),
+          non_neg_integer(),
+          non_neg_integer()
+        ) ::
           {:ok, map()} | {:error, term()}
   def record_interaction(manager, instance_id, character_id, object_id) do
     GenServer.call(manager, {:record_interaction, instance_id, character_id, object_id})
@@ -215,7 +233,12 @@ defmodule BezgelorWorld.EventManager do
   end
 
   @doc "Record damage to world boss."
-  @spec damage_world_boss(pid() | tuple(), non_neg_integer(), non_neg_integer(), non_neg_integer()) ::
+  @spec damage_world_boss(
+          pid() | tuple(),
+          non_neg_integer(),
+          non_neg_integer(),
+          non_neg_integer()
+        ) ::
           {:ok, map()} | {:error, term()}
   def damage_world_boss(manager, boss_id, character_id, damage) do
     GenServer.call(manager, {:damage_world_boss, boss_id, character_id, damage})
@@ -244,7 +267,12 @@ defmodule BezgelorWorld.EventManager do
   end
 
   @doc "Report wave enemies killed."
-  @spec wave_enemy_killed(pid() | tuple(), non_neg_integer(), non_neg_integer(), non_neg_integer()) ::
+  @spec wave_enemy_killed(
+          pid() | tuple(),
+          non_neg_integer(),
+          non_neg_integer(),
+          non_neg_integer()
+        ) ::
           {:ok, map()} | {:error, term()}
   def wave_enemy_killed(manager, instance_id, character_id, creature_id) do
     GenServer.call(manager, {:wave_enemy_killed, instance_id, character_id, creature_id})
@@ -276,7 +304,12 @@ defmodule BezgelorWorld.EventManager do
 
   Tracks the character's contribution to the boss fight for reward calculation.
   """
-  @spec record_boss_damage(pid() | tuple(), non_neg_integer(), non_neg_integer(), non_neg_integer()) :: :ok
+  @spec record_boss_damage(
+          pid() | tuple(),
+          non_neg_integer(),
+          non_neg_integer(),
+          non_neg_integer()
+        ) :: :ok
   def record_boss_damage(manager, boss_id, character_id, damage) do
     GenServer.cast(manager, {:record_boss_damage, boss_id, character_id, damage})
   end
@@ -344,7 +377,10 @@ defmodule BezgelorWorld.EventManager do
             events = Map.put(state.events, instance_id, event_state)
             state = %{state | events: events, next_instance_id: instance_id + 1}
 
-            Logger.info("Started event #{event_id} as instance #{instance_id} in zone #{state.zone_id}")
+            Logger.info(
+              "Started event #{event_id} as instance #{instance_id} in zone #{state.zone_id}"
+            )
+
             {:reply, {:ok, instance_id}, state}
 
           {:error, reason} ->
@@ -668,7 +704,10 @@ defmodule BezgelorWorld.EventManager do
         # Update DB
         PublicEvents.spawn_boss(boss_id)
 
-        Logger.info("Spawned world boss #{boss_id} (creature #{creature_id}) in zone #{state.zone_id}")
+        Logger.info(
+          "Spawned world boss #{boss_id} (creature #{creature_id}) in zone #{state.zone_id}"
+        )
+
         {:reply, {:ok, creature_id}, %{state | world_bosses: world_bosses}}
 
       :error ->
@@ -693,7 +732,10 @@ defmodule BezgelorWorld.EventManager do
           end
 
         # Add to participants
-        boss_state = %{boss_state | participants: MapSet.put(boss_state.participants, character_id)}
+        boss_state = %{
+          boss_state
+          | participants: MapSet.put(boss_state.participants, character_id)
+        }
 
         # Track contribution
         current_contrib = Map.get(boss_state.contributions, character_id, 0)
@@ -713,7 +755,9 @@ defmodule BezgelorWorld.EventManager do
           {:reply, {:ok, %{health: 0, killed: true}}, state}
         else
           world_bosses = Map.put(state.world_bosses, boss_id, boss_state)
-          {:reply, {:ok, %{health: new_health, killed: false, phase: boss_state.phase}}, %{state | world_bosses: world_bosses}}
+
+          {:reply, {:ok, %{health: new_health, killed: false, phase: boss_state.phase}},
+           %{state | world_bosses: world_bosses}}
         end
     end
   end
@@ -828,7 +872,13 @@ defmodule BezgelorWorld.EventManager do
         else
           event_state = %{event_state | wave_state: wave_state}
           events = Map.put(state.events, instance_id, event_state)
-          {:reply, {:ok, %{wave_complete: false, remaining: wave_state.enemies_spawned - wave_state.enemies_killed}}, %{state | events: events}}
+
+          {:reply,
+           {:ok,
+            %{
+              wave_complete: false,
+              remaining: wave_state.enemies_spawned - wave_state.enemies_killed
+            }}, %{state | events: events}}
         end
     end
   end
@@ -865,7 +915,8 @@ defmodule BezgelorWorld.EventManager do
             players = MapSet.put(territory.players_in_zone, character_id)
             territory = %{territory | players_in_zone: players}
 
-            territory_state = update_territory_point(event_state.territory_state, territory_index, territory)
+            territory_state =
+              update_territory_point(event_state.territory_state, territory_index, territory)
 
             # Start capture tick timer if not running and players present
             territory_state = maybe_start_capture_tick(territory_state, instance_id)
@@ -873,7 +924,10 @@ defmodule BezgelorWorld.EventManager do
             event_state = %{event_state | territory_state: territory_state}
             events = Map.put(state.events, instance_id, event_state)
 
-            Logger.debug("Character #{character_id} entered territory #{territory_index} in event #{instance_id}")
+            Logger.debug(
+              "Character #{character_id} entered territory #{territory_index} in event #{instance_id}"
+            )
+
             {:reply, {:ok, territory}, %{state | events: events}}
         end
     end
@@ -898,11 +952,16 @@ defmodule BezgelorWorld.EventManager do
             players = MapSet.delete(territory.players_in_zone, character_id)
             territory = %{territory | players_in_zone: players}
 
-            territory_state = update_territory_point(event_state.territory_state, territory_index, territory)
+            territory_state =
+              update_territory_point(event_state.territory_state, territory_index, territory)
+
             event_state = %{event_state | territory_state: territory_state}
             events = Map.put(state.events, instance_id, event_state)
 
-            Logger.debug("Character #{character_id} left territory #{territory_index} in event #{instance_id}")
+            Logger.debug(
+              "Character #{character_id} left territory #{territory_index} in event #{instance_id}"
+            )
+
             {:reply, :ok, %{state | events: events}}
         end
     end
@@ -1124,7 +1183,8 @@ defmodule BezgelorWorld.EventManager do
         # Find and update kill objectives
         {objectives, any_updated} =
           Enum.map_reduce(event_state.objectives, false, fn obj, updated ->
-            if obj.type == :kill and (obj.creature_id == creature_id or obj.creature_id == nil) and obj.current < obj.target do
+            if obj.type == :kill and (obj.creature_id == creature_id or obj.creature_id == nil) and
+                 obj.current < obj.target do
               {%{obj | current: obj.current + 1}, true}
             else
               {obj, updated}
@@ -1133,12 +1193,14 @@ defmodule BezgelorWorld.EventManager do
 
         if any_updated do
           # Update participant contribution
-          participant = Map.get(state.participants, character_id, %{
-            character_id: character_id,
-            contribution: 0,
-            damage_dealt: 0,
-            joined_at: DateTime.utc_now()
-          })
+          participant =
+            Map.get(state.participants, character_id, %{
+              character_id: character_id,
+              contribution: 0,
+              damage_dealt: 0,
+              joined_at: DateTime.utc_now()
+            })
+
           participant = %{participant | contribution: participant.contribution + 1}
           participants = Map.put(state.participants, character_id, participant)
 
@@ -1171,12 +1233,14 @@ defmodule BezgelorWorld.EventManager do
         wave_state = %{wave_state | enemies_killed: new_killed}
 
         # Update participant contribution
-        participant = Map.get(state.participants, character_id, %{
-          character_id: character_id,
-          contribution: 0,
-          damage_dealt: 0,
-          joined_at: DateTime.utc_now()
-        })
+        participant =
+          Map.get(state.participants, character_id, %{
+            character_id: character_id,
+            contribution: 0,
+            damage_dealt: 0,
+            joined_at: DateTime.utc_now()
+          })
+
         participant = %{participant | contribution: participant.contribution + 1}
         participants = Map.put(state.participants, character_id, participant)
 
@@ -1362,7 +1426,9 @@ defmodule BezgelorWorld.EventManager do
           distribute_event_rewards(event_state, state.participants)
         end
 
-        Logger.info("Event #{instance_id} completed: success=#{success}, participants=#{MapSet.size(event_state.participants)}")
+        Logger.info(
+          "Event #{instance_id} completed: success=#{success}, participants=#{MapSet.size(event_state.participants)}"
+        )
 
         events = Map.delete(state.events, instance_id)
         %{state | events: events}
@@ -1372,7 +1438,8 @@ defmodule BezgelorWorld.EventManager do
   defp update_matching_objectives(objectives, type, target_id, amount \\ 1) do
     {updated_objectives, any_updated} =
       Enum.map_reduce(objectives, false, fn obj, updated ->
-        if obj.type == type and (obj.target_id == nil or obj.target_id == target_id) and obj.current < obj.target do
+        if obj.type == type and (obj.target_id == nil or obj.target_id == target_id) and
+             obj.current < obj.target do
           new_current = min(obj.current + amount, obj.target)
           {%{obj | current: new_current}, true}
         else
@@ -1513,7 +1580,13 @@ defmodule BezgelorWorld.EventManager do
   defp maybe_start_capture_tick(territory_state, _instance_id), do: territory_state
 
   defp schedule_capture_tick(territory_state, instance_id) do
-    timer_ref = Process.send_after(self(), {:territory_capture_tick, instance_id}, @capture_tick_interval_ms)
+    timer_ref =
+      Process.send_after(
+        self(),
+        {:territory_capture_tick, instance_id},
+        @capture_tick_interval_ms
+      )
+
     %{territory_state | capture_tick_timer: timer_ref}
   end
 
@@ -1525,7 +1598,9 @@ defmodule BezgelorWorld.EventManager do
         if player_count > 0 and not territory.captured do
           # Progress increases based on player count (diminishing returns)
           progress_increase = @capture_progress_per_tick * min(player_count, 5)
-          new_progress = min(territory.capture_progress + progress_increase, @capture_progress_max)
+
+          new_progress =
+            min(territory.capture_progress + progress_increase, @capture_progress_max)
 
           captured = new_progress >= @capture_progress_max
 
@@ -1600,7 +1675,7 @@ defmodule BezgelorWorld.EventManager do
     contributions =
       Enum.map(participant_ids, fn char_id ->
         participant = Map.get(participants, char_id)
-        {char_id, participant && participant.contribution || 0}
+        {char_id, (participant && participant.contribution) || 0}
       end)
 
     total_contribution = Enum.reduce(contributions, 0, fn {_, c}, acc -> acc + c end)
@@ -1614,7 +1689,9 @@ defmodule BezgelorWorld.EventManager do
       reward_data = calculate_participant_rewards(rewards_def, multiplier)
 
       # Log the reward (actual distribution would call game systems)
-      Logger.debug("Event reward for #{character_id}: tier=#{tier}, rewards=#{inspect(reward_data)}")
+      Logger.debug(
+        "Event reward for #{character_id}: tier=#{tier}, rewards=#{inspect(reward_data)}"
+      )
 
       # Record completion in DB (character_id, event_id, tier, contribution, duration_ms)
       PublicEvents.record_completion(
@@ -1639,7 +1716,8 @@ defmodule BezgelorWorld.EventManager do
         :gold
 
       true ->
-        percent = if total_contribution > 0, do: div(contribution * 100, total_contribution), else: 0
+        percent =
+          if total_contribution > 0, do: div(contribution * 100, total_contribution), else: 0
 
         cond do
           percent >= @gold_tier_threshold -> :gold

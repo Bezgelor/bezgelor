@@ -75,22 +75,42 @@ defmodule BezgelorDb.Schema.EventParticipationTest do
     end
 
     test "defaults contribution_score to 0" do
-      changeset = EventParticipation.changeset(%EventParticipation{}, %{event_instance_id: 1, character_id: 1})
+      changeset =
+        EventParticipation.changeset(%EventParticipation{}, %{
+          event_instance_id: 1,
+          character_id: 1
+        })
+
       assert Ecto.Changeset.get_field(changeset, :contribution_score) == 0
     end
 
     test "defaults kills to 0" do
-      changeset = EventParticipation.changeset(%EventParticipation{}, %{event_instance_id: 1, character_id: 1})
+      changeset =
+        EventParticipation.changeset(%EventParticipation{}, %{
+          event_instance_id: 1,
+          character_id: 1
+        })
+
       assert Ecto.Changeset.get_field(changeset, :kills) == 0
     end
 
     test "defaults rewards_claimed to false" do
-      changeset = EventParticipation.changeset(%EventParticipation{}, %{event_instance_id: 1, character_id: 1})
+      changeset =
+        EventParticipation.changeset(%EventParticipation{}, %{
+          event_instance_id: 1,
+          character_id: 1
+        })
+
       assert Ecto.Changeset.get_field(changeset, :rewards_claimed) == false
     end
 
     test "defaults objectives_completed to empty list" do
-      changeset = EventParticipation.changeset(%EventParticipation{}, %{event_instance_id: 1, character_id: 1})
+      changeset =
+        EventParticipation.changeset(%EventParticipation{}, %{
+          event_instance_id: 1,
+          character_id: 1
+        })
+
       assert Ecto.Changeset.get_field(changeset, :objectives_completed) == []
     end
   end

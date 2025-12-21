@@ -33,8 +33,7 @@ defmodule BezgelorPortalWeb.Admin.LogsLive do
        search_query: "",
        auto_scroll: true,
        paused: false
-     ),
-     layout: {BezgelorPortalWeb.Layouts, :admin}}
+     ), layout: {BezgelorPortalWeb.Layouts, :admin}}
   end
 
   @impl true
@@ -77,8 +76,8 @@ defmodule BezgelorPortalWeb.Admin.LogsLive do
           {if @paused, do: "Paused", else: "Live"}
         </span>
       </div>
-
-      <!-- Controls -->
+      
+    <!-- Controls -->
       <div class="card bg-base-100 shadow">
         <div class="card-body py-3">
           <div class="flex flex-wrap gap-4 items-end">
@@ -96,8 +95,8 @@ defmodule BezgelorPortalWeb.Admin.LogsLive do
                 <option value="error" selected={@filter_level == :error}>Error</option>
               </select>
             </div>
-
-            <!-- Search -->
+            
+    <!-- Search -->
             <div class="form-control flex-1 min-w-[200px]">
               <label class="label py-1">
                 <span class="label-text text-xs">Search</span>
@@ -112,8 +111,8 @@ defmodule BezgelorPortalWeb.Admin.LogsLive do
                 name="query"
               />
             </div>
-
-            <!-- Actions -->
+            
+    <!-- Actions -->
             <div class="flex gap-2 items-center">
               <button
                 type="button"
@@ -121,11 +120,9 @@ defmodule BezgelorPortalWeb.Admin.LogsLive do
                 phx-click="toggle_pause"
               >
                 <%= if @paused do %>
-                  <.icon name="hero-play" class="size-4" />
-                  Resume
+                  <.icon name="hero-play" class="size-4" /> Resume
                 <% else %>
-                  <.icon name="hero-pause" class="size-4" />
-                  Pause
+                  <.icon name="hero-pause" class="size-4" /> Pause
                 <% end %>
               </button>
               <button
@@ -133,8 +130,7 @@ defmodule BezgelorPortalWeb.Admin.LogsLive do
                 class="btn btn-sm btn-ghost"
                 phx-click="clear_logs"
               >
-                <.icon name="hero-trash" class="size-4" />
-                Clear
+                <.icon name="hero-trash" class="size-4" /> Clear
               </button>
               <label class="label cursor-pointer gap-2">
                 <span class="label-text text-sm">Auto-scroll</span>
@@ -149,8 +145,8 @@ defmodule BezgelorPortalWeb.Admin.LogsLive do
           </div>
         </div>
       </div>
-
-      <!-- Log Output -->
+      
+    <!-- Log Output -->
       <div
         id="log-container"
         class="card bg-base-300 shadow"
@@ -177,24 +173,20 @@ defmodule BezgelorPortalWeb.Admin.LogsLive do
           <% end %>
         </div>
       </div>
-
-      <!-- Legend -->
+      
+    <!-- Legend -->
       <div class="flex gap-4 text-sm">
         <span class="flex items-center gap-1">
-          <span class="w-3 h-3 rounded bg-base-content/30"></span>
-          Debug
+          <span class="w-3 h-3 rounded bg-base-content/30"></span> Debug
         </span>
         <span class="flex items-center gap-1">
-          <span class="w-3 h-3 rounded bg-info"></span>
-          Info
+          <span class="w-3 h-3 rounded bg-info"></span> Info
         </span>
         <span class="flex items-center gap-1">
-          <span class="w-3 h-3 rounded bg-warning"></span>
-          Warning
+          <span class="w-3 h-3 rounded bg-warning"></span> Warning
         </span>
         <span class="flex items-center gap-1">
-          <span class="w-3 h-3 rounded bg-error"></span>
-          Error
+          <span class="w-3 h-3 rounded bg-error"></span> Error
         </span>
       </div>
     </div>

@@ -104,6 +104,46 @@ defmodule BezgelorDb.Inventory do
     |> Repo.all()
   end
 
+  @doc """
+  Ensure ability items exist for the character.
+
+  Abilities are stored as items in the :ability container with bag_index
+  set to the ability slot and slot set to 0.
+  """
+  @spec ensure_ability_items(integer(), [map()]) :: [InventoryItem.t()]
+  def ensure_ability_items(character_id, abilities) when is_list(abilities) do
+    Enum.each(abilities, fn ability ->
+      attrs = %{
+        character_id: character_id,
+        item_id: ability.spell_id,
+        container_type: :ability,
+        bag_index: ability.slot,
+        slot: 0,
+        quantity: 1,
+        max_stack: 1,
+        durability: 100,
+        max_durability: 100
+      }
+
+      %InventoryItem{}
+      |> InventoryItem.changeset(attrs)
+      |> Repo.insert(
+        on_conflict: [
+          set: [
+            item_id: attrs.item_id,
+            quantity: attrs.quantity,
+            max_stack: attrs.max_stack,
+            durability: attrs.durability,
+            max_durability: attrs.max_durability
+          ]
+        ],
+        conflict_target: [:character_id, :container_type, :bag_index, :slot]
+      )
+    end)
+
+    get_items(character_id, :ability)
+  end
+
   @doc "Get item at a specific location."
   @spec get_item_at(integer(), atom(), integer(), integer()) :: InventoryItem.t() | nil
   def get_item_at(character_id, container_type, bag_index, slot) do
@@ -128,7 +168,8 @@ defmodule BezgelorDb.Inventory do
     container_type = Map.get(opts, :container_type, :bag)
 
     Repo.transaction(fn ->
-      remaining = add_to_existing_stacks(character_id, item_id, quantity, max_stack, container_type)
+      remaining =
+        add_to_existing_stacks(character_id, item_id, quantity, max_stack, container_type)
 
       if remaining > 0 do
         case create_new_stacks(character_id, item_id, remaining, max_stack, container_type, opts) do
@@ -149,7 +190,8 @@ defmodule BezgelorDb.Inventory do
     items =
       InventoryItem
       |> where([i], i.character_id == ^character_id and i.item_id == ^item_id)
-      |> order_by([i], asc: i.quantity)  # Remove from smallest stacks first
+      # Remove from smallest stacks first
+      |> order_by([i], asc: i.quantity)
       |> Repo.all()
 
     total_available = Enum.sum(Enum.map(items, & &1.quantity))
@@ -371,14 +413,15 @@ defmodule BezgelorDb.Inventory do
     # Single query: get all bags and their occupied slots in one shot
     # This replaces the previous N+1 pattern (1 query for bags + N queries for items)
     query =
-      from b in Bag,
+      from(b in Bag,
         left_join: i in InventoryItem,
-          on:
-            i.character_id == b.character_id and
-              i.bag_index == b.bag_index and
-              i.container_type == ^container_type,
+        on:
+          i.character_id == b.character_id and
+            i.bag_index == b.bag_index and
+            i.container_type == ^container_type,
         where: b.character_id == ^character_id,
         select: {b, i.slot}
+      )
 
     results = Repo.all(query)
 
@@ -417,13 +460,15 @@ defmodule BezgelorDb.Inventory do
       # Find existing partial stacks
       partial_stacks =
         InventoryItem
-        |> where([i],
+        |> where(
+          [i],
           i.character_id == ^character_id and
-          i.item_id == ^item_id and
-          i.container_type == ^container_type and
-          i.quantity < i.max_stack
+            i.item_id == ^item_id and
+            i.container_type == ^container_type and
+            i.quantity < i.max_stack
         )
-        |> order_by([i], desc: i.quantity)  # Fill fullest stacks first
+        # Fill fullest stacks first
+        |> order_by([i], desc: i.quantity)
         |> Repo.all()
 
       Enum.reduce_while(partial_stacks, quantity, fn stack, remaining ->
@@ -649,5 +694,106 @@ defmodule BezgelorDb.Inventory do
     else
       {:error, :insufficient_funds}
     end
+  end
+
+  # ============================================================================
+  # Durability Management
+  # ============================================================================
+
+  @doc """
+  Apply death durability loss to all equipped items.
+
+  Reduces durability of equipped gear based on character level.
+  Uses BezgelorCore.Death.durability_loss/1 to calculate percentage.
+
+  Returns the number of items affected.
+  """
+  @spec apply_death_durability_loss(integer(), integer()) :: {:ok, non_neg_integer()}
+  def apply_death_durability_loss(character_id, level) do
+    loss_percent = BezgelorCore.Death.durability_loss(level)
+
+    if loss_percent > 0 do
+      # Get all equipped items
+      equipped_items = get_items(character_id, :equipped)
+
+      # Update each item's durability
+      affected_count =
+        Enum.reduce(equipped_items, 0, fn item, count ->
+          if item.max_durability > 0 do
+            durability_loss = round(item.max_durability * loss_percent / 100.0)
+            new_durability = max(0, item.durability - durability_loss)
+
+            {:ok, _} =
+              item
+              |> InventoryItem.changeset(%{durability: new_durability})
+              |> Repo.update()
+
+            count + 1
+          else
+            count
+          end
+        end)
+
+      {:ok, affected_count}
+    else
+      {:ok, 0}
+    end
+  end
+
+  @doc """
+  Update durability for a specific item.
+  """
+  @spec update_durability(integer(), integer()) ::
+          {:ok, InventoryItem.t()} | {:error, term()}
+  def update_durability(item_id, new_durability) when new_durability >= 0 do
+    case Repo.get(InventoryItem, item_id) do
+      nil ->
+        {:error, :not_found}
+
+      item ->
+        clamped = min(new_durability, item.max_durability)
+
+        item
+        |> InventoryItem.changeset(%{durability: clamped})
+        |> Repo.update()
+    end
+  end
+
+  @doc """
+  Repair item to full durability.
+  """
+  @spec repair_item(integer()) :: {:ok, InventoryItem.t()} | {:error, term()}
+  def repair_item(item_id) do
+    case Repo.get(InventoryItem, item_id) do
+      nil ->
+        {:error, :not_found}
+
+      item ->
+        item
+        |> InventoryItem.changeset(%{durability: item.max_durability})
+        |> Repo.update()
+    end
+  end
+
+  @doc """
+  Repair all equipped items for a character.
+
+  Returns the total repair cost (0 for now, future: calculate based on item level).
+  """
+  @spec repair_all_equipped(integer()) :: {:ok, integer()}
+  def repair_all_equipped(character_id) do
+    equipped_items = get_items(character_id, :equipped)
+
+    Enum.each(equipped_items, fn item ->
+      if item.durability < item.max_durability do
+        {:ok, _} =
+          item
+          |> InventoryItem.changeset(%{durability: item.max_durability})
+          |> Repo.update()
+      end
+    end)
+
+    # TODO: Calculate repair cost
+    {:ok, 0}
   end
 end

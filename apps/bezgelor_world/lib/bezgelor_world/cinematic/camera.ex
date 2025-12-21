@@ -42,8 +42,16 @@ defmodule BezgelorWorld.Cinematic.Camera do
     %__MODULE__{
       actor: actor,
       actions: [
-        {:attach, %{delay: 0, attach_id: attach_id, attach_type: attach_type, use_rotation: use_rotation}},
-        {:transition, %{delay: 0, type: transition_type, start: transition_start, mid: transition_mid, end: transition_end}}
+        {:attach,
+         %{delay: 0, attach_id: attach_id, attach_type: attach_type, use_rotation: use_rotation}},
+        {:transition,
+         %{
+           delay: 0,
+           type: transition_type,
+           start: transition_start,
+           mid: transition_mid,
+           end: transition_end
+         }}
       ]
     }
   end

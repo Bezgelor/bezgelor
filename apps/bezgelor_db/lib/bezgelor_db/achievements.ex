@@ -84,7 +84,11 @@ defmodule BezgelorDb.Achievements do
   @spec completed?(integer(), integer()) :: boolean()
   def completed?(character_id, achievement_id) do
     Achievement
-    |> where([a], a.character_id == ^character_id and a.achievement_id == ^achievement_id and a.completed == true)
+    |> where(
+      [a],
+      a.character_id == ^character_id and a.achievement_id == ^achievement_id and
+        a.completed == true
+    )
     |> Repo.exists?()
   end
 
@@ -166,7 +170,14 @@ defmodule BezgelorDb.Achievements do
   """
   @spec update_criteria(integer(), integer(), String.t(), boolean(), list(), integer()) ::
           {:ok, Achievement.t(), :completed | :progress | :already_complete} | {:error, term()}
-  def update_criteria(character_id, achievement_id, criteria_key, value, all_criteria, points \\ 10) do
+  def update_criteria(
+        character_id,
+        achievement_id,
+        criteria_key,
+        value,
+        all_criteria,
+        points \\ 10
+      ) do
     case get_or_create(character_id, achievement_id) do
       {:ok, achievement} ->
         if achievement.completed do

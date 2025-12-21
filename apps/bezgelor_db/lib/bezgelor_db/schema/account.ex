@@ -52,27 +52,27 @@ defmodule BezgelorDb.Schema.Account do
         }
 
   schema "accounts" do
-    field :email, :string
-    field :salt, :string
-    field :verifier, :string
-    field :game_token, :string
-    field :session_key, :string
-    field :session_key_created_at, :utc_datetime
-    field :active_title_id, :integer
+    field(:email, :string)
+    field(:salt, :string)
+    field(:verifier, :string)
+    field(:game_token, :string)
+    field(:session_key, :string)
+    field(:session_key_created_at, :utc_datetime)
+    field(:active_title_id, :integer)
 
     # Portal fields
-    field :email_verified_at, :utc_datetime
-    field :totp_secret_encrypted, :binary
-    field :totp_enabled_at, :utc_datetime
-    field :backup_codes_hashed, {:array, :string}
-    field :discord_id, :string
-    field :discord_username, :string
-    field :discord_linked_at, :utc_datetime
-    field :deleted_at, :utc_datetime
+    field(:email_verified_at, :utc_datetime)
+    field(:totp_secret_encrypted, :binary)
+    field(:totp_enabled_at, :utc_datetime)
+    field(:backup_codes_hashed, {:array, :string})
+    field(:discord_id, :string)
+    field(:discord_username, :string)
+    field(:discord_linked_at, :utc_datetime)
+    field(:deleted_at, :utc_datetime)
 
-    has_many :suspensions, BezgelorDb.Schema.AccountSuspension
-    has_many :account_roles, BezgelorDb.Schema.AccountRole
-    many_to_many :roles, BezgelorDb.Schema.Role, join_through: "account_roles"
+    has_many(:suspensions, BezgelorDb.Schema.AccountSuspension)
+    has_many(:account_roles, BezgelorDb.Schema.AccountRole)
+    many_to_many(:roles, BezgelorDb.Schema.Role, join_through: "account_roles")
 
     timestamps(type: :utc_datetime)
   end

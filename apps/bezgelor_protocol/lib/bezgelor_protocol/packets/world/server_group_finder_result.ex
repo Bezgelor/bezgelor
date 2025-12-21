@@ -14,7 +14,14 @@ defmodule BezgelorProtocol.Packets.World.ServerGroupFinderResult do
 
   alias BezgelorProtocol.PacketWriter
 
-  defstruct [:result, :group_id, :instance_id, :error_code, zone_id: 0, teleport_pos: {0.0, 0.0, 0.0}]
+  defstruct [
+    :result,
+    :group_id,
+    :instance_id,
+    :error_code,
+    zone_id: 0,
+    teleport_pos: {0.0, 0.0, 0.0}
+  ]
 
   @impl true
   def opcode, do: 0x0B03

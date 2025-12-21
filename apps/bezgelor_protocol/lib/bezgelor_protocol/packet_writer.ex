@@ -410,7 +410,11 @@ defmodule BezgelorProtocol.PacketWriter do
 
   defp write_bits_acc(writer, _value, 0), do: writer
 
-  defp write_bits_acc(%__MODULE__{bit_pos: bit_pos, bit_value: bit_value} = writer, value, remaining) do
+  defp write_bits_acc(
+         %__MODULE__{bit_pos: bit_pos, bit_value: bit_value} = writer,
+         value,
+         remaining
+       ) do
     bits_available = 8 - bit_pos
     bits_to_write = min(remaining, bits_available)
     mask = (1 <<< bits_to_write) - 1

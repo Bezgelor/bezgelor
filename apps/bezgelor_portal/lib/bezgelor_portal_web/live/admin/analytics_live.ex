@@ -18,7 +18,8 @@ defmodule BezgelorPortalWeb.Admin.AnalyticsLive do
   alias BezgelorDb.{Accounts, Characters}
   alias BezgelorWorld.Portal
 
-  @refresh_interval 5_000  # 5 seconds
+  # 5 seconds
+  @refresh_interval 5_000
 
   @impl true
   def mount(_params, _session, socket) do
@@ -33,8 +34,7 @@ defmodule BezgelorPortalWeb.Admin.AnalyticsLive do
        refresh_interval: @refresh_interval,
        last_refresh: DateTime.utc_now()
      )
-     |> load_all_metrics(),
-     layout: {BezgelorPortalWeb.Layouts, :admin}}
+     |> load_all_metrics(), layout: {BezgelorPortalWeb.Layouts, :admin}}
   end
 
   @impl true
@@ -61,12 +61,11 @@ defmodule BezgelorPortalWeb.Admin.AnalyticsLive do
           </span>
         </div>
       </div>
-
-      <!-- Player Statistics -->
+      
+    <!-- Player Statistics -->
       <section>
         <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
-          <.icon name="hero-users" class="size-5" />
-          Player Statistics
+          <.icon name="hero-users" class="size-5" /> Player Statistics
         </h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <.stat_card
@@ -99,12 +98,11 @@ defmodule BezgelorPortalWeb.Admin.AnalyticsLive do
           />
         </div>
       </section>
-
-      <!-- BEAM/OTP Metrics -->
+      
+    <!-- BEAM/OTP Metrics -->
       <section>
         <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
-          <.icon name="hero-cpu-chip" class="size-5" />
-          BEAM/OTP Metrics
+          <.icon name="hero-cpu-chip" class="size-5" /> BEAM/OTP Metrics
         </h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <.stat_card
@@ -136,36 +134,55 @@ defmodule BezgelorPortalWeb.Admin.AnalyticsLive do
             color="secondary"
           />
         </div>
-
-        <!-- Memory Breakdown -->
+        
+    <!-- Memory Breakdown -->
         <div class="card bg-base-100 shadow mt-4">
           <div class="card-body">
             <h3 class="card-title text-base">Memory Breakdown</h3>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-2">
-              <.memory_item label="Processes" value={@beam_stats.process_memory} total={@beam_stats.total_memory} />
-              <.memory_item label="Binary" value={@beam_stats.binary_memory} total={@beam_stats.total_memory} />
-              <.memory_item label="Code" value={@beam_stats.code_memory} total={@beam_stats.total_memory} />
-              <.memory_item label="ETS" value={@beam_stats.ets_memory} total={@beam_stats.total_memory} />
+              <.memory_item
+                label="Processes"
+                value={@beam_stats.process_memory}
+                total={@beam_stats.total_memory}
+              />
+              <.memory_item
+                label="Binary"
+                value={@beam_stats.binary_memory}
+                total={@beam_stats.total_memory}
+              />
+              <.memory_item
+                label="Code"
+                value={@beam_stats.code_memory}
+                total={@beam_stats.total_memory}
+              />
+              <.memory_item
+                label="ETS"
+                value={@beam_stats.ets_memory}
+                total={@beam_stats.total_memory}
+              />
             </div>
           </div>
         </div>
-
-        <!-- Scheduler Utilization -->
+        
+    <!-- Scheduler Utilization -->
         <div class="card bg-base-100 shadow mt-4">
           <div class="card-body">
             <h3 class="card-title text-base">Scheduler Utilization</h3>
             <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2 mt-2">
-              <.scheduler_bar :for={{idx, util} <- @beam_stats.scheduler_util} index={idx} utilization={util} />
+              <.scheduler_bar
+                :for={{idx, util} <- @beam_stats.scheduler_util}
+                index={idx}
+                utilization={util}
+              />
             </div>
           </div>
         </div>
       </section>
-
-      <!-- Game Metrics -->
+      
+    <!-- Game Metrics -->
       <section>
         <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
-          <.icon name="hero-puzzle-piece" class="size-5" />
-          Game Metrics
+          <.icon name="hero-puzzle-piece" class="size-5" /> Game Metrics
         </h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <.stat_card
@@ -198,12 +215,11 @@ defmodule BezgelorPortalWeb.Admin.AnalyticsLive do
           />
         </div>
       </section>
-
-      <!-- System Metrics -->
+      
+    <!-- System Metrics -->
       <section>
         <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
-          <.icon name="hero-server" class="size-5" />
-          System Metrics
+          <.icon name="hero-server" class="size-5" /> System Metrics
         </h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <.stat_card
@@ -236,12 +252,11 @@ defmodule BezgelorPortalWeb.Admin.AnalyticsLive do
           />
         </div>
       </section>
-
-      <!-- Top Zones -->
+      
+    <!-- Top Zones -->
       <section>
         <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
-          <.icon name="hero-map-pin" class="size-5" />
-          Top Zones by Players
+          <.icon name="hero-map-pin" class="size-5" /> Top Zones by Players
         </h2>
         <div class="card bg-base-100 shadow">
           <div class="card-body">
@@ -310,11 +325,13 @@ defmodule BezgelorPortalWeb.Admin.AnalyticsLive do
   attr :utilization, :float, required: true
 
   defp scheduler_bar(assigns) do
-    color = cond do
-      assigns.utilization > 80 -> "error"
-      assigns.utilization > 50 -> "warning"
-      true -> "success"
-    end
+    color =
+      cond do
+        assigns.utilization > 80 -> "error"
+        assigns.utilization > 50 -> "warning"
+        true -> "success"
+      end
+
     assigns = assign(assigns, :color, color)
 
     ~H"""
@@ -374,7 +391,8 @@ defmodule BezgelorPortalWeb.Admin.AnalyticsLive do
       total_accounts: total_accounts,
       accounts_today: count_accounts_today(),
       total_characters: total_characters,
-      active_characters: total_characters,  # Would filter by last_online
+      # Would filter by last_online
+      active_characters: total_characters,
       online_players: online_players,
       peak_today: peak_stats.daily,
       active_zones: length(zone_counts),
@@ -390,6 +408,7 @@ defmodule BezgelorPortalWeb.Admin.AnalyticsLive do
 
     # Get scheduler utilization (sample)
     scheduler_count = :erlang.system_info(:schedulers)
+
     scheduler_util =
       try do
         # This requires scheduler wall time to be enabled
@@ -431,7 +450,8 @@ defmodule BezgelorPortalWeb.Admin.AnalyticsLive do
     %{
       dungeon_instances: dungeon_instances,
       dungeon_players: dungeon_players,
-      pvp_matches: 0,  # Would come from PvP system when implemented
+      # Would come from PvP system when implemented
+      pvp_matches: 0,
       pvp_queue: 0,
       active_events: length(active_events),
       event_participants: event_participants,
@@ -462,7 +482,8 @@ defmodule BezgelorPortalWeb.Admin.AnalyticsLive do
     cpu_cores = :erlang.system_info(:schedulers_online)
 
     %{
-      cpu_usage: :rand.uniform(30) + 10,  # Placeholder
+      # Placeholder
+      cpu_usage: :rand.uniform(30) + 10,
       cpu_cores: cpu_cores,
       memory_total: get_system_memory_total(),
       memory_used: get_system_memory_used(),
@@ -506,7 +527,8 @@ defmodule BezgelorPortalWeb.Admin.AnalyticsLive do
       _ -> 0
     end
   rescue
-    _ -> :erlang.memory(:total) * 2  # Fallback estimate
+    # Fallback estimate
+    _ -> :erlang.memory(:total) * 2
   end
 
   defp get_system_memory_used do
@@ -515,10 +537,13 @@ defmodule BezgelorPortalWeb.Admin.AnalyticsLive do
         total = Keyword.get(data, :total_memory, 0)
         free = Keyword.get(data, :free_memory, 0)
         total - free
-      _ -> 0
+
+      _ ->
+        0
     end
   rescue
-    _ -> :erlang.memory(:total)  # Fallback
+    # Fallback
+    _ -> :erlang.memory(:total)
   end
 
   defp get_system_uptime do
@@ -529,13 +554,16 @@ defmodule BezgelorPortalWeb.Admin.AnalyticsLive do
         |> List.first()
         |> String.to_float()
         |> round()
-      _ -> 0
+
+      _ ->
+        0
     end
   rescue
     _ -> 0
   end
 
   defp format_number(nil), do: "0"
+
   defp format_number(n) when is_integer(n) do
     n
     |> Integer.to_string()
@@ -548,19 +576,25 @@ defmodule BezgelorPortalWeb.Admin.AnalyticsLive do
 
   defp format_bytes(bytes) when bytes < 1024, do: "#{bytes} B"
   defp format_bytes(bytes) when bytes < 1024 * 1024, do: "#{Float.round(bytes / 1024, 1)} KB"
-  defp format_bytes(bytes) when bytes < 1024 * 1024 * 1024, do: "#{Float.round(bytes / 1024 / 1024, 1)} MB"
+
+  defp format_bytes(bytes) when bytes < 1024 * 1024 * 1024,
+    do: "#{Float.round(bytes / 1024 / 1024, 1)} MB"
+
   defp format_bytes(bytes), do: "#{Float.round(bytes / 1024 / 1024 / 1024, 2)} GB"
 
   defp format_uptime(seconds) when seconds < 60, do: "#{seconds}s"
+
   defp format_uptime(seconds) when seconds < 3600 do
     minutes = div(seconds, 60)
     "#{minutes}m"
   end
+
   defp format_uptime(seconds) when seconds < 86400 do
     hours = div(seconds, 3600)
     minutes = div(rem(seconds, 3600), 60)
     "#{hours}h #{minutes}m"
   end
+
   defp format_uptime(seconds) do
     days = div(seconds, 86400)
     hours = div(rem(seconds, 86400), 3600)

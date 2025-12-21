@@ -72,7 +72,10 @@ permissions = [
   %{key: "admin.export_audit_log", category: "administration", description: "Download audit logs"},
 
   # Account Features
-  %{key: "account.signature", category: "account_features", description: "Signature tier account (premium features, extra slots)"}
+  %{key: "account.signature", category: "account_features", description: "Signature tier account (premium features, extra slots)"},
+
+  # Testing Tools (development/QA)
+  %{key: "testing.manage", category: "testing", description: "Access testing tools for character creation and deletion"}
 ]
 
 now = DateTime.utc_now() |> DateTime.truncate(:second)

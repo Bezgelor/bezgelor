@@ -206,7 +206,7 @@ defmodule BezgelorPortalWeb.CoreComponents do
 
     ~H"""
     <div class="fieldset mb-2">
-      <label>
+      <label class="label cursor-pointer justify-start gap-2">
         <input
           type="hidden"
           name={@name}
@@ -214,17 +214,16 @@ defmodule BezgelorPortalWeb.CoreComponents do
           disabled={@rest[:disabled]}
           form={@rest[:form]}
         />
-        <span class="label">
-          <input
-            type="checkbox"
-            id={@id}
-            name={@name}
-            value="true"
-            checked={@checked}
-            class={@class || "checkbox checkbox-sm"}
-            {@rest}
-          />{@label}
-        </span>
+        <input
+          type="checkbox"
+          id={@id}
+          name={@name}
+          value="true"
+          checked={@checked}
+          class={@class || "checkbox checkbox-sm"}
+          {@rest}
+        />
+        <span class="label-text">{@label}</span>
       </label>
       <.error :for={msg <- @errors}>{msg}</.error>
     </div>
@@ -232,6 +231,16 @@ defmodule BezgelorPortalWeb.CoreComponents do
   end
 
   def input(%{type: "select"} = assigns) do
+    # Multi-selects need different styling to respect the size attribute
+    base_class =
+      if assigns[:multiple] do
+        "w-full border border-base-300 rounded-lg bg-base-100 px-2 py-1"
+      else
+        "w-full select"
+      end
+
+    assigns = assign(assigns, :base_class, base_class)
+
     ~H"""
     <div class="fieldset mb-2">
       <label>
@@ -239,7 +248,7 @@ defmodule BezgelorPortalWeb.CoreComponents do
         <select
           id={@id}
           name={@name}
-          class={[@class || "w-full select", @errors != [] && (@error_class || "select-error")]}
+          class={[@class || @base_class, @errors != [] && (@error_class || "select-error")]}
           multiple={@multiple}
           {@rest}
         >

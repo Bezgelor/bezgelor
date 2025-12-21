@@ -64,6 +64,7 @@ defmodule BezgelorAuth.Application do
     case parse_host(host) do
       {:ok, ip_tuple} ->
         %{base_opts | socket_opts: [port: port, ip: ip_tuple]}
+
       :error ->
         base_opts
     end

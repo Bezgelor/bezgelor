@@ -21,7 +21,16 @@ defmodule BezgelorProtocol.Packets.World.ServerBuffApply do
   alias BezgelorProtocol.PacketWriter
   alias BezgelorCore.BuffDebuff
 
-  defstruct [:target_guid, :caster_guid, :buff_id, :spell_id, :buff_type, :amount, :duration, :is_debuff]
+  defstruct [
+    :target_guid,
+    :caster_guid,
+    :buff_id,
+    :spell_id,
+    :buff_type,
+    :amount,
+    :duration,
+    :is_debuff
+  ]
 
   @type t :: %__MODULE__{
           target_guid: non_neg_integer(),
@@ -59,7 +68,16 @@ defmodule BezgelorProtocol.Packets.World.ServerBuffApply do
   @doc """
   Create a new buff apply packet.
   """
-  @spec new(non_neg_integer(), non_neg_integer(), non_neg_integer(), non_neg_integer(), atom() | non_neg_integer(), integer(), non_neg_integer(), boolean()) :: t()
+  @spec new(
+          non_neg_integer(),
+          non_neg_integer(),
+          non_neg_integer(),
+          non_neg_integer(),
+          atom() | non_neg_integer(),
+          integer(),
+          non_neg_integer(),
+          boolean()
+        ) :: t()
   def new(target_guid, caster_guid, buff_id, spell_id, buff_type, amount, duration, is_debuff) do
     buff_type_int = if is_atom(buff_type), do: BuffDebuff.type_to_int(buff_type), else: buff_type
 

@@ -31,18 +31,18 @@ defmodule BezgelorDb.Schema.ArenaTeam do
   @max_roster_size %{"2v2" => 4, "3v3" => 6, "5v5" => 10}
 
   schema "arena_teams" do
-    field :name, :string
-    field :bracket, :string
-    field :rating, :integer, default: 0
-    field :season_high, :integer, default: 0
-    field :games_played, :integer, default: 0
-    field :games_won, :integer, default: 0
-    field :captain_id, :integer
-    field :faction_id, :integer
-    field :created_at, :utc_datetime
-    field :disbanded_at, :utc_datetime
+    field(:name, :string)
+    field(:bracket, :string)
+    field(:rating, :integer, default: 0)
+    field(:season_high, :integer, default: 0)
+    field(:games_played, :integer, default: 0)
+    field(:games_won, :integer, default: 0)
+    field(:captain_id, :integer)
+    field(:faction_id, :integer)
+    field(:created_at, :utc_datetime)
+    field(:disbanded_at, :utc_datetime)
 
-    has_many :members, ArenaTeamMember, foreign_key: :team_id
+    has_many(:members, ArenaTeamMember, foreign_key: :team_id)
 
     timestamps()
   end
@@ -60,7 +60,9 @@ defmodule BezgelorDb.Schema.ArenaTeam do
     |> validate_required(@required_fields)
     |> validate_inclusion(:bracket, @brackets)
     |> validate_length(:name, min: 2, max: 24)
-    |> validate_format(:name, ~r/^[a-zA-Z0-9\s]+$/, message: "only letters, numbers and spaces allowed")
+    |> validate_format(:name, ~r/^[a-zA-Z0-9\s]+$/,
+      message: "only letters, numbers and spaces allowed"
+    )
     |> validate_number(:rating, greater_than_or_equal_to: 0)
     |> unique_constraint(:name)
   end
@@ -125,6 +127,7 @@ defmodule BezgelorDb.Schema.ArenaTeam do
   """
   @spec win_rate(t()) :: float()
   def win_rate(%__MODULE__{games_played: 0}), do: 0.0
+
   def win_rate(%__MODULE__{games_won: won, games_played: played}) do
     Float.round(won / played * 100, 1)
   end

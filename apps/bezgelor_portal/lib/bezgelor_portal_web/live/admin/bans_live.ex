@@ -31,8 +31,7 @@ defmodule BezgelorPortalWeb.Admin.BansLive do
        page: 1,
        has_more: false,
        total_active: Accounts.count_suspensions(active_only: true)
-     ),
-     layout: {BezgelorPortalWeb.Layouts, :admin}}
+     ), layout: {BezgelorPortalWeb.Layouts, :admin}}
   end
 
   @impl true
@@ -65,8 +64,8 @@ defmodule BezgelorPortalWeb.Admin.BansLive do
           </div>
         </div>
       </div>
-
-      <!-- Filters -->
+      
+    <!-- Filters -->
       <div class="card bg-base-100 shadow">
         <div class="card-body">
           <form phx-submit="search" class="flex flex-wrap gap-4 items-end">
@@ -98,14 +97,13 @@ defmodule BezgelorPortalWeb.Admin.BansLive do
             </div>
 
             <button type="submit" class="btn btn-primary">
-              <.icon name="hero-magnifying-glass" class="size-4" />
-              Search
+              <.icon name="hero-magnifying-glass" class="size-4" /> Search
             </button>
           </form>
         </div>
       </div>
-
-      <!-- Results -->
+      
+    <!-- Results -->
       <div class="card bg-base-100 shadow">
         <div class="overflow-x-auto">
           <table class="table">
@@ -134,7 +132,10 @@ defmodule BezgelorPortalWeb.Admin.BansLive do
               <% else %>
                 <tr :for={suspension <- @suspensions} class="hover">
                   <td>
-                    <.link navigate={~p"/admin/users/#{suspension.account_id}"} class="link link-hover">
+                    <.link
+                      navigate={~p"/admin/users/#{suspension.account_id}"}
+                      class="link link-hover"
+                    >
                       {suspension.account.email}
                     </.link>
                   </td>
@@ -164,10 +165,12 @@ defmodule BezgelorPortalWeb.Admin.BansLive do
                       phx-value-id={suspension.id}
                       data-confirm="Remove this ban/suspension?"
                     >
-                      <.icon name="hero-check-circle" class="size-4" />
-                      Unban
+                      <.icon name="hero-check-circle" class="size-4" /> Unban
                     </button>
-                    <span :if={!AccountSuspension.active?(suspension)} class="text-base-content/50 text-sm">
+                    <span
+                      :if={!AccountSuspension.active?(suspension)}
+                      class="text-base-content/50 text-sm"
+                    >
                       Expired
                     </span>
                   </td>
@@ -176,13 +179,15 @@ defmodule BezgelorPortalWeb.Admin.BansLive do
             </tbody>
           </table>
         </div>
-
-        <!-- Pagination -->
+        
+    <!-- Pagination -->
         <div :if={@page > 1 or @has_more} class="card-body pt-0">
           <div class="flex justify-center gap-2">
             <.link
               :if={@page > 1}
-              patch={~p"/admin/users/bans?#{pagination_params(@search_query, @active_only, @page - 1)}"}
+              patch={
+                ~p"/admin/users/bans?#{pagination_params(@search_query, @active_only, @page - 1)}"
+              }
               class="btn btn-sm"
             >
               Previous
@@ -190,7 +195,9 @@ defmodule BezgelorPortalWeb.Admin.BansLive do
             <span class="btn btn-sm btn-ghost">Page {@page}</span>
             <.link
               :if={@has_more}
-              patch={~p"/admin/users/bans?#{pagination_params(@search_query, @active_only, @page + 1)}"}
+              patch={
+                ~p"/admin/users/bans?#{pagination_params(@search_query, @active_only, @page + 1)}"
+              }
               class="btn btn-sm"
             >
               Next
@@ -236,7 +243,11 @@ defmodule BezgelorPortalWeb.Admin.BansLive do
   def handle_event("toggle_active", _, socket) do
     new_active = !socket.assigns.active_only
     active = if new_active, do: "true", else: "false"
-    {:noreply, push_patch(socket, to: ~p"/admin/users/bans?#{%{q: socket.assigns.search_query, active: active}}")}
+
+    {:noreply,
+     push_patch(socket,
+       to: ~p"/admin/users/bans?#{%{q: socket.assigns.search_query, active: active}}"
+     )}
   end
 
   @impl true
@@ -271,12 +282,13 @@ defmodule BezgelorPortalWeb.Admin.BansLive do
     %{search_query: search, active_only: active_only, page: page} = socket.assigns
     offset = (page - 1) * @per_page
 
-    suspensions = Accounts.list_suspensions(
-      active_only: active_only,
-      search: search,
-      limit: @per_page + 1,
-      offset: offset
-    )
+    suspensions =
+      Accounts.list_suspensions(
+        active_only: active_only,
+        search: search,
+        limit: @per_page + 1,
+        offset: offset
+      )
 
     {suspensions, has_more} =
       if length(suspensions) > @per_page do
@@ -289,6 +301,7 @@ defmodule BezgelorPortalWeb.Admin.BansLive do
   end
 
   defp format_datetime(nil), do: "-"
+
   defp format_datetime(datetime) do
     Calendar.strftime(datetime, "%Y-%m-%d %H:%M")
   end

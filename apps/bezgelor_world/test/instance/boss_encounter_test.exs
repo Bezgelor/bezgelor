@@ -13,7 +13,8 @@ defmodule BezgelorWorld.Instance.BossEncounterTest do
   setup do
     # Generate unique IDs for this test
     instance_guid = System.unique_integer([:positive])
-    boss_id = 17163  # Stormtalon
+    # Stormtalon
+    boss_id = 17163
 
     # Register a test player session with self() as connection PID
     account_id = System.unique_integer([:positive])
@@ -75,16 +76,17 @@ defmodule BezgelorWorld.Instance.BossEncounterTest do
       }
     }
 
-    {:ok, pid} = BossEncounter.start_link(
-      instance_guid: instance_guid,
-      boss_id: boss_id,
-      boss_definition: boss_definition,
-      difficulty: :normal,
-      players: players,
-      boss_guid: boss_guid,
-      zone_id: 1,
-      boss_position: {100.0, 50.0, 200.0}
-    )
+    {:ok, pid} =
+      BossEncounter.start_link(
+        instance_guid: instance_guid,
+        boss_id: boss_id,
+        boss_definition: boss_definition,
+        difficulty: :normal,
+        players: players,
+        boss_guid: boss_guid,
+        zone_id: 1,
+        boss_position: {100.0, 50.0, 200.0}
+      )
 
     # Wait for initialization
     Process.sleep(50)
@@ -95,14 +97,13 @@ defmodule BezgelorWorld.Instance.BossEncounterTest do
     end)
 
     {:ok,
-      pid: pid,
-      instance_guid: instance_guid,
-      boss_id: boss_id,
-      character_id: character_id,
-      player_guid: player_guid,
-      boss_guid: boss_guid,
-      account_id: account_id
-    }
+     pid: pid,
+     instance_guid: instance_guid,
+     boss_id: boss_id,
+     character_id: character_id,
+     player_guid: player_guid,
+     boss_guid: boss_guid,
+     account_id: account_id}
   end
 
   describe "initialization" do
@@ -253,15 +254,16 @@ defmodule BezgelorWorld.Instance.BossEncounterTest do
       boss_id = System.unique_integer([:positive])
       boss_guid = WorldManager.generate_guid(:creature)
 
-      {:ok, pid} = BossEncounter.start_link(
-        instance_guid: instance_guid,
-        boss_id: boss_id,
-        boss_definition: %{"health" => 100_000, "phases" => []},
-        difficulty: :veteran,
-        players: %{},
-        boss_guid: boss_guid,
-        zone_id: 1
-      )
+      {:ok, pid} =
+        BossEncounter.start_link(
+          instance_guid: instance_guid,
+          boss_id: boss_id,
+          boss_definition: %{"health" => 100_000, "phases" => []},
+          difficulty: :veteran,
+          players: %{},
+          boss_guid: boss_guid,
+          zone_id: 1
+        )
 
       Process.sleep(50)
       {:ok, state} = BossEncounter.get_state(pid)
@@ -276,16 +278,17 @@ defmodule BezgelorWorld.Instance.BossEncounterTest do
       boss_id = System.unique_integer([:positive])
       boss_guid = WorldManager.generate_guid(:creature)
 
-      {:ok, pid} = BossEncounter.start_link(
-        instance_guid: instance_guid,
-        boss_id: boss_id,
-        boss_definition: %{"health" => 100_000, "phases" => []},
-        difficulty: :mythic_plus,
-        mythic_level: 10,
-        players: %{},
-        boss_guid: boss_guid,
-        zone_id: 1
-      )
+      {:ok, pid} =
+        BossEncounter.start_link(
+          instance_guid: instance_guid,
+          boss_id: boss_id,
+          boss_definition: %{"health" => 100_000, "phases" => []},
+          difficulty: :mythic_plus,
+          mythic_level: 10,
+          players: %{},
+          boss_guid: boss_guid,
+          zone_id: 1
+        )
 
       Process.sleep(50)
       {:ok, state} = BossEncounter.get_state(pid)

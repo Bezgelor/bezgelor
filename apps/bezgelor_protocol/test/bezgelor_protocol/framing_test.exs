@@ -37,7 +37,8 @@ defmodule BezgelorProtocol.FramingTest do
     test "returns remaining data for incomplete packet" do
       # Complete packet + incomplete
       complete = <<6, 0, 0, 0, 3, 0, 1, 2>>
-      incomplete = <<10, 0, 0, 0, 4, 0>>  # Says 10 bytes but only 6 present
+      # Says 10 bytes but only 6 present
+      incomplete = <<10, 0, 0, 0, 4, 0>>
 
       data = complete <> incomplete
 
@@ -45,7 +46,8 @@ defmodule BezgelorProtocol.FramingTest do
     end
 
     test "returns all data when header incomplete" do
-      data = <<6, 0, 0>>  # Only 3 bytes, need 6 for header
+      # Only 3 bytes, need 6 for header
+      data = <<6, 0, 0>>
 
       assert {:ok, [], ^data} = Framing.parse_packets(data)
     end

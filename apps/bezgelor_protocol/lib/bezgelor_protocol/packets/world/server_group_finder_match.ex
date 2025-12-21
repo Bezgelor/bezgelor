@@ -22,7 +22,14 @@ defmodule BezgelorProtocol.Packets.World.ServerGroupFinderMatch do
 
   alias BezgelorProtocol.PacketWriter
 
-  defstruct [:group_id, :instance_id, :instance_type, :difficulty, timeout_seconds: 30, members: []]
+  defstruct [
+    :group_id,
+    :instance_id,
+    :instance_type,
+    :difficulty,
+    timeout_seconds: 30,
+    members: []
+  ]
 
   @impl true
   def opcode, do: 0x0B02

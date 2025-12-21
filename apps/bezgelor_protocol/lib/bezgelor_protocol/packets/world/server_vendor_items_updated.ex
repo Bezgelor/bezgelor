@@ -149,9 +149,12 @@ defmodule BezgelorProtocol.Packets.World.ServerVendorItemsUpdated do
       writer
       |> PacketWriter.write_f32(packet.sell_price_multiplier)
       |> PacketWriter.write_f32(packet.buy_price_multiplier)
-      |> PacketWriter.write_bits(0, 1)  # unknown2
-      |> PacketWriter.write_bits(0, 1)  # unknown3
-      |> PacketWriter.write_bits(0, 1)  # unknown4
+      # unknown2
+      |> PacketWriter.write_bits(0, 1)
+      # unknown3
+      |> PacketWriter.write_bits(0, 1)
+      # unknown4
+      |> PacketWriter.write_bits(0, 1)
       |> PacketWriter.flush_bits()
 
     {:ok, writer}
@@ -166,18 +169,26 @@ defmodule BezgelorProtocol.Packets.World.ServerVendorItemsUpdated do
   defp write_vendor_item(item, writer) do
     writer
     |> PacketWriter.write_u32(item.index)
-    |> PacketWriter.write_bits(0, 4)              # unknown1
+    # unknown1
+    |> PacketWriter.write_bits(0, 4)
     |> PacketWriter.flush_bits()
     |> PacketWriter.write_u32(item.item_id)
-    |> PacketWriter.write_u32(0)               # unknown3
-    |> PacketWriter.write_u32(0)               # unknown4
-    |> PacketWriter.write_bits(0, 17)             # unknown5
+    # unknown3
+    |> PacketWriter.write_u32(0)
+    # unknown4
+    |> PacketWriter.write_u32(0)
+    # unknown5
+    |> PacketWriter.write_bits(0, 17)
     |> PacketWriter.flush_bits()
-    |> PacketWriter.write_u32(0)               # unknown6
+    # unknown6
+    |> PacketWriter.write_u32(0)
     |> PacketWriter.write_u32(item.category_index)
-    |> PacketWriter.write_u32(0)               # unknown8
-    |> PacketWriter.write_u64(0)               # unknown9
-    |> PacketWriter.write_u32(0)               # unknownA
+    # unknown8
+    |> PacketWriter.write_u32(0)
+    # unknown9
+    |> PacketWriter.write_u64(0)
+    # unknownA
+    |> PacketWriter.write_u32(0)
     |> write_extra_cost(item.extra_cost1)
     |> write_extra_cost(item.extra_cost2)
   end

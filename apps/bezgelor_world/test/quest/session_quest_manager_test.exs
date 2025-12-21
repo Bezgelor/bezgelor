@@ -12,17 +12,19 @@ defmodule BezgelorWorld.Quest.SessionQuestManagerTest do
             state: :accepted,
             dirty: false,
             objectives: [
-              %{index: 0, type: 2, data: 12345, current: 0, target: 5}  # Kill creature 12345
+              # Kill creature 12345
+              %{index: 0, type: 2, data: 12345, current: 0, target: 5}
             ]
           }
         }
       }
 
-      {updated_session, packets} = SessionQuestManager.process_game_event(
-        session_data,
-        :kill,
-        %{creature_id: 12345}
-      )
+      {updated_session, packets} =
+        SessionQuestManager.process_game_event(
+          session_data,
+          :kill,
+          %{creature_id: 12345}
+        )
 
       # Verify objective incremented
       quest = updated_session.active_quests[100]
@@ -47,11 +49,13 @@ defmodule BezgelorWorld.Quest.SessionQuestManagerTest do
         }
       }
 
-      {updated_session, packets} = SessionQuestManager.process_game_event(
-        session_data,
-        :kill,
-        %{creature_id: 99999}  # Different creature
-      )
+      {updated_session, packets} =
+        SessionQuestManager.process_game_event(
+          session_data,
+          :kill,
+          # Different creature
+          %{creature_id: 99999}
+        )
 
       # Verify no update
       quest = updated_session.active_quests[100]
@@ -68,17 +72,19 @@ defmodule BezgelorWorld.Quest.SessionQuestManagerTest do
             state: :accepted,
             dirty: false,
             objectives: [
-              %{index: 0, type: 3, data: 5001, current: 2, target: 10}  # Collect item 5001
+              # Collect item 5001
+              %{index: 0, type: 3, data: 5001, current: 2, target: 10}
             ]
           }
         }
       }
 
-      {updated_session, packets} = SessionQuestManager.process_game_event(
-        session_data,
-        :loot,
-        %{item_id: 5001}
-      )
+      {updated_session, packets} =
+        SessionQuestManager.process_game_event(
+          session_data,
+          :loot,
+          %{item_id: 5001}
+        )
 
       quest = updated_session.active_quests[100]
       assert quest.dirty == true
@@ -94,20 +100,23 @@ defmodule BezgelorWorld.Quest.SessionQuestManagerTest do
             state: :accepted,
             dirty: false,
             objectives: [
-              %{index: 0, type: 2, data: 12345, current: 4, target: 5}  # 4/5 kills
+              # 4/5 kills
+              %{index: 0, type: 2, data: 12345, current: 4, target: 5}
             ]
           }
         }
       }
 
-      {updated_session, _packets} = SessionQuestManager.process_game_event(
-        session_data,
-        :kill,
-        %{creature_id: 12345}
-      )
+      {updated_session, _packets} =
+        SessionQuestManager.process_game_event(
+          session_data,
+          :kill,
+          %{creature_id: 12345}
+        )
 
       quest = updated_session.active_quests[100]
-      assert quest.state == :complete  # Auto-completed
+      # Auto-completed
+      assert quest.state == :complete
       assert Enum.at(quest.objectives, 0).current == 5
     end
 
@@ -119,17 +128,19 @@ defmodule BezgelorWorld.Quest.SessionQuestManagerTest do
             state: :accepted,
             dirty: false,
             objectives: [
-              %{index: 0, type: 2, data: 12345, current: 5, target: 5}  # Already at target
+              # Already at target
+              %{index: 0, type: 2, data: 12345, current: 5, target: 5}
             ]
           }
         }
       }
 
-      {updated_session, packets} = SessionQuestManager.process_game_event(
-        session_data,
-        :kill,
-        %{creature_id: 12345}
-      )
+      {updated_session, packets} =
+        SessionQuestManager.process_game_event(
+          session_data,
+          :kill,
+          %{creature_id: 12345}
+        )
 
       # Should not process since already at target
       quest = updated_session.active_quests[100]
@@ -142,7 +153,8 @@ defmodule BezgelorWorld.Quest.SessionQuestManagerTest do
         active_quests: %{
           100 => %{
             quest_id: 100,
-            state: :complete,  # Already complete
+            # Already complete
+            state: :complete,
             dirty: false,
             objectives: [
               %{index: 0, type: 2, data: 12345, current: 5, target: 5}
@@ -151,11 +163,12 @@ defmodule BezgelorWorld.Quest.SessionQuestManagerTest do
         }
       }
 
-      {updated_session, packets} = SessionQuestManager.process_game_event(
-        session_data,
-        :kill,
-        %{creature_id: 12345}
-      )
+      {updated_session, packets} =
+        SessionQuestManager.process_game_event(
+          session_data,
+          :kill,
+          %{creature_id: 12345}
+        )
 
       assert packets == []
       assert updated_session.active_quests[100].state == :complete
@@ -228,7 +241,8 @@ defmodule BezgelorWorld.Quest.SessionQuestManagerTest do
       quest = %{
         objectives: [
           %{current: 5, target: 5},
-          %{current: 8, target: 10}  # Not complete
+          # Not complete
+          %{current: 8, target: 10}
         ]
       }
 
@@ -259,7 +273,8 @@ defmodule BezgelorWorld.Quest.SessionQuestManagerTest do
             state: :accepted,
             dirty: false,
             objectives: [
-              %{index: 0, type: 2, data: 12345, current: 3, target: 10}  # Same creature
+              # Same creature
+              %{index: 0, type: 2, data: 12345, current: 3, target: 10}
             ]
           },
           300 => %{
@@ -267,17 +282,19 @@ defmodule BezgelorWorld.Quest.SessionQuestManagerTest do
             state: :accepted,
             dirty: false,
             objectives: [
-              %{index: 0, type: 2, data: 99999, current: 0, target: 5}  # Different creature
+              # Different creature
+              %{index: 0, type: 2, data: 99999, current: 0, target: 5}
             ]
           }
         }
       }
 
-      {updated_session, packets} = SessionQuestManager.process_game_event(
-        session_data,
-        :kill,
-        %{creature_id: 12345}
-      )
+      {updated_session, packets} =
+        SessionQuestManager.process_game_event(
+          session_data,
+          :kill,
+          %{creature_id: 12345}
+        )
 
       # Quest 100 and 200 should update
       assert updated_session.active_quests[100].objectives |> Enum.at(0) |> Map.get(:current) == 1
@@ -300,17 +317,19 @@ defmodule BezgelorWorld.Quest.SessionQuestManagerTest do
             state: :accepted,
             dirty: false,
             objectives: [
-              %{index: 0, type: 12, data: 7890, current: 0, target: 1}  # Interact with object
+              # Interact with object
+              %{index: 0, type: 12, data: 7890, current: 0, target: 1}
             ]
           }
         }
       }
 
-      {updated_session, packets} = SessionQuestManager.process_game_event(
-        session_data,
-        :interact,
-        %{object_id: 7890}
-      )
+      {updated_session, packets} =
+        SessionQuestManager.process_game_event(
+          session_data,
+          :interact,
+          %{object_id: 7890}
+        )
 
       quest = updated_session.active_quests[100]
       assert quest.dirty == true
@@ -328,17 +347,19 @@ defmodule BezgelorWorld.Quest.SessionQuestManagerTest do
             state: :accepted,
             dirty: false,
             objectives: [
-              %{index: 0, type: 5, data: 500, current: 0, target: 1}  # Enter location 500
+              # Enter location 500
+              %{index: 0, type: 5, data: 500, current: 0, target: 1}
             ]
           }
         }
       }
 
-      {updated_session, packets} = SessionQuestManager.process_game_event(
-        session_data,
-        :enter_location,
-        %{location_id: 500}
-      )
+      {updated_session, packets} =
+        SessionQuestManager.process_game_event(
+          session_data,
+          :enter_location,
+          %{location_id: 500}
+        )
 
       quest = updated_session.active_quests[100]
       assert Enum.at(quest.objectives, 0).current == 1

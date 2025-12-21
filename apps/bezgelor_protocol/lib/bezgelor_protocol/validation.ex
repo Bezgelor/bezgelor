@@ -57,7 +57,8 @@ defmodule BezgelorProtocol.Validation do
       {:error, :position_out_of_bounds}
   """
   @spec validate_position({number(), number(), number()}) ::
-          :ok | {:error, :invalid_position_type | :invalid_position_value | :position_out_of_bounds}
+          :ok
+          | {:error, :invalid_position_type | :invalid_position_value | :position_out_of_bounds}
   def validate_position({x, y, z}) do
     cond do
       not is_number(x) or not is_number(y) or not is_number(z) ->
@@ -319,6 +320,7 @@ defmodule BezgelorProtocol.Validation do
   @doc """
   Validate character level is within bounds.
   """
-  @spec validate_level(integer()) :: :ok | {:error, {:out_of_range, integer(), integer(), integer()}}
+  @spec validate_level(integer()) ::
+          :ok | {:error, {:out_of_range, integer(), integer(), integer()}}
   def validate_level(level), do: validate_range(level, 1, 50)
 end

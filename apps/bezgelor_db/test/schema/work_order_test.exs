@@ -6,6 +6,7 @@ defmodule BezgelorDb.Schema.WorkOrderTest do
   describe "changeset/2" do
     test "valid with required fields" do
       expires = DateTime.add(DateTime.utc_now(), 86400, :second)
+
       attrs = %{
         character_id: 1,
         work_order_id: 100,
@@ -13,12 +14,14 @@ defmodule BezgelorDb.Schema.WorkOrderTest do
         quantity_required: 5,
         expires_at: expires
       }
+
       changeset = WorkOrder.changeset(%WorkOrder{}, attrs)
       assert changeset.valid?
     end
 
     test "defaults status to active" do
       expires = DateTime.add(DateTime.utc_now(), 86400, :second)
+
       attrs = %{
         character_id: 1,
         work_order_id: 100,
@@ -26,12 +29,14 @@ defmodule BezgelorDb.Schema.WorkOrderTest do
         quantity_required: 5,
         expires_at: expires
       }
+
       changeset = WorkOrder.changeset(%WorkOrder{}, attrs)
       assert Ecto.Changeset.get_field(changeset, :status) == :active
     end
 
     test "defaults quantity_completed to 0" do
       expires = DateTime.add(DateTime.utc_now(), 86400, :second)
+
       attrs = %{
         character_id: 1,
         work_order_id: 100,
@@ -39,6 +44,7 @@ defmodule BezgelorDb.Schema.WorkOrderTest do
         quantity_required: 5,
         expires_at: expires
       }
+
       changeset = WorkOrder.changeset(%WorkOrder{}, attrs)
       assert Ecto.Changeset.get_field(changeset, :quantity_completed) == 0
     end

@@ -22,8 +22,7 @@ defmodule BezgelorPortalWeb.Admin.RolesLive do
        roles: roles,
        show_create_modal: false,
        create_form: %{"name" => "", "description" => ""}
-     ),
-     layout: {BezgelorPortalWeb.Layouts, :admin}}
+     ), layout: {BezgelorPortalWeb.Layouts, :admin}}
   end
 
   @impl true
@@ -41,12 +40,11 @@ defmodule BezgelorPortalWeb.Admin.RolesLive do
           class="btn btn-primary"
           phx-click="show_create_modal"
         >
-          <.icon name="hero-plus" class="size-4" />
-          Create Role
+          <.icon name="hero-plus" class="size-4" /> Create Role
         </button>
       </div>
-
-      <!-- Roles Grid -->
+      
+    <!-- Roles Grid -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <.role_card
           :for={role <- @roles}
@@ -55,9 +53,14 @@ defmodule BezgelorPortalWeb.Admin.RolesLive do
           can_delete={"roles.delete" in get_permission_keys(@current_account)}
         />
       </div>
-
-      <!-- Create Modal -->
-      <.modal :if={@show_create_modal} id="create-role-modal" show on_cancel={JS.push("hide_create_modal")}>
+      
+    <!-- Create Modal -->
+      <.modal
+        :if={@show_create_modal}
+        id="create-role-modal"
+        show
+        on_cancel={JS.push("hide_create_modal")}
+      >
         <:title>Create New Role</:title>
         <form phx-submit="create_role" class="space-y-4">
           <div class="form-control">
@@ -136,8 +139,7 @@ defmodule BezgelorPortalWeb.Admin.RolesLive do
             navigate={~p"/admin/roles/#{@role.id}/edit"}
             class="btn btn-ghost btn-sm"
           >
-            <.icon name="hero-pencil" class="size-4" />
-            Edit
+            <.icon name="hero-pencil" class="size-4" /> Edit
           </.link>
           <button
             :if={@can_delete && !@role.protected}
@@ -147,8 +149,7 @@ defmodule BezgelorPortalWeb.Admin.RolesLive do
             phx-value-id={@role.id}
             data-confirm={"Are you sure you want to delete the \"#{@role.name}\" role?"}
           >
-            <.icon name="hero-trash" class="size-4" />
-            Delete
+            <.icon name="hero-trash" class="size-4" /> Delete
           </button>
         </div>
       </div>
@@ -165,7 +166,8 @@ defmodule BezgelorPortalWeb.Admin.RolesLive do
 
   @impl true
   def handle_event("hide_create_modal", _, socket) do
-    {:noreply, assign(socket, show_create_modal: false, create_form: %{"name" => "", "description" => ""})}
+    {:noreply,
+     assign(socket, show_create_modal: false, create_form: %{"name" => "", "description" => ""})}
   end
 
   @impl true

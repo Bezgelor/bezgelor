@@ -116,20 +116,32 @@ defmodule BezgelorWorld.Zone.Instance do
   end
 
   def get_entity_creature_id({zone_id, instance_id}, guid) do
-    GenServer.call(via_tuple(zone_id, instance_id), {:get_entity_creature_id, guid}, @call_timeout)
+    GenServer.call(
+      via_tuple(zone_id, instance_id),
+      {:get_entity_creature_id, guid},
+      @call_timeout
+    )
   end
 
   @doc """
   Update an entity's state.
   """
-  @spec update_entity(pid() | {non_neg_integer(), instance_id()}, non_neg_integer(), (Entity.t() -> Entity.t())) ::
+  @spec update_entity(
+          pid() | {non_neg_integer(), instance_id()},
+          non_neg_integer(),
+          (Entity.t() -> Entity.t())
+        ) ::
           :ok | :error
   def update_entity(instance, guid, update_fn) when is_pid(instance) do
     GenServer.call(instance, {:update_entity, guid, update_fn}, @call_timeout)
   end
 
   def update_entity({zone_id, instance_id}, guid, update_fn) do
-    GenServer.call(via_tuple(zone_id, instance_id), {:update_entity, guid, update_fn}, @call_timeout)
+    GenServer.call(
+      via_tuple(zone_id, instance_id),
+      {:update_entity, guid, update_fn},
+      @call_timeout
+    )
   end
 
   @doc """
@@ -138,14 +150,22 @@ defmodule BezgelorWorld.Zone.Instance do
   This is more efficient than update_entity when only the position changes,
   as it avoids the overhead of a full entity update.
   """
-  @spec update_entity_position(pid() | {non_neg_integer(), instance_id()}, non_neg_integer(), Entity.position()) ::
+  @spec update_entity_position(
+          pid() | {non_neg_integer(), instance_id()},
+          non_neg_integer(),
+          Entity.position()
+        ) ::
           :ok | :error
   def update_entity_position(instance, guid, position) when is_pid(instance) do
     GenServer.call(instance, {:update_entity_position, guid, position}, @call_timeout)
   end
 
   def update_entity_position({zone_id, instance_id}, guid, position) do
-    GenServer.call(via_tuple(zone_id, instance_id), {:update_entity_position, guid, position}, @call_timeout)
+    GenServer.call(
+      via_tuple(zone_id, instance_id),
+      {:update_entity_position, guid, position},
+      @call_timeout
+    )
   end
 
   @doc """
@@ -158,7 +178,11 @@ defmodule BezgelorWorld.Zone.Instance do
   end
 
   def entities_in_range({zone_id, instance_id}, position, radius) do
-    GenServer.call(via_tuple(zone_id, instance_id), {:entities_in_range, position, radius}, @call_timeout)
+    GenServer.call(
+      via_tuple(zone_id, instance_id),
+      {:entities_in_range, position, radius},
+      @call_timeout
+    )
   end
 
   @doc """
@@ -255,10 +279,20 @@ defmodule BezgelorWorld.Zone.Instance do
     state =
       case entity.type do
         :player ->
-          %{state | entities: entities, spatial_grid: spatial_grid, players: MapSet.put(state.players, entity.guid)}
+          %{
+            state
+            | entities: entities,
+              spatial_grid: spatial_grid,
+              players: MapSet.put(state.players, entity.guid)
+          }
 
         :creature ->
-          %{state | entities: entities, spatial_grid: spatial_grid, creatures: MapSet.put(state.creatures, entity.guid)}
+          %{
+            state
+            | entities: entities,
+              spatial_grid: spatial_grid,
+              creatures: MapSet.put(state.creatures, entity.guid)
+          }
 
         _ ->
           %{state | entities: entities, spatial_grid: spatial_grid}
@@ -278,10 +312,20 @@ defmodule BezgelorWorld.Zone.Instance do
       if entity do
         case entity.type do
           :player ->
-            %{state | entities: entities, spatial_grid: spatial_grid, players: MapSet.delete(state.players, guid)}
+            %{
+              state
+              | entities: entities,
+                spatial_grid: spatial_grid,
+                players: MapSet.delete(state.players, guid)
+            }
 
           :creature ->
-            %{state | entities: entities, spatial_grid: spatial_grid, creatures: MapSet.delete(state.creatures, guid)}
+            %{
+              state
+              | entities: entities,
+                spatial_grid: spatial_grid,
+                creatures: MapSet.delete(state.creatures, guid)
+            }
 
           _ ->
             %{state | entities: entities, spatial_grid: spatial_grid}
@@ -297,7 +341,8 @@ defmodule BezgelorWorld.Zone.Instance do
   @impl true
   def handle_cast({:broadcast, message}, state) do
     # Broadcast to all player connection processes in this zone instance
-    sessions = BezgelorWorld.WorldManager.get_zone_instance_sessions(state.zone_id, state.instance_id)
+    sessions =
+      BezgelorWorld.WorldManager.get_zone_instance_sessions(state.zone_id, state.instance_id)
 
     case message do
       # Packet broadcast: {opcode, packet_data}

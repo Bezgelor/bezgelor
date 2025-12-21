@@ -19,8 +19,7 @@ defmodule BezgelorPortalWeb.Admin.ItemsLive do
        search_query: "",
        search_results: [],
        selected_item: nil
-     ),
-     layout: {BezgelorPortalWeb.Layouts, :admin}}
+     ), layout: {BezgelorPortalWeb.Layouts, :admin}}
   end
 
   @impl true
@@ -48,8 +47,8 @@ defmodule BezgelorPortalWeb.Admin.ItemsLive do
           <p class="text-base-content/70">Search and view game item data</p>
         </div>
       </div>
-
-      <!-- Search -->
+      
+    <!-- Search -->
       <div class="card bg-base-100 shadow">
         <div class="card-body">
           <form phx-submit="search" phx-change="search_change">
@@ -63,15 +62,14 @@ defmodule BezgelorPortalWeb.Admin.ItemsLive do
                 phx-debounce="300"
               />
               <button type="submit" class="btn btn-primary join-item">
-                <.icon name="hero-magnifying-glass" class="size-5" />
-                Search
+                <.icon name="hero-magnifying-glass" class="size-5" /> Search
               </button>
             </div>
           </form>
         </div>
       </div>
-
-      <!-- Results -->
+      
+    <!-- Results -->
       <div class="card bg-base-100 shadow">
         <div class="card-body">
           <h2 class="card-title">Results ({length(@search_results)})</h2>
@@ -81,7 +79,7 @@ defmodule BezgelorPortalWeb.Admin.ItemsLive do
               <%= if @search_query == "" do %>
                 Enter a search term to find items.
               <% else %>
-                No items found matching "<%= @search_query %>".
+                No items found matching "{@search_query}".
               <% end %>
             </p>
           <% else %>
@@ -97,7 +95,12 @@ defmodule BezgelorPortalWeb.Admin.ItemsLive do
                   </tr>
                 </thead>
                 <tbody>
-                  <tr :for={item <- @search_results} class="hover cursor-pointer" phx-click="view_item" phx-value-id={item[:ID]}>
+                  <tr
+                    :for={item <- @search_results}
+                    class="hover cursor-pointer"
+                    phx-click="view_item"
+                    phx-value-id={item[:ID]}
+                  >
                     <td class="font-mono">{item[:ID]}</td>
                     <td class={item_quality_class(item)}>{item.name}</td>
                     <td>{item_family_name(item)}</td>
@@ -114,8 +117,8 @@ defmodule BezgelorPortalWeb.Admin.ItemsLive do
           <% end %>
         </div>
       </div>
-
-      <!-- Item Detail Modal -->
+      
+    <!-- Item Detail Modal -->
       <.item_detail_modal :if={@selected_item} item={@selected_item} />
     </div>
     """
@@ -286,23 +289,40 @@ defmodule BezgelorPortalWeb.Admin.ItemsLive do
   # Item family ID to icon
   defp item_family_icon(item) do
     case Map.get(item, :item2FamilyId, 0) do
-      1 -> "hero-shield-check"      # Armor
-      2 -> "hero-bolt"              # Weapon
-      3 -> "hero-archive-box"       # Bag
-      4 -> "hero-beaker"            # Consumable
-      5 -> "hero-currency-dollar"   # Currency
-      6 -> "hero-clipboard-document" # Quest
-      7 -> "hero-home"              # Housing
-      8 -> "hero-sparkles"          # Costume
-      9 -> "hero-puzzle-piece"      # Schematic
-      10 -> "hero-cog-6-tooth"      # Tool
-      11 -> "hero-book-open"        # Amp
-      12 -> "hero-book-open"        # Amp
-      13 -> "hero-cube"             # Rune
-      14 -> "hero-swatch"           # Dye
-      15 -> "hero-photo"            # Decor
-      16 -> "hero-wrench-screwdriver" # FABkit
-      _ -> "hero-cube-transparent"  # Other
+      # Armor
+      1 -> "hero-shield-check"
+      # Weapon
+      2 -> "hero-bolt"
+      # Bag
+      3 -> "hero-archive-box"
+      # Consumable
+      4 -> "hero-beaker"
+      # Currency
+      5 -> "hero-currency-dollar"
+      # Quest
+      6 -> "hero-clipboard-document"
+      # Housing
+      7 -> "hero-home"
+      # Costume
+      8 -> "hero-sparkles"
+      # Schematic
+      9 -> "hero-puzzle-piece"
+      # Tool
+      10 -> "hero-cog-6-tooth"
+      # Amp
+      11 -> "hero-book-open"
+      # Amp
+      12 -> "hero-book-open"
+      # Rune
+      13 -> "hero-cube"
+      # Dye
+      14 -> "hero-swatch"
+      # Decor
+      15 -> "hero-photo"
+      # FABkit
+      16 -> "hero-wrench-screwdriver"
+      # Other
+      _ -> "hero-cube-transparent"
     end
   end
 

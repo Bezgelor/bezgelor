@@ -15,7 +15,7 @@ defmodule BezgelorProtocol.Packets.World.ServerMythicAffixInfo do
 
   alias BezgelorProtocol.PacketWriter
 
-  defstruct [keystone_level: 0, affixes: []]
+  defstruct keystone_level: 0, affixes: []
 
   @impl true
   def opcode, do: 0x0B30

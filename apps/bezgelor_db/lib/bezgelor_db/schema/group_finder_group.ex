@@ -29,14 +29,14 @@ defmodule BezgelorDb.Schema.GroupFinderGroup do
   @statuses ~w(forming ready entering active disbanded)
 
   schema "group_finder_groups" do
-    field :group_guid, :binary
-    field :instance_definition_id, :integer
-    field :difficulty, :string
-    field :member_ids, {:array, :integer}
-    field :roles, :map
-    field :status, :string, default: "forming"
-    field :ready_check, :map, default: %{}
-    field :expires_at, :utc_datetime
+    field(:group_guid, :binary)
+    field(:instance_definition_id, :integer)
+    field(:difficulty, :string)
+    field(:member_ids, {:array, :integer})
+    field(:roles, :map)
+    field(:status, :string, default: "forming")
+    field(:ready_check, :map, default: %{})
+    field(:expires_at, :utc_datetime)
 
     timestamps()
   end

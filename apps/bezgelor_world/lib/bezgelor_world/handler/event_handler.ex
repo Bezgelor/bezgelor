@@ -21,6 +21,7 @@ defmodule BezgelorWorld.Handler.EventHandler do
 
   alias BezgelorProtocol.PacketReader
   alias BezgelorProtocol.PacketWriter
+
   alias BezgelorProtocol.Packets.World.{
     ClientEventJoin,
     ClientEventLeave,
@@ -29,6 +30,7 @@ defmodule BezgelorWorld.Handler.EventHandler do
     ServerEventList,
     ServerEventUpdate
   }
+
   alias BezgelorWorld.EventManager
 
   @impl true
@@ -167,11 +169,18 @@ defmodule BezgelorWorld.Handler.EventHandler do
         # Handle item-based contribution (turn-in)
         if packet.item_id do
           # TODO: Verify player has item and consume it
-          Logger.debug("Character #{character_id} contributing #{packet.amount} of item #{packet.item_id}")
+          Logger.debug(
+            "Character #{character_id} contributing #{packet.amount} of item #{packet.item_id}"
+          )
         end
 
         # Record contribution
-        case EventManager.track_contribution(manager, packet.instance_id, character_id, packet.amount) do
+        case EventManager.track_contribution(
+               manager,
+               packet.instance_id,
+               character_id,
+               packet.amount
+             ) do
           {:ok, _participant} ->
             # Send updated event state (one packet per objective)
             case EventManager.get_event(manager, packet.instance_id) do
@@ -183,7 +192,10 @@ defmodule BezgelorWorld.Handler.EventHandler do
             end
 
           {:error, reason} ->
-            Logger.debug("Failed to contribute to event #{packet.instance_id}: #{inspect(reason)}")
+            Logger.debug(
+              "Failed to contribute to event #{packet.instance_id}: #{inspect(reason)}"
+            )
+
             {:error, reason}
         end
     end

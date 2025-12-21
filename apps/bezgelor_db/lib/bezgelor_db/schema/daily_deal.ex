@@ -9,19 +9,25 @@ defmodule BezgelorDb.Schema.DailyDeal do
   @type t :: %__MODULE__{}
 
   schema "daily_deals" do
-    belongs_to :store_item, BezgelorDb.Schema.StoreItem
+    belongs_to(:store_item, BezgelorDb.Schema.StoreItem)
 
-    field :discount_percent, :integer
-    field :active_date, :date
-    field :quantity_limit, :integer
-    field :quantity_sold, :integer, default: 0
+    field(:discount_percent, :integer)
+    field(:active_date, :date)
+    field(:quantity_limit, :integer)
+    field(:quantity_sold, :integer, default: 0)
 
     timestamps(type: :utc_datetime)
   end
 
   def changeset(deal, attrs) do
     deal
-    |> cast(attrs, [:store_item_id, :discount_percent, :active_date, :quantity_limit, :quantity_sold])
+    |> cast(attrs, [
+      :store_item_id,
+      :discount_percent,
+      :active_date,
+      :quantity_limit,
+      :quantity_sold
+    ])
     |> validate_required([:store_item_id, :discount_percent, :active_date])
     |> validate_number(:discount_percent, greater_than: 0, less_than_or_equal_to: 100)
     |> validate_number(:quantity_limit, greater_than: 0)

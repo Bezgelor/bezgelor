@@ -137,7 +137,9 @@ defmodule BezgelorProtocol.Packets.World.ClientMovement do
   @doc "Check if movement flag is set."
   @spec has_flag?(t(), atom()) :: boolean()
   def has_flag?(%__MODULE__{movement_flags: flags}, :forward), do: (flags &&& @flag_forward) != 0
-  def has_flag?(%__MODULE__{movement_flags: flags}, :backward), do: (flags &&& @flag_backward) != 0
+
+  def has_flag?(%__MODULE__{movement_flags: flags}, :backward),
+    do: (flags &&& @flag_backward) != 0
 
   def has_flag?(%__MODULE__{movement_flags: flags}, :strafe_left),
     do: (flags &&& @flag_strafe_left) != 0
@@ -147,7 +149,9 @@ defmodule BezgelorProtocol.Packets.World.ClientMovement do
 
   def has_flag?(%__MODULE__{movement_flags: flags}, :jump), do: (flags &&& @flag_jump) != 0
   def has_flag?(%__MODULE__{movement_flags: flags}, :falling), do: (flags &&& @flag_falling) != 0
-  def has_flag?(%__MODULE__{movement_flags: flags}, :swimming), do: (flags &&& @flag_swimming) != 0
+
+  def has_flag?(%__MODULE__{movement_flags: flags}, :swimming),
+    do: (flags &&& @flag_swimming) != 0
 
   def has_flag?(%__MODULE__{movement_flags: flags}, :sprinting),
     do: (flags &&& @flag_sprinting) != 0

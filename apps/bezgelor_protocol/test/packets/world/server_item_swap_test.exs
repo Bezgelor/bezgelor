@@ -35,12 +35,16 @@ defmodule BezgelorProtocol.Packets.World.ServerItemSwapTest do
       assert item2_guid == 200
 
       # Decode drag_drop1
-      assert Bitwise.band(drag_drop1, 0xFF) == 1  # :bag
-      assert Bitwise.bsr(drag_drop1, 16) == 5     # slot
+      # :bag
+      assert Bitwise.band(drag_drop1, 0xFF) == 1
+      # slot
+      assert Bitwise.bsr(drag_drop1, 16) == 5
 
       # Decode drag_drop2
-      assert Bitwise.band(drag_drop2, 0xFF) == 1  # :bag
-      assert Bitwise.bsr(drag_drop2, 16) == 10    # slot
+      # :bag
+      assert Bitwise.band(drag_drop2, 0xFF) == 1
+      # slot
+      assert Bitwise.bsr(drag_drop2, 16) == 10
     end
 
     test "encodes swap between equipped and bag" do
@@ -48,7 +52,8 @@ defmodule BezgelorProtocol.Packets.World.ServerItemSwapTest do
         item1_guid: 111,
         item1_location: :equipped,
         item1_bag_index: 0,
-        item1_slot: 2,  # e.g., chest slot
+        # e.g., chest slot
+        item1_slot: 2,
         item2_guid: 222,
         item2_location: :bag,
         item2_bag_index: 0,
@@ -67,11 +72,13 @@ defmodule BezgelorProtocol.Packets.World.ServerItemSwapTest do
       >> = binary
 
       # Item1 moved to equipped slot
-      assert Bitwise.band(drag_drop1, 0xFF) == 0  # :equipped
+      # :equipped
+      assert Bitwise.band(drag_drop1, 0xFF) == 0
       assert Bitwise.bsr(drag_drop1, 16) == 2
 
       # Item2 moved to bag slot
-      assert Bitwise.band(drag_drop2, 0xFF) == 1  # :bag
+      # :bag
+      assert Bitwise.band(drag_drop2, 0xFF) == 1
       assert Bitwise.bsr(drag_drop2, 16) == 0
     end
   end

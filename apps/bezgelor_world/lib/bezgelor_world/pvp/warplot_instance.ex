@@ -90,9 +90,7 @@ defmodule BezgelorWorld.PvP.WarplotInstance do
   end
 
   def start_link([match_id, warplot1, warplot2]) do
-    GenServer.start_link(__MODULE__, [match_id, warplot1, warplot2],
-      name: via_tuple(match_id)
-    )
+    GenServer.start_link(__MODULE__, [match_id, warplot1, warplot2], name: via_tuple(match_id))
   end
 
   defp via_tuple(match_id) do
@@ -425,12 +423,24 @@ defmodule BezgelorWorld.PvP.WarplotInstance do
   defp end_match(state, reason) do
     winner =
       case reason do
-        :team1_generator_destroyed -> :team1
-        :team2_generator_destroyed -> :team2
-        :team1_score_limit -> :team1
-        :team2_score_limit -> :team2
-        :generator_destroyed when state.team1_generator_health == 0 -> :team2
-        :generator_destroyed -> :team1
+        :team1_generator_destroyed ->
+          :team1
+
+        :team2_generator_destroyed ->
+          :team2
+
+        :team1_score_limit ->
+          :team1
+
+        :team2_score_limit ->
+          :team2
+
+        :generator_destroyed when state.team1_generator_health == 0 ->
+          :team2
+
+        :generator_destroyed ->
+          :team1
+
         :time_expired ->
           cond do
             state.team1_score > state.team2_score -> :team1

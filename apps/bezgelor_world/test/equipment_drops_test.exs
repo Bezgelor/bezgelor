@@ -19,6 +19,7 @@ defmodule BezgelorWorld.EquipmentDropsTest do
     test "returns list of item IDs (possibly empty)" do
       result = EquipmentDrops.roll_equipment(3, 20)
       assert is_list(result)
+
       Enum.each(result, fn item_id ->
         assert is_integer(item_id)
         assert item_id > 0

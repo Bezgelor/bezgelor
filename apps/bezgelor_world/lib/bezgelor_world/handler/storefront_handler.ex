@@ -26,6 +26,7 @@ defmodule BezgelorWorld.Handler.StorefrontHandler do
   alias BezgelorDb.Schema.StoreItem
   alias BezgelorProtocol.PacketReader
   alias BezgelorProtocol.PacketWriter
+
   alias BezgelorProtocol.Packets.World.{
     ClientStoreBrowse,
     ClientStorePurchase,
@@ -75,11 +76,14 @@ defmodule BezgelorWorld.Handler.StorefrontHandler do
       end
 
     # Mark items as new
-    items_with_new = Enum.map(items, fn item ->
-      Map.put(item, :is_new, StoreItem.is_new?(item))
-    end)
+    items_with_new =
+      Enum.map(items, fn item ->
+        Map.put(item, :is_new, StoreItem.is_new?(item))
+      end)
 
-    Logger.debug("Sending store catalog: #{length(categories)} categories, #{length(items)} items")
+    Logger.debug(
+      "Sending store catalog: #{length(categories)} categories, #{length(items)} items"
+    )
 
     response = %ServerStoreCatalog{
       categories: categories,
@@ -114,37 +118,40 @@ defmodule BezgelorWorld.Handler.StorefrontHandler do
 
     result = Storefront.purchase_item(account_id, packet.item_id, packet.currency_type, opts)
 
-    response = case result do
-      {:ok, purchase} ->
-        Logger.info("Account #{account_id} purchased store item #{packet.item_id} for #{purchase.amount_paid}")
+    response =
+      case result do
+        {:ok, purchase} ->
+          Logger.info(
+            "Account #{account_id} purchased store item #{packet.item_id} for #{purchase.amount_paid}"
+          )
 
-        ServerStorePurchaseResult.success(
-          packet.item_id,
-          purchase.amount_paid,
-          purchase.discount_applied || 0,
-          packet.currency_type
-        )
+          ServerStorePurchaseResult.success(
+            packet.item_id,
+            purchase.amount_paid,
+            purchase.discount_applied || 0,
+            packet.currency_type
+          )
 
-      {:error, :not_found} ->
-        Logger.warning("Store item #{packet.item_id} not found")
-        ServerStorePurchaseResult.error(:not_found, packet.item_id)
+        {:error, :not_found} ->
+          Logger.warning("Store item #{packet.item_id} not found")
+          ServerStorePurchaseResult.error(:not_found, packet.item_id)
 
-      {:error, :insufficient_funds} ->
-        Logger.debug("Account #{account_id} has insufficient funds for item #{packet.item_id}")
-        ServerStorePurchaseResult.error(:insufficient_funds, packet.item_id)
+        {:error, :insufficient_funds} ->
+          Logger.debug("Account #{account_id} has insufficient funds for item #{packet.item_id}")
+          ServerStorePurchaseResult.error(:insufficient_funds, packet.item_id)
 
-      {:error, {:invalid_promo, _reason}} ->
-        Logger.debug("Invalid promo code for account #{account_id}")
-        ServerStorePurchaseResult.error(:invalid_promo, packet.item_id)
+        {:error, {:invalid_promo, _reason}} ->
+          Logger.debug("Invalid promo code for account #{account_id}")
+          ServerStorePurchaseResult.error(:invalid_promo, packet.item_id)
 
-      {:error, :no_price} ->
-        Logger.warning("Store item #{packet.item_id} has no price for #{packet.currency_type}")
-        ServerStorePurchaseResult.error(:no_price, packet.item_id)
+        {:error, :no_price} ->
+          Logger.warning("Store item #{packet.item_id} has no price for #{packet.currency_type}")
+          ServerStorePurchaseResult.error(:no_price, packet.item_id)
 
-      {:error, reason} ->
-        Logger.error("Store purchase failed: #{inspect(reason)}")
-        ServerStorePurchaseResult.error(:error, packet.item_id)
-    end
+        {:error, reason} ->
+          Logger.error("Store purchase failed: #{inspect(reason)}")
+          ServerStorePurchaseResult.error(:error, packet.item_id)
+      end
 
     writer = PacketWriter.new()
     {:ok, writer} = ServerStorePurchaseResult.write(response, writer)
@@ -196,47 +203,51 @@ defmodule BezgelorWorld.Handler.StorefrontHandler do
     # Look up recipient by character name
     recipient_result = Accounts.get_account_by_character_name(packet.recipient_name)
 
-    result = case recipient_result do
-      {:ok, recipient_account} ->
-        Storefront.gift_item(
-          account_id,
-          recipient_account.id,
-          packet.item_id,
-          packet.currency_type,
-          packet.message
-        )
+    result =
+      case recipient_result do
+        {:ok, recipient_account} ->
+          Storefront.gift_item(
+            account_id,
+            recipient_account.id,
+            packet.item_id,
+            packet.currency_type,
+            packet.message
+          )
 
-      {:error, :not_found} ->
-        {:error, :recipient_not_found}
-    end
+        {:error, :not_found} ->
+          {:error, :recipient_not_found}
+      end
 
-    response = case result do
-      {:ok, purchase} ->
-        Logger.info("Account #{account_id} gifted item #{packet.item_id} to #{packet.recipient_name}")
+    response =
+      case result do
+        {:ok, purchase} ->
+          Logger.info(
+            "Account #{account_id} gifted item #{packet.item_id} to #{packet.recipient_name}"
+          )
 
-        ServerStorePurchaseResult.success(
-          packet.item_id,
-          purchase.amount_paid,
-          0,
-          packet.currency_type
-        )
+          ServerStorePurchaseResult.success(
+            packet.item_id,
+            purchase.amount_paid,
+            0,
+            packet.currency_type
+          )
 
-      {:error, :not_found} ->
-        Logger.warning("Store item #{packet.item_id} not found for gift")
-        ServerStorePurchaseResult.error(:not_found, packet.item_id)
+        {:error, :not_found} ->
+          Logger.warning("Store item #{packet.item_id} not found for gift")
+          ServerStorePurchaseResult.error(:not_found, packet.item_id)
 
-      {:error, :recipient_not_found} ->
-        Logger.debug("Gift recipient #{packet.recipient_name} not found")
-        ServerStorePurchaseResult.error(:not_found, packet.item_id)
+        {:error, :recipient_not_found} ->
+          Logger.debug("Gift recipient #{packet.recipient_name} not found")
+          ServerStorePurchaseResult.error(:not_found, packet.item_id)
 
-      {:error, :insufficient_funds} ->
-        Logger.debug("Account #{account_id} has insufficient funds for gift")
-        ServerStorePurchaseResult.error(:insufficient_funds, packet.item_id)
+        {:error, :insufficient_funds} ->
+          Logger.debug("Account #{account_id} has insufficient funds for gift")
+          ServerStorePurchaseResult.error(:insufficient_funds, packet.item_id)
 
-      {:error, reason} ->
-        Logger.error("Gift failed: #{inspect(reason)}")
-        ServerStorePurchaseResult.error(:error, packet.item_id)
-    end
+        {:error, reason} ->
+          Logger.error("Gift failed: #{inspect(reason)}")
+          ServerStorePurchaseResult.error(:error, packet.item_id)
+      end
 
     writer = PacketWriter.new()
     {:ok, writer} = ServerStorePurchaseResult.write(response, writer)
@@ -264,45 +275,48 @@ defmodule BezgelorWorld.Handler.StorefrontHandler do
 
     result = Storefront.redeem_promo_code(packet.code, account_id)
 
-    response = case result do
-      {:ok, promo_code} ->
-        Logger.info("Account #{account_id} redeemed promo code: #{packet.code}")
+    response =
+      case result do
+        {:ok, promo_code} ->
+          Logger.info("Account #{account_id} redeemed promo code: #{packet.code}")
 
-        case promo_code.code_type do
-          "item" ->
-            ServerPromoCodeResult.success_item(promo_code.granted_item_id || 0)
+          case promo_code.code_type do
+            "item" ->
+              ServerPromoCodeResult.success_item(promo_code.granted_item_id || 0)
 
-          "currency" ->
-            currency_type = String.to_existing_atom(promo_code.granted_currency_type || "premium")
-            ServerPromoCodeResult.success_currency(
-              promo_code.granted_currency_amount || 0,
-              currency_type
-            )
+            "currency" ->
+              currency_type =
+                String.to_existing_atom(promo_code.granted_currency_type || "premium")
 
-          _ ->
-            ServerPromoCodeResult.success_discount()
-        end
+              ServerPromoCodeResult.success_currency(
+                promo_code.granted_currency_amount || 0,
+                currency_type
+              )
 
-      {:error, :not_found} ->
-        Logger.debug("Promo code #{packet.code} not found")
-        ServerPromoCodeResult.error(:not_found)
+            _ ->
+              ServerPromoCodeResult.success_discount()
+          end
 
-      {:error, :expired} ->
-        Logger.debug("Promo code #{packet.code} expired")
-        ServerPromoCodeResult.error(:expired)
+        {:error, :not_found} ->
+          Logger.debug("Promo code #{packet.code} not found")
+          ServerPromoCodeResult.error(:not_found)
 
-      {:error, :already_redeemed} ->
-        Logger.debug("Promo code #{packet.code} already redeemed by account #{account_id}")
-        ServerPromoCodeResult.error(:already_redeemed)
+        {:error, :expired} ->
+          Logger.debug("Promo code #{packet.code} expired")
+          ServerPromoCodeResult.error(:expired)
 
-      {:error, :not_redeemable} ->
-        Logger.debug("Promo code #{packet.code} is not directly redeemable (discount code)")
-        ServerPromoCodeResult.error(:not_found)
+        {:error, :already_redeemed} ->
+          Logger.debug("Promo code #{packet.code} already redeemed by account #{account_id}")
+          ServerPromoCodeResult.error(:already_redeemed)
 
-      {:error, reason} ->
-        Logger.error("Promo code redemption failed: #{inspect(reason)}")
-        ServerPromoCodeResult.error(:error)
-    end
+        {:error, :not_redeemable} ->
+          Logger.debug("Promo code #{packet.code} is not directly redeemable (discount code)")
+          ServerPromoCodeResult.error(:not_found)
+
+        {:error, reason} ->
+          Logger.error("Promo code redemption failed: #{inspect(reason)}")
+          ServerPromoCodeResult.error(:error)
+      end
 
     writer = PacketWriter.new()
     {:ok, writer} = ServerPromoCodeResult.write(response, writer)

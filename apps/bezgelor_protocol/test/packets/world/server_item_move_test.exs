@@ -22,7 +22,8 @@ defmodule BezgelorProtocol.Packets.World.ServerItemMoveTest do
       bag_index = Bitwise.band(Bitwise.bsr(drag_drop, 8), 0xFF)
       slot = Bitwise.bsr(drag_drop, 16)
 
-      assert location == 1  # :bag
+      # :bag
+      assert location == 1
       assert bag_index == 0
       assert slot == 5
     end
@@ -39,7 +40,8 @@ defmodule BezgelorProtocol.Packets.World.ServerItemMoveTest do
       location = Bitwise.band(drag_drop, 0xFF)
       slot = Bitwise.bsr(drag_drop, 16)
 
-      assert location == 0  # :equipped
+      # :equipped
+      assert location == 0
       assert slot == 3
     end
 
@@ -56,7 +58,8 @@ defmodule BezgelorProtocol.Packets.World.ServerItemMoveTest do
       bag_index = Bitwise.band(Bitwise.bsr(drag_drop, 8), 0xFF)
       slot = Bitwise.bsr(drag_drop, 16)
 
-      assert location == 2  # :bank
+      # :bank
+      assert location == 2
       assert bag_index == 2
       assert slot == 10
     end

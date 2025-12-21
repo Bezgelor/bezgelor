@@ -1,21 +1,28 @@
 # BezgelorWorld
 
-**TODO: Add description**
+World server managing game state, zones, players, and combat.
 
-## Installation
+## Features
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `bezgelor_world` to your list of dependencies in `mix.exs`:
+- Zone instance management (one GenServer per active zone)
+- Player session handling
+- Entity spawning and despawning
+- Combat resolution
+- Movement and position tracking
+- Spell casting and effects
+- NPC and creature AI
+- TCP listener on port 24000
 
-```elixir
-def deps do
-  [
-    {:bezgelor_world, "~> 0.1.0"}
-  ]
-end
-```
+## Architecture
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at <https://hexdocs.pm/bezgelor_world>.
+- Each connected player runs as a supervised process
+- Zone instances are GenServers managing entities within that zone
+- Communication via message passing (no shared state)
+- Fault tolerance through supervision trees
 
+## Key Modules
+
+- `BezgelorWorld.Zone.Instance` - Zone state management
+- `BezgelorWorld.Handler.*` - Packet handlers for world operations
+- `BezgelorWorld.Combat` - Combat state machine
+- `BezgelorWorld.Movement` - Position and movement validation

@@ -262,7 +262,10 @@ defmodule BezgelorDb.InventoryTest do
       assert {:error, :not_found} = Inventory.admin_remove_item(character.id, 999_999)
     end
 
-    test "returns error when item belongs to different character", %{account: account, character: character} do
+    test "returns error when item belongs to different character", %{
+      account: account,
+      character: character
+    } do
       # Create another character
       {:ok, other_char} =
         Characters.create_character(account.id, %{

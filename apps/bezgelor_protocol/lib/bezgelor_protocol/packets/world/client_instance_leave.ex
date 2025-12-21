@@ -9,7 +9,7 @@ defmodule BezgelorProtocol.Packets.World.ClientInstanceLeave do
 
   alias BezgelorProtocol.PacketReader
 
-  defstruct [teleport_out: true]
+  defstruct teleport_out: true
 
   @impl true
   def opcode, do: :client_instance_leave

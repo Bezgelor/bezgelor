@@ -153,7 +153,10 @@ defmodule BezgelorWorld.Handler.ChatHandler do
 
     if entity do
       {x, y, z} = entity.position
-      msg = "Location: World #{entity.world_id}, Zone #{entity.zone_id} at (#{Float.round(x, 1)}, #{Float.round(y, 1)}, #{Float.round(z, 1)})"
+
+      msg =
+        "Location: World #{entity.world_id}, Zone #{entity.zone_id} at (#{Float.round(x, 1)}, #{Float.round(y, 1)}, #{Float.round(z, 1)})"
+
       system_msg = ServerChat.system(msg)
       send_packet(:server_chat, system_msg, state)
     else

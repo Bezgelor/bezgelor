@@ -104,7 +104,8 @@ defmodule BezgelorDb.PvP do
   @doc """
   Adds currency to a character's stats.
   """
-  @spec add_currency(integer(), :conquest | :honor, integer()) :: {:ok, PvpStats.t()} | {:error, term()}
+  @spec add_currency(integer(), :conquest | :honor, integer()) ::
+          {:ok, PvpStats.t()} | {:error, term()}
   def add_currency(character_id, currency_type, amount) do
     with {:ok, stats} <- get_or_create_stats(character_id) do
       stats
@@ -162,7 +163,8 @@ defmodule BezgelorDb.PvP do
   @doc """
   Records a match result and updates rating.
   """
-  @spec record_match(integer(), String.t(), boolean(), integer()) :: {:ok, PvpRating.t()} | {:error, term()}
+  @spec record_match(integer(), String.t(), boolean(), integer()) ::
+          {:ok, PvpRating.t()} | {:error, term()}
   def record_match(character_id, bracket, won, opponent_rating) do
     with {:ok, rating} <- get_or_create_rating(character_id, bracket) do
       rating

@@ -1,21 +1,13 @@
 # BezgelorApi
 
-**TODO: Add description**
+Phoenix-based REST API for external integrations and tooling.
 
-## Installation
+## Features
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `bezgelor_api` to your list of dependencies in `mix.exs`:
+- RESTful endpoints for server management
+- Character and account queries
+- Health check and metrics endpoints
 
-```elixir
-def deps do
-  [
-    {:bezgelor_api, "~> 0.1.0"}
-  ]
-end
-```
+## Usage
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at <https://hexdocs.pm/bezgelor_api>.
-
+This application is part of the Bezgelor umbrella. Endpoints are defined in the router and can be extended as needed.

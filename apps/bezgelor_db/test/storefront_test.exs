@@ -2,7 +2,15 @@ defmodule BezgelorDb.StorefrontTest do
   use ExUnit.Case
 
   alias BezgelorDb.{Accounts, Collections, Storefront, Repo}
-  alias BezgelorDb.Schema.{AccountCurrency, DailyDeal, PromoCode, StoreCategory, StoreItem, StorePromotion}
+
+  alias BezgelorDb.Schema.{
+    AccountCurrency,
+    DailyDeal,
+    PromoCode,
+    StoreCategory,
+    StoreItem,
+    StorePromotion
+  }
 
   @moduletag :database
 
@@ -20,7 +28,11 @@ defmodule BezgelorDb.StorefrontTest do
 
     # Give account some currency
     %AccountCurrency{}
-    |> AccountCurrency.changeset(%{account_id: account.id, premium_currency: 1000, bonus_currency: 500})
+    |> AccountCurrency.changeset(%{
+      account_id: account.id,
+      premium_currency: 1000,
+      bonus_currency: 500
+    })
     |> Repo.insert!()
 
     # Create a store item
@@ -57,12 +69,13 @@ defmodule BezgelorDb.StorefrontTest do
     end
 
     test "create_store_item creates item" do
-      {:ok, item} = Storefront.create_store_item(%{
-        item_type: "pet",
-        item_id: 6001,
-        name: "Fluffy Cat",
-        bonus_price: 50
-      })
+      {:ok, item} =
+        Storefront.create_store_item(%{
+          item_type: "pet",
+          item_id: 6001,
+          name: "Fluffy Cat",
+          bonus_price: 50
+        })
 
       assert item.name == "Fluffy Cat"
       assert item.item_type == "pet"
@@ -70,13 +83,14 @@ defmodule BezgelorDb.StorefrontTest do
 
     test "list_featured_items returns featured items" do
       # Create a featured item
-      {:ok, _item} = Storefront.create_store_item(%{
-        item_type: "costume",
-        item_id: 7001,
-        name: "Shiny Outfit",
-        premium_price: 200,
-        featured: true
-      })
+      {:ok, _item} =
+        Storefront.create_store_item(%{
+          item_type: "costume",
+          item_id: 7001,
+          name: "Shiny Outfit",
+          premium_price: 200,
+          featured: true
+        })
 
       items = Storefront.list_featured_items()
       assert Enum.all?(items, & &1.featured)
@@ -85,14 +99,15 @@ defmodule BezgelorDb.StorefrontTest do
     test "list_sale_items returns items on sale" do
       sale_ends = DateTime.add(DateTime.utc_now(), 3600, :second)
 
-      {:ok, _item} = Storefront.create_store_item(%{
-        item_type: "dye",
-        item_id: 8001,
-        name: "Red Dye",
-        premium_price: 100,
-        sale_price: 50,
-        sale_ends_at: sale_ends
-      })
+      {:ok, _item} =
+        Storefront.create_store_item(%{
+          item_type: "dye",
+          item_id: 8001,
+          name: "Red Dye",
+          premium_price: 100,
+          sale_price: 50,
+          sale_ends_at: sale_ends
+        })
 
       items = Storefront.list_sale_items()
       assert length(items) >= 1
@@ -104,7 +119,8 @@ defmodule BezgelorDb.StorefrontTest do
       {:ok, _purchase} = Storefront.purchase_item(account.id, store_item.id, :premium)
 
       currency = Repo.get_by(AccountCurrency, account_id: account.id)
-      assert currency.premium_currency == 900  # 1000 - 100
+      # 1000 - 100
+      assert currency.premium_currency == 900
     end
 
     test "purchase_item unlocks collectible", %{account: account, store_item: store_item} do
@@ -139,7 +155,10 @@ defmodule BezgelorDb.StorefrontTest do
       assert purchase.amount_paid == 100
     end
 
-    test "get_purchase_history returns account purchases", %{account: account, store_item: store_item} do
+    test "get_purchase_history returns account purchases", %{
+      account: account,
+      store_item: store_item
+    } do
       {:ok, _} = Storefront.purchase_item(account.id, store_item.id, :premium)
 
       history = Storefront.get_purchase_history(account.id)
@@ -149,10 +168,11 @@ defmodule BezgelorDb.StorefrontTest do
 
   describe "categories" do
     test "create and list categories" do
-      {:ok, category} = Storefront.create_category(%{
-        name: "Mounts",
-        slug: "mounts-#{System.unique_integer([:positive])}"
-      })
+      {:ok, category} =
+        Storefront.create_category(%{
+          name: "Mounts",
+          slug: "mounts-#{System.unique_integer([:positive])}"
+        })
 
       categories = Storefront.list_categories()
       assert Enum.any?(categories, &(&1.id == category.id))
@@ -167,34 +187,38 @@ defmodule BezgelorDb.StorefrontTest do
     end
 
     test "hierarchical categories" do
-      {:ok, parent} = Storefront.create_category(%{
-        name: "Parent",
-        slug: "parent-#{System.unique_integer([:positive])}"
-      })
+      {:ok, parent} =
+        Storefront.create_category(%{
+          name: "Parent",
+          slug: "parent-#{System.unique_integer([:positive])}"
+        })
 
-      {:ok, child} = Storefront.create_category(%{
-        name: "Child",
-        slug: "child-#{System.unique_integer([:positive])}",
-        parent_id: parent.id
-      })
+      {:ok, child} =
+        Storefront.create_category(%{
+          name: "Child",
+          slug: "child-#{System.unique_integer([:positive])}",
+          parent_id: parent.id
+        })
 
       children = Storefront.get_subcategories(parent.id)
       assert Enum.any?(children, &(&1.id == child.id))
     end
 
     test "list_items_by_category" do
-      {:ok, category} = Storefront.create_category(%{
-        name: "Pets",
-        slug: "pets-#{System.unique_integer([:positive])}"
-      })
+      {:ok, category} =
+        Storefront.create_category(%{
+          name: "Pets",
+          slug: "pets-#{System.unique_integer([:positive])}"
+        })
 
-      {:ok, item} = Storefront.create_store_item(%{
-        item_type: "pet",
-        item_id: 9001,
-        name: "Test Pet",
-        premium_price: 100,
-        category_id: category.id
-      })
+      {:ok, item} =
+        Storefront.create_store_item(%{
+          item_type: "pet",
+          item_id: 9001,
+          name: "Test Pet",
+          premium_price: 100,
+          category_id: category.id
+        })
 
       items = Storefront.list_items_by_category(category.id)
       assert Enum.any?(items, &(&1.id == item.id))
@@ -207,13 +231,14 @@ defmodule BezgelorDb.StorefrontTest do
       starts = DateTime.add(now, -3600, :second)
       ends = DateTime.add(now, 3600, :second)
 
-      {:ok, promo} = Storefront.create_promotion(%{
-        name: "Summer Sale",
-        promotion_type: "sale",
-        discount_percent: 20,
-        starts_at: starts,
-        ends_at: ends
-      })
+      {:ok, promo} =
+        Storefront.create_promotion(%{
+          name: "Summer Sale",
+          promotion_type: "sale",
+          discount_percent: 20,
+          starts_at: starts,
+          ends_at: ends
+        })
 
       promos = Storefront.list_active_promotions()
       assert Enum.any?(promos, &(&1.id == promo.id))
@@ -225,14 +250,15 @@ defmodule BezgelorDb.StorefrontTest do
       ends = DateTime.add(now, 3600, :second)
 
       # Create promotion that applies to all items
-      {:ok, _promo} = Storefront.create_promotion(%{
-        name: "Store-wide Sale",
-        promotion_type: "sale",
-        discount_percent: 10,
-        starts_at: starts,
-        ends_at: ends,
-        applies_to: %{}
-      })
+      {:ok, _promo} =
+        Storefront.create_promotion(%{
+          name: "Store-wide Sale",
+          promotion_type: "sale",
+          discount_percent: 10,
+          starts_at: starts,
+          ends_at: ends,
+          applies_to: %{}
+        })
 
       promo = Storefront.get_applicable_promotion(store_item)
       assert promo != nil
@@ -243,11 +269,12 @@ defmodule BezgelorDb.StorefrontTest do
     test "create and get daily deals", %{store_item: store_item} do
       today = Date.utc_today()
 
-      {:ok, deal} = Storefront.create_daily_deal(%{
-        store_item_id: store_item.id,
-        discount_percent: 30,
-        active_date: today
-      })
+      {:ok, deal} =
+        Storefront.create_daily_deal(%{
+          store_item_id: store_item.id,
+          discount_percent: 30,
+          active_date: today
+        })
 
       deals = Storefront.get_daily_deals()
       assert Enum.any?(deals, &(&1.id == deal.id))
@@ -256,24 +283,27 @@ defmodule BezgelorDb.StorefrontTest do
     test "daily deal calculates discounted price", %{store_item: store_item} do
       today = Date.utc_today()
 
-      {:ok, deal} = Storefront.create_daily_deal(%{
-        store_item_id: store_item.id,
-        discount_percent: 25,
-        active_date: today
-      })
+      {:ok, deal} =
+        Storefront.create_daily_deal(%{
+          store_item_id: store_item.id,
+          discount_percent: 25,
+          active_date: today
+        })
 
       discounted = DailyDeal.calculate_price(deal, 100)
-      assert discounted == 75  # 100 - 25%
+      # 100 - 25%
+      assert discounted == 75
     end
 
     test "purchase daily deal applies discount", %{account: account, store_item: store_item} do
       today = Date.utc_today()
 
-      {:ok, deal} = Storefront.create_daily_deal(%{
-        store_item_id: store_item.id,
-        discount_percent: 50,
-        active_date: today
-      })
+      {:ok, deal} =
+        Storefront.create_daily_deal(%{
+          store_item_id: store_item.id,
+          discount_percent: 50,
+          active_date: today
+        })
 
       {:ok, purchase} = Storefront.purchase_daily_deal(account.id, deal.id, :premium)
 
@@ -285,22 +315,24 @@ defmodule BezgelorDb.StorefrontTest do
 
   describe "promo codes" do
     test "create and validate promo code", %{account: account} do
-      {:ok, promo} = Storefront.create_promo_code(%{
-        code: "SAVE20",
-        code_type: "discount",
-        discount_percent: 20
-      })
+      {:ok, promo} =
+        Storefront.create_promo_code(%{
+          code: "SAVE20",
+          code_type: "discount",
+          discount_percent: 20
+        })
 
       {:ok, validated} = Storefront.validate_promo_code("save20", account.id)
       assert validated.id == promo.id
     end
 
     test "promo code is case insensitive", %{account: account} do
-      {:ok, promo} = Storefront.create_promo_code(%{
-        code: "TESTCODE",
-        code_type: "discount",
-        discount_percent: 10
-      })
+      {:ok, promo} =
+        Storefront.create_promo_code(%{
+          code: "TESTCODE",
+          code_type: "discount",
+          discount_percent: 10
+        })
 
       {:ok, validated} = Storefront.validate_promo_code("testcode", account.id)
       assert validated.id == promo.id
@@ -309,12 +341,13 @@ defmodule BezgelorDb.StorefrontTest do
     test "expired promo code returns error", %{account: account} do
       past = DateTime.add(DateTime.utc_now(), -86400, :second)
 
-      {:ok, _promo} = Storefront.create_promo_code(%{
-        code: "EXPIRED123",
-        code_type: "discount",
-        discount_percent: 10,
-        ends_at: past
-      })
+      {:ok, _promo} =
+        Storefront.create_promo_code(%{
+          code: "EXPIRED123",
+          code_type: "discount",
+          discount_percent: 10,
+          ends_at: past
+        })
 
       {:error, :expired} = Storefront.validate_promo_code("EXPIRED123", account.id)
     end
@@ -326,18 +359,20 @@ defmodule BezgelorDb.StorefrontTest do
     end
 
     test "purchase with promo code", %{account: account, store_item: store_item} do
-      {:ok, _promo} = Storefront.create_promo_code(%{
-        code: "DISCOUNT30",
-        code_type: "discount",
-        discount_percent: 30
-      })
+      {:ok, _promo} =
+        Storefront.create_promo_code(%{
+          code: "DISCOUNT30",
+          code_type: "discount",
+          discount_percent: 30
+        })
 
-      {:ok, purchase} = Storefront.purchase_item(
-        account.id,
-        store_item.id,
-        :premium,
-        promo_code: "DISCOUNT30"
-      )
+      {:ok, purchase} =
+        Storefront.purchase_item(
+          account.id,
+          store_item.id,
+          :premium,
+          promo_code: "DISCOUNT30"
+        )
 
       # 100 - 30% = 70
       assert purchase.amount_paid == 70
@@ -345,23 +380,26 @@ defmodule BezgelorDb.StorefrontTest do
     end
 
     test "promo code tracks redemption", %{account: account, store_item: store_item} do
-      {:ok, promo} = Storefront.create_promo_code(%{
-        code: "ONCE123",
-        code_type: "discount",
-        discount_percent: 10,
-        uses_per_account: 1
-      })
+      {:ok, promo} =
+        Storefront.create_promo_code(%{
+          code: "ONCE123",
+          code_type: "discount",
+          discount_percent: 10,
+          uses_per_account: 1
+        })
 
       # First use should work
-      {:ok, _} = Storefront.purchase_item(account.id, store_item.id, :premium, promo_code: "ONCE123")
+      {:ok, _} =
+        Storefront.purchase_item(account.id, store_item.id, :premium, promo_code: "ONCE123")
 
       # Create another item to purchase
-      {:ok, item2} = Storefront.create_store_item(%{
-        item_type: "dye",
-        item_id: 9999,
-        name: "Another Item",
-        premium_price: 50
-      })
+      {:ok, item2} =
+        Storefront.create_store_item(%{
+          item_type: "dye",
+          item_id: 9999,
+          name: "Another Item",
+          premium_price: 50
+        })
 
       # Second use should fail
       {:error, {:invalid_promo, :already_redeemed}} =
@@ -397,7 +435,14 @@ defmodule BezgelorDb.StorefrontTest do
     end
 
     test "PromoCode.usable? checks active and limits" do
-      active = %PromoCode{is_active: true, max_uses: nil, current_uses: 0, starts_at: nil, ends_at: nil}
+      active = %PromoCode{
+        is_active: true,
+        max_uses: nil,
+        current_uses: 0,
+        starts_at: nil,
+        ends_at: nil
+      }
+
       assert PromoCode.usable?(active)
 
       inactive = %PromoCode{is_active: false}

@@ -52,7 +52,8 @@ defmodule BezgelorAuth.Sts.Packet do
 
   Returns `{:ok, packet, remaining}` or `{:incomplete, data}` if more data needed.
   """
-  @spec parse_request(binary()) :: {:ok, t(), binary()} | {:incomplete, binary()} | {:error, term()}
+  @spec parse_request(binary()) ::
+          {:ok, t(), binary()} | {:incomplete, binary()} | {:error, term()}
   def parse_request(data) do
     case parse_headers(data) do
       {:ok, request_line, headers, body_start, remaining} ->
@@ -62,7 +63,13 @@ defmodule BezgelorAuth.Sts.Packet do
 
             if byte_size(body_start <> remaining) >= content_length do
               body = binary_part(body_start <> remaining, 0, content_length)
-              rest = binary_part(body_start <> remaining, content_length, byte_size(body_start <> remaining) - content_length)
+
+              rest =
+                binary_part(
+                  body_start <> remaining,
+                  content_length,
+                  byte_size(body_start <> remaining) - content_length
+                )
 
               packet = %__MODULE__{
                 method: method,
@@ -95,12 +102,14 @@ defmodule BezgelorAuth.Sts.Packet do
     body_with_newline = body <> "\n"
 
     # Add required headers (length includes trailing newline)
-    headers = headers
-    |> Map.put("l", Integer.to_string(byte_size(body_with_newline)))
+    headers =
+      headers
+      |> Map.put("l", Integer.to_string(byte_size(body_with_newline)))
 
     # Build header lines
-    header_lines = Enum.map(headers, fn {k, v} -> "#{k}:#{v}" end)
-    |> Enum.join("\r\n")
+    header_lines =
+      Enum.map(headers, fn {k, v} -> "#{k}:#{v}" end)
+      |> Enum.join("\r\n")
 
     # Build full response
     # Note: NexusForever uses double space before status message: "STS/1.0 200  OK"
@@ -138,6 +147,7 @@ defmodule BezgelorAuth.Sts.Packet do
   defp sts_error_code(_status, _message), do: 0
 
   defp error_body(0), do: ""
+
   defp error_body(code) do
     # Format matches NexusForever ServerErrorMessage
     "<Error code=\"#{code}\" server=\"0\" module=\"0\" line=\"0\" text=\"0\"/>"
@@ -150,13 +160,14 @@ defmodule BezgelorAuth.Sts.Packet do
       [header_section, body_and_rest] ->
         [request_line | header_lines] = String.split(header_section, "\r\n")
 
-        headers = header_lines
-        |> Enum.reduce(%{}, fn line, acc ->
-          case String.split(line, ":", parts: 2) do
-            [key, value] -> Map.put(acc, key, value)
-            _ -> acc
-          end
-        end)
+        headers =
+          header_lines
+          |> Enum.reduce(%{}, fn line, acc ->
+            case String.split(line, ":", parts: 2) do
+              [key, value] -> Map.put(acc, key, value)
+              _ -> acc
+            end
+          end)
 
         {:ok, request_line, headers, body_and_rest, <<>>}
 

@@ -60,8 +60,7 @@ defmodule BezgelorPortalWeb.LoginLive do
     <div class="divider">OR</div>
 
     <p class="text-center text-sm text-base-content/70">
-      Don't have an account?
-      <.link href="/register" class="link link-primary">Create one</.link>
+      Don't have an account? <.link href="/register" class="link link-primary">Create one</.link>
     </p>
     """
   end
@@ -75,12 +74,16 @@ defmodule BezgelorPortalWeb.LoginLive do
           # We pass a token that will be verified on the other side
           {:noreply,
            socket
-           |> push_navigate(to: ~p"/auth/totp-verify?pending=#{generate_totp_pending_token(account)}")}
+           |> push_navigate(
+             to: ~p"/auth/totp-verify?pending=#{generate_totp_pending_token(account)}"
+           )}
         else
           # No TOTP - proceed directly to login
           {:noreply,
            socket
-           |> push_navigate(to: ~p"/auth/callback?email=#{email}&token=#{generate_login_token(account)}")}
+           |> push_navigate(
+             to: ~p"/auth/callback?email=#{email}&token=#{generate_login_token(account)}"
+           )}
         end
 
       {:error, :invalid_credentials} ->
@@ -91,7 +94,9 @@ defmodule BezgelorPortalWeb.LoginLive do
 
       {:error, {:account_suspended, days}} ->
         days_text = if days < 1, do: "less than a day", else: "#{Float.round(days, 1)} days"
-        {:noreply, assign(socket, error: "This account is suspended. Time remaining: #{days_text}.")}
+
+        {:noreply,
+         assign(socket, error: "This account is suspended. Time remaining: #{days_text}.")}
     end
   end
 
@@ -103,6 +108,10 @@ defmodule BezgelorPortalWeb.LoginLive do
 
   # Generate a token for TOTP pending verification (short-lived, 5 minutes)
   defp generate_totp_pending_token(account) do
-    Phoenix.Token.sign(BezgelorPortalWeb.Endpoint, "totp_pending", {account.id, System.system_time(:second)})
+    Phoenix.Token.sign(
+      BezgelorPortalWeb.Endpoint,
+      "totp_pending",
+      {account.id, System.system_time(:second)}
+    )
   end
 end

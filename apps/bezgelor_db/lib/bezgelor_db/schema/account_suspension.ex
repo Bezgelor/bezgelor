@@ -50,10 +50,10 @@ defmodule BezgelorDb.Schema.AccountSuspension do
         }
 
   schema "account_suspensions" do
-    belongs_to :account, Account
-    field :reason, :string
-    field :start_time, :utc_datetime
-    field :end_time, :utc_datetime
+    belongs_to(:account, Account)
+    field(:reason, :string)
+    field(:start_time, :utc_datetime)
+    field(:end_time, :utc_datetime)
 
     timestamps(type: :utc_datetime)
   end
@@ -73,7 +73,8 @@ defmodule BezgelorDb.Schema.AccountSuspension do
   Check if this suspension is currently active.
   """
   @spec active?(t()) :: boolean()
-  def active?(%__MODULE__{end_time: nil}), do: true  # Permanent ban
+  # Permanent ban
+  def active?(%__MODULE__{end_time: nil}), do: true
 
   def active?(%__MODULE__{start_time: start_time, end_time: end_time}) do
     now = DateTime.utc_now()

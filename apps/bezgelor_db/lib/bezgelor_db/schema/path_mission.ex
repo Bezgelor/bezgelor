@@ -24,19 +24,19 @@ defmodule BezgelorDb.Schema.PathMission do
   @type t :: %__MODULE__{}
 
   schema "path_missions" do
-    belongs_to :character, BezgelorDb.Schema.Character
+    belongs_to(:character, BezgelorDb.Schema.Character)
 
     # Mission template reference (from BezgelorData)
-    field :mission_id, :integer
+    field(:mission_id, :integer)
 
     # State
-    field :state, Ecto.Enum, values: [:active, :completed, :failed], default: :active
+    field(:state, Ecto.Enum, values: [:active, :completed, :failed], default: :active)
 
     # Flexible progress tracking
-    field :progress, :map, default: %{}
+    field(:progress, :map, default: %{})
 
     # Completion time
-    field :completed_at, :utc_datetime
+    field(:completed_at, :utc_datetime)
 
     timestamps(type: :utc_datetime)
   end
@@ -46,7 +46,9 @@ defmodule BezgelorDb.Schema.PathMission do
     |> cast(attrs, [:character_id, :mission_id, :state, :progress, :completed_at])
     |> validate_required([:character_id, :mission_id])
     |> foreign_key_constraint(:character_id)
-    |> unique_constraint([:character_id, :mission_id], name: :path_missions_character_id_mission_id_index)
+    |> unique_constraint([:character_id, :mission_id],
+      name: :path_missions_character_id_mission_id_index
+    )
   end
 
   def progress_changeset(mission, progress) do

@@ -20,7 +20,12 @@ defmodule BezgelorDb.PetsTest do
     {:ok, character} =
       Characters.create_character(account.id, %{
         name: "PetOwner#{System.unique_integer([:positive])}",
-        sex: 0, race: 0, class: 0, faction_id: 166, world_id: 1, world_zone_id: 1
+        sex: 0,
+        race: 0,
+        class: 0,
+        faction_id: 166,
+        world_id: 1,
+        world_zone_id: 1
       })
 
     {:ok, _} = Collections.unlock_account_pet(account.id, 2001, "purchase")
@@ -60,7 +65,8 @@ defmodule BezgelorDb.PetsTest do
       # Default level curve: 100 XP for level 2
       {:ok, pet, :level_up} = Pets.award_pet_xp(character.id, 150)
       assert pet.level == 2
-      assert pet.xp == 50  # Leftover after level up
+      # Leftover after level up
+      assert pet.xp == 50
     end
 
     test "set_nickname changes pet name", %{account: account, character: character} do

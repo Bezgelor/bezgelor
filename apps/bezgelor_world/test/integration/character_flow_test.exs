@@ -115,7 +115,9 @@ defmodule BezgelorWorld.Integration.CharacterFlowTest do
       {:ok, _hello} = :gen_tcp.recv(socket, 0, 5000)
 
       # Send ClientHelloRealm with invalid session key
-      auth_packet = build_client_hello_realm(999_999, :crypto.strong_rand_bytes(16), "invalid@test.com")
+      auth_packet =
+        build_client_hello_realm(999_999, :crypto.strong_rand_bytes(16), "invalid@test.com")
+
       framed = Framing.frame_packet(Opcode.to_integer(:client_hello_realm), auth_packet)
       :ok = :gen_tcp.send(socket, framed)
 

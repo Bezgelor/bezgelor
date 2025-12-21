@@ -24,9 +24,12 @@ defmodule BezgelorWorld.HandlerRegistration do
 
   alias BezgelorWorld.Handler.{
     AchievementHandler,
+    AbilityBookActivationHandler,
+    ActionSetHandler,
     BattlegroundHandler,
     ChatHandler,
     CombatHandler,
+    CastSpellContinuousHandler,
     CraftingHandler,
     DuelHandler,
     EventHandler,
@@ -38,6 +41,7 @@ defmodule BezgelorWorld.HandlerRegistration do
     LootHandler,
     MailHandler,
     MountHandler,
+    NonSpellActionSetHandler,
     NpcHandler,
     PathHandler,
     PetHandler,
@@ -63,7 +67,11 @@ defmodule BezgelorWorld.HandlerRegistration do
 
     # Spells
     PacketRegistry.register(:client_cast_spell, SpellHandler)
+    PacketRegistry.register(:client_cast_spell_continuous, CastSpellContinuousHandler)
     PacketRegistry.register(:client_cancel_cast, SpellHandler)
+    PacketRegistry.register(:client_request_action_set_changes, ActionSetHandler)
+    PacketRegistry.register(:client_non_spell_action_set_changes, NonSpellActionSetHandler)
+    PacketRegistry.register(:client_ability_book_activate_spell, AbilityBookActivationHandler)
 
     # Combat
     PacketRegistry.register(:client_set_target, CombatHandler)

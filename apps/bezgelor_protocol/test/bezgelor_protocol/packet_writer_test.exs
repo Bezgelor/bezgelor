@@ -88,8 +88,10 @@ defmodule BezgelorProtocol.PacketWriterTest do
   describe "write_bits/3" do
     test "writes specified number of bits" do
       writer = PacketWriter.new()
-      writer = PacketWriter.write_bits(writer, 22, 5)  # 0b10110
-      writer = PacketWriter.write_bits(writer, 6, 3)   # 0b110
+      # 0b10110
+      writer = PacketWriter.write_bits(writer, 22, 5)
+      # 0b110
+      writer = PacketWriter.write_bits(writer, 6, 3)
       writer = PacketWriter.flush_bits(writer)
       # Combined: 0b110_10110 = 0xD6
       assert PacketWriter.to_binary(writer) == <<0xD6>>
@@ -98,11 +100,15 @@ defmodule BezgelorProtocol.PacketWriterTest do
     test "continuous bit stream across multiple writes" do
       # This test verifies the key WildStar protocol behavior:
       # All values are written as continuous bits without byte alignment
-      writer = PacketWriter.new()
-      |> PacketWriter.write_bits(0b11, 2)      # 2 bits
-      |> PacketWriter.write_u8(0xFF)          # 8 bits (should continue from bit 2)
-      |> PacketWriter.write_bits(0b101, 3)    # 3 bits
-      |> PacketWriter.flush_bits()
+      writer =
+        PacketWriter.new()
+        # 2 bits
+        |> PacketWriter.write_bits(0b11, 2)
+        # 8 bits (should continue from bit 2)
+        |> PacketWriter.write_u8(0xFF)
+        # 3 bits
+        |> PacketWriter.write_bits(0b101, 3)
+        |> PacketWriter.flush_bits()
 
       # Total: 13 bits = 2 bytes (with 3 unused bits in last byte)
       # Byte 0: bits 0-1 = 0b11, bits 2-7 = 0b111111 (low 6 bits of 0xFF)

@@ -125,6 +125,7 @@ defmodule BezgelorDev.ReportGenerator do
   defp capture_type_title(:handler_error), do: "Handler Error Report"
 
   defp format_decimal(opcode) when is_integer(opcode), do: Integer.to_string(opcode)
+
   defp format_decimal(opcode) when is_atom(opcode) do
     try do
       Integer.to_string(BezgelorProtocol.Opcode.to_integer(opcode))
@@ -162,6 +163,7 @@ defmodule BezgelorDev.ReportGenerator do
   end
 
   defp format_error_section(nil), do: ""
+
   defp format_error_section(error) do
     """
     ## Error Details
@@ -176,8 +178,11 @@ defmodule BezgelorDev.ReportGenerator do
       if(context.player_name, do: "- **Name**: #{context.player_name}"),
       if(context.player_id, do: "- **ID**: #{context.player_id}"),
       if(context.player_zone_name || context.player_zone_id,
-        do: "- **Zone**: #{context.player_zone_name || context.player_zone_id}"),
-      if(context.player_position, do: "- **Position**: #{format_position(context.player_position)}"),
+        do: "- **Zone**: #{context.player_zone_name || context.player_zone_id}"
+      ),
+      if(context.player_position,
+        do: "- **Position**: #{format_position(context.player_position)}"
+      ),
       "- **Session State**: #{context.session_state}",
       "- **In World**: #{context.in_world}"
     ]
@@ -188,11 +193,13 @@ defmodule BezgelorDev.ReportGenerator do
   end
 
   defp format_position(nil), do: "Unknown"
+
   defp format_position({x, y, z}) do
     "(#{Float.round(x * 1.0, 2)}, #{Float.round(y * 1.0, 2)}, #{Float.round(z * 1.0, 2)})"
   end
 
   defp format_recent_packets_table([]), do: "_No recent packets recorded_"
+
   defp format_recent_packets_table(packets) do
     header = "| Direction | Opcode | Time Ago |\n|-----------|--------|----------|\n"
 
@@ -218,6 +225,7 @@ defmodule BezgelorDev.ReportGenerator do
   defp format_player_commentary(commentary), do: "> \"#{commentary}\""
 
   defp format_claude_analysis(nil), do: ""
+
   defp format_claude_analysis(analysis) do
     """
     ## Claude Analysis
@@ -237,6 +245,7 @@ defmodule BezgelorDev.ReportGenerator do
 
   defp format_field_analysis(nil), do: "_No field analysis available_"
   defp format_field_analysis([]), do: "_No field analysis available_"
+
   defp format_field_analysis(fields) do
     header = "| Offset | Size | Type | Meaning |\n|--------|------|------|--------|\n"
 
@@ -268,6 +277,7 @@ defmodule BezgelorDev.ReportGenerator do
   end
 
   defp format_unknown_opcodes_list([]), do: "_None captured_"
+
   defp format_unknown_opcodes_list(captures) do
     captures
     |> Enum.uniq_by(& &1.opcode)
@@ -276,6 +286,7 @@ defmodule BezgelorDev.ReportGenerator do
   end
 
   defp format_unhandled_opcodes_list([]), do: "_None captured_"
+
   defp format_unhandled_opcodes_list(captures) do
     captures
     |> Enum.uniq_by(& &1.opcode)
@@ -287,6 +298,7 @@ defmodule BezgelorDev.ReportGenerator do
   end
 
   defp format_handler_errors_list([]), do: "_None captured_"
+
   defp format_handler_errors_list(captures) do
     captures
     |> Enum.map(fn c ->
@@ -297,7 +309,8 @@ defmodule BezgelorDev.ReportGenerator do
   end
 
   defp format_captures_table(captures) do
-    header = "| # | Time | Type | Opcode | Commentary |\n|---|------|------|--------|------------|\n"
+    header =
+      "| # | Time | Type | Opcode | Commentary |\n|---|------|------|--------|------------|\n"
 
     rows =
       captures

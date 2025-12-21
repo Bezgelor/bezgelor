@@ -43,7 +43,8 @@ defmodule BezgelorWorld.Quest.RewardHandler do
 
   Returns a summary of granted rewards for logging/notification.
   """
-  @spec grant_quest_rewards(pid(), non_neg_integer(), non_neg_integer()) :: {:ok, map()} | {:error, atom()}
+  @spec grant_quest_rewards(pid(), non_neg_integer(), non_neg_integer()) ::
+          {:ok, map()} | {:error, atom()}
   def grant_quest_rewards(connection_pid, character_id, quest_id) do
     with {:ok, quest} <- Store.get_quest(quest_id) do
       rewards_summary = %{
@@ -55,11 +56,14 @@ defmodule BezgelorWorld.Quest.RewardHandler do
       }
 
       # Get rewards from quest definition
-      rewards_summary = grant_quest_definition_rewards(connection_pid, character_id, quest, rewards_summary)
+      rewards_summary =
+        grant_quest_definition_rewards(connection_pid, character_id, quest, rewards_summary)
 
       # Get rewards from quest_rewards table
       table_rewards = Store.get_quest_rewards(quest_id)
-      rewards_summary = grant_table_rewards(connection_pid, character_id, table_rewards, rewards_summary)
+
+      rewards_summary =
+        grant_table_rewards(connection_pid, character_id, table_rewards, rewards_summary)
 
       Logger.info(
         "Quest #{quest_id} rewards granted to #{character_id}: " <>
@@ -242,7 +246,10 @@ defmodule BezgelorWorld.Quest.RewardHandler do
 
       {:error, :inventory_full} ->
         # TODO: Send to mail or overflow storage
-        Logger.warning("Inventory full for character #{character_id}, item #{item_id} not granted")
+        Logger.warning(
+          "Inventory full for character #{character_id}, item #{item_id} not granted"
+        )
+
         {:error, :inventory_full}
 
       {:error, reason} ->
@@ -252,15 +259,16 @@ defmodule BezgelorWorld.Quest.RewardHandler do
 
   # Grant currency to character
   defp grant_currency(character_id, currency_type, amount) do
-    currency = case currency_type do
-      1 -> :gold
-      2 -> :renown
-      3 -> :prestige
-      4 -> :elder_gems
-      5 -> :glory
-      6 -> :crafting_vouchers
-      _ -> :gold
-    end
+    currency =
+      case currency_type do
+        1 -> :gold
+        2 -> :renown
+        3 -> :prestige
+        4 -> :elder_gems
+        5 -> :glory
+        6 -> :crafting_vouchers
+        _ -> :gold
+      end
 
     case add_currency(character_id, currency, amount) do
       {:ok, _} ->
@@ -274,7 +282,8 @@ defmodule BezgelorWorld.Quest.RewardHandler do
   end
 
   # Add currency to a character's currency record
-  defp add_currency(character_id, currency_type, amount) when is_atom(currency_type) and amount > 0 do
+  defp add_currency(character_id, currency_type, amount)
+       when is_atom(currency_type) and amount > 0 do
     case get_or_create_currency_record(character_id) do
       {:ok, record} ->
         case CharacterCurrency.modify_changeset(record, currency_type, amount) do

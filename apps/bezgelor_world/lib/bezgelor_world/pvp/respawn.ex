@@ -105,7 +105,10 @@ defmodule BezgelorWorld.PvP.Respawn do
   """
   @spec apply_protection(t()) :: t()
   def apply_protection(respawn) do
-    %{respawn | protection_expires: System.monotonic_time(:millisecond) + @graveyard_protection_ms}
+    %{
+      respawn
+      | protection_expires: System.monotonic_time(:millisecond) + @graveyard_protection_ms
+    }
   end
 
   @doc """

@@ -27,17 +27,17 @@ Bezgelor is an Elixir umbrella application that emulates WildStar game servers u
 
 | App | Purpose |
 |-----|---------|
-| `bezgelor_core` | Game logic - entities, spells, combat, AI, XP |
-| `bezgelor_crypto` | SRP6 authentication, packet encryption |
-| `bezgelor_protocol` | WildStar binary protocol - packets, framing, handlers |
-| `bezgelor_db` | Ecto schemas and database operations |
-| `bezgelor_data` | Static game data loaded into ETS |
-| `bezgelor_auth` | Authentication server (port 6600) |
-| `bezgelor_realm` | Realm server (port 23115) |
-| `bezgelor_world` | World server (port 24000) |
-| `bezgelor_api` | Phoenix REST API |
-| `bezgelor_portal` | Phoenix LiveView account portal - player dashboard & admin console |
-| `bezgelor_dev` | Development capture system for reverse engineering |
+| [`bezgelor_core`](apps/bezgelor_core/) | Game logic - entities, spells, combat, AI, XP |
+| [`bezgelor_crypto`](apps/bezgelor_crypto/) | SRP6 authentication, packet encryption |
+| [`bezgelor_protocol`](apps/bezgelor_protocol/) | WildStar binary protocol - packets, framing, handlers |
+| [`bezgelor_db`](apps/bezgelor_db/) | Ecto schemas and database operations |
+| [`bezgelor_data`](apps/bezgelor_data/) | Static game data loaded into ETS |
+| [`bezgelor_auth`](apps/bezgelor_auth/) | Authentication server (port 6600) |
+| [`bezgelor_realm`](apps/bezgelor_realm/) | Realm server (port 23115) |
+| [`bezgelor_world`](apps/bezgelor_world/) | World server (port 24000) |
+| [`bezgelor_api`](apps/bezgelor_api/) | Phoenix REST API |
+| [`bezgelor_portal`](apps/bezgelor_portal/) | Phoenix LiveView account portal - player dashboard & admin console |
+| [`bezgelor_dev`](apps/bezgelor_dev/) | Development capture system for reverse engineering |
 
 ### Key Patterns
 
@@ -105,6 +105,22 @@ mix run --no-halt
 
 # With named node (for distributed/clustering)
 iex --sname bezgelor -S mix phx.server
+```
+
+### Mix Tasks
+
+```bash
+# Generate boss encounter scripts from JSON data
+mix dungeon.generate stormtalon_lair.json --boss stormtalon --force
+
+# Create a character (admin helper)
+mix bezgelor.create_character ACCOUNT_ID RACE_ID CLASS_ID --auto-name --sex 1
+
+# Refresh default action set shortcuts for a character
+mix bezgelor.refresh_action_set_defaults CHARACTER_ID --all-specs
+
+# Delete all characters (soft delete by default, hard delete with --hard)
+mix bezgelor.delete_all_characters --confirm --hard
 ```
 
 ### Database Management

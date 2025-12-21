@@ -33,6 +33,7 @@ config :bezgelor_db, BezgelorDb.Repo,
 
 # Don't start servers during tests
 config :bezgelor_auth, start_server: false
+config :bezgelor_api, start_server: false
 config :bezgelor_realm, start_server: false
 config :bezgelor_world, start_server: false
 

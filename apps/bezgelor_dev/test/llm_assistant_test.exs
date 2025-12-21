@@ -99,7 +99,8 @@ defmodule BezgelorDev.LlmAssistantTest do
     end
 
     test "includes hex dump of payload" do
-      payload = <<0x48, 0x65, 0x6C, 0x6C, 0x6F>>  # "Hello"
+      # "Hello"
+      payload = <<0x48, 0x65, 0x6C, 0x6C, 0x6F>>
       event = sample_event(payload: payload)
       prompt = LlmAssistant.generate_analysis_prompt(event)
 

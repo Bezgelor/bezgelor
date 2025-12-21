@@ -63,7 +63,8 @@ defmodule BezgelorRealm.Integration.RealmFlowTest do
 
       # Should receive ServerHello packet
       {:ok, data} = :gen_tcp.recv(socket, 0, 5000)
-      assert byte_size(data) > 6  # At least a header
+      # At least a header
+      assert byte_size(data) > 6
 
       # Parse the packet header
       <<_size::little-32, opcode::little-16, _payload::binary>> = data
@@ -83,13 +84,14 @@ defmodule BezgelorRealm.Integration.RealmFlowTest do
       {:ok, _account} = Accounts.update_game_token(account, game_token_hex)
 
       # Create an online realm
-      {:ok, _realm} = Realms.create_realm(%{
-        name: "TestRealm#{System.unique_integer([:positive])}",
-        address: "127.0.0.1",
-        port: 24000,
-        type: :pve,
-        online: true
-      })
+      {:ok, _realm} =
+        Realms.create_realm(%{
+          name: "TestRealm#{System.unique_integer([:positive])}",
+          address: "127.0.0.1",
+          port: 24000,
+          type: :pve,
+          online: true
+        })
 
       {:ok, socket} = :gen_tcp.connect(~c"localhost", @test_port, [:binary, active: false])
 
@@ -119,7 +121,9 @@ defmodule BezgelorRealm.Integration.RealmFlowTest do
       {:ok, _hello} = :gen_tcp.recv(socket, 0, 5000)
 
       # Send ClientHelloAuth with invalid/random token
-      auth_packet = build_client_hello_auth(16042, "invalid@test.com", :crypto.strong_rand_bytes(16))
+      auth_packet =
+        build_client_hello_auth(16042, "invalid@test.com", :crypto.strong_rand_bytes(16))
+
       framed = Framing.frame_packet(Opcode.to_integer(:client_hello_auth_realm), auth_packet)
       :ok = :gen_tcp.send(socket, framed)
 
@@ -148,7 +152,9 @@ defmodule BezgelorRealm.Integration.RealmFlowTest do
       {:ok, _hello} = :gen_tcp.recv(socket, 0, 5000)
 
       # Send ClientHelloAuth with wrong build
-      auth_packet = build_client_hello_auth(99999, "test@example.com", :crypto.strong_rand_bytes(16))
+      auth_packet =
+        build_client_hello_auth(99999, "test@example.com", :crypto.strong_rand_bytes(16))
+
       framed = Framing.frame_packet(Opcode.to_integer(:client_hello_auth_realm), auth_packet)
       :ok = :gen_tcp.send(socket, framed)
 
@@ -181,13 +187,14 @@ defmodule BezgelorRealm.Integration.RealmFlowTest do
       # Ensure no online realms exist for this test
       # (Previous tests may have created online realms)
       # Create an offline realm
-      {:ok, _realm} = Realms.create_realm(%{
-        name: "OfflineRealm#{System.unique_integer([:positive])}",
-        address: "127.0.0.1",
-        port: 24001,
-        type: :pve,
-        online: false
-      })
+      {:ok, _realm} =
+        Realms.create_realm(%{
+          name: "OfflineRealm#{System.unique_integer([:positive])}",
+          address: "127.0.0.1",
+          port: 24001,
+          type: :pve,
+          online: false
+        })
 
       # Set all realms offline for this test
       Realms.list_realms()
@@ -230,16 +237,22 @@ defmodule BezgelorRealm.Integration.RealmFlowTest do
 
     <<
       build::little-32,
-      0x1588::little-64,  # crypt_key_integer
+      # crypt_key_integer
+      0x1588::little-64,
       email_length::little-32,
       utf16_email::binary,
       uuid_1::binary-size(16),
       game_token::binary-size(16),
-      0::little-32,  # inet_address
-      0::little-32,  # language
-      0::little-32,  # game_mode
-      0::little-32,  # unused
-      0::little-32   # datacenter_id
+      # inet_address
+      0::little-32,
+      # language
+      0::little-32,
+      # game_mode
+      0::little-32,
+      # unused
+      0::little-32,
+      # datacenter_id
+      0::little-32
     >>
   end
 end

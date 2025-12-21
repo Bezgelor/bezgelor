@@ -61,7 +61,8 @@ defmodule BezgelorAuth.Integration.AuthFlowTest do
 
       # Should receive ServerHello packet
       {:ok, data} = :gen_tcp.recv(socket, 0, 5000)
-      assert byte_size(data) > 6  # At least a header
+      # At least a header
+      assert byte_size(data) > 6
 
       # Parse the packet header
       <<_size::little-32, opcode::little-16, _payload::binary>> = data
@@ -134,7 +135,8 @@ defmodule BezgelorAuth.Integration.AuthFlowTest do
       # Create account and ban it
       email = "banned#{System.unique_integer([:positive])}@test.com"
       {:ok, account} = Accounts.create_account(email, "password123")
-      {:ok, _} = Accounts.create_suspension(account, "Cheating", nil)  # Permanent ban
+      # Permanent ban
+      {:ok, _} = Accounts.create_suspension(account, "Cheating", nil)
 
       {:ok, socket} = :gen_tcp.connect(~c"localhost", @test_port, [:binary, active: false])
 

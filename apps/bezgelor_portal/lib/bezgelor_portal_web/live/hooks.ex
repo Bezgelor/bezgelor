@@ -89,7 +89,10 @@ defmodule BezgelorPortalWeb.Live.Hooks do
         # Admin users must have TOTP enabled
         socket =
           socket
-          |> put_flash(:warning, "Two-factor authentication is required for admin access. Please set it up first.")
+          |> put_flash(
+            :warning,
+            "Two-factor authentication is required for admin access. Please set it up first."
+          )
           |> redirect(to: "/settings/totp/setup")
 
         {:halt, socket}
@@ -125,7 +128,8 @@ defmodule BezgelorPortalWeb.Live.Hooks do
     "events.broadcast_message",
     "server.view_logs",
     "admin.manage_roles",
-    "admin.view_audit_log"
+    "admin.view_audit_log",
+    "testing.manage"
   ]
 
   defp has_admin_access?(account) do
@@ -142,7 +146,9 @@ defmodule BezgelorPortalWeb.Live.Hooks do
   defp maybe_schedule_status_refresh(socket) do
     if connected?(socket) do
       attach_hook(socket, :server_status_refresh, :handle_info, &handle_status_refresh/2)
-      |> tap(fn _ -> Process.send_after(self(), :refresh_server_status, @status_refresh_interval) end)
+      |> tap(fn _ ->
+        Process.send_after(self(), :refresh_server_status, @status_refresh_interval)
+      end)
     else
       socket
     end

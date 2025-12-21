@@ -85,13 +85,16 @@ defmodule BezgelorData.Compiler do
     Logger.info("Compiling #{Path.basename(json_path)} -> #{Path.basename(etf_path)}")
 
     with {:ok, json_content} <- File.read(json_path),
-         {:ok, data} <- Jason.decode(json_content, keys: :atoms) do
+         {:ok, data} <- decode_trusted_json(json_content) do
       # Convert to ETF with compression
       etf_content = :erlang.term_to_binary(data, [:compressed])
 
       case File.write(etf_path, etf_content) do
         :ok ->
-          Logger.debug("Compiled #{byte_size(json_content)} bytes JSON -> #{byte_size(etf_content)} bytes ETF")
+          Logger.debug(
+            "Compiled #{byte_size(json_content)} bytes JSON -> #{byte_size(etf_content)} bytes ETF"
+          )
+
           :ok
 
         {:error, reason} ->
@@ -160,16 +163,17 @@ defmodule BezgelorData.Compiler do
   @spec load_json(String.t(), String.t()) :: {:ok, map()} | {:error, term()}
   def load_json(json_path, key) do
     with {:ok, content} <- File.read(json_path),
-         {:ok, data} <- Jason.decode(content, keys: :atoms) do
+         {:ok, data} <- decode_trusted_json(content) do
       items = Map.get(data, String.to_atom(key), [])
       {:ok, items}
     end
   end
 
   # Safely convert binary to term, catching any errors
+  # Uses [:safe] to prevent arbitrary code execution from tampered cache files
   defp safe_binary_to_term(binary) do
     try do
-      {:ok, :erlang.binary_to_term(binary)}
+      {:ok, :erlang.binary_to_term(binary, [:safe])}
     rescue
       ArgumentError -> {:error, :invalid_etf}
     end
@@ -181,5 +185,18 @@ defmodule BezgelorData.Compiler do
 
   defp compiled_directory do
     Application.app_dir(:bezgelor_data, "priv/compiled")
+  end
+
+  # Decode trusted game data JSON with atom keys.
+  #
+  # SECURITY NOTE: Uses `keys: :atoms` which creates atoms from JSON keys.
+  # This is acceptable here because:
+  # 1. Game data files are shipped with the application (not user-uploadable)
+  # 2. Files have known, stable structures with predictable keys
+  # 3. Data is loaded once at startup and cached to ETF
+  #
+  # DO NOT use this for user-controlled or external JSON data.
+  defp decode_trusted_json(content) do
+    Jason.decode(content, keys: :atoms)
   end
 end

@@ -67,70 +67,112 @@ defmodule BezgelorWorld.Quest.ObjectiveHandler do
   # ============================================================================
 
   # Combat objectives
-  @type_kill_creature 2        # 598 objectives - Kill specific creature
-  @type_kill_creature_type 22  # 511 objectives - Kill creatures of type/tier
-  @type_kill_elite 23          # 96 objectives - Kill elite creature
+  # 598 objectives - Kill specific creature
+  @type_kill_creature 2
+  # 511 objectives - Kill creatures of type/tier
+  @type_kill_creature_type 22
+  # 96 objectives - Kill elite creature
+  @type_kill_elite 23
 
   # Item objectives
-  @type_collect_item 3         # 350 objectives - Collect/loot item
-  @type_loot_item 10           # 52 objectives - Loot item from creature
-  @type_use_item 8             # 498 objectives - Use an item
-  @type_deliver_item 6         # Deliver item to NPC
-  @type_equip_item 7           # Equip specific item
-  @type_craft_item 13          # 3 objectives - Craft item
+  # 350 objectives - Collect/loot item
+  @type_collect_item 3
+  # 52 objectives - Loot item from creature
+  @type_loot_item 10
+  # 498 objectives - Use an item
+  @type_use_item 8
+  # Deliver item to NPC
+  @type_deliver_item 6
+  # Equip specific item
+  @type_equip_item 7
+  # 3 objectives - Craft item
+  @type_craft_item 13
 
   # Interaction objectives
-  @type_talk_to_npc 4          # 327 objectives - Talk to NPC
-  @type_interact_object 12     # 1187 objectives - Interact with object
-  @type_activate_datacube 20   # 11 objectives - Activate datacube/lore
-  @type_scan_creature 21       # 10 objectives - Scan creature
+  # 327 objectives - Talk to NPC
+  @type_talk_to_npc 4
+  # 1187 objectives - Interact with object
+  @type_interact_object 12
+  # 11 objectives - Activate datacube/lore
+  @type_activate_datacube 20
+  # 10 objectives - Scan creature
+  @type_scan_creature 21
 
   # Location objectives
-  @type_enter_location 5       # 1556 objectives - Enter location/zone
-  @type_explore 25             # 152 objectives - Explore location
-  @type_discover_poi 15        # 26 objectives - Discover point of interest
+  # 1556 objectives - Enter location/zone
+  @type_enter_location 5
+  # 152 objectives - Explore location
+  @type_explore 25
+  # 26 objectives - Discover point of interest
+  @type_discover_poi 15
 
   # Escort/defense objectives
-  @type_escort_npc 14          # 426 objectives - Escort/protect NPC
-  @type_defend_location 18     # 35 objectives - Defend location
-  @type_escort_to_location 24  # 39 objectives - Escort NPC to location
+  # 426 objectives - Escort/protect NPC
+  @type_escort_npc 14
+  # 35 objectives - Defend location
+  @type_defend_location 18
+  # 39 objectives - Escort NPC to location
+  @type_escort_to_location 24
 
   # Ability objectives
-  @type_use_ability 17         # 199 objectives - Use spell/ability
+  # 199 objectives - Use spell/ability
+  @type_use_ability 17
 
   # Resource objectives
-  @type_gather_resource 33     # 215 objectives - Gather resource node
+  # 215 objectives - Gather resource node
+  @type_gather_resource 33
 
   # Event/sequence objectives
-  @type_complete_event 31      # 260 objectives - Complete public event
-  @type_achieve_condition 32   # 709 objectives - Achieve condition/state
-  @type_objective_sequence 11  # 128 objectives - Complete objective sequence
-  @type_complete_dungeon 9     # 18 objectives - Complete dungeon event
-  @type_timed_event 16         # 55 objectives - Complete timed event
+  # 260 objectives - Complete public event
+  @type_complete_event 31
+  # 709 objectives - Achieve condition/state
+  @type_achieve_condition 32
+  # 128 objectives - Complete objective sequence
+  @type_objective_sequence 11
+  # 18 objectives - Complete dungeon event
+  @type_complete_dungeon 9
+  # 55 objectives - Complete timed event
+  @type_timed_event 16
 
   # Path objectives
-  @type_path_mission 19        # 2 objectives - Complete path mission
+  # 2 objectives - Complete path mission
+  @type_path_mission 19
 
   # PvP/competitive objectives
-  @type_win_pvp 28             # 5 objectives - Win PvP match/battleground
-  @type_capture_point 29       # 2 objectives - Capture objective point
-  @type_challenge 35           # 10 objectives - Complete challenge
+  # 5 objectives - Win PvP match/battleground
+  @type_win_pvp 28
+  # 2 objectives - Capture objective point
+  @type_capture_point 29
+  # 10 objectives - Complete challenge
+  @type_challenge 35
 
   # Specialized objectives
-  @type_reputation 36          # 6 objectives - Reach reputation level
-  @type_level_requirement 37   # 4 objectives - Reach character level
-  @type_housing 39             # 2 objectives - Housing interaction
-  @type_mount 40               # 2 objectives - Mount related
-  @type_costume 41             # 2 objectives - Costume/appearance
-  @type_title 42               # 2 objectives - Earn title
-  @type_achievement 44         # 7 objectives - Earn achievement
-  @type_currency 46            # 1 objective - Earn/spend currency
-  @type_social 47              # 2 objectives - Social interaction
-  @type_guild 48               # 2 objectives - Guild related
+  # 6 objectives - Reach reputation level
+  @type_reputation 36
+  # 4 objectives - Reach character level
+  @type_level_requirement 37
+  # 2 objectives - Housing interaction
+  @type_housing 39
+  # 2 objectives - Mount related
+  @type_mount 40
+  # 2 objectives - Costume/appearance
+  @type_costume 41
+  # 2 objectives - Earn title
+  @type_title 42
+  # 7 objectives - Earn achievement
+  @type_achievement 44
+  # 1 objective - Earn/spend currency
+  @type_currency 46
+  # 2 objectives - Social interaction
+  @type_social 47
+  # 2 objectives - Guild related
+  @type_guild 48
 
   # Generic/script-triggered (most common - fallback for many types)
-  @type_generic 38             # 2520 objectives - Script-triggered
-  @type_special 27             # 1 objective - Special scripted
+  # 2520 objectives - Script-triggered
+  @type_generic 38
+  # 1 objective - Special scripted
+  @type_special 27
 
   @doc """
   Process a game event and update relevant quest objectives.

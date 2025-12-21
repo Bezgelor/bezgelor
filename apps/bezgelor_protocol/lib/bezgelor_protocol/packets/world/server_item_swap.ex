@@ -60,7 +60,8 @@ defmodule BezgelorProtocol.Packets.World.ServerItemSwap do
   @impl true
   def write(%__MODULE__{} = packet, writer) do
     # Write first item (moved to destination)
-    drag_drop1 = encode_drag_drop(packet.item1_location, packet.item1_bag_index, packet.item1_slot)
+    drag_drop1 =
+      encode_drag_drop(packet.item1_location, packet.item1_bag_index, packet.item1_slot)
 
     writer =
       writer
@@ -68,7 +69,8 @@ defmodule BezgelorProtocol.Packets.World.ServerItemSwap do
       |> PacketWriter.write_u64(drag_drop1)
 
     # Write second item (displaced from destination)
-    drag_drop2 = encode_drag_drop(packet.item2_location, packet.item2_bag_index, packet.item2_slot)
+    drag_drop2 =
+      encode_drag_drop(packet.item2_location, packet.item2_bag_index, packet.item2_slot)
 
     writer =
       writer
@@ -81,7 +83,7 @@ defmodule BezgelorProtocol.Packets.World.ServerItemSwap do
   # Encode location, bag_index, and slot into drag_drop format
   defp encode_drag_drop(location, bag_index, slot) do
     location_int = location_to_int(location)
-    location_int ||| (bag_index <<< 8) ||| (slot <<< 16)
+    location_int ||| bag_index <<< 8 ||| slot <<< 16
   end
 
   defp location_to_int(:equipped), do: 0

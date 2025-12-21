@@ -267,7 +267,10 @@ defmodule BezgelorWorld.BuffManager.Shard do
       )
 
       effect = %{type: :damage, amount: buff.amount, is_crit: false}
-      CombatBroadcaster.send_spell_effect(caster_guid, entity_guid, buff.spell_id, effect, [entity_guid])
+
+      CombatBroadcaster.send_spell_effect(caster_guid, entity_guid, buff.spell_id, effect, [
+        entity_guid
+      ])
     else
       # HoT - heal over time
       Logger.debug(
@@ -275,7 +278,10 @@ defmodule BezgelorWorld.BuffManager.Shard do
       )
 
       effect = %{type: :heal, amount: buff.amount, is_crit: false}
-      CombatBroadcaster.send_spell_effect(caster_guid, entity_guid, buff.spell_id, effect, [entity_guid])
+
+      CombatBroadcaster.send_spell_effect(caster_guid, entity_guid, buff.spell_id, effect, [
+        entity_guid
+      ])
     end
   end
 

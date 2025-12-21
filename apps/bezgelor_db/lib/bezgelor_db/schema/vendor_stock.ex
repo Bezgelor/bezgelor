@@ -21,10 +21,10 @@ defmodule BezgelorDb.Schema.VendorStock do
         }
 
   schema "vendor_stock" do
-    field :vendor_id, :integer
-    field :item_id, :integer
-    field :quantity_remaining, :integer
-    field :last_restock_at, :utc_datetime
+    field(:vendor_id, :integer)
+    field(:item_id, :integer)
+    field(:quantity_remaining, :integer)
+    field(:last_restock_at, :utc_datetime)
 
     timestamps(type: :utc_datetime)
   end

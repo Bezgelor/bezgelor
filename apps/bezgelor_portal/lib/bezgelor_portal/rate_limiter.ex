@@ -16,13 +16,16 @@ defmodule BezgelorPortal.RateLimiter do
   """
 
   @registration_limit 5
-  @registration_window_ms 60_000 * 60  # 1 hour
+  # 1 hour
+  @registration_window_ms 60_000 * 60
 
   @login_limit 10
-  @login_window_ms 60_000 * 15  # 15 minutes
+  # 15 minutes
+  @login_window_ms 60_000 * 15
 
   @password_reset_limit 3
-  @password_reset_window_ms 60_000 * 60  # 1 hour
+  # 1 hour
+  @password_reset_window_ms 60_000 * 60
 
   @doc """
   Check if a registration attempt is allowed for the given IP.
@@ -51,7 +54,11 @@ defmodule BezgelorPortal.RateLimiter do
   """
   @spec check_password_reset(String.t()) :: :ok | {:error, :rate_limited}
   def check_password_reset(email) when is_binary(email) do
-    check_rate("password_reset:#{String.downcase(email)}", @password_reset_limit, @password_reset_window_ms)
+    check_rate(
+      "password_reset:#{String.downcase(email)}",
+      @password_reset_limit,
+      @password_reset_window_ms
+    )
   end
 
   @doc """
@@ -61,7 +68,11 @@ defmodule BezgelorPortal.RateLimiter do
   """
   @spec check_verification_resend(String.t()) :: :ok | {:error, :rate_limited}
   def check_verification_resend(email) when is_binary(email) do
-    check_rate("verification_resend:#{String.downcase(email)}", @password_reset_limit, @password_reset_window_ms)
+    check_rate(
+      "verification_resend:#{String.downcase(email)}",
+      @password_reset_limit,
+      @password_reset_window_ms
+    )
   end
 
   defp check_rate(key, limit, window_ms) do

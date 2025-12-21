@@ -37,7 +37,9 @@ defmodule BezgelorDb.Pets do
   @spec clear_active_pet(integer()) :: :ok
   def clear_active_pet(character_id) do
     case get_active_pet(character_id) do
-      nil -> :ok
+      nil ->
+        :ok
+
       pet ->
         Repo.delete(pet)
         :ok

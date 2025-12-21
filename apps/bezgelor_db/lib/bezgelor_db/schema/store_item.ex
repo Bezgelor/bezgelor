@@ -11,30 +11,30 @@ defmodule BezgelorDb.Schema.StoreItem do
   @item_types ~w(mount pet costume dye service bundle)
 
   schema "store_items" do
-    field :item_type, :string
-    field :item_id, :integer
-    field :name, :string
-    field :description, :string
-    field :premium_price, :integer
-    field :bonus_price, :integer
-    field :gold_price, :integer
-    field :category, :string
-    field :featured, :boolean, default: false
-    field :limited_time, :boolean, default: false
-    field :available_from, :utc_datetime
-    field :available_until, :utc_datetime
-    field :active, :boolean, default: true
+    field(:item_type, :string)
+    field(:item_id, :integer)
+    field(:name, :string)
+    field(:description, :string)
+    field(:premium_price, :integer)
+    field(:bonus_price, :integer)
+    field(:gold_price, :integer)
+    field(:category, :string)
+    field(:featured, :boolean, default: false)
+    field(:limited_time, :boolean, default: false)
+    field(:available_from, :utc_datetime)
+    field(:available_until, :utc_datetime)
+    field(:active, :boolean, default: true)
 
     # New fields from migration
-    belongs_to :store_category, BezgelorDb.Schema.StoreCategory, foreign_key: :category_id
-    field :sort_order, :integer, default: 0
-    field :new_until, :utc_datetime
-    field :sale_price, :integer
-    field :sale_ends_at, :utc_datetime
-    field :metadata, :map, default: %{}
+    belongs_to(:store_category, BezgelorDb.Schema.StoreCategory, foreign_key: :category_id)
+    field(:sort_order, :integer, default: 0)
+    field(:new_until, :utc_datetime)
+    field(:sale_price, :integer)
+    field(:sale_ends_at, :utc_datetime)
+    field(:metadata, :map, default: %{})
 
-    has_many :purchases, BezgelorDb.Schema.StorePurchase
-    has_many :daily_deals, BezgelorDb.Schema.DailyDeal
+    has_many(:purchases, BezgelorDb.Schema.StorePurchase)
+    has_many(:daily_deals, BezgelorDb.Schema.DailyDeal)
 
     timestamps(type: :utc_datetime)
   end
@@ -42,12 +42,25 @@ defmodule BezgelorDb.Schema.StoreItem do
   def changeset(item, attrs) do
     item
     |> cast(attrs, [
-      :item_type, :item_id, :name, :description,
-      :premium_price, :bonus_price, :gold_price,
-      :category, :featured, :limited_time,
-      :available_from, :available_until, :active,
-      :category_id, :sort_order, :new_until,
-      :sale_price, :sale_ends_at, :metadata
+      :item_type,
+      :item_id,
+      :name,
+      :description,
+      :premium_price,
+      :bonus_price,
+      :gold_price,
+      :category,
+      :featured,
+      :limited_time,
+      :available_from,
+      :available_until,
+      :active,
+      :category_id,
+      :sort_order,
+      :new_until,
+      :sale_price,
+      :sale_ends_at,
+      :metadata
     ])
     |> validate_required([:item_type, :item_id, :name])
     |> validate_inclusion(:item_type, @item_types)
@@ -89,12 +102,14 @@ defmodule BezgelorDb.Schema.StoreItem do
 
   @doc "Check if item is currently on sale."
   def on_sale?(%__MODULE__{sale_price: nil}), do: false
+
   def on_sale?(%__MODULE__{sale_ends_at: ends_at}) do
     DateTime.compare(DateTime.utc_now(), ends_at) == :lt
   end
 
   @doc "Check if item is marked as new."
   def is_new?(%__MODULE__{new_until: nil}), do: false
+
   def is_new?(%__MODULE__{new_until: new_until}) do
     DateTime.compare(DateTime.utc_now(), new_until) == :lt
   end

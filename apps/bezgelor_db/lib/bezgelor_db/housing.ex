@@ -21,9 +21,10 @@ defmodule BezgelorDb.Housing do
   @spec get_plot(integer()) :: {:ok, HousingPlot.t()} | :error
   def get_plot(character_id) do
     query =
-      from p in HousingPlot,
+      from(p in HousingPlot,
         where: p.character_id == ^character_id,
         preload: [:decor, :fabkits, :neighbors]
+      )
 
     case Repo.one(query) do
       nil -> :error
@@ -34,9 +35,10 @@ defmodule BezgelorDb.Housing do
   @spec get_plot_by_id(integer()) :: {:ok, HousingPlot.t()} | :error
   def get_plot_by_id(plot_id) do
     query =
-      from p in HousingPlot,
+      from(p in HousingPlot,
         where: p.id == ^plot_id,
         preload: [:decor, :fabkits, :neighbors]
+      )
 
     case Repo.one(query) do
       nil -> :error
@@ -95,8 +97,9 @@ defmodule BezgelorDb.Housing do
   @spec remove_neighbor(integer(), integer()) :: :ok | {:error, :not_found}
   def remove_neighbor(plot_id, character_id) do
     query =
-      from n in HousingNeighbor,
+      from(n in HousingNeighbor,
         where: n.plot_id == ^plot_id and n.character_id == ^character_id
+      )
 
     case Repo.delete_all(query) do
       {0, _} -> {:error, :not_found}
@@ -117,7 +120,8 @@ defmodule BezgelorDb.Housing do
     end
   end
 
-  @spec demote_from_roommate(integer(), integer()) :: {:ok, HousingNeighbor.t()} | {:error, term()}
+  @spec demote_from_roommate(integer(), integer()) ::
+          {:ok, HousingNeighbor.t()} | {:error, term()}
   def demote_from_roommate(plot_id, character_id) do
     case get_neighbor(plot_id, character_id) do
       {:ok, neighbor} ->
@@ -139,8 +143,9 @@ defmodule BezgelorDb.Housing do
   @spec is_neighbor?(integer(), integer()) :: boolean()
   def is_neighbor?(plot_id, character_id) do
     query =
-      from n in HousingNeighbor,
+      from(n in HousingNeighbor,
         where: n.plot_id == ^plot_id and n.character_id == ^character_id
+      )
 
     Repo.exists?(query)
   end
@@ -148,8 +153,9 @@ defmodule BezgelorDb.Housing do
   @spec is_roommate?(integer(), integer()) :: boolean()
   def is_roommate?(plot_id, character_id) do
     query =
-      from n in HousingNeighbor,
+      from(n in HousingNeighbor,
         where: n.plot_id == ^plot_id and n.character_id == ^character_id and n.is_roommate == true
+      )
 
     Repo.exists?(query)
   end
@@ -160,13 +166,20 @@ defmodule BezgelorDb.Housing do
       {:ok, plot} ->
         cond do
           # Owner can always visit
-          plot.character_id == visitor_character_id -> true
+          plot.character_id == visitor_character_id ->
+            true
+
           # Public plots allow anyone
-          plot.permission_level == :public -> true
+          plot.permission_level == :public ->
+            true
+
           # Check neighbor/roommate permission
-          plot.permission_level in [:neighbors, :roommates] -> is_neighbor?(plot_id, visitor_character_id)
+          plot.permission_level in [:neighbors, :roommates] ->
+            is_neighbor?(plot_id, visitor_character_id)
+
           # Private - only owner
-          true -> false
+          true ->
+            false
         end
 
       :error ->
@@ -188,8 +201,9 @@ defmodule BezgelorDb.Housing do
 
   defp get_neighbor(plot_id, character_id) do
     query =
-      from n in HousingNeighbor,
+      from(n in HousingNeighbor,
         where: n.plot_id == ^plot_id and n.character_id == ^character_id
+      )
 
     case Repo.one(query) do
       nil -> :error
@@ -230,7 +244,9 @@ defmodule BezgelorDb.Housing do
   @spec remove_decor(integer()) :: :ok | {:error, :not_found}
   def remove_decor(decor_id) do
     case Repo.get(HousingDecor, decor_id) do
-      nil -> {:error, :not_found}
+      nil ->
+        {:error, :not_found}
+
       decor ->
         Repo.delete(decor)
         :ok
@@ -280,8 +296,9 @@ defmodule BezgelorDb.Housing do
   @spec get_fabkit_at_socket(integer(), integer()) :: {:ok, HousingFabkit.t()} | :error
   def get_fabkit_at_socket(plot_id, socket_index) do
     query =
-      from f in HousingFabkit,
+      from(f in HousingFabkit,
         where: f.plot_id == ^plot_id and f.socket_index == ^socket_index
+      )
 
     case Repo.one(query) do
       nil -> :error
@@ -292,7 +309,9 @@ defmodule BezgelorDb.Housing do
   @spec remove_fabkit(integer()) :: :ok | {:error, :not_found}
   def remove_fabkit(fabkit_id) do
     case Repo.get(HousingFabkit, fabkit_id) do
-      nil -> {:error, :not_found}
+      nil ->
+        {:error, :not_found}
+
       fabkit ->
         Repo.delete(fabkit)
         :ok
