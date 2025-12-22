@@ -259,6 +259,9 @@ defmodule BezgelorWorld.Economy.Telemetry do
   end
 
   defp do_flush(state) do
+    # Always update last_flush to show the flush cycle is running
+    state = %{state | metrics: Map.put(state.metrics, :last_flush, DateTime.utc_now())}
+
     if state.batch == [] do
       # Nothing to flush
       state
@@ -270,11 +273,7 @@ defmodule BezgelorWorld.Economy.Telemetry do
       case persist_events(events) do
         {:ok, count} ->
           Logger.debug("Economy.Telemetry flushed #{count} events to database")
-
-          %{state |
-            batch: [],
-            metrics: Map.put(state.metrics, :last_flush, DateTime.utc_now())
-          }
+          %{state | batch: []}
 
         {:error, reason} ->
           Logger.error("Economy.Telemetry flush failed: #{inspect(reason)}")
