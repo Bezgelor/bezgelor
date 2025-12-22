@@ -26,7 +26,8 @@ defmodule BezgelorCore.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:phoenix_pubsub, "~> 2.1"}
+      {:phoenix_pubsub, "~> 2.1"},
+      {:telemetry, "~> 1.2"}
     ]
   end
 end

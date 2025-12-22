@@ -13,6 +13,7 @@ defmodule BezgelorDb.Storefront do
   """
 
   import Ecto.Query
+  alias BezgelorCore.Economy.TelemetryEvents
   alias BezgelorDb.Repo
 
   alias BezgelorDb.Schema.{
@@ -475,6 +476,28 @@ defmodule BezgelorDb.Storefront do
         daily_deal_id: context.daily_deal && context.daily_deal.id
       })
     end)
+    |> Multi.run(:telemetry, fn _repo, %{currency: currency_result} ->
+      # Emit telemetry for currency deduction if we have character_id
+      if context.character_id && final_price > 0 && currency_result != :free do
+        balance_after =
+          case currency_type do
+            :premium -> currency_result.premium_currency
+            :bonus -> currency_result.bonus_currency
+            :gold -> 0
+          end
+
+        TelemetryEvents.emit_currency_transaction(
+          amount: -final_price,
+          balance_after: balance_after,
+          character_id: context.character_id,
+          currency_type: currency_type,
+          source_type: :storefront_purchase,
+          source_id: item.id
+        )
+      end
+
+      {:ok, :telemetry_emitted}
+    end)
     |> Repo.transaction()
   end
 
@@ -711,30 +734,58 @@ defmodule BezgelorDb.Storefront do
   defp grant_currency(account_id, currency_type, amount) do
     currency = Repo.get_by(AccountCurrency, account_id: account_id)
 
-    if currency do
-      changeset =
-        case currency_type do
-          :premium ->
-            AccountCurrency.changeset(currency, %{
-              premium_currency: currency.premium_currency + amount
-            })
+    result =
+      if currency do
+        changeset =
+          case currency_type do
+            :premium ->
+              AccountCurrency.changeset(currency, %{
+                premium_currency: currency.premium_currency + amount
+              })
 
-          :bonus ->
-            AccountCurrency.changeset(currency, %{
-              bonus_currency: currency.bonus_currency + amount
-            })
-        end
+            :bonus ->
+              AccountCurrency.changeset(currency, %{
+                bonus_currency: currency.bonus_currency + amount
+              })
+          end
 
-      Repo.update(changeset)
-    else
-      # Create currency record if it doesn't exist
-      %AccountCurrency{}
-      |> AccountCurrency.changeset(%{
-        account_id: account_id,
-        premium_currency: if(currency_type == :premium, do: amount, else: 0),
-        bonus_currency: if(currency_type == :bonus, do: amount, else: 0)
-      })
-      |> Repo.insert()
+        Repo.update(changeset)
+      else
+        # Create currency record if it doesn't exist
+        %AccountCurrency{}
+        |> AccountCurrency.changeset(%{
+          account_id: account_id,
+          premium_currency: if(currency_type == :premium, do: amount, else: 0),
+          bonus_currency: if(currency_type == :bonus, do: amount, else: 0)
+        })
+        |> Repo.insert()
+      end
+
+    # Emit telemetry on successful grant
+    # Note: We don't have character_id for account-level currencies, so we use account_id as a placeholder
+    case result do
+      {:ok, updated_currency} ->
+        balance_after =
+          case currency_type do
+            :premium -> updated_currency.premium_currency
+            :bonus -> updated_currency.bonus_currency
+          end
+
+        # Using account_id as character_id since this is account-level currency
+        # In a real system, you might want to track this differently or skip the event
+        TelemetryEvents.emit_currency_transaction(
+          amount: amount,
+          balance_after: balance_after,
+          character_id: account_id,
+          currency_type: currency_type,
+          source_type: :promo_code,
+          source_id: 0
+        )
+
+        result
+
+      error ->
+        error
     end
   end
 end

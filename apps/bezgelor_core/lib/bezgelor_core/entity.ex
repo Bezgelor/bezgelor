@@ -183,6 +183,7 @@ defmodule BezgelorCore.Entity do
       rotation: creature.rotation,
       world_id: creature.world_id,
       zone_id: creature.zone_id,
+      creature_id: creature.creature_id,
       source_guid: creature.guid,
       loot: loot,
       despawn_at: now + @corpse_despawn_time,

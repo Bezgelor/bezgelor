@@ -20,6 +20,7 @@ defmodule BezgelorProtocol.Handler.VendorHandler do
 
   @behaviour BezgelorProtocol.Handler
 
+  alias BezgelorCore.Economy.TelemetryEvents
   alias BezgelorData
   alias BezgelorData.Store
   alias BezgelorDb.Inventory
@@ -111,6 +112,15 @@ defmodule BezgelorProtocol.Handler.VendorHandler do
                 {:ok, _item} ->
                   Logger.info(
                     "Player #{character_id} purchased #{quantity}x item #{item_id} for #{total_cost} gold"
+                  )
+
+                  # Emit telemetry event for successful vendor transaction
+                  TelemetryEvents.emit_vendor_transaction(
+                    total_cost: total_cost,
+                    item_count: quantity,
+                    character_id: character_id,
+                    vendor_id: vendor_creature_id,
+                    transaction_type: :buy
                   )
 
                 {:error, reason} ->

@@ -27,6 +27,7 @@ defmodule BezgelorDb.Mail do
   import Ecto.Query
   alias BezgelorDb.Repo
   alias BezgelorDb.Schema.{Mail, MailAttachment}
+  alias BezgelorCore.Economy.TelemetryEvents
 
   @max_inbox_size 50
 
@@ -111,17 +112,35 @@ defmodule BezgelorDb.Mail do
     gold = Keyword.get(opts, :gold, 0)
     attachments = Keyword.get(opts, :attachments, [])
 
-    send_mail(
-      %{
-        recipient_id: recipient_id,
-        sender_name: Keyword.get(opts, :sender_name, "System"),
-        subject: subject,
-        body: body,
-        gold_attached: gold,
-        is_system_mail: true
-      },
-      attachments
-    )
+    result =
+      send_mail(
+        %{
+          recipient_id: recipient_id,
+          sender_name: Keyword.get(opts, :sender_name, "System"),
+          subject: subject,
+          body: body,
+          gold_attached: gold,
+          is_system_mail: true
+        },
+        attachments
+      )
+
+    case result do
+      {:ok, _mail} ->
+        # Emit telemetry for system mail
+        TelemetryEvents.emit_mail_sent(
+          currency_attached: gold,
+          item_count: length(attachments),
+          cod_amount: 0,
+          sender_id: 0,
+          recipient_id: recipient_id
+        )
+
+        result
+
+      error ->
+        error
+    end
   end
 
   # Reading and Taking
@@ -232,14 +251,24 @@ defmodule BezgelorDb.Mail do
 
           # Send COD payment to original sender if it was a player mail
           if mail.sender_id do
-            send_mail(%{
-              recipient_id: mail.sender_id,
-              sender_name: "COD Payment",
-              subject: "COD Payment Received",
-              body: "Your COD payment of #{cod} gold has been received.",
-              gold_attached: cod,
-              is_system_mail: true
-            })
+            {:ok, _cod_mail} =
+              send_mail(%{
+                recipient_id: mail.sender_id,
+                sender_name: "COD Payment",
+                subject: "COD Payment Received",
+                body: "Your COD payment of #{cod} gold has been received.",
+                gold_attached: cod,
+                is_system_mail: true
+              })
+
+            # Emit telemetry for COD payment mail
+            TelemetryEvents.emit_mail_sent(
+              currency_attached: cod,
+              item_count: 0,
+              cod_amount: 0,
+              sender_id: mail.recipient_id,
+              recipient_id: mail.sender_id
+            )
           end
 
           {attachments, cod}
@@ -315,6 +344,15 @@ defmodule BezgelorDb.Mail do
                 %{item_id: a.item_id, stack_count: a.stack_count, item_data: a.item_data}
               end)
             )
+
+          # Emit telemetry for returned mail
+          TelemetryEvents.emit_mail_sent(
+            currency_attached: mail.gold_attached || 0,
+            item_count: length(attachments),
+            cod_amount: 0,
+            sender_id: mail.recipient_id,
+            recipient_id: mail.sender_id
+          )
 
           # Mark original as returned and clear contents
           Repo.delete_all(from(a in MailAttachment, where: a.mail_id == ^mail.id))

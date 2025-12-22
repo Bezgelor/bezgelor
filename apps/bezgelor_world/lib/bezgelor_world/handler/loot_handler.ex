@@ -11,6 +11,7 @@ defmodule BezgelorWorld.Handler.LootHandler do
 
   require Logger
 
+  alias BezgelorCore.Economy.TelemetryEvents
   alias BezgelorWorld.{CombatBroadcaster, CorpseManager}
   alias BezgelorWorld.Loot.LootManager
   alias BezgelorProtocol.Packets.World.ServerLootSettings
@@ -30,6 +31,20 @@ defmodule BezgelorWorld.Handler.LootHandler do
     corpse_guid = packet.corpse_guid
 
     if player_guid && character_id do
+      # Get corpse info before taking loot (for telemetry)
+      corpse_info =
+        case CorpseManager.get_corpse(corpse_guid) do
+          {:ok, corpse} ->
+            %{
+              creature_id: corpse.creature_id || 0,
+              world_id: corpse.world_id || 0,
+              zone_id: corpse.zone_id || 0
+            }
+
+          {:error, _} ->
+            nil
+        end
+
       case CorpseManager.take_loot(corpse_guid, player_guid) do
         {:ok, loot_items} when loot_items != [] ->
           # Separate gold and items
@@ -40,7 +55,13 @@ defmodule BezgelorWorld.Handler.LootHandler do
 
           # Add gold to player
           if gold > 0 do
-            add_gold_to_player(character_id, gold)
+            creature_id = if corpse_info, do: corpse_info.creature_id, else: 0
+            add_gold_to_player(character_id, gold, creature_id)
+          end
+
+          # Emit loot drop telemetry
+          if corpse_info do
+            emit_loot_telemetry(character_id, corpse_info, gold, items)
           end
 
           # Send loot notification
@@ -189,15 +210,53 @@ defmodule BezgelorWorld.Handler.LootHandler do
   end
 
   # Add gold to player's currency
-  defp add_gold_to_player(character_id, gold) do
-    alias BezgelorDb.Characters
+  defp add_gold_to_player(character_id, gold, creature_id) do
+    alias BezgelorDb.{Characters, Inventory}
 
     case Characters.add_currency(character_id, :gold, gold) do
-      {:ok, _} ->
+      {:ok, currency} ->
         Logger.debug("Added #{gold} gold to character #{character_id}")
+
+        # Emit currency transaction telemetry
+        balance_after = Map.get(currency, :gold, 0)
+
+        TelemetryEvents.emit_currency_transaction(
+          amount: gold,
+          balance_after: balance_after,
+          character_id: character_id,
+          currency_type: :gold,
+          source_type: :loot,
+          source_id: creature_id
+        )
 
       {:error, reason} ->
         Logger.warning("Failed to add gold to character #{character_id}: #{inspect(reason)}")
     end
+  end
+
+  # Emit loot drop telemetry for each item and total gold
+  defp emit_loot_telemetry(character_id, corpse_info, gold, items) do
+    # For now, we'll use a simple heuristic for item value
+    # In a production system, this would query item templates for actual values
+    item_value = calculate_total_item_value(items)
+
+    TelemetryEvents.emit_loot_drop(
+      item_value: item_value,
+      currency_amount: gold,
+      character_id: character_id,
+      creature_id: corpse_info.creature_id,
+      world_id: corpse_info.world_id,
+      zone_id: corpse_info.zone_id
+    )
+  end
+
+  # Calculate estimated value of items
+  # This is a placeholder - in production, would query item data for sell prices
+  defp calculate_total_item_value(items) do
+    # Estimate: assume average item value of 10 gold per item
+    # Real implementation would look up item_id in item templates
+    Enum.reduce(items, 0, fn {_item_id, quantity}, acc ->
+      acc + quantity * 10
+    end)
   end
 end

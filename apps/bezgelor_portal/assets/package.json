@@ -7,6 +7,10 @@
     "build": "esbuild js/app.js --bundle --target=es2022 --outdir=../priv/static/assets/js"
   },
   "dependencies": {
+    "chart.js": "^4.5.1",
     "three": "^0.170.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.27.2"
   }
 }

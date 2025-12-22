@@ -24,6 +24,8 @@ defmodule BezgelorProtocol.Handler.ItemAuctionsHandler do
 
   require Logger
 
+  alias BezgelorCore.Economy.TelemetryEvents
+
   @impl true
   def handle(_payload, state) do
     # Verify session has an authenticated character
@@ -50,6 +52,15 @@ defmodule BezgelorProtocol.Handler.ItemAuctionsHandler do
         # The character_id is used to ensure we only return auctions owned
         # by this character, preventing cross-account data leakage.
         # TODO: Send ServerItemAuctionsResponse with auction list
+
+        # TODO: When implementing auction listing, emit telemetry:
+        # TelemetryEvents.emit_auction_event(
+        #   price: listing_price,
+        #   fee: auction_house_fee,
+        #   character_id: character_id,
+        #   item_id: item_id,
+        #   event_type: :list
+        # )
 
         # For now, just acknowledge - auction house not implemented
         {:ok, state}
