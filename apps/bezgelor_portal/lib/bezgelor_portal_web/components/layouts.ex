@@ -406,7 +406,11 @@ defmodule BezgelorPortalWeb.Layouts do
           <!-- Logo and title -->
           <div class="text-center mb-8">
             <a href="/" class="inline-block">
-              <h1 class="text-4xl font-bold text-glow-cyan text-glow-pulse">BEZGELOR</h1>
+              <img
+                src={~p"/images/bezgelor_logotype_b_squash.png"}
+                alt="Bezgelor"
+                class="h-16 w-auto mx-auto drop-shadow-[0_0_15px_rgba(0,255,255,0.5)]"
+              />
             </a>
             <p class="text-white/60 mt-2">Your gateway to Nexus awaits</p>
           </div>
