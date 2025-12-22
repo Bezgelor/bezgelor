@@ -288,11 +288,15 @@ defmodule BezgelorPortalWeb.Admin.MetricsDashboardLive do
   attr :chart_type, :string, default: "line"
 
   defp chart_card(assigns) do
+    has_data = length(assigns.chart_data[:labels] || []) > 0
+    assigns = assign(assigns, :has_data, has_data)
+
     ~H"""
     <div class="card bg-base-100 shadow">
       <div class="card-body">
         <h3 class="card-title text-base">{@title}</h3>
-        <div class="h-64">
+        <div class="h-64 relative">
+          <%!-- Always render canvas so hook can attach --%>
           <canvas
             id={@id}
             phx-hook="MetricsChart"
@@ -300,6 +304,15 @@ defmodule BezgelorPortalWeb.Admin.MetricsDashboardLive do
             data-chart-type={@chart_type}
             data-chart-data={Jason.encode!(@chart_data)}
           />
+          <%!-- Overlay message when no data --%>
+          <%= unless @has_data do %>
+            <div class="absolute inset-0 flex items-center justify-center bg-base-100/80">
+              <div class="text-center text-base-content/50">
+                <.icon name="hero-chart-bar" class="size-12 mx-auto mb-2 opacity-50" />
+                <p>No data available for this time range</p>
+              </div>
+            </div>
+          <% end %>
         </div>
       </div>
     </div>
