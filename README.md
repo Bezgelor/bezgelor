@@ -36,7 +36,7 @@ This project is only possible thanks to the groundbreaking work and support of t
 
 ## Features
 
-> **Note:** While work has been done on the following components, much of it isn't fully functional due to incomplete implementation or bugs. This project is under active development.
+> **Note:** While work has been done on the following components, much of it isn't functional due to incomplete implementation or bugs. This project is under active development.
 
 - **Authentication** - SRP6 zero-knowledge authentication with packet encryption
 - **Character Management** - Creation, customization, selection, and deletion
