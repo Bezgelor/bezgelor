@@ -89,10 +89,10 @@ defmodule BezgelorPortalWeb.LoginLive do
              to: ~p"/auth/totp-verify?pending=#{generate_totp_pending_token(account)}"
            )}
         else
-          # No TOTP - proceed directly to login
+          # No TOTP - proceed directly to login (use redirect for non-LiveView route)
           {:noreply,
            socket
-           |> push_navigate(
+           |> redirect(
              to: ~p"/auth/callback?email=#{email}&token=#{generate_login_token(account)}"
            )}
         end

@@ -157,7 +157,7 @@ defmodule BezgelorPortal.RollupScheduler do
     perform_hour_rollup()
     perform_day_rollup()
 
-    Logger.info("[RollupScheduler] Startup rollup complete")
+    Logger.debug("[RollupScheduler] Startup rollup complete")
   end
 
   defp perform_minute_rollup do
@@ -183,7 +183,7 @@ defmodule BezgelorPortal.RollupScheduler do
       successes = Enum.count(results, &match?({:ok, _}, &1))
       failures = Enum.count(results, &match?({:error, _}, &1))
 
-      Logger.info(
+      Logger.debug(
         "[RollupScheduler] Minute rollup complete: #{successes} success, #{failures} failures"
       )
 
@@ -222,7 +222,7 @@ defmodule BezgelorPortal.RollupScheduler do
       purge_cutoff = DateTime.add(DateTime.utc_now(), -@minute_retention_secs, :second)
       {purged, _} = Metrics.purge_buckets_before(:minute, purge_cutoff)
 
-      Logger.info(
+      Logger.debug(
         "[RollupScheduler] Hour rollup complete: #{successes} success, #{failures} failures, #{purged} minute buckets purged"
       )
 
@@ -267,7 +267,7 @@ defmodule BezgelorPortal.RollupScheduler do
       {purged_hours, _} = Metrics.purge_buckets_before(:hour, hour_cutoff)
       {purged_days, _} = Metrics.purge_buckets_before(:day, day_cutoff)
 
-      Logger.info(
+      Logger.debug(
         "[RollupScheduler] Day rollup complete: #{successes} success, #{failures} failures, " <>
           "purged #{purged_events} events, #{purged_hours} hour buckets, #{purged_days} day buckets"
       )
