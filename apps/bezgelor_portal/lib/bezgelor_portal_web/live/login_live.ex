@@ -10,15 +10,26 @@ defmodule BezgelorPortalWeb.LoginLive do
   """
   use BezgelorPortalWeb, :live_view
 
+  alias BezgelorDb.Accounts
   alias BezgelorPortal.{Auth, TOTP}
 
   def mount(_params, session, socket) do
-    # Check if already logged in (session is a map in LiveView, not a Plug.Conn)
-    if session["current_account_id"] do
-      {:ok, push_navigate(socket, to: ~p"/dashboard")}
-    else
-      form = to_form(%{"email" => "", "password" => ""}, as: :login)
-      {:ok, assign(socket, form: form, error: nil)}
+    # Check if already logged in AND account still exists
+    # Prevents redirect loop when session has stale account_id
+    case session["current_account_id"] do
+      nil ->
+        form = to_form(%{"email" => "", "password" => ""}, as: :login)
+        {:ok, assign(socket, form: form, error: nil)}
+
+      account_id ->
+        if Accounts.get_by_id(account_id) do
+          {:ok, push_navigate(socket, to: ~p"/dashboard")}
+        else
+          # Account no longer exists - show login form
+          # Session will be overwritten on next successful login
+          form = to_form(%{"email" => "", "password" => ""}, as: :login)
+          {:ok, assign(socket, form: form, error: nil)}
+        end
     end
   end
 
