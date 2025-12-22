@@ -409,10 +409,10 @@ defmodule BezgelorPortalWeb.Layouts do
               <img
                 src={~p"/images/bezgelor_logotype_b_squash.png"}
                 alt="Bezgelor"
-                class="h-44 w-auto mx-auto drop-shadow-[0_0_25px_rgba(0,255,255,0.5)]"
+                class="h-56 w-auto mx-auto drop-shadow-[0_0_25px_rgba(0,255,255,0.5)]"
               />
             </a>
-            <p class="text-white/60 mt-1">Your gateway to Nexus awaits</p>
+            <p class="text-white/60 -mt-2">Your gateway to Nexus awaits</p>
           </div>
           
     <!-- Auth card - no animate-on-scroll to prevent LiveView patch issues -->
