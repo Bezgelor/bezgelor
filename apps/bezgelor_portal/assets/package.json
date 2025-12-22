@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "chart.js": "^4.5.1",
+    "chartjs-adapter-date-fns": "^3.0.0",
     "three": "^0.170.0"
   },
   "devDependencies": {
