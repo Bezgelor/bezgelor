@@ -19,8 +19,6 @@ defmodule BezgelorProtocol.Handler.CommodityOrdersHandler do
 
   require Logger
 
-  alias BezgelorCore.Economy.TelemetryEvents
-
   @impl true
   def handle(_payload, state) do
     Logger.debug("[CommodityOrders] Player requested owned commodity orders")

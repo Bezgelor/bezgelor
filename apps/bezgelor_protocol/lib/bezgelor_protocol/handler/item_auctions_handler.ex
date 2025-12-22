@@ -24,8 +24,6 @@ defmodule BezgelorProtocol.Handler.ItemAuctionsHandler do
 
   require Logger
 
-  alias BezgelorCore.Economy.TelemetryEvents
-
   @impl true
   def handle(_payload, state) do
     # Verify session has an authenticated character

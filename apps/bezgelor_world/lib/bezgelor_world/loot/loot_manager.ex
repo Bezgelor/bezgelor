@@ -14,7 +14,6 @@ defmodule BezgelorWorld.Loot.LootManager do
 
   require Logger
 
-  alias BezgelorCore.Economy.TelemetryEvents
   alias BezgelorWorld.Loot.LootRules
 
   # 30 seconds to roll
