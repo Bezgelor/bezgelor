@@ -403,16 +403,9 @@ defmodule BezgelorPortalWeb.Layouts do
     <!-- Auth content -->
       <main class="flex-1 flex flex-col items-center justify-center px-4 py-8 relative z-10">
         <div class="w-full max-w-md">
-          <!-- Logo and title -->
-          <div class="text-center mb-4">
-            <a href="/" class="inline-block">
-              <img
-                src={~p"/images/bezgelor_logotype_b_squash.png"}
-                alt="Bezgelor"
-                class="h-56 w-auto mx-auto drop-shadow-[0_0_25px_rgba(0,255,255,0.5)]"
-              />
-            </a>
-            <p class="text-white/60 -mt-2">Your gateway to Nexus awaits</p>
+          <!-- Title -->
+          <div class="text-center mb-6">
+            <p class="text-2xl text-white/70">Your gateway to Nexus awaits</p>
           </div>
           
     <!-- Auth card - no animate-on-scroll to prevent LiveView patch issues -->
