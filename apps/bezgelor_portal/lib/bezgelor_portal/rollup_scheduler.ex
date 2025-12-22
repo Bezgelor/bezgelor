@@ -89,8 +89,10 @@ defmodule BezgelorPortal.RollupScheduler do
 
     # Run startup rollup asynchronously unless skipped (for tests)
     unless skip_startup do
-      # TODO: Use BezgelorPortal.TaskSupervisor when available
-      Task.start(fn -> perform_startup_rollup() end)
+      Task.Supervisor.start_child(
+        BezgelorPortal.TaskSupervisor,
+        fn -> perform_startup_rollup() end
+      )
     end
 
     {:ok, %{}}

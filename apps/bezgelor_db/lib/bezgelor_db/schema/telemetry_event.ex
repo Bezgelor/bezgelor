@@ -57,7 +57,8 @@ defmodule BezgelorDb.Schema.TelemetryEvent do
     changeset(%__MODULE__{}, %{
       event_name: event_name,
       measurements: measurements,
-      metadata: metadata
+      metadata: metadata,
+      occurred_at: DateTime.utc_now()
     })
   end
 end

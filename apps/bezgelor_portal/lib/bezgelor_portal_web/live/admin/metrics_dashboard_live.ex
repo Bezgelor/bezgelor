@@ -19,6 +19,7 @@ defmodule BezgelorPortalWeb.Admin.MetricsDashboardLive do
   @refresh_interval 10_000
   @time_ranges [{"1h", 1}, {"6h", 6}, {"24h", 24}, {"7d", 24 * 7}, {"30d", 24 * 30}]
   @tab_mapping %{"server" => :server, "auth" => :auth, "gameplay" => :gameplay, "combat" => :combat}
+  @tab_order [{"server", :server}, {"auth", :auth}, {"gameplay", :gameplay}, {"combat", :combat}]
   @max_custom_range_days 90
 
   @impl true
@@ -38,7 +39,7 @@ defmodule BezgelorPortalWeb.Admin.MetricsDashboardLive do
        custom_to: nil,
        last_refresh: DateTime.utc_now(),
        time_ranges: @time_ranges,
-       tab_mapping: @tab_mapping
+       tab_order: @tab_order
      )
      |> load_tab_data(), layout: {BezgelorPortalWeb.Layouts, :admin}}
   end
@@ -161,7 +162,7 @@ defmodule BezgelorPortalWeb.Admin.MetricsDashboardLive do
       <!-- Tabs -->
       <div role="tablist" class={["tabs tabs-boxed bg-base-100 p-1 w-fit"]}>
         <button
-          :for={{tab_key, tab_atom} <- @tab_mapping}
+          :for={{tab_key, tab_atom} <- @tab_order}
           type="button"
           role="tab"
           class={["tab", if(@active_tab == tab_atom, do: "tab-active", else: "")]}
