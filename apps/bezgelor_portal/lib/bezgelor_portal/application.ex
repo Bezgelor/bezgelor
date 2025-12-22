@@ -17,6 +17,11 @@ defmodule BezgelorPortal.Application do
       BezgelorPortal.Vault,
       # Log buffer for admin log viewer
       BezgelorPortal.LogBuffer,
+      # Task supervisor for async tasks (must start before RollupScheduler)
+      {Task.Supervisor, name: BezgelorPortal.TaskSupervisor},
+      # Telemetry metrics collection and rollup
+      BezgelorPortal.TelemetryCollector,
+      BezgelorPortal.RollupScheduler,
       # Start to serve requests, typically the last entry
       BezgelorPortalWeb.Endpoint
     ]
