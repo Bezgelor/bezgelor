@@ -136,28 +136,39 @@ defmodule BezgelorPortalWeb.Admin.EconomyLive do
 
     <div class="card bg-base-100 shadow mt-6">
       <div class="card-body">
-        <h2 class="card-title">Economy Tracking</h2>
-        <div class="alert alert-info">
-          <.icon name="hero-information-circle" class="size-5" />
+        <h2 class="card-title">Economy Overview</h2>
+        <div class="alert alert-success">
+          <.icon name="hero-check-circle" class="size-5" />
           <div>
-            <h3 class="font-bold">Coming Soon</h3>
+            <h3 class="font-bold">Economy Telemetry Active</h3>
             <p class="text-sm">
-              Economy tracking will provide real-time insights into gold flow,
-              including charts for trends over time, top gold holders, and
-              detection of unusual economic activity.
+              Real-time economy tracking is operational. View the <strong>Telemetry</strong>
+              tab for live metrics including currency transactions, vendor activity, loot drops, and more.
+              Use the <strong>Gift Tools</strong> tab to send items or currency to characters.
             </p>
           </div>
         </div>
 
         <div class="mt-4">
+          <h3 class="font-semibold mb-2">Working Features:</h3>
+          <ul class="list-disc list-inside text-sm text-success space-y-1">
+            <li>✓ Real-time telemetry metrics (Telemetry tab)</li>
+            <li>✓ Currency transaction tracking</li>
+            <li>✓ Vendor transaction tracking</li>
+            <li>✓ Admin gift tools for items and currency (Gift Tools tab)</li>
+            <li>✓ Audit logging for all admin actions</li>
+          </ul>
+        </div>
+
+        <div class="mt-4">
           <h3 class="font-semibold mb-2">Planned Features:</h3>
           <ul class="list-disc list-inside text-sm text-base-content/70 space-y-1">
-            <li>Real-time gold circulation tracking</li>
+            <li>Total gold circulation tracking</li>
             <li>Daily/weekly/monthly trend charts</li>
-            <li>Gold sources breakdown (quests, loot, mail, trades)</li>
-            <li>Gold sinks breakdown (repairs, vendors, AH fees)</li>
+            <li>Transaction search and filtering (Transactions tab)</li>
+            <li>Auction house integration</li>
             <li>Top gold holders leaderboard</li>
-            <li>Unusual activity detection</li>
+            <li>Unusual activity detection alerts</li>
           </ul>
         </div>
       </div>
