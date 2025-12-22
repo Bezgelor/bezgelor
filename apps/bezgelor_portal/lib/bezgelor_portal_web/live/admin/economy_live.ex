@@ -47,6 +47,7 @@ defmodule BezgelorPortalWeb.Admin.EconomyLive do
        },
        gift_result: nil,
        last_refresh: DateTime.utc_now(),
+       refresh_interval: @refresh_interval,
        telemetry_metrics: load_telemetry_metrics()
      ), layout: {BezgelorPortalWeb.Layouts, :admin}}
   end
