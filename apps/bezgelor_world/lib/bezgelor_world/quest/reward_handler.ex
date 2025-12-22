@@ -23,6 +23,7 @@ defmodule BezgelorWorld.Quest.RewardHandler do
       RewardHandler.grant_quest_rewards(connection_pid, character_id, quest_id)
   """
 
+  alias BezgelorCore.Economy.TelemetryEvents
   alias BezgelorData.Store
   alias BezgelorDb.{Characters, Inventory, Repo}
   alias BezgelorDb.Schema.CharacterCurrency
@@ -63,7 +64,7 @@ defmodule BezgelorWorld.Quest.RewardHandler do
       table_rewards = Store.get_quest_rewards(quest_id)
 
       rewards_summary =
-        grant_table_rewards(connection_pid, character_id, table_rewards, rewards_summary)
+        grant_table_rewards(connection_pid, character_id, quest_id, table_rewards, rewards_summary)
 
       Logger.info(
         "Quest #{quest_id} rewards granted to #{character_id}: " <>
@@ -77,10 +78,12 @@ defmodule BezgelorWorld.Quest.RewardHandler do
 
   # Grant rewards from quest definition fields
   defp grant_quest_definition_rewards(connection_pid, character_id, quest, summary) do
+    quest_id = Map.get(quest, :id, 0)
+
     summary =
       summary
       |> grant_xp_reward(connection_pid, character_id, quest)
-      |> grant_cash_reward(connection_pid, character_id, quest)
+      |> grant_cash_reward(connection_pid, character_id, quest, quest_id)
       |> grant_pushed_items(connection_pid, character_id, quest)
 
     summary
@@ -133,11 +136,11 @@ defmodule BezgelorWorld.Quest.RewardHandler do
   end
 
   # Grant gold/cash reward
-  defp grant_cash_reward(summary, _connection_pid, character_id, quest) do
+  defp grant_cash_reward(summary, _connection_pid, character_id, quest, quest_id) do
     gold = Map.get(quest, :reward_cashOverride, 0)
 
     if gold > 0 do
-      case add_currency(character_id, :gold, gold) do
+      case add_currency(character_id, :gold, gold, quest_id) do
         {:ok, _} ->
           Logger.debug("Granted #{gold} gold to character #{character_id}")
           %{summary | gold: summary.gold + gold}
@@ -184,14 +187,14 @@ defmodule BezgelorWorld.Quest.RewardHandler do
   end
 
   # Grant rewards from quest_rewards table
-  defp grant_table_rewards(connection_pid, character_id, rewards, summary) do
+  defp grant_table_rewards(connection_pid, character_id, quest_id, rewards, summary) do
     Enum.reduce(rewards, summary, fn reward, acc ->
-      grant_single_reward(connection_pid, character_id, reward, acc)
+      grant_single_reward(connection_pid, character_id, quest_id, reward, acc)
     end)
   end
 
   # Grant a single reward entry
-  defp grant_single_reward(connection_pid, character_id, reward, summary) do
+  defp grant_single_reward(connection_pid, character_id, quest_id, reward, summary) do
     type = Map.get(reward, :quest2RewardTypeId, 0)
     object_id = Map.get(reward, :objectId, 0)
     amount = Map.get(reward, :objectAmount, 1)
@@ -208,7 +211,7 @@ defmodule BezgelorWorld.Quest.RewardHandler do
 
       @reward_type_currency ->
         # object_id indicates currency type (1 = gold, others = various currencies)
-        case grant_currency(character_id, object_id, amount) do
+        case grant_currency(character_id, object_id, amount, quest_id) do
           :ok ->
             %{summary | gold: summary.gold + amount}
 
@@ -258,7 +261,7 @@ defmodule BezgelorWorld.Quest.RewardHandler do
   end
 
   # Grant currency to character
-  defp grant_currency(character_id, currency_type, amount) do
+  defp grant_currency(character_id, currency_type, amount, quest_id) do
     currency =
       case currency_type do
         1 -> :gold
@@ -270,7 +273,7 @@ defmodule BezgelorWorld.Quest.RewardHandler do
         _ -> :gold
       end
 
-    case add_currency(character_id, currency, amount) do
+    case add_currency(character_id, currency, amount, quest_id) do
       {:ok, _} ->
         Logger.debug("Granted #{amount} #{currency} to character #{character_id}")
         :ok
@@ -282,13 +285,31 @@ defmodule BezgelorWorld.Quest.RewardHandler do
   end
 
   # Add currency to a character's currency record
-  defp add_currency(character_id, currency_type, amount)
+  defp add_currency(character_id, currency_type, amount, quest_id)
        when is_atom(currency_type) and amount > 0 do
     case get_or_create_currency_record(character_id) do
       {:ok, record} ->
         case CharacterCurrency.modify_changeset(record, currency_type, amount) do
           {:ok, changeset} ->
-            Repo.update(changeset)
+            case Repo.update(changeset) do
+              {:ok, updated_currency} = result ->
+                # Emit telemetry after successful currency modification
+                balance_after = Map.get(updated_currency, currency_type, 0)
+
+                TelemetryEvents.emit_currency_transaction(
+                  amount: amount,
+                  balance_after: balance_after,
+                  character_id: character_id,
+                  currency_type: currency_type,
+                  source_type: :quest_reward,
+                  source_id: quest_id
+                )
+
+                result
+
+              error ->
+                error
+            end
 
           {:error, reason} ->
             {:error, reason}
@@ -299,7 +320,7 @@ defmodule BezgelorWorld.Quest.RewardHandler do
     end
   end
 
-  defp add_currency(_character_id, _currency_type, _amount), do: {:ok, nil}
+  defp add_currency(_character_id, _currency_type, _amount, _quest_id), do: {:ok, nil}
 
   # Get or create a currency record for a character
   defp get_or_create_currency_record(character_id) do

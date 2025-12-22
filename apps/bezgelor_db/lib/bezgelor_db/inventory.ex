@@ -761,39 +761,89 @@ defmodule BezgelorDb.Inventory do
 
   @doc """
   Repair item to full durability.
+
+  ## Parameters
+  - `item_id`: The ID of the item to repair
+  - `opts`: Optional keyword list with:
+    - `:character_id` - Required for telemetry
+    - `:vendor_id` - Required for telemetry
+    - `:repair_cost` - Cost of the repair (default: 0)
   """
-  @spec repair_item(integer()) :: {:ok, InventoryItem.t()} | {:error, term()}
-  def repair_item(item_id) do
+  @spec repair_item(integer(), keyword()) :: {:ok, InventoryItem.t()} | {:error, term()}
+  def repair_item(item_id, opts \\ []) do
     case Repo.get(InventoryItem, item_id) do
       nil ->
         {:error, :not_found}
 
       item ->
-        item
-        |> InventoryItem.changeset(%{durability: item.max_durability})
-        |> Repo.update()
+        result =
+          item
+          |> InventoryItem.changeset(%{durability: item.max_durability})
+          |> Repo.update()
+
+        # Emit telemetry if character_id and vendor_id are provided
+        case result do
+          {:ok, _updated_item} ->
+            if Keyword.has_key?(opts, :character_id) and Keyword.has_key?(opts, :vendor_id) do
+              repair_cost = Keyword.get(opts, :repair_cost, 0)
+
+              BezgelorCore.Economy.TelemetryEvents.emit_repair_complete(
+                repair_cost: repair_cost,
+                items_repaired: 1,
+                character_id: Keyword.fetch!(opts, :character_id),
+                vendor_id: Keyword.fetch!(opts, :vendor_id)
+              )
+            end
+
+            result
+
+          error ->
+            error
+        end
     end
   end
 
   @doc """
   Repair all equipped items for a character.
 
-  Returns the total repair cost (0 for now, future: calculate based on item level).
+  ## Parameters
+  - `character_id`: The ID of the character
+  - `opts`: Optional keyword list with:
+    - `:vendor_id` - Required for telemetry
+
+  Returns `{:ok, {items_repaired, repair_cost}}`.
   """
-  @spec repair_all_equipped(integer()) :: {:ok, integer()}
-  def repair_all_equipped(character_id) do
+  @spec repair_all_equipped(integer(), keyword()) :: {:ok, {non_neg_integer(), integer()}}
+  def repair_all_equipped(character_id, opts \\ []) do
     equipped_items = get_items(character_id, :equipped)
 
-    Enum.each(equipped_items, fn item ->
-      if item.durability < item.max_durability do
-        {:ok, _} =
-          item
-          |> InventoryItem.changeset(%{durability: item.max_durability})
-          |> Repo.update()
-      end
-    end)
+    items_repaired =
+      Enum.reduce(equipped_items, 0, fn item, count ->
+        if item.durability < item.max_durability do
+          {:ok, _} =
+            item
+            |> InventoryItem.changeset(%{durability: item.max_durability})
+            |> Repo.update()
 
-    # TODO: Calculate repair cost
-    {:ok, 0}
+          count + 1
+        else
+          count
+        end
+      end)
+
+    # TODO: Calculate repair cost based on item level
+    repair_cost = 0
+
+    # Emit telemetry if vendor_id is provided and items were repaired
+    if items_repaired > 0 and Keyword.has_key?(opts, :vendor_id) do
+      BezgelorCore.Economy.TelemetryEvents.emit_repair_complete(
+        repair_cost: repair_cost,
+        items_repaired: items_repaired,
+        character_id: character_id,
+        vendor_id: Keyword.fetch!(opts, :vendor_id)
+      )
+    end
+
+    {:ok, {items_repaired, repair_cost}}
   end
 end

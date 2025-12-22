@@ -25,6 +25,7 @@ import {LiveSocket} from "phoenix_live_view"
 import {hooks as colocatedHooks} from "phoenix-colocated/bezgelor_portal"
 import topbar from "../vendor/topbar"
 import {CharacterViewer} from "./character_viewer"
+import {ChartJS} from "./hooks/chart_hook"
 
 // ============================================
 // LIVEVEW HOOKS
@@ -243,6 +244,7 @@ const CharacterViewerHook = {
 const Hooks = {
   ...colocatedHooks,
   CharacterViewer: CharacterViewerHook,
+  ChartJS: ChartJS,
 }
 
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")

@@ -10,6 +10,7 @@ defmodule BezgelorDb.PvP do
 
   import Ecto.Query
 
+  alias BezgelorCore.Economy.TelemetryEvents
   alias BezgelorDb.Repo
   alias BezgelorDb.Schema.{PvpStats, PvpRating, PvpSeason}
 
@@ -108,9 +109,31 @@ defmodule BezgelorDb.PvP do
           {:ok, PvpStats.t()} | {:error, term()}
   def add_currency(character_id, currency_type, amount) do
     with {:ok, stats} <- get_or_create_stats(character_id) do
-      stats
-      |> PvpStats.add_currency(currency_type, amount)
-      |> Repo.update()
+      changeset = PvpStats.add_currency(stats, currency_type, amount)
+
+      case Repo.update(changeset) do
+        {:ok, updated_stats} = result ->
+          # Emit telemetry after successful currency addition
+          balance_after =
+            case currency_type do
+              :conquest -> updated_stats.conquest_total
+              :honor -> updated_stats.honor_total
+            end
+
+          TelemetryEvents.emit_currency_transaction(
+            amount: amount,
+            balance_after: balance_after,
+            character_id: character_id,
+            currency_type: currency_type,
+            source_type: :pvp_reward,
+            source_id: 0
+          )
+
+          result
+
+        error ->
+          error
+      end
     end
   end
 

@@ -51,6 +51,15 @@ defmodule BezgelorProtocol.Handler.ItemAuctionsHandler do
         # by this character, preventing cross-account data leakage.
         # TODO: Send ServerItemAuctionsResponse with auction list
 
+        # TODO: When implementing auction listing, emit telemetry:
+        # TelemetryEvents.emit_auction_event(
+        #   price: listing_price,
+        #   fee: auction_house_fee,
+        #   character_id: character_id,
+        #   item_id: item_id,
+        #   event_type: :list
+        # )
+
         # For now, just acknowledge - auction house not implemented
         {:ok, state}
     end

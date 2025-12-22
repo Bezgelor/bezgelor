@@ -18,6 +18,7 @@ defmodule BezgelorWorld.Handler.CraftingHandler do
 
   require Logger
 
+  alias BezgelorCore.Economy.TelemetryEvents
   alias BezgelorDb.Tradeskills
   alias BezgelorProtocol.PacketReader
   alias BezgelorProtocol.PacketWriter
@@ -156,6 +157,20 @@ defmodule BezgelorWorld.Handler.CraftingHandler do
                 build_failure_result()
             end
           end
+
+        # Calculate materials cost and result value for telemetry
+        materials_cost = calculate_materials_cost(session)
+        result_value = if result.result in [:success, :critical], do: result.item_id, else: 0
+        success = result.result in [:success, :critical]
+
+        # Emit telemetry event
+        TelemetryEvents.emit_crafting_complete(
+          materials_cost: materials_cost,
+          result_value: result_value,
+          character_id: character_id,
+          schematic_id: session.schematic_id,
+          success: success
+        )
 
         # Clear crafting session
         new_state = put_in(state, [:session_data, :crafting_session], nil)
@@ -323,5 +338,18 @@ defmodule BezgelorWorld.Handler.CraftingHandler do
     {:ok, writer} = packet.__struct__.write(packet, writer)
     packet_data = PacketWriter.to_binary(writer)
     {:reply, opcode, packet_data, state}
+  end
+
+  defp calculate_materials_cost(session) do
+    # Get the list of materials used from the session
+    material_list = CraftingSession.get_material_cost(session)
+
+    # Calculate total estimated cost
+    # TODO: Look up actual item values from static data
+    # For now, use placeholder calculation based on quantity
+    Enum.reduce(material_list, 0, fn {_item_id, quantity}, acc ->
+      # Placeholder: assume each material unit costs 10
+      acc + quantity * 10
+    end)
   end
 end

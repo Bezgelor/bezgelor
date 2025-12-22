@@ -91,7 +91,10 @@ defmodule BezgelorWorld.Application do
       # Warplot manager
       BezgelorWorld.PvP.WarplotManager,
       # PvP season scheduler (rating decay & season transitions)
-      BezgelorWorld.PvP.SeasonScheduler
+      BezgelorWorld.PvP.SeasonScheduler,
+      # Economy telemetry and alerts
+      BezgelorWorld.Economy.Telemetry,
+      BezgelorWorld.Economy.Alerts
     ]
 
     server_children =

@@ -388,6 +388,16 @@ defmodule BezgelorWorld.Loot.LootManager do
       "Loot awarded: item #{award.item[:id] || "unknown"} to player #{award.winner_id} (#{award.award_reason})"
     )
 
+    # TODO: When loot is actually delivered to players, emit telemetry:
+    # TelemetryEvents.emit_loot_drop(
+    #   item_value: calculate_item_value(award.item),
+    #   currency_amount: 0,  # or gold value if applicable
+    #   character_id: award.winner_id,
+    #   creature_id: state.source_creature_id,
+    #   world_id: state.world_id,
+    #   zone_id: state.zone_id
+    # )
+
     # In production: send ServerLootAwarded packet to all group members
     :ok
   end
@@ -400,6 +410,17 @@ defmodule BezgelorWorld.Loot.LootManager do
 
   defp send_personal_loot(character_id, award) do
     Logger.info("Personal loot for player #{character_id}: item #{award.item[:id] || "unknown"}")
+
+    # TODO: When loot is actually delivered to players, emit telemetry:
+    # TelemetryEvents.emit_loot_drop(
+    #   item_value: calculate_item_value(award.item),
+    #   currency_amount: 0,  # or gold value if applicable
+    #   character_id: character_id,
+    #   creature_id: state.source_creature_id,
+    #   world_id: state.world_id,
+    #   zone_id: state.zone_id
+    # )
+
     # In production: send ServerLootAwarded packet to the character
     :ok
   end

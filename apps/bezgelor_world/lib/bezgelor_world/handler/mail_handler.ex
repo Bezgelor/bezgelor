@@ -33,6 +33,7 @@ defmodule BezgelorWorld.Handler.MailHandler do
 
   alias BezgelorDb.{Mail, Characters}
   alias BezgelorWorld.WorldManager
+  alias BezgelorCore.Economy.TelemetryEvents
 
   @impl true
   def handle(payload, state) do
@@ -89,6 +90,16 @@ defmodule BezgelorWorld.Handler.MailHandler do
           case Mail.send_mail(mail_attrs, []) do
             {:ok, mail} ->
               Logger.debug("Character #{character_id} sent mail to #{recipient.name}")
+
+              # Emit telemetry event
+              TelemetryEvents.emit_mail_sent(
+                currency_attached: packet.gold_attached || 0,
+                item_count: 0,
+                cod_amount: packet.cod_amount || 0,
+                sender_id: character_id,
+                recipient_id: recipient.id
+              )
+
               # Notify recipient if online
               notify_new_mail(recipient.id)
               send_result(:ok, :send, state, mail_id: mail.id)

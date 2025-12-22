@@ -175,7 +175,63 @@ defmodule BezgelorProtocol.Handler.Unknown0x00E3Handler do
 end
 
 defmodule BezgelorProtocol.Handler.P2PTradingCancelHandler do
-  @moduledoc "Handler for ClientP2PTradingCancelTrade (0x018F)"
+  @moduledoc """
+  Handler for ClientP2PTradingCancelTrade (0x018F).
+
+  Player-to-player trading is not yet implemented. When implementing, the following
+  telemetry should be added to track trade activity:
+
+  ## Telemetry Integration Points
+
+  ### Trade Completion (when both players commit)
+  When a trade is successfully completed, emit telemetry using:
+
+      alias BezgelorCore.Economy.TelemetryEvents
+
+      TelemetryEvents.emit_trade_complete(
+        items_exchanged: total_items_count,
+        currency_exchanged: total_currency_amount,
+        initiator_id: initiator_character_id,
+        acceptor_id: acceptor_character_id,
+        duration_ms: trade_duration_ms
+      )
+
+  Where:
+  - `items_exchanged`: Total number of items exchanged (items from both players)
+  - `currency_exchanged`: Total currency exchanged (sum from both players)
+  - `initiator_id`: Character ID of player who initiated the trade
+  - `acceptor_id`: Character ID of player who accepted the trade invite
+  - `duration_ms`: Time from trade initiation to completion in milliseconds
+
+  ### Related Packets to Implement
+
+  Client packets:
+  - ClientP2PTradingInitiateTrade - Start trade with target player
+  - ClientP2PTradingAcceptInvite - Accept trade invitation
+  - ClientP2PTradingDeclineInvite - Decline trade invitation
+  - ClientP2PTradingAddItem - Add item to trade window
+  - ClientP2PTradingRemoveItem - Remove item from trade window
+  - ClientP2PTradingSetMoney - Set currency amount to trade
+  - ClientP2PTradingCommit - Commit to trade (ready to complete)
+  - ClientP2PTradingCancelTrade - Cancel ongoing trade (this handler)
+
+  Server packets:
+  - ServerP2PTradeInvite - Send trade invitation to target
+  - ServerP2PTradeUpdateItem - Update items in trade window
+  - ServerP2PTradeUpdateMoney - Update currency in trade window
+  - ServerP2PTradeItemRemoved - Notify item removed from trade
+  - ServerP2PTradeResult - Send trade completion result
+
+  ## Implementation Notes
+
+  Trade flow:
+  1. Player A initiates trade with Player B
+  2. Player B accepts or declines
+  3. Both players add items and set currency amounts
+  4. Both players commit when ready
+  5. Trade completes or is cancelled
+  6. On completion, emit telemetry event
+  """
   @behaviour BezgelorProtocol.Handler
   require Logger
 
@@ -183,6 +239,11 @@ defmodule BezgelorProtocol.Handler.P2PTradingCancelHandler do
   def handle(_payload, state) do
     # Player is canceling a P2P trade - currently not implemented
     Logger.debug("[P2PTrading] Trade cancel request (trading not implemented)")
+
+    # TODO: When implementing P2P trading, track cancellations separately from completions
+    # TODO: Consider adding telemetry for trade cancellations to monitor player behavior
+    # TODO: Validate that a trade session exists before processing cancel
+
     {:ok, state}
   end
 end

@@ -26,6 +26,52 @@ defmodule BezgelorProtocol.Handler.CommodityOrdersHandler do
     # TODO: Fetch player's commodity orders from database
     # TODO: Send ServerCommodityOrdersResponse with order list
 
+    # TODO: When implementing commodity order operations, emit telemetry:
+    # For buy orders:
+    # TelemetryEvents.emit_auction_event(
+    #   price: order_price,
+    #   fee: exchange_fee,
+    #   character_id: character_id,
+    #   item_id: commodity_id,
+    #   event_type: :bid
+    # )
+    #
+    # For sell orders (listing):
+    # TelemetryEvents.emit_auction_event(
+    #   price: listing_price,
+    #   fee: exchange_fee,
+    #   character_id: character_id,
+    #   item_id: commodity_id,
+    #   event_type: :list
+    # )
+    #
+    # For completed/matched orders:
+    # TelemetryEvents.emit_auction_event(
+    #   price: final_price,
+    #   fee: 0,
+    #   character_id: character_id,
+    #   item_id: commodity_id,
+    #   event_type: :buyout
+    # )
+    #
+    # For cancelled orders:
+    # TelemetryEvents.emit_auction_event(
+    #   price: 0,
+    #   fee: 0,
+    #   character_id: character_id,
+    #   item_id: commodity_id,
+    #   event_type: :cancel
+    # )
+    #
+    # For expired orders:
+    # TelemetryEvents.emit_auction_event(
+    #   price: 0,
+    #   fee: 0,
+    #   character_id: character_id,
+    #   item_id: commodity_id,
+    #   event_type: :expire
+    # )
+
     # For now, just acknowledge - marketplace not implemented
     {:ok, state}
   end

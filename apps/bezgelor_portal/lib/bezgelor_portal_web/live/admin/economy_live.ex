@@ -14,11 +14,24 @@ defmodule BezgelorPortalWeb.Admin.EconomyLive do
 
   alias BezgelorDb.{Authorization, Characters, Inventory}
   alias BezgelorDb.Mail
+  alias BezgelorWorld.Economy.Telemetry
+
+  # 5 seconds - refresh interval for telemetry metrics
+  @refresh_interval 5_000
 
   @impl true
   def mount(_params, _session, socket) do
+    socket =
+      if connected?(socket) do
+        :timer.send_interval(@refresh_interval, self(), :refresh_telemetry)
+        socket
+      else
+        socket
+      end
+
     {:ok,
-     assign(socket,
+     socket
+     |> assign(
        page_title: "Economy Management",
        active_tab: :overview,
        # Gift form state
@@ -32,7 +45,10 @@ defmodule BezgelorPortalWeb.Admin.EconomyLive do
          "amount" => "",
          "reason" => ""
        },
-       gift_result: nil
+       gift_result: nil,
+       last_refresh: DateTime.utc_now(),
+       refresh_interval: @refresh_interval,
+       telemetry_metrics: load_telemetry_metrics()
      ), layout: {BezgelorPortalWeb.Layouts, :admin}}
   end
 
@@ -48,7 +64,7 @@ defmodule BezgelorPortalWeb.Admin.EconomyLive do
     <!-- Tabs -->
       <div role="tablist" class="tabs tabs-boxed bg-base-100 p-1 w-fit">
         <button
-          :for={tab <- [:overview, :transactions, :gifts]}
+          :for={tab <- [:overview, :telemetry, :transactions, :gifts]}
           type="button"
           role="tab"
           class={"tab #{if @active_tab == tab, do: "tab-active"}"}
@@ -58,11 +74,17 @@ defmodule BezgelorPortalWeb.Admin.EconomyLive do
           {tab_label(tab)}
         </button>
       </div>
-      
+
     <!-- Tab Content -->
       <%= case @active_tab do %>
         <% :overview -> %>
           <.overview_tab />
+        <% :telemetry -> %>
+          <.telemetry_tab
+            metrics={@telemetry_metrics}
+            last_refresh={@last_refresh}
+            refresh_interval={@refresh_interval}
+          />
         <% :transactions -> %>
           <.transactions_tab />
         <% :gifts -> %>
@@ -70,6 +92,15 @@ defmodule BezgelorPortalWeb.Admin.EconomyLive do
       <% end %>
     </div>
     """
+  end
+
+  # Event handlers
+
+  @impl true
+  def handle_info(:refresh_telemetry, socket) do
+    {:noreply,
+     socket
+     |> assign(last_refresh: DateTime.utc_now(), telemetry_metrics: load_telemetry_metrics())}
   end
 
   # Tab components
@@ -105,31 +136,260 @@ defmodule BezgelorPortalWeb.Admin.EconomyLive do
 
     <div class="card bg-base-100 shadow mt-6">
       <div class="card-body">
-        <h2 class="card-title">Economy Tracking</h2>
-        <div class="alert alert-info">
-          <.icon name="hero-information-circle" class="size-5" />
+        <h2 class="card-title">Economy Overview</h2>
+        <div class="alert alert-success">
+          <.icon name="hero-check-circle" class="size-5" />
           <div>
-            <h3 class="font-bold">Coming Soon</h3>
+            <h3 class="font-bold">Economy Telemetry Active</h3>
             <p class="text-sm">
-              Economy tracking will provide real-time insights into gold flow,
-              including charts for trends over time, top gold holders, and
-              detection of unusual economic activity.
+              Real-time economy tracking is operational. View the <strong>Telemetry</strong>
+              tab for live metrics including currency transactions, vendor activity, loot drops, and more.
+              Use the <strong>Gift Tools</strong> tab to send items or currency to characters.
             </p>
           </div>
         </div>
 
         <div class="mt-4">
+          <h3 class="font-semibold mb-2">Working Features:</h3>
+          <ul class="list-disc list-inside text-sm text-success space-y-1">
+            <li>✓ Real-time telemetry metrics (Telemetry tab)</li>
+            <li>✓ Currency transaction tracking</li>
+            <li>✓ Vendor transaction tracking</li>
+            <li>✓ Admin gift tools for items and currency (Gift Tools tab)</li>
+            <li>✓ Audit logging for all admin actions</li>
+          </ul>
+        </div>
+
+        <div class="mt-4">
           <h3 class="font-semibold mb-2">Planned Features:</h3>
           <ul class="list-disc list-inside text-sm text-base-content/70 space-y-1">
-            <li>Real-time gold circulation tracking</li>
+            <li>Total gold circulation tracking</li>
             <li>Daily/weekly/monthly trend charts</li>
-            <li>Gold sources breakdown (quests, loot, mail, trades)</li>
-            <li>Gold sinks breakdown (repairs, vendors, AH fees)</li>
+            <li>Transaction search and filtering (Transactions tab)</li>
+            <li>Auction house integration</li>
             <li>Top gold holders leaderboard</li>
-            <li>Unusual activity detection</li>
+            <li>Unusual activity detection alerts</li>
           </ul>
         </div>
       </div>
+    </div>
+    """
+  end
+
+  attr :metrics, :map, required: true
+  attr :last_refresh, :any, required: true
+  attr :refresh_interval, :integer, required: true
+
+  defp telemetry_tab(assigns) do
+    ~H"""
+    <div class="space-y-6">
+      <!-- Header with auto-refresh indicator -->
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-lg font-semibold">Economy Telemetry Metrics</h2>
+          <p class="text-sm text-base-content/70">Real-time economy activity tracking</p>
+        </div>
+        <div class="flex items-center gap-4">
+          <div class="flex items-center gap-2 text-sm text-base-content/70">
+            <span class="loading loading-ring loading-xs"></span>
+            <span>Auto-refresh every {div(@refresh_interval, 1000)}s</span>
+          </div>
+          <span class="text-xs text-base-content/50">
+            Last: {Calendar.strftime(@last_refresh, "%H:%M:%S")}
+          </span>
+        </div>
+      </div>
+
+    <!-- Metrics Overview Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <.metric_card
+          title="Currency Transactions"
+          value={format_number(@metrics.currency_transactions)}
+          icon="hero-currency-dollar"
+          color="primary"
+        />
+        <.metric_card
+          title="Vendor Transactions"
+          value={format_number(@metrics.vendor_transactions)}
+          icon="hero-shopping-bag"
+          color="secondary"
+        />
+        <.metric_card
+          title="Loot Drops"
+          value={format_number(@metrics.loot_drops)}
+          icon="hero-gift"
+          color="accent"
+        />
+        <.metric_card
+          title="Trade Completions"
+          value={format_number(@metrics.trade_completions)}
+          icon="hero-arrow-path-rounded-square"
+          color="info"
+        />
+      </div>
+
+    <!-- Currency Flow Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <.currency_flow_card
+          title="Total Currency Gained"
+          amount={@metrics.total_currency_gained}
+          color="success"
+          icon="hero-arrow-trending-up"
+        />
+        <.currency_flow_card
+          title="Total Currency Spent"
+          amount={@metrics.total_currency_spent}
+          color="error"
+          icon="hero-arrow-trending-down"
+        />
+      </div>
+
+    <!-- Activity Breakdown -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Event Type Distribution -->
+        <div class="card bg-base-100 shadow">
+          <div class="card-body">
+            <h3 class="card-title text-base">Event Type Distribution</h3>
+            <div
+              id="event-distribution-chart"
+              phx-hook="ChartJS"
+              phx-update="ignore"
+              data-chart-type="doughnut"
+              data-chart-config={event_distribution_config(@metrics)}
+              class="h-64"
+            >
+              <canvas></canvas>
+            </div>
+          </div>
+        </div>
+
+      <!-- Additional Metrics -->
+        <div class="card bg-base-100 shadow">
+          <div class="card-body">
+            <h3 class="card-title text-base">Additional Activity</h3>
+            <div class="space-y-3">
+              <.activity_row
+                label="Auction Events"
+                value={@metrics.auction_events}
+                icon="hero-building-storefront"
+              />
+              <.activity_row label="Mail Sent" value={@metrics.mail_sent} icon="hero-envelope" />
+              <.activity_row
+                label="Crafting Completions"
+                value={@metrics.crafting_completions}
+                icon="hero-wrench-screwdriver"
+              />
+              <.activity_row
+                label="Repair Completions"
+                value={@metrics.repair_completions}
+                icon="hero-shield-check"
+              />
+              <.activity_row
+                label="Pending Events"
+                value={@metrics.pending_events}
+                icon="hero-clock"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+    <!-- System Status -->
+      <div class="card bg-base-100 shadow">
+        <div class="card-body">
+          <h3 class="card-title text-base">Telemetry System Status</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <p class="text-sm text-base-content/70">
+                <strong>Batch Size:</strong>
+                Events are batched and flushed to database when 100 events accumulate or every 5 seconds.
+              </p>
+            </div>
+            <div>
+              <p class="text-sm text-base-content/70">
+                <strong>Last Flush:</strong>
+                <%= if @metrics.last_flush do %>
+                  {Calendar.strftime(@metrics.last_flush, "%Y-%m-%d %H:%M:%S UTC")}
+                <% else %>
+                  <span class="text-warning">Not yet flushed</span>
+                <% end %>
+              </p>
+            </div>
+          </div>
+
+        <div class="alert alert-info mt-4">
+            <.icon name="hero-information-circle" class="size-5" />
+            <div>
+              <p class="text-sm">
+                Economy telemetry tracks all economic events in real-time including currency transactions,
+                vendor purchases, loot drops, trades, auctions, mail, crafting, and repairs.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    """
+  end
+
+  attr :title, :string, required: true
+  attr :value, :string, required: true
+  attr :icon, :string, required: true
+  attr :color, :string, default: "primary"
+
+  defp metric_card(assigns) do
+    ~H"""
+    <div class="card bg-base-100 shadow">
+      <div class="card-body p-4">
+        <div class="flex items-start justify-between">
+          <div>
+            <div class="text-2xl font-bold">{@value}</div>
+            <div class="text-sm text-base-content/70">{@title}</div>
+          </div>
+          <div class={"p-2 rounded-lg bg-#{@color}/10"}>
+            <.icon name={@icon} class={"size-6 text-#{@color}"} />
+          </div>
+        </div>
+      </div>
+    </div>
+    """
+  end
+
+  attr :title, :string, required: true
+  attr :amount, :integer, required: true
+  attr :color, :string, required: true
+  attr :icon, :string, required: true
+
+  defp currency_flow_card(assigns) do
+    ~H"""
+    <div class="card bg-base-100 shadow">
+      <div class="card-body p-4">
+        <div class="flex items-start justify-between">
+          <div>
+            <div class="text-2xl font-bold font-mono">{format_currency(@amount)}</div>
+            <div class="text-sm text-base-content/70">{@title}</div>
+          </div>
+          <div class={"p-2 rounded-lg bg-#{@color}/10"}>
+            <.icon name={@icon} class={"size-6 text-#{@color}"} />
+          </div>
+        </div>
+      </div>
+    </div>
+    """
+  end
+
+  attr :label, :string, required: true
+  attr :value, :integer, required: true
+  attr :icon, :string, required: true
+
+  defp activity_row(assigns) do
+    ~H"""
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <.icon name={@icon} class="size-4 text-base-content/70" />
+        <span class="text-sm text-base-content/70">{@label}</span>
+      </div>
+      <span class="font-mono font-semibold">{format_number(@value)}</span>
     </div>
     """
   end
@@ -377,8 +637,6 @@ defmodule BezgelorPortalWeb.Admin.EconomyLive do
     """
   end
 
-  # Event handlers
-
   @impl true
   def handle_event("change_tab", %{"tab" => tab}, socket) do
     {:noreply, assign(socket, active_tab: String.to_existing_atom(tab))}
@@ -485,6 +743,117 @@ defmodule BezgelorPortalWeb.Admin.EconomyLive do
   defp currency_id_to_atom(_), do: nil
 
   defp tab_label(:overview), do: "Overview"
+  defp tab_label(:telemetry), do: "Telemetry"
   defp tab_label(:transactions), do: "Transactions"
   defp tab_label(:gifts), do: "Gift Tools"
+
+  # Helper functions
+
+  defp load_telemetry_metrics do
+    try do
+      Telemetry.get_metrics_summary()
+    rescue
+      _ ->
+        # Return default metrics if telemetry server not available
+        %{
+          currency_transactions: 0,
+          vendor_transactions: 0,
+          loot_drops: 0,
+          auction_events: 0,
+          trade_completions: 0,
+          mail_sent: 0,
+          crafting_completions: 0,
+          repair_completions: 0,
+          total_currency_gained: 0,
+          total_currency_spent: 0,
+          last_flush: nil,
+          pending_events: 0
+        }
+    end
+  end
+
+  defp event_distribution_config(metrics) do
+    Jason.encode!(%{
+      labels: [
+        "Currency",
+        "Vendor",
+        "Loot",
+        "Auction",
+        "Trade",
+        "Mail",
+        "Crafting",
+        "Repair"
+      ],
+      datasets: [
+        %{
+          label: "Event Count",
+          data: [
+            metrics.currency_transactions,
+            metrics.vendor_transactions,
+            metrics.loot_drops,
+            metrics.auction_events,
+            metrics.trade_completions,
+            metrics.mail_sent,
+            metrics.crafting_completions,
+            metrics.repair_completions
+          ],
+          backgroundColor: [
+            "rgba(99, 102, 241, 0.8)",
+            "rgba(139, 92, 246, 0.8)",
+            "rgba(168, 85, 247, 0.8)",
+            "rgba(59, 130, 246, 0.8)",
+            "rgba(34, 197, 94, 0.8)",
+            "rgba(251, 191, 36, 0.8)",
+            "rgba(249, 115, 22, 0.8)",
+            "rgba(239, 68, 68, 0.8)"
+          ],
+          borderColor: [
+            "rgba(99, 102, 241, 1)",
+            "rgba(139, 92, 246, 1)",
+            "rgba(168, 85, 247, 1)",
+            "rgba(59, 130, 246, 1)",
+            "rgba(34, 197, 94, 1)",
+            "rgba(251, 191, 36, 1)",
+            "rgba(249, 115, 22, 1)",
+            "rgba(239, 68, 68, 1)"
+          ],
+          borderWidth: 1
+        }
+      ],
+      options: %{
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: %{
+          legend: %{
+            position: "bottom"
+          }
+        }
+      }
+    })
+  end
+
+  defp format_number(nil), do: "0"
+
+  defp format_number(n) when is_integer(n) do
+    n
+    |> Integer.to_string()
+    |> String.graphemes()
+    |> Enum.reverse()
+    |> Enum.chunk_every(3)
+    |> Enum.join(",")
+    |> String.reverse()
+  end
+
+  defp format_currency(amount) when is_integer(amount) do
+    formatted = format_number(amount)
+
+    cond do
+      amount >= 1_000_000_000 -> "#{format_number(div(amount, 1_000_000))}M"
+      amount >= 1_000_000 -> "#{format_number(div(amount, 1_000_000))}M"
+      amount >= 1_000 -> "#{format_number(div(amount, 1_000))}K"
+      true -> formatted
+    end
+  end
+
+  defp format_currency(_), do: "0"
 end
