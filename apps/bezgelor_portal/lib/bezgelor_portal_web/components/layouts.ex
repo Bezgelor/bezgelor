@@ -261,7 +261,6 @@ defmodule BezgelorPortalWeb.Layouts do
           permission_set={@permission_set}
           links={[
             %{href: "/admin/server", label: "Server Status", permission: "server.view_logs"},
-            %{href: "/admin/live-dashboard", label: "Live Dashboard", permission: "server.view_logs", external: true},
             %{href: "/admin/server/logs", label: "Logs", permission: "server.view_logs"},
             %{href: "/admin/settings", label: "Server Settings", permission: "server.settings"}
           ]}
