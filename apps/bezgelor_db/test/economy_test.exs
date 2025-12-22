@@ -26,6 +26,202 @@ defmodule BezgelorDb.EconomyTest do
     {:ok, account: account, char1: char1, char2: char2}
   end
 
+  describe "record_transactions_batch/1" do
+    test "inserts multiple transactions in a batch", %{char1: char1, char2: char2} do
+      transactions = [
+        %{
+          character_id: char1.id,
+          currency_type: 1,
+          amount: 100,
+          balance_after: 1000,
+          source_type: "quest"
+        },
+        %{
+          character_id: char2.id,
+          currency_type: 1,
+          amount: -50,
+          balance_after: 500,
+          source_type: "vendor"
+        },
+        %{
+          character_id: char1.id,
+          currency_type: 2,
+          amount: 200,
+          balance_after: 300,
+          source_type: "loot"
+        }
+      ]
+
+      assert {:ok, 3} = Economy.record_transactions_batch(transactions)
+
+      # Verify transactions were created
+      char1_transactions = Economy.get_transactions_for_character(char1.id)
+      assert length(char1_transactions) == 2
+
+      char2_transactions = Economy.get_transactions_for_character(char2.id)
+      assert length(char2_transactions) == 1
+    end
+
+    test "returns {:ok, 0} for empty list" do
+      assert {:ok, 0} = Economy.record_transactions_batch([])
+    end
+
+    test "includes timestamps automatically", %{char1: char1} do
+      transactions = [
+        %{
+          character_id: char1.id,
+          currency_type: 1,
+          amount: 100,
+          balance_after: 1000,
+          source_type: "quest"
+        }
+      ]
+
+      before_insert = DateTime.utc_now() |> DateTime.truncate(:second)
+      assert {:ok, 1} = Economy.record_transactions_batch(transactions)
+      after_insert = DateTime.utc_now() |> DateTime.add(1, :second) |> DateTime.truncate(:second)
+
+      [transaction] = Economy.get_transactions_for_character(char1.id)
+      assert %DateTime{} = transaction.inserted_at
+      assert %DateTime{} = transaction.updated_at
+      # Timestamps are truncated to seconds, so allow some tolerance
+      assert DateTime.compare(transaction.inserted_at, before_insert) in [:gt, :eq]
+      assert DateTime.compare(transaction.inserted_at, after_insert) in [:lt, :eq]
+    end
+
+    test "validates all transactions before inserting", %{char1: char1} do
+      transactions = [
+        %{
+          character_id: char1.id,
+          currency_type: 1,
+          amount: 100,
+          balance_after: 1000,
+          source_type: "quest"
+        },
+        %{
+          character_id: char1.id,
+          currency_type: 1,
+          amount: 50,
+          balance_after: 1050,
+          source_type: "invalid_source"
+        }
+      ]
+
+      assert {:error, changeset} = Economy.record_transactions_batch(transactions)
+      assert %{source_type: ["is invalid"]} = errors_on(changeset)
+
+      # Verify no transactions were inserted
+      char1_transactions = Economy.get_transactions_for_character(char1.id)
+      assert char1_transactions == []
+    end
+
+    test "returns error for transaction missing required fields", %{char1: char1} do
+      transactions = [
+        %{
+          character_id: char1.id,
+          currency_type: 1,
+          amount: 100,
+          balance_after: 1000,
+          source_type: "quest"
+        },
+        %{
+          currency_type: 1,
+          amount: 50
+        }
+      ]
+
+      assert {:error, changeset} = Economy.record_transactions_batch(transactions)
+      errors = errors_on(changeset)
+      assert Map.has_key?(errors, :character_id)
+      assert Map.has_key?(errors, :balance_after)
+      assert Map.has_key?(errors, :source_type)
+    end
+
+    test "handles metadata and source_id in batch", %{char1: char1} do
+      transactions = [
+        %{
+          character_id: char1.id,
+          currency_type: 1,
+          amount: 100,
+          balance_after: 1000,
+          source_type: "quest",
+          source_id: 123,
+          metadata: %{quest_name: "Test Quest"}
+        },
+        %{
+          character_id: char1.id,
+          currency_type: 1,
+          amount: 50,
+          balance_after: 1050,
+          source_type: "loot"
+        }
+      ]
+
+      assert {:ok, 2} = Economy.record_transactions_batch(transactions)
+
+      # Returns in desc order (newest first), so loot comes before quest
+      [loot_tx, quest_tx] = Economy.get_transactions_for_character(char1.id)
+
+      # Quest transaction should have source_id and metadata
+      assert quest_tx.source_id == 123
+      assert quest_tx.metadata == %{"quest_name" => "Test Quest"}
+
+      # Loot transaction should have no source_id or empty metadata (JSONB null becomes {})
+      assert loot_tx.source_id == nil
+      assert loot_tx.metadata == %{}
+    end
+
+    test "validates negative balance_after", %{char1: char1} do
+      transactions = [
+        %{
+          character_id: char1.id,
+          currency_type: 1,
+          amount: -100,
+          balance_after: -10,
+          source_type: "vendor"
+        }
+      ]
+
+      assert {:error, changeset} = Economy.record_transactions_batch(transactions)
+      assert %{balance_after: _} = errors_on(changeset)
+    end
+
+    test "accepts zero balance_after in batch", %{char1: char1} do
+      transactions = [
+        %{
+          character_id: char1.id,
+          currency_type: 1,
+          amount: -100,
+          balance_after: 0,
+          source_type: "vendor"
+        }
+      ]
+
+      assert {:ok, 1} = Economy.record_transactions_batch(transactions)
+
+      [transaction] = Economy.get_transactions_for_character(char1.id)
+      assert transaction.balance_after == 0
+    end
+
+    test "works with large batch", %{char1: char1} do
+      transactions =
+        for i <- 1..100 do
+          %{
+            character_id: char1.id,
+            currency_type: 1,
+            amount: i,
+            balance_after: i * 10,
+            source_type: "quest"
+          }
+        end
+
+      assert {:ok, 100} = Economy.record_transactions_batch(transactions)
+
+      char1_transactions = Economy.get_transactions_for_character(char1.id, limit: 1000)
+      assert length(char1_transactions) == 100
+    end
+  end
+
   describe "record_transaction/1" do
     test "creates transaction with valid attributes", %{char1: char1} do
       attrs = %{

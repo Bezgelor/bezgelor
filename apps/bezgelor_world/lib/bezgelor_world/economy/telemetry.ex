@@ -290,19 +290,8 @@ defmodule BezgelorWorld.Economy.Telemetry do
       |> Enum.filter(&currency_transaction?/1)
       |> Enum.map(&event_to_transaction/1)
 
-    # Bulk insert transactions
-    inserted =
-      Enum.reduce_while(transactions, {:ok, 0}, fn transaction_attrs, {:ok, count} ->
-        case Economy.record_transaction(transaction_attrs) do
-          {:ok, _transaction} -> {:cont, {:ok, count + 1}}
-          {:error, reason} -> {:halt, {:error, reason}}
-        end
-      end)
-
-    case inserted do
-      {:ok, count} -> {:ok, count}
-      {:error, reason} -> {:error, reason}
-    end
+    # Batch insert all transactions in a single operation
+    Economy.record_transactions_batch(transactions)
   end
 
   defp currency_transaction?(%{event_name: [:bezgelor, :economy, :currency, :transaction]}), do: true

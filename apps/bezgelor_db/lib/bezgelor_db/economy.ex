@@ -99,6 +99,92 @@ defmodule BezgelorDb.Economy do
   end
 
   @doc """
+  Record multiple currency transactions in a single batch insert.
+
+  This is more efficient than calling `record_transaction/1` multiple times
+  as it performs a single database operation. However, it bypasses Ecto
+  changesets, so all validation must be done beforehand.
+
+  ## Parameters
+
+  - `transactions` - List of transaction attribute maps. Each map should contain:
+    - `:character_id` - Character ID (required)
+    - `:currency_type` - Currency type ID (required)
+    - `:amount` - Amount changed (required)
+    - `:balance_after` - Balance after transaction (required)
+    - `:source_type` - Source type (required)
+    - `:source_id` - Optional source entity ID
+    - `:metadata` - Optional JSON metadata
+
+  ## Returns
+
+  - `{:ok, count}` - Number of records inserted
+  - `{:error, reason}` - If validation fails or database error occurs
+
+  ## Example
+
+      transactions = [
+        %{
+          character_id: 123,
+          currency_type: 1,
+          amount: 100,
+          balance_after: 1000,
+          source_type: "quest"
+        },
+        %{
+          character_id: 456,
+          currency_type: 1,
+          amount: -50,
+          balance_after: 500,
+          source_type: "vendor"
+        }
+      ]
+
+      {:ok, 2} = Economy.record_transactions_batch(transactions)
+  """
+  @spec record_transactions_batch([map()]) :: {:ok, non_neg_integer()} | {:error, term()}
+  def record_transactions_batch([]), do: {:ok, 0}
+
+  def record_transactions_batch(transactions) when is_list(transactions) do
+    now = DateTime.utc_now() |> DateTime.truncate(:second)
+
+    # Validate all transactions first and prepare entries
+    result =
+      Enum.reduce_while(transactions, {:ok, []}, fn attrs, {:ok, acc} ->
+        changeset = CurrencyTransaction.changeset(%CurrencyTransaction{}, attrs)
+
+        if changeset.valid? do
+          # Build entry directly from attrs, preserving all provided fields
+          entry =
+            attrs
+            |> Map.take([:character_id, :currency_type, :amount, :balance_after, :source_type, :source_id, :metadata])
+            |> Map.put(:inserted_at, now)
+            |> Map.put(:updated_at, now)
+
+          {:cont, {:ok, [entry | acc]}}
+        else
+          {:halt, {:error, changeset}}
+        end
+      end)
+
+    case result do
+      {:ok, entries} ->
+        # Reverse to maintain original order
+        entries = Enum.reverse(entries)
+
+        # Perform batch insert
+        case Repo.insert_all(CurrencyTransaction, entries, returning: false) do
+          {count, _} -> {:ok, count}
+        end
+
+      {:error, changeset} ->
+        {:error, changeset}
+    end
+  rescue
+    e -> {:error, e}
+  end
+
+  @doc """
   Get transactions for a character.
 
   ## Options
@@ -132,63 +218,17 @@ defmodule BezgelorDb.Economy do
   """
   @spec get_transactions_for_character(integer(), keyword()) :: [CurrencyTransaction.t()]
   def get_transactions_for_character(character_id, opts \\ []) do
-    currency_type = Keyword.get(opts, :currency_type)
-    source_type = Keyword.get(opts, :source_type)
-    since = Keyword.get(opts, :since)
-    until_time = Keyword.get(opts, :until)
     limit = opts |> Keyword.get(:limit, @default_limit) |> min(@max_query_limit)
     offset = opts |> Keyword.get(:offset, 0) |> max(0)
     order = Keyword.get(opts, :order, :desc)
 
-    query =
-      from(t in CurrencyTransaction,
-        where: t.character_id == ^character_id
-      )
-
-    query =
-      if currency_type do
-        from(t in query, where: t.currency_type == ^currency_type)
-      else
-        query
-      end
-
-    query =
-      if source_type do
-        from(t in query, where: t.source_type == ^source_type)
-      else
-        query
-      end
-
-    query =
-      if since do
-        from(t in query, where: t.inserted_at >= ^since)
-      else
-        query
-      end
-
-    query =
-      if until_time do
-        from(t in query, where: t.inserted_at <= ^until_time)
-      else
-        query
-      end
-
-    query =
-      case order do
-        :asc ->
-          from(t in query, order_by: [asc: t.inserted_at])
-
-        _ ->
-          from(t in query, order_by: [desc: t.inserted_at])
-      end
-
-    query =
-      from(t in query,
-        limit: ^limit,
-        offset: ^offset
-      )
-
-    Repo.all(query)
+    from(t in CurrencyTransaction,
+      where: t.character_id == ^character_id
+    )
+    |> apply_transaction_filters(opts)
+    |> apply_transaction_order(order)
+    |> apply_transaction_pagination(limit, offset)
+    |> Repo.all()
   end
 
   @doc """
@@ -222,49 +262,14 @@ defmodule BezgelorDb.Economy do
   """
   @spec get_recent_transactions(keyword()) :: [CurrencyTransaction.t()]
   def get_recent_transactions(opts \\ []) do
-    currency_type = Keyword.get(opts, :currency_type)
-    source_type = Keyword.get(opts, :source_type)
-    since = Keyword.get(opts, :since)
     limit = opts |> Keyword.get(:limit, @default_limit) |> min(@max_query_limit)
     offset = opts |> Keyword.get(:offset, 0) |> max(0)
-    preload_character = Keyword.get(opts, :preload_character, false)
 
-    query =
-      from(t in CurrencyTransaction,
-        order_by: [desc: t.inserted_at],
-        limit: ^limit,
-        offset: ^offset
-      )
-
-    query =
-      if currency_type do
-        from(t in query, where: t.currency_type == ^currency_type)
-      else
-        query
-      end
-
-    query =
-      if source_type do
-        from(t in query, where: t.source_type == ^source_type)
-      else
-        query
-      end
-
-    query =
-      if since do
-        from(t in query, where: t.inserted_at >= ^since)
-      else
-        query
-      end
-
-    query =
-      if preload_character do
-        from(t in query, preload: :character)
-      else
-        query
-      end
-
-    Repo.all(query)
+    from(t in CurrencyTransaction)
+    |> apply_transaction_filters(opts)
+    |> apply_transaction_order(:desc)
+    |> apply_transaction_pagination(limit, offset)
+    |> Repo.all()
   end
 
   @doc """
@@ -376,65 +381,16 @@ defmodule BezgelorDb.Economy do
   """
   @spec list_alerts(keyword()) :: [EconomyAlert.t()]
   def list_alerts(opts \\ []) do
-    severity = Keyword.get(opts, :severity)
-    alert_type = Keyword.get(opts, :alert_type)
-    acknowledged = Keyword.get(opts, :acknowledged)
-    character_id = Keyword.get(opts, :character_id)
-    since = Keyword.get(opts, :since)
     limit = opts |> Keyword.get(:limit, @default_limit) |> min(@max_query_limit)
     offset = opts |> Keyword.get(:offset, 0) |> max(0)
-    preload_character = Keyword.get(opts, :preload_character, false)
 
-    query =
-      from(a in EconomyAlert,
-        order_by: [desc: a.inserted_at],
-        limit: ^limit,
-        offset: ^offset
-      )
-
-    query =
-      if severity do
-        from(a in query, where: a.severity == ^severity)
-      else
-        query
-      end
-
-    query =
-      if alert_type do
-        from(a in query, where: a.alert_type == ^alert_type)
-      else
-        query
-      end
-
-    query =
-      if is_boolean(acknowledged) do
-        from(a in query, where: a.acknowledged == ^acknowledged)
-      else
-        query
-      end
-
-    query =
-      if character_id do
-        from(a in query, where: a.character_id == ^character_id)
-      else
-        query
-      end
-
-    query =
-      if since do
-        from(a in query, where: a.inserted_at >= ^since)
-      else
-        query
-      end
-
-    query =
-      if preload_character do
-        from(a in query, preload: :character)
-      else
-        query
-      end
-
-    Repo.all(query)
+    from(a in EconomyAlert,
+      order_by: [desc: a.inserted_at],
+      limit: ^limit,
+      offset: ^offset
+    )
+    |> apply_alert_filters(opts)
+    |> Repo.all()
   end
 
   @doc """
@@ -539,6 +495,111 @@ defmodule BezgelorDb.Economy do
       order_by: [desc: a.inserted_at]
     )
     |> Repo.all()
+  end
+
+  # ============================================================================
+  # Alert Query Helpers (Private)
+  # ============================================================================
+
+  defp apply_alert_filters(query, opts) do
+    query
+    |> maybe_filter_alert_severity(Keyword.get(opts, :severity))
+    |> maybe_filter_alert_type(Keyword.get(opts, :alert_type))
+    |> maybe_filter_alert_acknowledged(Keyword.get(opts, :acknowledged))
+    |> maybe_filter_alert_character_id(Keyword.get(opts, :character_id))
+    |> maybe_filter_alert_since(Keyword.get(opts, :since))
+    |> maybe_preload_alert_character(Keyword.get(opts, :preload_character, false))
+  end
+
+  defp maybe_filter_alert_severity(query, nil), do: query
+
+  defp maybe_filter_alert_severity(query, severity) do
+    from(a in query, where: a.severity == ^severity)
+  end
+
+  defp maybe_filter_alert_type(query, nil), do: query
+
+  defp maybe_filter_alert_type(query, alert_type) do
+    from(a in query, where: a.alert_type == ^alert_type)
+  end
+
+  defp maybe_filter_alert_acknowledged(query, acknowledged) when is_boolean(acknowledged) do
+    from(a in query, where: a.acknowledged == ^acknowledged)
+  end
+
+  defp maybe_filter_alert_acknowledged(query, _), do: query
+
+  defp maybe_filter_alert_character_id(query, nil), do: query
+
+  defp maybe_filter_alert_character_id(query, character_id) do
+    from(a in query, where: a.character_id == ^character_id)
+  end
+
+  defp maybe_filter_alert_since(query, nil), do: query
+
+  defp maybe_filter_alert_since(query, since) do
+    from(a in query, where: a.inserted_at >= ^since)
+  end
+
+  defp maybe_preload_alert_character(query, false), do: query
+
+  defp maybe_preload_alert_character(query, true) do
+    from(a in query, preload: :character)
+  end
+
+  # ============================================================================
+  # Transaction Query Helpers (Private)
+  # ============================================================================
+
+  defp apply_transaction_filters(query, opts) do
+    query
+    |> maybe_filter_currency_type(Keyword.get(opts, :currency_type))
+    |> maybe_filter_source_type(Keyword.get(opts, :source_type))
+    |> maybe_filter_since(Keyword.get(opts, :since))
+    |> maybe_filter_until(Keyword.get(opts, :until))
+    |> maybe_preload_character(Keyword.get(opts, :preload_character, false))
+  end
+
+  defp maybe_filter_currency_type(query, nil), do: query
+
+  defp maybe_filter_currency_type(query, currency_type) do
+    from(t in query, where: t.currency_type == ^currency_type)
+  end
+
+  defp maybe_filter_source_type(query, nil), do: query
+
+  defp maybe_filter_source_type(query, source_type) do
+    from(t in query, where: t.source_type == ^source_type)
+  end
+
+  defp maybe_filter_since(query, nil), do: query
+
+  defp maybe_filter_since(query, since) do
+    from(t in query, where: t.inserted_at >= ^since)
+  end
+
+  defp maybe_filter_until(query, nil), do: query
+
+  defp maybe_filter_until(query, until_time) do
+    from(t in query, where: t.inserted_at <= ^until_time)
+  end
+
+  defp maybe_preload_character(query, false), do: query
+
+  defp maybe_preload_character(query, true) do
+    from(t in query, preload: :character)
+  end
+
+  defp apply_transaction_order(query, :asc) do
+    from(t in query, order_by: [asc: t.inserted_at, asc: t.id])
+  end
+
+  defp apply_transaction_order(query, _) do
+    from(t in query, order_by: [desc: t.inserted_at, desc: t.id])
+  end
+
+  defp apply_transaction_pagination(query, limit, offset) do
+    from(t in query, limit: ^limit, offset: ^offset)
   end
 
   # ============================================================================
