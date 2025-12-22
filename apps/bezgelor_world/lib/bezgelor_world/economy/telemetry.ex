@@ -235,10 +235,11 @@ defmodule BezgelorWorld.Economy.Telemetry do
       :telemetry.detach(handler_id)
 
       # Attach handler that sends event to this GenServer
+      # Note: Must use module-qualified function reference to avoid performance penalty
       :telemetry.attach(
         handler_id,
         event_name,
-        &handle_telemetry_event/4,
+        &__MODULE__.handle_telemetry_event/4,
         nil
       )
     end)
@@ -246,7 +247,9 @@ defmodule BezgelorWorld.Economy.Telemetry do
     :ok
   end
 
-  defp handle_telemetry_event(event_name, measurements, metadata, _config) do
+  @doc false
+  # Public for module-qualified telemetry handler reference (avoids performance penalty)
+  def handle_telemetry_event(event_name, measurements, metadata, _config) do
     # Forward event to GenServer for batching
     send(__MODULE__, {:telemetry_event, event_name, measurements, metadata})
   end
