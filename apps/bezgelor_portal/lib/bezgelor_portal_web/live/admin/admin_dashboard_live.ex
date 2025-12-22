@@ -70,17 +70,21 @@ defmodule BezgelorPortalWeb.Admin.AdminDashboardLive do
             <.icon name="hero-globe-alt" class="size-8" />
           </div>
           <div class="stat-title">Online Players</div>
-          <div class="stat-value text-info">--</div>
-          <div class="stat-desc">Real-time tracking coming soon</div>
+          <div class="stat-value text-info">{format_stat(@stats.online_players)}</div>
+          <div class="stat-desc">Currently in-game</div>
         </div>
 
         <div class="stat">
-          <div class="stat-figure text-success">
+          <div class={"stat-figure #{if @stats.server_online, do: "text-success", else: "text-error"}"}>
             <.icon name="hero-server" class="size-8" />
           </div>
           <div class="stat-title">Server Status</div>
-          <div class="stat-value text-success">Online</div>
-          <div class="stat-desc">Portal operational</div>
+          <div class={"stat-value #{if @stats.server_online, do: "text-success", else: "text-error"}"}>
+            {if @stats.server_online, do: "Online", else: "Offline"}
+          </div>
+          <div class="stat-desc">
+            {if @stats.server_online, do: "World server operational", else: "World server unavailable"}
+          </div>
         </div>
       </div>
 
@@ -207,10 +211,22 @@ defmodule BezgelorPortalWeb.Admin.AdminDashboardLive do
 
   # Load dashboard stats
   defp load_stats do
+    server_status = get_server_status()
+
     %{
       account_count: Accounts.count_accounts(),
-      character_count: Accounts.count_characters()
+      character_count: Accounts.count_characters(),
+      online_players: server_status[:online_players] || 0,
+      server_online: server_status != nil
     }
+  end
+
+  defp get_server_status do
+    try do
+      BezgelorWorld.Portal.server_status()
+    catch
+      :exit, _ -> nil
+    end
   end
 
   # Format stat for display

@@ -1,17 +1,16 @@
 defmodule BezgelorDb.Schema.TelemetryEvent do
   @moduledoc """
-  Database schema for storing raw telemetry events.
+  Raw telemetry event storage.
 
-  Captures telemetry events emitted throughout the application for metrics,
-  monitoring, and analytics purposes. Events are stored with their full
-  measurements and metadata for later aggregation and analysis.
+  Stores individual telemetry events for up to 48 hours before rollup.
+  Events are batch-inserted by TelemetryCollector every few seconds.
 
   ## Fields
 
-  - `event_name` - The telemetry event path (e.g., "bezgelor.economy.currency.transaction")
-  - `measurements` - Map of numeric measurements from the telemetry event
-  - `metadata` - Map of additional context and tags from the telemetry event
-  - `inserted_at` - When the event was recorded
+  - `event_name` - Dotted event name (e.g., "bezgelor.auth.login_complete")
+  - `measurements` - JSON map of numeric measurements
+  - `metadata` - JSON map of event context/tags
+  - `occurred_at` - When the event was emitted
   """
 
   use Ecto.Schema
@@ -22,6 +21,7 @@ defmodule BezgelorDb.Schema.TelemetryEvent do
           event_name: String.t() | nil,
           measurements: map() | nil,
           metadata: map() | nil,
+          occurred_at: DateTime.t() | nil,
           inserted_at: DateTime.t() | nil
         }
 
@@ -29,22 +29,19 @@ defmodule BezgelorDb.Schema.TelemetryEvent do
     field(:event_name, :string)
     field(:measurements, :map)
     field(:metadata, :map)
+    field(:occurred_at, :utc_datetime_usec)
 
     timestamps(updated_at: false, type: :utc_datetime)
   end
 
-  @required_fields [:event_name]
-  @optional_fields [:measurements, :metadata]
-
   @doc """
-  Creates a changeset for a telemetry event.
+  Changeset for creating a telemetry event.
   """
   @spec changeset(t(), map()) :: Ecto.Changeset.t()
   def changeset(event, attrs) do
     event
-    |> cast(attrs, @required_fields ++ @optional_fields)
-    |> validate_required(@required_fields)
-    |> validate_length(:event_name, min: 1, max: 255)
+    |> cast(attrs, [:event_name, :measurements, :metadata, :occurred_at])
+    |> validate_required([:event_name, :occurred_at])
   end
 
   @doc """
@@ -60,7 +57,8 @@ defmodule BezgelorDb.Schema.TelemetryEvent do
     changeset(%__MODULE__{}, %{
       event_name: event_name,
       measurements: measurements,
-      metadata: metadata
+      metadata: metadata,
+      occurred_at: DateTime.utc_now()
     })
   end
 end

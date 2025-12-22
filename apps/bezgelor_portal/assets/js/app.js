@@ -27,6 +27,16 @@ import topbar from "../vendor/topbar"
 import {CharacterViewer} from "./character_viewer"
 import {ChartJS} from "./hooks/chart_hook"
 
+// Chart.js - bundled for reliability and CSP compliance
+import Chart from "chart.js/auto"
+import "chartjs-adapter-date-fns"
+
+// Make Chart available globally for the hook
+window.Chart = Chart
+
+// Metrics-specific chart hook
+import MetricsChart from "./metrics_chart"
+
 // ============================================
 // LIVEVEW HOOKS
 // ============================================
@@ -245,6 +255,7 @@ const Hooks = {
   ...colocatedHooks,
   CharacterViewer: CharacterViewerHook,
   ChartJS: ChartJS,
+  MetricsChart: MetricsChart,
 }
 
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")

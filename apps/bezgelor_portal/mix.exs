@@ -89,10 +89,7 @@ defmodule BezgelorPortal.MixProject do
       {:hammer, "~> 7.1"},
 
       # Observability
-      {:orion, "~> 1.0"},
-
-      # LiveDashboard
-      {:phoenix_live_dashboard, "~> 0.8"}
+      {:orion, "~> 1.0"}
     ]
   end
 

@@ -7,7 +7,8 @@ defmodule BezgelorPortal.Application do
 
   @impl true
   def start(_type, _args) do
-    children = [
+    # Core children that always start
+    base_children = [
       BezgelorPortalWeb.Telemetry,
       {DNSCluster, query: Application.get_env(:bezgelor_portal, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: BezgelorPortal.PubSub},
@@ -17,9 +18,26 @@ defmodule BezgelorPortal.Application do
       BezgelorPortal.Vault,
       # Log buffer for admin log viewer
       BezgelorPortal.LogBuffer,
-      # Start to serve requests, typically the last entry
-      BezgelorPortalWeb.Endpoint
+      # Task supervisor for async tasks (must start before RollupScheduler)
+      {Task.Supervisor, name: BezgelorPortal.TaskSupervisor}
     ]
+
+    # Conditionally add telemetry collectors (disabled in test)
+    telemetry_children =
+      []
+      |> maybe_add_child(
+        Application.get_env(:bezgelor_portal, :start_telemetry_collector, true),
+        BezgelorPortal.TelemetryCollector
+      )
+      |> maybe_add_child(
+        Application.get_env(:bezgelor_portal, :start_rollup_scheduler, true),
+        BezgelorPortal.RollupScheduler
+      )
+
+    # Endpoint must be last
+    endpoint_children = [BezgelorPortalWeb.Endpoint]
+
+    children = base_children ++ telemetry_children ++ endpoint_children
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
@@ -34,4 +52,7 @@ defmodule BezgelorPortal.Application do
     BezgelorPortalWeb.Endpoint.config_change(changed, removed)
     :ok
   end
+
+  defp maybe_add_child(children, true, child), do: children ++ [child]
+  defp maybe_add_child(children, false, _child), do: children
 end

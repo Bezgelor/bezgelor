@@ -37,4 +37,8 @@ config :bezgelor_api, start_server: false
 config :bezgelor_realm, start_server: false
 config :bezgelor_world, start_server: false
 
+# Don't start telemetry collectors during tests (they're started manually in tests)
+config :bezgelor_portal, start_telemetry_collector: false
+config :bezgelor_portal, start_rollup_scheduler: false
+
 config :logger, level: :warning

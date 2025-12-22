@@ -261,7 +261,7 @@ defmodule BezgelorPortalWeb.Layouts do
           permission_set={@permission_set}
           links={[
             %{href: "/admin/server", label: "Server Status", permission: "server.view_logs"},
-            %{href: "/admin/live-dashboard", label: "Live Dashboard", permission: "server.view_logs", external: true},
+            %{href: "/admin/metrics", label: "Metrics", permission: "server.view_logs"},
             %{href: "/admin/server/logs", label: "Logs", permission: "server.view_logs"},
             %{href: "/admin/settings", label: "Server Settings", permission: "server.settings"}
           ]}
@@ -403,12 +403,9 @@ defmodule BezgelorPortalWeb.Layouts do
     <!-- Auth content -->
       <main class="flex-1 flex flex-col items-center justify-center px-4 py-8 relative z-10">
         <div class="w-full max-w-md">
-          <!-- Logo and title -->
-          <div class="text-center mb-8">
-            <a href="/" class="inline-block">
-              <h1 class="text-4xl font-bold text-glow-cyan text-glow-pulse">BEZGELOR</h1>
-            </a>
-            <p class="text-white/60 mt-2">Your gateway to Nexus awaits</p>
+          <!-- Title -->
+          <div class="text-center mb-6">
+            <p class="text-2xl text-white/70">Your gateway to Nexus awaits</p>
           </div>
           
     <!-- Auth card - no animate-on-scroll to prevent LiveView patch issues -->

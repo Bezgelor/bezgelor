@@ -179,11 +179,11 @@ defmodule BezgelorWorld.Portal do
         |> Enum.reject(&is_nil/1)
         |> Enum.map(fn state ->
           %{
-            zone_id: state.world_id,
-            instance_id: state.instance_id,
-            player_count: map_size(state.players || %{}),
-            creature_count: map_size(state.creatures || %{}),
-            started_at: state.started_at
+            zone_id: Map.get(state, :zone_id) || Map.get(state, :world_id),
+            instance_id: Map.get(state, :instance_id, 1),
+            player_count: count_collection(Map.get(state, :players)),
+            creature_count: count_collection(Map.get(state, :creatures)),
+            started_at: Map.get(state, :started_at)
           }
         end)
     end
@@ -1039,4 +1039,11 @@ defmodule BezgelorWorld.Portal do
       _pid -> true
     end
   end
+
+  # Count items in a collection (Map, MapSet, or list)
+  defp count_collection(nil), do: 0
+  defp count_collection(%MapSet{} = set), do: MapSet.size(set)
+  defp count_collection(%{} = map), do: map_size(map)
+  defp count_collection(list) when is_list(list), do: length(list)
+  defp count_collection(_), do: 0
 end
