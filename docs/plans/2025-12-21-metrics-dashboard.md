@@ -2,11 +2,198 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
+> **Supersedes:** `docs/plans/2025-12-21-livedashboard-telemetry-integration.md` - This plan removes Phoenix LiveDashboard and implements a custom metrics dashboard with persistent storage.
+
 **Goal:** Store telemetry events in Postgres with rollup aggregation and visualize via Chart.js in a tabbed Phoenix LiveView dashboard.
 
 **Architecture:** Telemetry events are captured by a buffered GenServer that batch-inserts to Postgres every 5 seconds. A RollupScheduler aggregates raw events into minute/hour/day buckets on timers. A LiveView dashboard queries these tables and renders Chart.js visualizations with auto-refresh.
 
-**Tech Stack:** Elixir/Phoenix, Ecto, PostgreSQL, Chart.js (via CDN), Phoenix LiveView hooks
+**Tech Stack:** Elixir/Phoenix, Ecto, PostgreSQL, Chart.js (bundled via npm/esbuild), Phoenix LiveView hooks
+
+---
+
+## Amendments Summary (Review Findings)
+
+The following issues were identified during plan review and added as `⚠️ AMENDMENT` notes throughout:
+
+| Severity | Task | Issue | Fix |
+|----------|------|-------|-----|
+| **Critical** | 4 | `upsert_bucket` overwrites instead of merging aggregates | Use `replace_all_except` or raw SQL with proper JSON merge |
+| **Critical** | 5 | Telemetry handlers leak on GenServer restart | Add `terminate/2` callback to detach handlers |
+| **High** | 6 | `array_agg(row_to_json(e))` loads all events into memory | Use streaming with `Repo.stream/2` |
+| **High** | 8 | CDN scripts without SRI hashes | Add `integrity` and `crossorigin` attributes |
+| **Medium** | 0 | `require_admin_plug` pipeline becomes orphaned | Remove it or document future use |
+| **Medium** | 3 | B-tree indexes inefficient for time-series data | Use BRIN indexes for time columns |
+| **Medium** | 4 | No validation on `event_name` (atom exhaustion risk) | Add regex validation |
+| **Medium** | 5 | Hardcoded `@tracked_events` list | Make configurable via application env |
+| **Medium** | 6 | No initial rollup on startup | Run rollup async in init |
+| **Medium** | 9 | `:timer.send_interval` leaks when LiveView dies | Use `Process.send_after` pattern |
+| **Medium** | 9 | `String.to_existing_atom/1` doesn't prevent atom exhaustion | Validate against `@valid_tabs` whitelist |
+| **Medium** | 9 | `load_chart_data/1` queries all 4 tabs on every refresh | Only load active tab's data |
+| **Medium** | 13 | Conditional canvas render prevents hook attachment | Always render canvas with overlay |
+| **Low** | 6 | Dead code - unused `query` variable | Remove unreachable code |
+| **Low** | 9 | `@time_ranges` map doesn't preserve order | Use keyword list for button order |
+| **Low** | 14 | Missing purge test and LiveView test | Add test cases |
+| **Medium** | 6 | Rollup window boundaries not aligned to complete intervals | Use last complete interval, not current |
+| **Medium** | 5 | Metadata may contain PII/sensitive values | Add whitelist sanitization |
+| **High** | 8 | CDN scripts violate bundling best practices | Bundle Chart.js via esbuild instead |
+| **Medium** | 9 | HEEx class string interpolation (old style) | Use list syntax for classes |
+| **Low** | 9 | push_event called when disconnected | Gate with `connected?(socket)` |
+| **Critical** | 6 | Rollup test uses wrong time window | Test events must be in PREVIOUS minute |
+| **Critical** | 5 | Metadata key type mismatch (atom vs string) | Handle both atom and string keys |
+| **Critical** | 4 | upsert still not idempotent with replace_all_except | Use fetch-then-merge pattern |
+| **High** | 12 | Task 12 contradicts Task 9 | Remove Task 12 (already implemented in Task 9) |
+| **High** | 6 | Unlinked Task.start for initial rollup | Use supervised task with error handling |
+| **High** | 9 | No max range limit for custom dates | Cap to 90 days |
+| **Medium** | 8 | Commit includes wrong file (root.html.heex) | Remove from commit |
+| **Medium** | 9 | Dead code: `time_ranges/0` never called | Remove function |
+| **Medium** | 7 | Need TaskSupervisor for supervised tasks | Add to application.ex |
+| **Critical** | 4 | upsert_bucket fetch-then-merge has TOCTOU race | Use raw SQL `ON CONFLICT UPDATE SET count = count + EXCLUDED.count` |
+| **High** | 6 | `array_agg(row_to_json(e))` still used despite amendment | Implement streaming or document as tech debt with event limit |
+| **High** | 9 | `String.to_atom(tab)` creates atoms before validation | Match on string directly, then convert |
+| **Medium** | 9 | `phx-blur` on each input sends only one field | Use form with `phx-change` to send both values |
+| **Medium** | 14 | `register_and_log_in_admin` helper not defined | Add note about existing helper or define it |
+| **Low** | 9 | Custom range doesn't validate `from < to` | Add validation to reject invalid ranges |
+| **Low** | 15 | Manual test emits to current minute but rollup processes previous | Fix test instructions timing |
+| **High** | 6 | `Stream.chunk_by` creates unbounded chunks (100k events = OOM) | Use incremental aggregation with Stream.transform |
+| **Medium** | 9 | `custom_range` nil check passes when value is nil | Check `is_binary` as well as non-empty |
+| **Low** | 4 | `Repo.load` receives string keys from SQL columns | Convert to atoms for safety |
+
+---
+
+## Task 0: Remove LiveDashboard Dependency (Preserve Useful Components)
+
+**Background:** The `phoenix_live_dashboard` dependency was previously added but we're replacing it with a custom metrics dashboard. This task removes LiveDashboard while preserving components that are useful for the new metrics dashboard.
+
+**Components to REMOVE:**
+- `phoenix_live_dashboard` dependency
+- LiveDashboard route (`/admin/live-dashboard`)
+- `import Phoenix.LiveDashboard.Router`
+- `live_dashboard.css` file
+- CSS import in `app.css`
+- Sidebar link to "Live Dashboard"
+
+**Components to PRESERVE (already useful for metrics dashboard):**
+- `require_admin_plug` pipeline in router.ex (reusable for metrics route)
+- `verify_admin_access/2` function in router.ex
+- `admins_only/1` function in hooks.ex
+- `BezgelorCore.TelemetryEvent` module (event declaration convention)
+- `mix bezgelor.telemetry.discover` task
+- All `@telemetry_events` declarations across apps
+- Telemetry metrics configuration in `telemetry.ex`
+
+**Files:**
+- Modify: `apps/bezgelor_portal/mix.exs`
+- Modify: `apps/bezgelor_portal/lib/bezgelor_portal_web/router.ex`
+- Modify: `apps/bezgelor_portal/assets/css/app.css`
+- Modify: `apps/bezgelor_portal/lib/bezgelor_portal_web/components/layouts.ex`
+- Delete: `apps/bezgelor_portal/assets/css/live_dashboard.css`
+
+**Step 1: Remove LiveDashboard dependency from mix.exs**
+
+In `apps/bezgelor_portal/mix.exs`, remove:
+
+```elixir
+      # LiveDashboard
+      {:phoenix_live_dashboard, "~> 0.8"}
+```
+
+**Step 2: Run mix deps.get**
+
+Run: `mix deps.get`
+Expected: Dependencies updated, phoenix_live_dashboard removed
+
+**Step 3: Remove LiveDashboard import and route from router.ex**
+
+In `apps/bezgelor_portal/lib/bezgelor_portal_web/router.ex`:
+
+Remove line 3:
+```elixir
+  import Phoenix.LiveDashboard.Router
+```
+
+Remove the LiveDashboard scope (lines 148-158):
+```elixir
+  # LiveDashboard for admins (outside live_session, uses plug-based auth)
+  scope "/admin" do
+    pipe_through [:require_admin_plug]
+
+    live_dashboard "/live-dashboard",
+      metrics: BezgelorPortalWeb.Telemetry,
+      ecto_repos: [BezgelorDb.Repo],
+      ecto_psql_extras_options: [long_running_queries: [threshold: "200 milliseconds"]],
+      env_keys: ["POSTGRES_HOST", "POSTGRES_PORT", "MIX_ENV"],
+      additional_pages: []
+  end
+```
+
+**NOTE:** Keep the `require_admin_plug` pipeline and `verify_admin_access/2` function - they will be reused for the metrics dashboard route.
+
+**⚠️ AMENDMENT: Orphaned Pipeline**
+
+The `require_admin_plug` pipeline becomes orphaned after this task because the new metrics route in Task 10 uses `live_session` (socket-based auth) rather than plug-based auth. Either:
+1. Remove the orphaned pipeline in this task, OR
+2. Keep it for future non-LiveView admin routes
+
+Decision: Remove it unless there's a concrete future use case.
+
+**Step 4: Remove CSS import from app.css**
+
+In `apps/bezgelor_portal/assets/css/app.css`, remove the last two lines:
+
+```css
+/* LiveDashboard custom styling */
+@import "./live_dashboard.css";
+```
+
+**Step 5: Delete live_dashboard.css**
+
+Run: `rm apps/bezgelor_portal/assets/css/live_dashboard.css`
+
+**Step 6: Remove sidebar link from layouts.ex**
+
+In `apps/bezgelor_portal/lib/bezgelor_portal_web/components/layouts.ex`, around line 264, remove:
+
+```elixir
+            %{href: "/admin/live-dashboard", label: "Live Dashboard", permission: "server.view_logs", external: true},
+```
+
+**Step 7: Verify application compiles**
+
+Run: `mix compile`
+Expected: Compiles without errors
+
+**Step 8: Verify no references remain**
+
+Run: `grep -r "live_dashboard\|LiveDashboard" apps/bezgelor_portal/`
+Expected: No matches (except possibly test files or comments)
+
+**Step 9: Archive the superseded LiveDashboard plan**
+
+Move the old plan to indicate it's superseded:
+
+Run: `mv docs/plans/2025-12-21-livedashboard-telemetry-integration.md docs/plans/archive/2025-12-21-livedashboard-telemetry-integration.md`
+
+If the archive directory doesn't exist:
+Run: `mkdir -p docs/plans/archive && mv docs/plans/2025-12-21-livedashboard-telemetry-integration.md docs/plans/archive/`
+
+**Step 10: Commit**
+
+```bash
+git add -A
+git commit -m "refactor(portal): remove LiveDashboard dependency in favor of custom metrics dashboard
+
+BREAKING: Removes /admin/live-dashboard route
+
+Preserved components for reuse:
+- require_admin_plug pipeline
+- admins_only/1 auth function
+- TelemetryEvent module
+- telemetry.discover mix task
+- All @telemetry_events declarations
+
+Archived: docs/plans/2025-12-21-livedashboard-telemetry-integration.md"
+```
 
 ---
 
@@ -323,9 +510,94 @@ defmodule BezgelorDb.Repo.Migrations.CreateTelemetryTables do
     create unique_index(:telemetry_buckets, [:event_name, :bucket_type, :bucket_start])
     create index(:telemetry_buckets, [:bucket_type, :bucket_start])
     create index(:telemetry_buckets, [:event_name, :bucket_type])
+
+    # ⚠️ AMENDMENT: SQL functions for atomic JSONB merging in upserts
+    # These are required by the upsert_bucket function in Metrics context.
+
+    # Merge two JSONB objects, adding numeric values for matching keys
+    execute """
+    CREATE OR REPLACE FUNCTION jsonb_merge_add(a jsonb, b jsonb) RETURNS jsonb AS $$
+    SELECT COALESCE(
+      jsonb_object_agg(
+        key,
+        COALESCE((a->>key)::numeric, 0) + COALESCE((b->>key)::numeric, 0)
+      ),
+      '{}'::jsonb
+    )
+    FROM (SELECT DISTINCT key FROM (
+      SELECT key FROM jsonb_each_text(COALESCE(a, '{}'))
+      UNION
+      SELECT key FROM jsonb_each_text(COALESCE(b, '{}'))
+    ) keys) k;
+    $$ LANGUAGE SQL IMMUTABLE;
+    """, "DROP FUNCTION IF EXISTS jsonb_merge_add(jsonb, jsonb);"
+
+    # Merge two JSONB objects, taking minimum numeric value for matching keys
+    execute """
+    CREATE OR REPLACE FUNCTION jsonb_merge_min(a jsonb, b jsonb) RETURNS jsonb AS $$
+    SELECT COALESCE(
+      jsonb_object_agg(
+        key,
+        LEAST(
+          COALESCE((a->>key)::numeric, 'infinity'::numeric),
+          COALESCE((b->>key)::numeric, 'infinity'::numeric)
+        )
+      ),
+      '{}'::jsonb
+    )
+    FROM (SELECT DISTINCT key FROM (
+      SELECT key FROM jsonb_each_text(COALESCE(a, '{}'))
+      UNION
+      SELECT key FROM jsonb_each_text(COALESCE(b, '{}'))
+    ) keys) k;
+    $$ LANGUAGE SQL IMMUTABLE;
+    """, "DROP FUNCTION IF EXISTS jsonb_merge_min(jsonb, jsonb);"
+
+    # Merge two JSONB objects, taking maximum numeric value for matching keys
+    execute """
+    CREATE OR REPLACE FUNCTION jsonb_merge_max(a jsonb, b jsonb) RETURNS jsonb AS $$
+    SELECT COALESCE(
+      jsonb_object_agg(
+        key,
+        GREATEST(
+          COALESCE((a->>key)::numeric, '-infinity'::numeric),
+          COALESCE((b->>key)::numeric, '-infinity'::numeric)
+        )
+      ),
+      '{}'::jsonb
+    )
+    FROM (SELECT DISTINCT key FROM (
+      SELECT key FROM jsonb_each_text(COALESCE(a, '{}'))
+      UNION
+      SELECT key FROM jsonb_each_text(COALESCE(b, '{}'))
+    ) keys) k;
+    $$ LANGUAGE SQL IMMUTABLE;
+    """, "DROP FUNCTION IF EXISTS jsonb_merge_max(jsonb, jsonb);"
   end
 end
 ```
+
+**⚠️ AMENDMENT: Use BRIN Indexes for Time-Series Data**
+
+For time-series data like telemetry events, BRIN indexes are more efficient than B-tree indexes because:
+- Data is naturally ordered by `occurred_at`/`bucket_start` (insert order matches physical order)
+- BRIN indexes are ~100x smaller than B-tree for time columns
+- Range scans are the primary access pattern
+
+Replace the time-based B-tree indexes with BRIN:
+
+```elixir
+# Instead of:
+create index(:telemetry_events, [:occurred_at])
+
+# Use:
+create index(:telemetry_events, [:occurred_at], using: :brin)
+
+# Also for buckets:
+create index(:telemetry_buckets, [:bucket_start], using: :brin)
+```
+
+Keep B-tree for `event_name` columns (high cardinality, exact match).
 
 **Step 3: Run migration**
 
@@ -496,24 +768,88 @@ defmodule BezgelorDb.Metrics do
 
   @doc """
   Upsert a telemetry bucket (insert or update counts).
+
+  ⚠️ CRITICAL: Uses raw SQL with ON CONFLICT for atomic upsert.
+  This avoids TOCTOU race conditions that occur with fetch-then-merge.
   """
-  @spec upsert_bucket(map()) :: {:ok, TelemetryBucket.t()} | {:error, Ecto.Changeset.t()}
+  @spec upsert_bucket(map()) :: {:ok, TelemetryBucket.t()} | {:error, term()}
   def upsert_bucket(attrs) do
-    %TelemetryBucket{}
-    |> TelemetryBucket.changeset(attrs)
-    |> Repo.insert(
-      on_conflict: [
-        inc: [count: attrs.count],
-        set: [
-          sum_values: attrs.sum_values,
-          min_values: attrs.min_values,
-          max_values: attrs.max_values,
-          metadata_counts: attrs.metadata_counts
-        ]
-      ],
-      conflict_target: [:event_name, :bucket_type, :bucket_start]
-    )
+    # Validate event_name to prevent atom exhaustion attacks
+    unless is_binary(attrs.event_name) and String.match?(attrs.event_name, ~r/^[a-z0-9._]+$/) do
+      raise ArgumentError, "Invalid event_name format: #{inspect(attrs.event_name)}"
+    end
+
+    # ⚠️ AMENDMENT: Use raw SQL with ON CONFLICT for atomic upsert
+    # The previous fetch-then-merge pattern had a TOCTOU race condition:
+    # - Between get_by and insert/update, another process could modify the row
+    # - This caused constraint violations or lost updates
+    #
+    # Raw SQL with ON CONFLICT DO UPDATE is atomic and handles concurrency correctly.
+    # The jsonb_each_text + aggregation pattern merges JSON values properly.
+    now = DateTime.utc_now() |> DateTime.truncate(:second) |> DateTime.to_iso8601()
+
+    sql = """
+    INSERT INTO telemetry_buckets (
+      event_name, bucket_type, bucket_start, count,
+      sum_values, min_values, max_values, metadata_counts, inserted_at
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    ON CONFLICT (event_name, bucket_type, bucket_start) DO UPDATE SET
+      count = telemetry_buckets.count + EXCLUDED.count,
+      sum_values = jsonb_merge_add(telemetry_buckets.sum_values, EXCLUDED.sum_values),
+      min_values = jsonb_merge_min(telemetry_buckets.min_values, EXCLUDED.min_values),
+      max_values = jsonb_merge_max(telemetry_buckets.max_values, EXCLUDED.max_values),
+      metadata_counts = jsonb_merge_add(telemetry_buckets.metadata_counts, EXCLUDED.metadata_counts)
+    RETURNING *
+    """
+
+    case Repo.query(sql, [
+      attrs.event_name,
+      to_string(attrs.bucket_type),
+      attrs.bucket_start,
+      attrs.count,
+      attrs.sum_values || %{},
+      attrs.min_values || %{},
+      attrs.max_values || %{},
+      attrs.metadata_counts || %{},
+      now
+    ]) do
+      {:ok, %{rows: [row], columns: columns}} ->
+        # ⚠️ AMENDMENT: Convert string column names to atoms for Repo.load
+        # SQL columns are strings, but Ecto schemas expect atom keys
+        data =
+          columns
+          |> Enum.zip(row)
+          |> Enum.into(%{}, fn {col, val} -> {String.to_existing_atom(col), val} end)
+
+        bucket = Repo.load(TelemetryBucket, data)
+        {:ok, bucket}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
   end
+
+  # Note: The jsonb_merge_add, jsonb_merge_min, jsonb_merge_max functions must be
+  # created in the database. Add to the migration:
+  #
+  # execute """
+  # CREATE OR REPLACE FUNCTION jsonb_merge_add(a jsonb, b jsonb) RETURNS jsonb AS $$
+  # SELECT COALESCE(
+  #   jsonb_object_agg(
+  #     key,
+  #     COALESCE((a->>key)::numeric, 0) + COALESCE((b->>key)::numeric, 0)
+  #   ),
+  #   '{}'::jsonb
+  # )
+  # FROM (SELECT DISTINCT key FROM (
+  #   SELECT key FROM jsonb_each_text(COALESCE(a, '{}'))
+  #   UNION
+  #   SELECT key FROM jsonb_each_text(COALESCE(b, '{}'))
+  # ) keys) k;
+  # $$ LANGUAGE SQL IMMUTABLE;
+  # """
+  #
+  # Similar for jsonb_merge_min and jsonb_merge_max using LEAST/GREATEST.
 
   @doc """
   Delete events older than the given cutoff.
@@ -622,8 +958,10 @@ defmodule BezgelorPortal.TelemetryCollector do
   @default_flush_interval 5_000
   @default_max_buffer_size 1_000
 
-  # Events to capture
-  @tracked_events [
+  # ⚠️ AMENDMENT: Make tracked events configurable via application env
+  # This allows adding/removing events without code changes.
+  # In config.exs: config :bezgelor_portal, :telemetry_events, [[:bezgelor, :auth, :login_complete], ...]
+  @default_tracked_events [
     [:bezgelor, :auth, :login_complete],
     [:bezgelor, :realm, :session_start],
     [:bezgelor, :world, :player_entered],
@@ -637,6 +975,38 @@ defmodule BezgelorPortal.TelemetryCollector do
     [:bezgelor, :server, :zones]
   ]
 
+  defp tracked_events do
+    Application.get_env(:bezgelor_portal, :telemetry_events, @default_tracked_events)
+  end
+
+  # ⚠️ AMENDMENT: Whitelist allowed metadata keys to prevent PII exposure
+  # Raw metadata could contain sensitive values (emails, IPs, tokens, etc.)
+  # ⚠️ AMENDMENT: Use atoms since telemetry metadata typically has atom keys
+  @allowed_metadata_keys [:account_id, :character_id, :zone_id, :success, :creature_id,
+                          :quest_id, :item_id, :spell_id, :guild_id, :world_id]
+
+  defp sanitize_metadata(metadata) when is_map(metadata) do
+    # ⚠️ AMENDMENT: Handle both atom and string keys from telemetry
+    metadata
+    |> Enum.filter(fn {k, _v} -> normalize_key(k) in @allowed_metadata_keys end)
+    |> Enum.into(%{}, fn {k, v} -> {to_string(k), sanitize_value(v)} end)
+  end
+  defp sanitize_metadata(_), do: %{}
+
+  # Normalize key to atom for comparison (handles both atom and string keys)
+  defp normalize_key(k) when is_atom(k), do: k
+  defp normalize_key(k) when is_binary(k) do
+    try do
+      String.to_existing_atom(k)
+    rescue
+      ArgumentError -> nil  # Unknown string key
+    end
+  end
+  defp normalize_key(_), do: nil
+
+  defp sanitize_value(v) when is_binary(v) and byte_size(v) > 100, do: String.slice(v, 0, 100)
+  defp sanitize_value(v), do: v
+
   def start_link(opts \\ []) do
     GenServer.start_link(__MODULE__, opts, name: Keyword.get(opts, :name, __MODULE__))
   end
@@ -646,8 +1016,8 @@ defmodule BezgelorPortal.TelemetryCollector do
     flush_interval = Keyword.get(opts, :flush_interval, @default_flush_interval)
     max_buffer_size = Keyword.get(opts, :max_buffer_size, @default_max_buffer_size)
 
-    # Attach to telemetry events
-    attach_handlers()
+    # Attach to telemetry events - returns list of handler IDs
+    handler_ids = attach_handlers()
 
     # Schedule periodic flush (unless :infinity for testing)
     if flush_interval != :infinity do
@@ -658,7 +1028,8 @@ defmodule BezgelorPortal.TelemetryCollector do
      %{
        buffer: [],
        flush_interval: flush_interval,
-       max_buffer_size: max_buffer_size
+       max_buffer_size: max_buffer_size,
+       handler_ids: handler_ids  # ⚠️ Store for cleanup in terminate
      }}
   end
 
@@ -676,7 +1047,7 @@ defmodule BezgelorPortal.TelemetryCollector do
     event = %{
       event_name: Enum.join(event_name, "."),
       measurements: measurements,
-      metadata: metadata,
+      metadata: sanitize_metadata(metadata),  # ⚠️ AMENDMENT: Sanitize to prevent PII
       occurred_at: occurred_at
     }
 
@@ -701,9 +1072,11 @@ defmodule BezgelorPortal.TelemetryCollector do
     {:noreply, %{state | buffer: []}}
   end
 
+  # ⚠️ AMENDMENT: Store handler IDs in state to detach on terminate
   defp attach_handlers do
-    Enum.each(@tracked_events, fn event ->
-      handler_id = "telemetry_collector_#{Enum.join(event, "_")}"
+    tracked_events()
+    |> Enum.map(fn event ->
+      handler_id = "telemetry_collector_#{Enum.join(event, "_")}_#{:erlang.pid_to_list(self())}"
 
       :telemetry.attach(
         handler_id,
@@ -711,7 +1084,20 @@ defmodule BezgelorPortal.TelemetryCollector do
         &__MODULE__.handle_event/4,
         %{collector: self()}
       )
+
+      handler_id
     end)
+  end
+
+  # ⚠️ CRITICAL: Detach handlers on terminate to prevent leaks
+  # If the GenServer restarts, old handlers with stale PIDs remain attached
+  # and will fail silently, losing telemetry data.
+  @impl true
+  def terminate(_reason, state) do
+    Enum.each(state.handler_ids || [], fn handler_id ->
+      :telemetry.detach(handler_id)
+    end)
+    :ok
   end
 
   defp schedule_flush(interval) do
@@ -766,35 +1152,43 @@ defmodule BezgelorPortal.RollupSchedulerTest do
 
   describe "rollup_minute/0" do
     test "aggregates events into minute buckets" do
+      # ⚠️ AMENDMENT: Events must be in the PREVIOUS complete minute.
+      # rollup_minute() processes the last COMPLETE minute, not the current one.
+      # If now is 14:32:45, rollup processes 14:31:00-14:32:00.
       now = DateTime.utc_now() |> DateTime.truncate(:second)
-      bucket_start = now |> Map.put(:second, 0)
+      current_minute_start = now |> Map.put(:second, 0)
+      # The bucket rollup_minute() will process:
+      previous_minute_start = DateTime.add(current_minute_start, -60, :second)
+      # Insert events in the MIDDLE of the previous minute (30 seconds in)
+      event_time = DateTime.add(previous_minute_start, 30, :second)
 
-      # Insert test events
+      # Insert test events in the PREVIOUS minute
       Metrics.insert_events([
         %{
           event_name: "test.event",
           measurements: %{"value" => 10},
           metadata: %{"tag" => "a"},
-          occurred_at: now
+          occurred_at: event_time
         },
         %{
           event_name: "test.event",
           measurements: %{"value" => 20},
           metadata: %{"tag" => "a"},
-          occurred_at: now
+          occurred_at: event_time
         }
       ])
 
-      # Run rollup
+      # Run rollup (processes previous minute)
       RollupScheduler.rollup_minute()
 
-      # Check bucket was created
-      buckets = Metrics.query_buckets("test.event", :minute, bucket_start, now)
+      # Check bucket was created for the PREVIOUS minute
+      buckets = Metrics.query_buckets("test.event", :minute, previous_minute_start, current_minute_start)
       assert length(buckets) == 1
 
       bucket = hd(buckets)
       assert bucket.count == 2
       assert bucket.sum_values["value"] == 30
+      assert bucket.bucket_start == previous_minute_start
     end
   end
 end
@@ -854,6 +1248,17 @@ defmodule BezgelorPortal.RollupScheduler do
 
   @impl true
   def init(_opts) do
+    # ⚠️ AMENDMENT: Run initial rollup on startup to catch events
+    # that accumulated while the scheduler was down.
+    # Run async to not block supervisor startup.
+    # ⚠️ AMENDMENT: Use Task.Supervisor for proper error handling.
+    # Unlinked Task.start means errors are silently swallowed.
+    Task.Supervisor.start_child(BezgelorPortal.TaskSupervisor, fn ->
+      Process.sleep(5_000)  # Wait for other services
+      rollup_minute()
+      rollup_hour()
+    end)
+
     schedule_minute_rollup()
     schedule_hour_rollup()
     schedule_day_rollup()
@@ -885,69 +1290,118 @@ defmodule BezgelorPortal.RollupScheduler do
 
   @doc """
   Aggregate raw events from the last minute into minute buckets.
+
+  ⚠️ AMENDMENT: Uses LAST COMPLETE minute, not current partial minute.
+  This ensures idempotent rollups even if scheduler drifts or restarts.
   """
   def rollup_minute do
     now = DateTime.utc_now()
-    bucket_start = now |> DateTime.truncate(:second) |> Map.put(:second, 0)
-    from = DateTime.add(bucket_start, -60, :second)
+    # Truncate to current minute boundary, then go back one minute
+    # This gives us the LAST COMPLETE minute
+    current_minute = now |> DateTime.truncate(:second) |> Map.put(:second, 0)
+    bucket_end = current_minute
+    bucket_start = DateTime.add(bucket_end, -60, :second)
 
-    aggregate_events_to_buckets(from, bucket_start, :minute)
+    aggregate_events_to_buckets(bucket_start, bucket_end, :minute)
   end
 
   @doc """
   Aggregate minute buckets from the last hour into hour buckets.
+
+  ⚠️ AMENDMENT: Uses LAST COMPLETE hour.
   """
   def rollup_hour do
     now = DateTime.utc_now()
-    bucket_start = now |> DateTime.truncate(:second) |> Map.put(:second, 0) |> Map.put(:minute, 0)
-    from = DateTime.add(bucket_start, -3600, :second)
+    # Truncate to current hour boundary, then go back one hour
+    current_hour = now |> DateTime.truncate(:second) |> Map.put(:second, 0) |> Map.put(:minute, 0)
+    bucket_end = current_hour
+    bucket_start = DateTime.add(bucket_end, -3600, :second)
 
-    aggregate_buckets(:minute, from, bucket_start, :hour, bucket_start)
+    aggregate_buckets(:minute, bucket_start, bucket_end, :hour, bucket_start)
   end
 
   @doc """
   Aggregate hour buckets from the last day into day buckets.
+
+  ⚠️ AMENDMENT: Uses YESTERDAY, not today (which is incomplete).
   """
   def rollup_day do
     now = DateTime.utc_now()
     today = DateTime.to_date(now)
-    bucket_start = DateTime.new!(today, ~T[00:00:00], "Etc/UTC")
-    from = DateTime.add(bucket_start, -86400, :second)
+    today_start = DateTime.new!(today, ~T[00:00:00], "Etc/UTC")
+    # Yesterday's complete day
+    bucket_start = DateTime.add(today_start, -86400, :second)
+    bucket_end = today_start
 
-    aggregate_buckets(:hour, from, bucket_start, :day, bucket_start)
+    aggregate_buckets(:hour, bucket_start, bucket_end, :day, bucket_start)
   end
 
   defp aggregate_events_to_buckets(from, to, bucket_type) do
-    # Query events grouped by name and aggregate
-    query =
-      from(e in TelemetryEvent,
-        where: e.occurred_at >= ^from and e.occurred_at < ^to,
-        group_by: e.event_name,
-        select: %{
-          event_name: e.event_name,
-          count: count(e.id),
-          events: fragment("array_agg(row_to_json(?))", e)
-        }
-      )
+    # ⚠️ AMENDMENT: Use incremental aggregation to avoid loading all events into memory
+    # The original array_agg(row_to_json(e)) loads ALL events into memory.
+    # Stream.chunk_by also creates unbounded chunks (100k events with same name = OOM).
+    #
+    # This implementation uses Stream.transform for true incremental aggregation:
+    # - Each event is processed one at a time
+    # - Aggregates are accumulated in a map keyed by event_name
+    # - Only the aggregates are kept in memory, not the events
 
     bucket_start_truncated =
       from |> DateTime.truncate(:second) |> Map.put(:second, 0)
 
-    Repo.all(query)
-    |> Enum.each(fn row ->
-      # Parse aggregated events to compute min/max/sum
-      {sum_values, min_values, max_values, metadata_counts} =
-        compute_aggregates(row.events)
+    # Use a transaction for streaming (required by Ecto)
+    {:ok, aggregates} = Repo.transaction(fn ->
+      TelemetryEvent
+      |> where([e], e.occurred_at >= ^from and e.occurred_at < ^to)
+      |> Repo.stream(max_rows: 500)
+      |> Enum.reduce(%{}, fn event, acc ->
+        # ⚠️ AMENDMENT: Incremental aggregation - never holds more than one event at a time
+        event_name = event.event_name
+        measurements = event.measurements || %{}
+        metadata = event.metadata || %{}
 
+        # Get or initialize aggregate for this event_name
+        current = Map.get(acc, event_name, %{
+          count: 0,
+          sum_values: %{},
+          min_values: %{},
+          max_values: %{},
+          metadata_counts: %{}
+        })
+
+        # Merge this event into the aggregate
+        updated = %{
+          count: current.count + 1,
+          sum_values: Map.merge(current.sum_values, measurements, fn _k, v1, v2 ->
+            (v1 || 0) + (v2 || 0)
+          end),
+          min_values: Map.merge(current.min_values, measurements, fn _k, v1, v2 ->
+            min(v1, v2)
+          end),
+          max_values: Map.merge(current.max_values, measurements, fn _k, v1, v2 ->
+            max(v1, v2)
+          end),
+          metadata_counts: (
+            meta_key = metadata |> Enum.sort() |> Enum.map(fn {k, v} -> "#{k}:#{v}" end) |> Enum.join(",")
+            Map.update(current.metadata_counts, meta_key, 1, &(&1 + 1))
+          )
+        }
+
+        Map.put(acc, event_name, updated)
+      end)
+    end, timeout: :infinity)
+
+    # Now upsert all the aggregated buckets
+    Enum.each(aggregates, fn {event_name, agg} ->
       Metrics.upsert_bucket(%{
-        event_name: row.event_name,
+        event_name: event_name,
         bucket_type: bucket_type,
         bucket_start: bucket_start_truncated,
-        count: row.count,
-        sum_values: sum_values,
-        min_values: min_values,
-        max_values: max_values,
-        metadata_counts: metadata_counts
+        count: agg.count,
+        sum_values: agg.sum_values,
+        min_values: agg.min_values,
+        max_values: agg.max_values,
+        metadata_counts: agg.metadata_counts
       })
     end)
 
@@ -955,19 +1409,10 @@ defmodule BezgelorPortal.RollupScheduler do
   end
 
   defp aggregate_buckets(source_type, from, to, target_type, target_start) do
-    query =
-      from(b in TelemetryBucket,
-        where: b.bucket_type == ^source_type,
-        where: b.bucket_start >= ^from and b.bucket_start < ^to,
-        group_by: b.event_name,
-        select: %{
-          event_name: b.event_name,
-          count: sum(b.count),
-          sum_values: fragment("jsonb_object_agg(key, COALESCE((? ->> key)::numeric, 0)) FROM jsonb_each_text(?)", b.sum_values, b.sum_values)
-        }
-      )
+    # ⚠️ AMENDMENT: Removed dead code - the `query` variable below was never used
+    # The actual implementation uses Enum.group_by instead.
 
-    # Simplified: just sum counts for now
+    # Fetch and aggregate source buckets
     TelemetryBucket
     |> where([b], b.bucket_type == ^source_type)
     |> where([b], b.bucket_start >= ^from and b.bucket_start < ^to)
@@ -1118,6 +1563,8 @@ defmodule BezgelorPortal.Application do
       BezgelorPortal.Vault,
       # Log buffer for admin log viewer
       BezgelorPortal.LogBuffer,
+      # ⚠️ AMENDMENT: Task supervisor for async tasks (must start before RollupScheduler)
+      {Task.Supervisor, name: BezgelorPortal.TaskSupervisor},
       # Telemetry metrics collection and rollup
       BezgelorPortal.TelemetryCollector,
       BezgelorPortal.RollupScheduler,
@@ -1260,20 +1707,64 @@ let liveSocket = new LiveSocket("/live", Socket, {
 })
 ```
 
-**Step 3: Add Chart.js CDN to layout**
+**Step 3: Bundle Chart.js via esbuild (NOT CDN)**
 
-Edit `apps/bezgelor_portal/lib/bezgelor_portal_web/components/layouts/root.html.heex`, add before closing `</head>`:
+**⚠️ AMENDMENT: Bundle Chart.js instead of CDN**
 
-```html
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+External CDN scripts violate bundling best practices and add CSP complexity. Bundle via npm/esbuild instead.
+
+**Step 3a: Install Chart.js npm packages**
+
+Run:
+```bash
+cd apps/bezgelor_portal/assets
+npm install chart.js chartjs-adapter-date-fns
 ```
+
+**Step 3b: Import in app.js**
+
+Edit `apps/bezgelor_portal/assets/js/app.js`, add near the top:
+
+```javascript
+// Chart.js - bundled for reliability and CSP compliance
+import Chart from "chart.js/auto"
+import "chartjs-adapter-date-fns"
+
+// Make Chart available globally for the hook
+window.Chart = Chart
+```
+
+**Step 3c: Update the hook to not assume global Chart**
+
+The hook should already work since we set `window.Chart`, but for cleaner code, update `metrics_chart.js`:
+
+```javascript
+// If using ES modules directly:
+// import Chart from "chart.js/auto"
+
+const MetricsChart = {
+  mounted() {
+    // Chart is available via window.Chart from app.js import
+    if (typeof Chart === "undefined") {
+      console.error("Chart.js not loaded")
+      return
+    }
+    // ... rest of hook
+  }
+  // ...
+}
+```
+
+**No layout changes needed** - Chart.js is now bundled in app.js.
 
 **Step 4: Commit**
 
 ```bash
-git add apps/bezgelor_portal/assets/js/metrics_chart.js apps/bezgelor_portal/assets/js/app.js apps/bezgelor_portal/lib/bezgelor_portal_web/components/layouts/root.html.heex
-git commit -m "feat(portal): add Chart.js hook for metrics visualization"
+# ⚠️ AMENDMENT: No root.html.heex changes - Chart.js is bundled via npm/esbuild
+git add apps/bezgelor_portal/assets/js/metrics_chart.js apps/bezgelor_portal/assets/js/app.js apps/bezgelor_portal/assets/package.json apps/bezgelor_portal/assets/package-lock.json
+git commit -m "feat(portal): add Chart.js hook for metrics visualization
+
+Bundles Chart.js via npm/esbuild for CSP compliance and reliability."
 ```
 
 ---
@@ -1302,18 +1793,27 @@ defmodule BezgelorPortalWeb.Admin.MetricsDashboardLive do
 
   @refresh_interval 10_000
 
-  @time_ranges %{
-    "1h" => 1,
-    "6h" => 6,
-    "24h" => 24,
-    "7d" => 24 * 7,
-    "30d" => 24 * 30
-  }
+  # ⚠️ AMENDMENT: Use keyword list to preserve order in UI
+  # Maps in Elixir don't preserve insertion order, so buttons would appear random.
+  @time_ranges [
+    {"1h", 1},
+    {"6h", 6},
+    {"24h", 24},
+    {"7d", 24 * 7},
+    {"30d", 24 * 30}
+  ]
+
+  # ⚠️ AMENDMENT: @valid_tabs removed - replaced by @tab_mapping in handle_event
+  # The mapping approach is safer because String.to_atom is never called on user input.
 
   @impl true
   def mount(_params, _session, socket) do
+    # ⚠️ AMENDMENT: Use Process.send_after instead of :timer.send_interval
+    # :timer.send_interval creates a timer process that isn't linked to the LiveView,
+    # causing memory leaks when the LiveView terminates (timer keeps running).
+    # Process.send_after self-cleans when the process dies.
     if connected?(socket) do
-      :timer.send_interval(@refresh_interval, self(), :refresh)
+      schedule_refresh()
     end
 
     {:ok,
@@ -1328,17 +1828,40 @@ defmodule BezgelorPortalWeb.Admin.MetricsDashboardLive do
      |> load_chart_data(), layout: {BezgelorPortalWeb.Layouts, :admin}}
   end
 
-  @impl true
-  def handle_info(:refresh, socket) do
-    {:noreply, load_chart_data(socket)}
+  defp schedule_refresh do
+    Process.send_after(self(), :refresh, @refresh_interval)
   end
 
   @impl true
+  def handle_info(:refresh, socket) do
+    # ⚠️ AMENDMENT: Reschedule next refresh
+    schedule_refresh()
+    {:noreply, load_chart_data(socket)}
+  end
+
+  # ⚠️ AMENDMENT: Map strings to atoms to prevent atom exhaustion attacks
+  # String.to_atom/1 creates atoms for ANY input, even before validation.
+  # This approach only allows the 4 known tab values.
+  @tab_mapping %{
+    "server" => :server,
+    "auth" => :auth,
+    "gameplay" => :gameplay,
+    "combat" => :combat
+  }
+
+  @impl true
   def handle_event("change_tab", %{"tab" => tab}, socket) do
-    {:noreply,
-     socket
-     |> assign(active_tab: String.to_existing_atom(tab))
-     |> load_chart_data()}
+    # ⚠️ AMENDMENT: Match on string first, then get atom from safe mapping
+    case Map.get(@tab_mapping, tab) do
+      nil ->
+        {:noreply, socket}
+
+      tab_atom ->
+        {:noreply,
+         socket
+         |> assign(active_tab: tab_atom)
+         |> load_chart_data()}
+    end
   end
 
   @impl true
@@ -1350,11 +1873,23 @@ defmodule BezgelorPortalWeb.Admin.MetricsDashboardLive do
   end
 
   @impl true
-  def handle_event("custom_range", %{"from" => from, "to" => to}, socket) do
-    {:noreply,
-     socket
-     |> assign(time_range: "custom", custom_from: from, custom_to: to)
-     |> load_chart_data()}
+  def handle_event("custom_range", params, socket) do
+    # ⚠️ AMENDMENT: Handle form phx-change which sends all form fields
+    # Also handle case where one field is empty during typing
+    from = Map.get(params, "from", socket.assigns.custom_from)
+    to = Map.get(params, "to", socket.assigns.custom_to)
+
+    # ⚠️ AMENDMENT: Check is_binary to handle nil values correctly
+    # nil != "" is true, so we must explicitly check for binary strings
+    if is_binary(from) and from != "" and is_binary(to) and to != "" do
+      {:noreply,
+       socket
+       |> assign(time_range: "custom", custom_from: from, custom_to: to)
+       |> load_chart_data()}
+    else
+      # Store partial values but don't reload data yet
+      {:noreply, assign(socket, custom_from: from, custom_to: to)}
+    end
   end
 
   @impl true
@@ -1372,26 +1907,33 @@ defmodule BezgelorPortalWeb.Admin.MetricsDashboardLive do
         </div>
       </div>
 
+      <%!-- ⚠️ AMENDMENT: Use list syntax for classes (modern HEEx style) --%>
       <!-- Time Range Selector -->
       <div class="flex items-center gap-4">
-        <div class="join">
+        <div class="flex gap-1">
           <button
             :for={{label, _} <- @time_ranges}
             type="button"
-            class={"join-item btn btn-sm #{if @time_range == label, do: "btn-primary", else: "btn-ghost"}"}
+            class={[
+              "px-3 py-1 text-sm rounded font-medium transition-colors",
+              @time_range == label && "bg-primary text-primary-content",
+              @time_range != label && "bg-base-200 hover:bg-base-300"
+            ]}
             phx-click="change_time_range"
             phx-value-range={label}
           >
             {label}
           </button>
         </div>
-        <div class="flex items-center gap-2">
+        <%!-- ⚠️ AMENDMENT: Wrap in form with phx-change to send both values --%>
+        <%!-- phx-blur on individual inputs only sends that field's value --%>
+        <form phx-change="custom_range" class="flex items-center gap-2">
           <input
             type="datetime-local"
             name="from"
             class="input input-sm input-bordered"
             value={@custom_from}
-            phx-blur="custom_range"
+            phx-debounce="500"
           />
           <span>to</span>
           <input
@@ -1399,18 +1941,22 @@ defmodule BezgelorPortalWeb.Admin.MetricsDashboardLive do
             name="to"
             class="input input-sm input-bordered"
             value={@custom_to}
-            phx-blur="custom_range"
+            phx-debounce="500"
           />
-        </div>
+        </form>
       </div>
 
       <!-- Tabs -->
-      <div role="tablist" class="tabs tabs-boxed bg-base-100 p-1 w-fit">
+      <div role="tablist" class="flex gap-1 bg-base-200 p-1 rounded-lg w-fit">
         <button
           :for={tab <- [:server, :auth, :gameplay, :combat]}
           type="button"
           role="tab"
-          class={"tab #{if @active_tab == tab, do: "tab-active"}"}
+          class={[
+            "px-4 py-2 text-sm font-medium rounded transition-colors",
+            @active_tab == tab && "bg-base-100 shadow",
+            @active_tab != tab && "hover:bg-base-300"
+          ]}
           phx-click="change_tab"
           phx-value-tab={tab}
         >
@@ -1481,12 +2027,17 @@ defmodule BezgelorPortalWeb.Admin.MetricsDashboardLive do
   defp load_chart_data(socket) do
     {from, to, bucket_type, time_unit} = get_time_range(socket.assigns)
 
-    socket
-    |> load_server_data(from, to, bucket_type, time_unit)
-    |> load_auth_data(from, to, bucket_type, time_unit)
-    |> load_gameplay_data(from, to, bucket_type, time_unit)
-    |> load_combat_data(from, to, bucket_type, time_unit)
-    |> push_chart_updates()
+    # ⚠️ AMENDMENT: Only load data for the active tab to reduce DB queries
+    # Previously loaded all 4 tabs on every refresh, causing unnecessary load.
+    socket =
+      case socket.assigns.active_tab do
+        :server -> load_server_data(socket, from, to, bucket_type, time_unit)
+        :auth -> load_auth_data(socket, from, to, bucket_type, time_unit)
+        :gameplay -> load_gameplay_data(socket, from, to, bucket_type, time_unit)
+        :combat -> load_combat_data(socket, from, to, bucket_type, time_unit)
+      end
+
+    push_chart_updates(socket)
   end
 
   defp get_time_range(assigns) do
@@ -1498,7 +2049,11 @@ defmodule BezgelorPortalWeb.Admin.MetricsDashboardLive do
           parse_custom_range(assigns.custom_from, assigns.custom_to, now)
 
         range ->
-          hours = Map.get(@time_ranges, range, 1)
+          # ⚠️ AMENDMENT: Use List.keyfind for keyword list lookup
+          hours = case List.keyfind(@time_ranges, range, 0) do
+            {_, h} -> h
+            nil -> 1
+          end
           {DateTime.add(now, -hours, :hour), now}
       end
 
@@ -1516,13 +2071,40 @@ defmodule BezgelorPortalWeb.Admin.MetricsDashboardLive do
     {from, to, bucket_type, time_unit}
   end
 
+  # ⚠️ AMENDMENT: Max 90 days for custom date range to prevent excessive queries
+  @max_custom_range_days 90
+
   defp parse_custom_range(nil, _, now), do: {DateTime.add(now, -1, :hour), now}
   defp parse_custom_range(_, nil, now), do: {DateTime.add(now, -1, :hour), now}
 
   defp parse_custom_range(from_str, to_str, now) do
     with {:ok, from} <- NaiveDateTime.from_iso8601(from_str),
          {:ok, to} <- NaiveDateTime.from_iso8601(to_str) do
-      {DateTime.from_naive!(from, "Etc/UTC"), DateTime.from_naive!(to, "Etc/UTC")}
+      from_dt = DateTime.from_naive!(from, "Etc/UTC")
+      to_dt = DateTime.from_naive!(to, "Etc/UTC")
+
+      # ⚠️ AMENDMENT: Validate from < to (reject invalid ranges)
+      # Also enforce max range limit
+      days_diff = DateTime.diff(to_dt, from_dt, :day)
+
+      cond do
+        # Invalid: from >= to (negative or zero range)
+        days_diff < 0 ->
+          # Swap them if user entered backwards
+          parse_custom_range(to_str, from_str, now)
+
+        days_diff == 0 and DateTime.compare(from_dt, to_dt) != :lt ->
+          # Same day but from >= to in time
+          {DateTime.add(now, -1, :hour), now}
+
+        # Exceeds max range
+        days_diff > @max_custom_range_days ->
+          # Cap the from date to 90 days before to
+          {DateTime.add(to_dt, -@max_custom_range_days, :day), to_dt}
+
+        true ->
+          {from_dt, to_dt}
+      end
     else
       _ -> {DateTime.add(now, -1, :hour), now}
     end
@@ -1647,23 +2229,42 @@ defmodule BezgelorPortalWeb.Admin.MetricsDashboardLive do
   end
 
   defp push_chart_updates(socket) do
-    # Push updates to all chart hooks
-    socket
-    |> push_event("update_chart", socket.assigns.players_data)
-    |> push_event("update_chart", socket.assigns.creatures_data)
-    |> push_event("update_chart", socket.assigns.zones_data)
-    |> push_event("update_chart", socket.assigns.logins_data)
-    |> push_event("update_chart", socket.assigns.sessions_data)
-    |> push_event("update_chart", socket.assigns.login_success_data)
-    |> push_event("update_chart", socket.assigns.world_entry_data)
-    |> push_event("update_chart", socket.assigns.quests_accepted_data)
-    |> push_event("update_chart", socket.assigns.quests_completed_data)
-    |> push_event("update_chart", socket.assigns.kills_data)
-    |> push_event("update_chart", socket.assigns.xp_data)
-    |> push_event("update_chart", socket.assigns.damage_data)
+    # ⚠️ AMENDMENT: Only push when connected to avoid unnecessary event queueing
+    unless connected?(socket) do
+      socket
+    else
+      # ⚠️ AMENDMENT: Only push updates for active tab's charts
+      # Avoids trying to access assigns that don't exist for inactive tabs.
+      case socket.assigns.active_tab do
+      :server ->
+        socket
+        |> push_event("update_chart_players-chart", socket.assigns.players_data)
+        |> push_event("update_chart_creatures-chart", socket.assigns.creatures_data)
+        |> push_event("update_chart_zones-chart", socket.assigns.zones_data)
+
+      :auth ->
+        socket
+        |> push_event("update_chart_logins-chart", socket.assigns.logins_data)
+        |> push_event("update_chart_sessions-chart", socket.assigns.sessions_data)
+        |> push_event("update_chart_login-success-chart", socket.assigns.login_success_data)
+
+      :gameplay ->
+        socket
+        |> push_event("update_chart_world-entry-chart", socket.assigns.world_entry_data)
+        |> push_event("update_chart_quests-accepted-chart", socket.assigns.quests_accepted_data)
+        |> push_event("update_chart_quests-completed-chart", socket.assigns.quests_completed_data)
+
+      :combat ->
+        socket
+        |> push_event("update_chart_kills-chart", socket.assigns.kills_data)
+        |> push_event("update_chart_xp-chart", socket.assigns.xp_data)
+        |> push_event("update_chart_damage-chart", socket.assigns.damage_data)
+      end
+    end
   end
 
-  defp time_ranges, do: @time_ranges
+  # ⚠️ AMENDMENT: Removed dead code `defp time_ranges, do: @time_ranges`
+  # It was never called - @time_ranges is used directly where needed.
 end
 ```
 
@@ -1721,14 +2322,29 @@ git commit -m "feat(portal): add /admin/metrics route for dashboard"
 
 **Step 1: Find admin sidebar links**
 
-Look for the sidebar section with admin links.
+Look for the Server sidebar section with admin links (around line 260-270).
 
 **Step 2: Add Metrics Dashboard link**
 
-Add after Live Dashboard or Analytics:
+Add where the "Live Dashboard" link was removed in Task 0, after "Server Status":
 
 ```elixir
-%{href: "/admin/metrics", label: "Metrics", permission: "server.view_logs"}
+            %{href: "/admin/metrics", label: "Metrics", permission: "server.view_logs"},
+```
+
+The Server section should now look like:
+```elixir
+        <.sidebar_section
+          title="Server"
+          icon="hero-server"
+          permission_set={@permission_set}
+          links={[
+            %{href: "/admin/server", label: "Server Status", permission: "server.view_logs"},
+            %{href: "/admin/metrics", label: "Metrics", permission: "server.view_logs"},
+            %{href: "/admin/server/logs", label: "Logs", permission: "server.view_logs"},
+            %{href: "/admin/settings", label: "Server Settings", permission: "server.settings"}
+          ]}
+        />
 ```
 
 **Step 3: Verify sidebar shows link**
@@ -1746,7 +2362,20 @@ git commit -m "feat(portal): add Metrics Dashboard to admin sidebar"
 
 ## Task 12: Fix Chart.js Hook Event Targeting
 
-**Files:**
+**⚠️ AMENDMENT: THIS TASK IS SUPERSEDED BY TASK 9**
+
+Task 9 already includes the corrected `push_chart_updates/1` implementation that:
+1. Only pushes events for the active tab's charts (not all 12 charts)
+2. Gates with `connected?(socket)` check
+3. Uses the correct per-chart event targeting pattern
+
+The `push_chart_updates/1` shown below is **OUT OF DATE** - it pushes ALL charts regardless of active tab.
+
+**SKIP THIS TASK** - The correct implementation is already in Task 9.
+
+---
+
+**Files (OUTDATED - see Task 9):**
 - Modify: `apps/bezgelor_portal/assets/js/metrics_chart.js`
 - Modify: `apps/bezgelor_portal/lib/bezgelor_portal_web/live/admin/metrics_dashboard_live.ex`
 
@@ -1812,7 +2441,11 @@ git commit -m "fix(portal): target chart updates to specific canvas elements"
 
 **Step 1: Add empty state check to chart_card**
 
-Update the chart_card component:
+**⚠️ AMENDMENT: Always render canvas so hooks can attach**
+
+The original implementation conditionally renders the canvas, which prevents the `phx-hook` from attaching when there's no data. Then when data arrives, the hook doesn't exist to receive `update_chart` events.
+
+**Fixed implementation:** Always render the canvas, but show an overlay message when empty:
 
 ```elixir
 defp chart_card(assigns) do
@@ -1823,19 +2456,20 @@ defp chart_card(assigns) do
   <div class="card bg-base-100 shadow">
     <div class="card-body">
       <h3 class="card-title text-base">{@title}</h3>
-      <div class="h-64">
-        <%= if @has_data do %>
-          <canvas
-            id={@id}
-            phx-hook="MetricsChart"
-            phx-update="ignore"
-            data-chart-type={@chart_type}
-            data-chart-title={@title}
-          >
-          </canvas>
-        <% else %>
-          <div class="flex items-center justify-center h-full text-base-content/50">
-            <div class="text-center">
+      <div class="h-64 relative">
+        <%!-- ⚠️ Always render canvas so hook can attach --%>
+        <canvas
+          id={@id}
+          phx-hook="MetricsChart"
+          phx-update="ignore"
+          data-chart-type={@chart_type}
+          data-chart-title={@title}
+        >
+        </canvas>
+        <%!-- Overlay message when no data --%>
+        <%= unless @has_data do %>
+          <div class="absolute inset-0 flex items-center justify-center bg-base-100/80">
+            <div class="text-center text-base-content/50">
               <.icon name="hero-chart-bar" class="size-12 mx-auto mb-2 opacity-50" />
               <p>No data available for this time range</p>
             </div>
@@ -1862,6 +2496,83 @@ git commit -m "feat(portal): add empty state handling for metrics charts"
 ---
 
 ## Task 14: Run Full Test Suite
+
+**⚠️ AMENDMENT: Add missing tests before running suite**
+
+The following tests are missing and should be added:
+
+**1. Metrics purge test** (`apps/bezgelor_db/test/metrics_test.exs`):
+
+```elixir
+describe "purge_events_before/1" do
+  test "deletes events older than cutoff" do
+    old = DateTime.add(DateTime.utc_now(), -72, :hour)
+    new = DateTime.utc_now()
+
+    Metrics.insert_events([
+      %{event_name: "test.event", measurements: %{}, metadata: %{}, occurred_at: old},
+      %{event_name: "test.event", measurements: %{}, metadata: %{}, occurred_at: new}
+    ])
+
+    cutoff = DateTime.add(DateTime.utc_now(), -48, :hour)
+    {count, _} = Metrics.purge_events_before(cutoff)
+
+    assert count == 1
+    assert length(Metrics.query_events("test.event", DateTime.add(new, -1, :hour), new)) == 1
+  end
+end
+```
+
+**2. LiveView test** (`apps/bezgelor_portal/test/live/admin/metrics_dashboard_live_test.exs`):
+
+**⚠️ AMENDMENT: Test helper requirement**
+
+The `register_and_log_in_admin` helper should already exist in `apps/bezgelor_portal/test/support/conn_case.ex`.
+If not, add it:
+
+```elixir
+# In ConnCase module
+def register_and_log_in_admin(%{conn: conn}) do
+  admin = BezgelorDb.AccountsFixtures.admin_fixture()
+  %{conn: log_in_account(conn, admin), admin: admin}
+end
+```
+
+```elixir
+defmodule BezgelorPortalWeb.Admin.MetricsDashboardLiveTest do
+  use BezgelorPortalWeb.ConnCase, async: false
+  import Phoenix.LiveViewTest
+
+  @moduletag :database
+
+  setup :register_and_log_in_admin
+
+  test "renders dashboard with tabs", %{conn: conn} do
+    {:ok, view, html} = live(conn, ~p"/admin/metrics")
+
+    assert html =~ "Metrics Dashboard"
+    assert html =~ "Server"
+    assert html =~ "Auth"
+    assert html =~ "Gameplay"
+    assert html =~ "Combat"
+  end
+
+  test "switches tabs", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/admin/metrics")
+
+    html = view |> element("button", "Auth") |> render_click()
+    assert html =~ "Login Rate"
+  end
+
+  test "changes time range", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/admin/metrics")
+
+    html = view |> element("button", "24h") |> render_click()
+    # Verify time range changed (check for visual indicator or data reload)
+    assert html =~ "24h"
+  end
+end
+```
 
 **Step 1: Run all tests**
 
@@ -1890,6 +2601,11 @@ Run: `iex -S mix phx.server`
 
 **Step 2: Generate test telemetry events**
 
+**⚠️ AMENDMENT: Timing note**
+
+Events are emitted at the current time, but `rollup_minute()` processes the PREVIOUS complete minute.
+Charts won't show data until a minute passes and the scheduler runs, OR you trigger rollup manually.
+
 In IEx:
 
 ```elixir
@@ -1901,8 +2617,16 @@ In IEx:
 # Wait for flush (5 seconds)
 Process.sleep(6000)
 
-# Verify events stored
+# Verify events stored in raw table
 BezgelorDb.Metrics.query_events("bezgelor.auth.login_complete", DateTime.add(DateTime.utc_now(), -60, :second), DateTime.utc_now())
+
+# ⚠️ AMENDMENT: To see data in charts immediately, either:
+# Option A: Wait ~60 seconds for the scheduler to run rollup_minute()
+# Option B: Manually trigger rollup (processes PREVIOUS minute):
+#   BezgelorPortal.RollupScheduler.rollup_minute()
+#
+# Note: If you just emitted events, they're in the CURRENT minute.
+# Wait until the clock rolls over to the next minute, then run rollup_minute().
 ```
 
 **Step 3: Check dashboard shows data**
