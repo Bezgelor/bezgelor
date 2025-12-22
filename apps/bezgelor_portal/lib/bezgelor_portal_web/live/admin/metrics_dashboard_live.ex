@@ -36,7 +36,9 @@ defmodule BezgelorPortalWeb.Admin.MetricsDashboardLive do
        time_range_hours: 24,
        custom_from: nil,
        custom_to: nil,
-       last_refresh: DateTime.utc_now()
+       last_refresh: DateTime.utc_now(),
+       time_ranges: @time_ranges,
+       tab_mapping: @tab_mapping
      )
      |> load_tab_data(), layout: {BezgelorPortalWeb.Layouts, :admin}}
   end
