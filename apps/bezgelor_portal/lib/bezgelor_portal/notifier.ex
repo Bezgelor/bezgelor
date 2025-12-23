@@ -209,7 +209,7 @@ defmodule BezgelorPortal.Notifier do
         </div>
         <div class="footer">
           <p>If you didn't create an account, you can safely ignore this email.</p>
-          <p>&copy; Bezgelor WildStar Server Emulator</p>
+          <p>Bezgelor WildStar Server Emulator</p>
         </div>
       </div>
     </body>
@@ -267,7 +267,7 @@ defmodule BezgelorPortal.Notifier do
         </div>
         <div class="footer">
           <p>If you didn't request a password reset, you can safely ignore this email.</p>
-          <p>&copy; Bezgelor WildStar Server Emulator</p>
+          <p>Bezgelor WildStar Server Emulator</p>
         </div>
       </div>
     </body>
@@ -326,7 +326,7 @@ defmodule BezgelorPortal.Notifier do
         </div>
         <div class="footer">
           <p>If you didn't request this change, you can safely ignore this email.</p>
-          <p>&copy; Bezgelor WildStar Server Emulator</p>
+          <p>Bezgelor WildStar Server Emulator</p>
         </div>
       </div>
     </body>

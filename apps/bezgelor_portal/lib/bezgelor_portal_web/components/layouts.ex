@@ -734,7 +734,7 @@ defmodule BezgelorPortalWeb.Layouts do
           </a>
         </div>
         
-    <!-- Logo and Copyright -->
+    <!-- Logo and Disclaimer -->
         <div class="mb-4">
           <span class="text-xl font-bold text-[var(--gaming-cyan)]">BEZGELOR</span>
         </div>
@@ -742,7 +742,7 @@ defmodule BezgelorPortalWeb.Layouts do
           A fan-made WildStar server emulator. Open source and free to play.
         </p>
         <p class="text-xs opacity-60">
-          &copy; {DateTime.utc_now().year} Bezgelor Project. Not affiliated with NCSOFT or Carbine Studios.
+          Not affiliated with NCSOFT or Carbine Studios.
           <br /> WildStar and all related content are trademarks of NCSOFT Corporation.
         </p>
       </div>
