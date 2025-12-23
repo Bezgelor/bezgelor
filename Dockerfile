@@ -14,9 +14,11 @@ ARG RUNNER_IMAGE="docker.io/debian:${DEBIAN_VERSION}"
 
 FROM ${BUILDER_IMAGE} AS builder
 
-# Install build dependencies
+# Install build dependencies including Node.js for assets
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends build-essential git \
+  && apt-get install -y --no-install-recommends build-essential git curl \
+  && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+  && apt-get install -y --no-install-recommends nodejs \
   && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -50,11 +52,14 @@ COPY config config
 # Compile dependencies
 RUN mix deps.compile
 
-# Setup assets (esbuild, tailwind)
+# Setup assets (esbuild, tailwind binaries)
 RUN mix assets.setup
 
 # Copy all application source
 COPY apps apps
+
+# Install npm dependencies for frontend assets
+RUN cd apps/bezgelor_portal/assets && npm install
 
 # Copy static data files
 COPY apps/bezgelor_data/priv apps/bezgelor_data/priv
