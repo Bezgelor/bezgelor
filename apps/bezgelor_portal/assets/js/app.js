@@ -52,7 +52,7 @@ import MetricsChart from "./metrics_chart"
  */
 const CharacterViewerHook = {
   mounted() {
-    this.destroyed = false
+    this._isDestroyed = false
     const race = this.el.dataset.race || "human"
     const gender = this.el.dataset.gender || "male"
 
@@ -70,7 +70,7 @@ const CharacterViewerHook = {
 
     deferInit(() => {
       // Check if we were destroyed during the defer
-      if (this.destroyed) {
+      if (this._isDestroyed) {
         console.log("[CharacterViewer] Destroyed before init")
         return
       }
@@ -94,7 +94,7 @@ const CharacterViewerHook = {
       }
 
       // Check again after viewer creation
-      if (this.destroyed) {
+      if (this._isDestroyed) {
         this.viewer?.dispose()
         this.viewer = null
         return
@@ -108,7 +108,7 @@ const CharacterViewerHook = {
       this.currentGender = gender
       this.viewer.loadModel(modelUrl).then((success) => {
         console.log("[CharacterViewer] Model load result:", success)
-        if (this.destroyed) return
+        if (this._isDestroyed) return
         if (success) {
           // Hide the loading spinner
           this._hideSpinner()
@@ -162,16 +162,27 @@ const CharacterViewerHook = {
 
   destroyed() {
     // Set flag first to stop any pending async operations
-    this.destroyed = true
+    this._isDestroyed = true
 
     if (this.resizeObserver) {
       this.resizeObserver.disconnect()
       this.resizeObserver = null
     }
 
+    // Defer heavy WebGL cleanup to not block navigation
+    // The viewer will be garbage collected eventually even if dispose fails
     if (this.viewer) {
-      this.viewer.dispose()
+      const viewer = this.viewer
       this.viewer = null
+
+      // Use setTimeout to make cleanup async and non-blocking
+      setTimeout(() => {
+        try {
+          viewer.dispose()
+        } catch (e) {
+          console.warn("[CharacterViewer] Dispose error:", e)
+        }
+      }, 0)
     }
   },
 
