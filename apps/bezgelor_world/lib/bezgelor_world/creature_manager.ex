@@ -1041,9 +1041,9 @@ defmodule BezgelorWorld.CreatureManager do
 
   # Add entity to World.Instance if the instance is running
   defp add_entity_to_world_instance(world_id, entity) do
-    # Try to add to world instance (instance_id 0 is the default open-world instance)
+    # Open world zones use instance_id 1 (not 0)
     # The instance should always exist at this point since spawns are loaded after instance starts
-    WorldInstance.add_entity({world_id, 0}, entity)
+    WorldInstance.add_entity({world_id, 1}, entity)
   end
 
   # Spawn a single creature from a spawn definition
