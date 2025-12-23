@@ -31,7 +31,7 @@ defmodule BezgelorProtocol.Handler.CharacterListHandler do
 
   alias BezgelorProtocol.{PacketReader, PacketWriter}
   alias BezgelorProtocol.Packets.World.ServerCharacterList.ItemVisual
-  alias BezgelorDb.{Authorization, Characters, Inventory}
+  alias BezgelorDb.{Characters, Inventory}
 
   require Logger
 
@@ -65,12 +65,10 @@ defmodule BezgelorProtocol.Handler.CharacterListHandler do
 
       max_level = max(actual_max, 50)
 
-      # Determine account tier based on signature permission
-      has_signature = Authorization.has_permission?(account_id, "account.signature")
-      account_tier = if has_signature, do: 1, else: 0
-
-      # Signature tier gets 12 slots, free tier gets 2
-      total_slots = if has_signature, do: 12, else: 2
+      # All accounts get signature tier (12 slots) by default on private servers
+      # This can be changed later if a freemium model is desired
+      account_tier = 1
+      total_slots = 12
       remaining_slots = max(0, total_slots - length(characters))
 
       # Build all the pre-character-list packets
