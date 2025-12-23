@@ -105,4 +105,23 @@ if config_env() == :prod do
   # Default sender address for emails
   config :bezgelor_portal,
     mail_from: System.get_env("MAIL_FROM", "noreply@bezgelor.com")
+
+  # Game server configuration for production
+  # WORLD_PUBLIC_ADDRESS is the address game clients connect to
+  config :bezgelor_world,
+    public_address: System.get_env("WORLD_PUBLIC_ADDRESS") ||
+      raise "WORLD_PUBLIC_ADDRESS environment variable is missing"
+
+  # Game server ports (usually defaults are fine)
+  if auth_port = System.get_env("AUTH_PORT") do
+    config :bezgelor_auth, port: String.to_integer(auth_port)
+  end
+
+  if realm_port = System.get_env("REALM_PORT") do
+    config :bezgelor_realm, port: String.to_integer(realm_port)
+  end
+
+  if world_port = System.get_env("WORLD_PORT") do
+    config :bezgelor_world, port: String.to_integer(world_port)
+  end
 end
