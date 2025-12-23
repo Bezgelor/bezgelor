@@ -16,7 +16,7 @@ defmodule BezgelorPortalWeb.DashboardLive do
       <div class="flex items-center justify-between mb-6">
         <div>
           <h1 class="text-2xl font-bold">Dashboard</h1>
-          <p class="text-base-content/70">Welcome back, {@current_account.email}</p>
+          <p class="text-base-content/70">Welcome, {@current_account.email}</p>
         </div>
       </div>
 

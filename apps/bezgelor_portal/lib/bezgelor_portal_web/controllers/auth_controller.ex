@@ -24,7 +24,7 @@ defmodule BezgelorPortalWeb.AuthController do
           %{email: ^email} = account ->
             conn
             |> Auth.login(account)
-            |> put_flash(:info, "Welcome back!")
+            |> put_flash(:info, "Welcome!")
             |> redirect(to: ~p"/dashboard")
 
           _ ->
@@ -60,7 +60,7 @@ defmodule BezgelorPortalWeb.AuthController do
             account ->
               conn
               |> Auth.login(account)
-              |> put_flash(:info, "Welcome back!")
+              |> put_flash(:info, "Welcome!")
               |> redirect(to: ~p"/dashboard")
           end
         else
