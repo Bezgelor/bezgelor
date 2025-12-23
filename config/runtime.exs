@@ -92,7 +92,14 @@ if config_env() == :prod do
   config :bezgelor_db, BezgelorDb.Repo,
     url: database_url,
     pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
-    socket_options: [:inet6]
+    socket_options: [:inet6],
+    # Fly.io Postgres connection handling
+    queue_target: 5000,
+    queue_interval: 30_000,
+    # Disconnect idle connections before Fly.io kills them
+    idle_interval: 60_000,
+    # TCP keepalive to detect dead connections
+    parameters: [tcp_keepalives_idle: "60", tcp_keepalives_interval: "10", tcp_keepalives_count: "3"]
 
   # Email configuration via Resend
   # Set RESEND_API_KEY to enable email sending in production
