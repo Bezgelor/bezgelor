@@ -287,10 +287,37 @@ defmodule BezgelorWorld.World.Instance do
 
   @impl true
   def handle_continue(:load_spawns, state) do
-    # Load spawns asynchronously - don't block world startup
-    # Managers log results directly
-    CreatureManager.load_zone_spawns_async(state.world_id)
-    HarvestNodeManager.load_zone_spawns_async(state.world_id)
+    # Load spawns synchronously - ensures creatures are ready before players can enter
+    # Use long timeout for slow hardware (Fly.io shared CPUs can take 3+ minutes)
+    spawn_timeout = Application.get_env(:bezgelor_world, :spawn_load_timeout, 300_000)
+
+    # Load creature spawns first (usually larger)
+    spawn_task =
+      Task.async(fn ->
+        try do
+          CreatureManager.load_zone_spawns(state.world_id)
+        catch
+          :exit, {:timeout, _} ->
+            Logger.warning("Creature spawn loading timed out for world #{state.world_id}")
+            {:error, :timeout}
+        end
+      end)
+
+    # Load harvest nodes in parallel
+    harvest_task =
+      Task.async(fn ->
+        try do
+          HarvestNodeManager.load_zone_spawns(state.world_id)
+        catch
+          :exit, {:timeout, _} ->
+            Logger.warning("Harvest node loading timed out for world #{state.world_id}")
+            {:error, :timeout}
+        end
+      end)
+
+    # Wait for both to complete with generous timeout
+    Task.await(spawn_task, spawn_timeout)
+    Task.await(harvest_task, spawn_timeout)
 
     {:noreply, state}
   end

@@ -138,4 +138,10 @@ if config_env() == :prod do
   if zone_timeout = System.get_env("ZONE_START_TIMEOUT") do
     config :bezgelor_world, zone_start_timeout: String.to_integer(zone_timeout)
   end
+
+  # Spawn loading timeout in milliseconds (default: 300000 = 5 minutes)
+  # Creature/harvest node spawning can take 3+ minutes on slow hardware
+  if spawn_timeout = System.get_env("SPAWN_LOAD_TIMEOUT") do
+    config :bezgelor_world, spawn_load_timeout: String.to_integer(spawn_timeout)
+  end
 end

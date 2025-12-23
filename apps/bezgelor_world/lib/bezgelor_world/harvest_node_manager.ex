@@ -57,7 +57,9 @@ defmodule BezgelorWorld.HarvestNodeManager do
   """
   @spec load_zone_spawns(non_neg_integer()) :: {:ok, non_neg_integer()} | {:error, term()}
   def load_zone_spawns(world_id) do
-    GenServer.call(__MODULE__, {:load_zone_spawns, world_id}, 30_000)
+    # Long timeout for slow hardware (Fly.io shared CPUs)
+    timeout = Application.get_env(:bezgelor_world, :spawn_load_timeout, 300_000)
+    GenServer.call(__MODULE__, {:load_zone_spawns, world_id}, timeout)
   end
 
   @doc """

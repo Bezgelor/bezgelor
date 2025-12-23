@@ -194,6 +194,7 @@ defmodule BezgelorPortalWeb.CharacterDetailLive do
             </h2>
             <div class="grid grid-cols-2 gap-4 mt-4">
               <.info_row label="World" value={GameData.world_name(@character.world_id)} />
+              <.info_row label="Zone" value={GameData.zone_name(@character.world_zone_id)} />
               <.info_row label="Position" value={format_position(@character)} />
             </div>
           </div>

@@ -256,10 +256,20 @@ defmodule BezgelorDb.Characters do
     # Calculate if level up occurred
     {new_level, leveled_up} = calculate_level(new_total, current_level)
 
-    changes = %{
-      total_xp: new_total,
-      level: new_level
-    }
+    # Reset level play time on level up
+    changes =
+      if leveled_up do
+        %{
+          total_xp: new_total,
+          level: new_level,
+          time_played_level: 0
+        }
+      else
+        %{
+          total_xp: new_total,
+          level: new_level
+        }
+      end
 
     case character
          |> Ecto.Changeset.change(changes)
@@ -647,6 +657,54 @@ defmodule BezgelorDb.Characters do
         original_name: nil
       )
       |> Repo.update()
+    end
+  end
+
+  # ============================================================================
+  # Play Time Tracking
+  # ============================================================================
+
+  @doc """
+  Add play time to a character's total and level-specific counters.
+
+  Called when a player disconnects to accumulate their session time.
+  Times are stored in seconds.
+  """
+  @spec add_play_time(integer(), integer()) ::
+          {:ok, Character.t()} | {:error, :not_found | Ecto.Changeset.t()}
+  def add_play_time(character_id, seconds) when is_integer(seconds) and seconds > 0 do
+    case Repo.get(Character, character_id) do
+      nil ->
+        {:error, :not_found}
+
+      character ->
+        character
+        |> Ecto.Changeset.change(
+          time_played_total: (character.time_played_total || 0) + seconds,
+          time_played_level: (character.time_played_level || 0) + seconds
+        )
+        |> Repo.update()
+    end
+  end
+
+  def add_play_time(_character_id, _seconds), do: {:ok, nil}
+
+  @doc """
+  Reset play time for the current level.
+
+  Called when a character levels up to reset their level-specific timer.
+  """
+  @spec reset_level_play_time(integer()) ::
+          {:ok, Character.t()} | {:error, :not_found | Ecto.Changeset.t()}
+  def reset_level_play_time(character_id) do
+    case Repo.get(Character, character_id) do
+      nil ->
+        {:error, :not_found}
+
+      character ->
+        character
+        |> Ecto.Changeset.change(time_played_level: 0)
+        |> Repo.update()
     end
   end
 end

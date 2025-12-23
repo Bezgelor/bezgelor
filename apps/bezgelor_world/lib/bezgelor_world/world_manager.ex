@@ -41,7 +41,8 @@ defmodule BezgelorWorld.WorldManager do
           connection_pid: pid(),
           entity_guid: non_neg_integer() | nil,
           zone_id: non_neg_integer() | nil,
-          instance_id: non_neg_integer() | nil
+          instance_id: non_neg_integer() | nil,
+          connected_at: DateTime.t()
         }
 
   @type state :: %{
@@ -217,7 +218,8 @@ defmodule BezgelorWorld.WorldManager do
       connection_pid: connection_pid,
       entity_guid: nil,
       zone_id: nil,
-      instance_id: nil
+      instance_id: nil,
+      connected_at: DateTime.utc_now()
     }
 
     sessions = Map.put(state.sessions, account_id, session)
@@ -383,6 +385,9 @@ defmodule BezgelorWorld.WorldManager do
   def handle_cast({:unregister_session, account_id}, state) do
     # Get session before removing
     session = Map.get(state.sessions, account_id)
+
+    # Update play time for this session
+    update_play_time(session)
 
     # Remove from name index if session exists
     name_to_account =
@@ -572,4 +577,36 @@ defmodule BezgelorWorld.WorldManager do
     |> Enum.map(&Map.get(state.sessions, &1))
     |> Enum.reject(&is_nil/1)
   end
+
+  # Play time tracking
+
+  defp update_play_time(nil), do: :ok
+
+  defp update_play_time(%{character_id: character_id, connected_at: connected_at})
+       when is_integer(character_id) and not is_nil(connected_at) do
+    # Calculate session duration in seconds
+    now = DateTime.utc_now()
+    session_seconds = DateTime.diff(now, connected_at, :second)
+
+    if session_seconds > 0 do
+      # Update asynchronously to not block disconnect
+      Task.start(fn ->
+        case BezgelorDb.Characters.add_play_time(character_id, session_seconds) do
+          {:ok, _} ->
+            Logger.debug(
+              "Updated play time for character #{character_id}: +#{session_seconds}s"
+            )
+
+          {:error, reason} ->
+            Logger.warning(
+              "Failed to update play time for character #{character_id}: #{inspect(reason)}"
+            )
+        end
+      end)
+    end
+
+    :ok
+  end
+
+  defp update_play_time(_session), do: :ok
 end
