@@ -43,10 +43,11 @@ defmodule BezgelorAuth.Sts.Handler.AuthHandler do
   @spec handle_login_start(Packet.t(), Session.t()) ::
           {:ok, binary(), Session.t()} | {:error, integer(), String.t(), Session.t()}
   def handle_login_start(packet, session) do
-    # Allow LoginStart from both :connected state (fresh login) and :authenticated state (re-login)
-    # The WildStar client reuses the STS connection after logout, so we need to handle re-login
-    # on an already authenticated session by treating it as a new login attempt.
-    if session.state not in [:connected, :authenticated] do
+    # Allow LoginStart from multiple states:
+    # - :connected - fresh login
+    # - :authenticated - re-login after logout (client reuses STS connection)
+    # - :login_start - retry after failed auth (wrong password/credentials)
+    if session.state not in [:connected, :authenticated, :login_start] do
       {:error, 400, "Bad Request", session}
     else
       # Parse the request body to get email
