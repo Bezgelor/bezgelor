@@ -1023,6 +1023,8 @@ defmodule BezgelorWorld.CreatureManager do
       Enum.reduce(spawn_defs, {0, state.creatures}, fn spawn_def, {count, creatures} ->
         case spawn_creature_from_def(spawn_def, world_id, spline_index) do
           {:ok, guid, creature_state} ->
+            # Add entity to the World.Instance for visibility to players
+            add_entity_to_world_instance(world_id, creature_state.entity)
             {count + 1, Map.put(creatures, guid, creature_state)}
 
           {:error, reason} ->
@@ -1035,6 +1037,13 @@ defmodule BezgelorWorld.CreatureManager do
       end)
 
     {spawned_count, %{state | creatures: creatures}}
+  end
+
+  # Add entity to World.Instance if the instance is running
+  defp add_entity_to_world_instance(world_id, entity) do
+    # Try to add to world instance (instance_id 0 is the default open-world instance)
+    # The instance should always exist at this point since spawns are loaded after instance starts
+    WorldInstance.add_entity({world_id, 0}, entity)
   end
 
   # Spawn a single creature from a spawn definition

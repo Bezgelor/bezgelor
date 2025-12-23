@@ -190,14 +190,20 @@ defmodule BezgelorPortal.GameData do
 
   @doc """
   Get zone name by ID, looking up from game data.
+  Returns nil if the zone name is not found or is empty.
   """
-  @spec zone_name(integer() | nil) :: String.t()
-  def zone_name(nil), do: "Unknown"
+  @spec zone_name(integer() | nil) :: String.t() | nil
+  def zone_name(nil), do: nil
 
   def zone_name(zone_id) do
     case BezgelorData.get_zone_with_name(zone_id) do
-      {:ok, zone} -> zone.name || "Zone #{zone_id}"
-      :error -> "Zone #{zone_id}"
+      {:ok, zone} ->
+        name = zone.name
+        # Return nil if name is empty/blank instead of "Zone X"
+        if name && String.trim(name) != "", do: name, else: nil
+
+      :error ->
+        nil
     end
   end
 
