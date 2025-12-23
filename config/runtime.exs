@@ -132,4 +132,10 @@ if config_env() == :prod do
   if world_port = System.get_env("WORLD_PORT") do
     config :bezgelor_world, port: String.to_integer(world_port)
   end
+
+  # Zone initialization timeout in milliseconds (default: 120000 = 2 minutes)
+  # Increase for slow hardware like Fly.io shared CPUs
+  if zone_timeout = System.get_env("ZONE_START_TIMEOUT") do
+    config :bezgelor_world, zone_start_timeout: String.to_integer(zone_timeout)
+  end
 end

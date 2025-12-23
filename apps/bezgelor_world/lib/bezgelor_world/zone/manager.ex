@@ -34,6 +34,9 @@ defmodule BezgelorWorld.Zone.Manager do
   # Maximum concurrent zone starts - scales with CPU cores (minimum 20 for 4-core, up to 50 for 8+ cores)
   @max_concurrent_zone_starts max(20, min(50, System.schedulers_online() * 5))
 
+  # Zone start timeout - default 120 seconds, configurable for slow hardware (e.g., Fly.io shared CPUs)
+  @default_zone_start_timeout 120_000
+
   @doc """
   Initialize default zone instances asynchronously.
 
@@ -46,7 +49,11 @@ defmodule BezgelorWorld.Zone.Manager do
     # Start zones that have spawn data (from NexusForever WorldDatabase)
     spawn_zones = BezgelorData.Store.get_all_spawn_zones()
 
-    Logger.info("Starting #{length(spawn_zones)} spawn zones asynchronously...")
+    zone_timeout = Application.get_env(:bezgelor_world, :zone_start_timeout, @default_zone_start_timeout)
+
+    Logger.info(
+      "Starting #{length(spawn_zones)} spawn zones (concurrency=#{@max_concurrent_zone_starts}, timeout=#{zone_timeout}ms)..."
+    )
 
     # Start zones concurrently with bounded parallelism
     spawn_started =
@@ -56,7 +63,7 @@ defmodule BezgelorWorld.Zone.Manager do
           start_spawn_zone(zone_data)
         end,
         max_concurrency: @max_concurrent_zone_starts,
-        timeout: 30_000,
+        timeout: zone_timeout,
         on_timeout: :kill_task
       )
       |> Enum.reduce(0, fn
