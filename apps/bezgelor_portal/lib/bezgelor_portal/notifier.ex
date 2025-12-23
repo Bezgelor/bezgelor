@@ -12,6 +12,7 @@ defmodule BezgelorPortal.Notifier do
   """
 
   import Swoosh.Email
+  require Logger
 
   alias BezgelorPortal.Mailer
   alias BezgelorDb.Schema.Account
@@ -38,7 +39,7 @@ defmodule BezgelorPortal.Notifier do
       |> html_body(verification_email_html(account, verification_url))
       |> text_body(verification_email_text(account, verification_url))
 
-    Mailer.deliver(email)
+    deliver_with_logging(email, :verification, account.email)
   end
 
   @doc """
@@ -57,7 +58,7 @@ defmodule BezgelorPortal.Notifier do
       |> html_body(password_reset_email_html(account, reset_url))
       |> text_body(password_reset_email_text(account, reset_url))
 
-    Mailer.deliver(email)
+    deliver_with_logging(email, :password_reset, account.email)
   end
 
   @doc """
@@ -117,7 +118,7 @@ defmodule BezgelorPortal.Notifier do
       |> html_body(email_change_html(new_email, verification_url))
       |> text_body(email_change_text(new_email, verification_url))
 
-    Mailer.deliver(email)
+    deliver_with_logging(email, :email_change, new_email)
   end
 
   @doc """
@@ -157,6 +158,19 @@ defmodule BezgelorPortal.Notifier do
   # Generate URL helper
   defp url(path) do
     BezgelorPortalWeb.Endpoint.url() <> path
+  end
+
+  # Deliver email with logging
+  defp deliver_with_logging(email, type, recipient) do
+    case Mailer.deliver(email) do
+      {:ok, _metadata} = result ->
+        Logger.info("[Email] Sent #{type} email to #{recipient}")
+        result
+
+      {:error, reason} = result ->
+        Logger.error("[Email] Failed to send #{type} email to #{recipient}: #{inspect(reason)}")
+        result
+    end
   end
 
   # Email templates
