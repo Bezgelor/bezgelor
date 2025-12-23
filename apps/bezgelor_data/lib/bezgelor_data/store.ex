@@ -2381,7 +2381,7 @@ defmodule BezgelorData.Store do
           end
         end,
         max_concurrency: 4,
-        timeout: 60_000
+        timeout: 300_000
       )
       |> Enum.reduce([], fn {:ok, {:ok, tuples}}, acc -> acc ++ tuples end)
 
@@ -2426,7 +2426,7 @@ defmodule BezgelorData.Store do
           end
         end,
         max_concurrency: 4,
-        timeout: 60_000
+        timeout: 300_000
       )
       |> Enum.reduce([], fn {:ok, {:ok, tuples}}, acc -> acc ++ tuples end)
 
@@ -2469,7 +2469,7 @@ defmodule BezgelorData.Store do
           end
         end,
         max_concurrency: 4,
-        timeout: 60_000
+        timeout: 300_000
       )
       |> Enum.reduce([], fn {:ok, {:ok, tuples}}, acc -> acc ++ tuples end)
 
