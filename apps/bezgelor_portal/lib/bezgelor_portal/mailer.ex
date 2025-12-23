@@ -6,12 +6,9 @@ defmodule BezgelorPortal.Mailer do
 
   In development, emails are stored locally and can be viewed at `/dev/mailbox`.
 
-  In production, configure SMTP settings via environment variables:
-  - `SMTP_HOST` - SMTP server hostname
-  - `SMTP_PORT` - SMTP server port (default: 587)
-  - `SMTP_USERNAME` - SMTP username
-  - `SMTP_PASSWORD` - SMTP password
-  - `MAIL_FROM` - Default sender email address
+  In production, configure Resend via environment variables:
+  - `RESEND_API_KEY` - Your Resend API key (get one at https://resend.com)
+  - `MAIL_FROM` - Default sender email address (default: noreply@bezgelor.com)
 
   ## Usage
 

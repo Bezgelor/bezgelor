@@ -92,4 +92,17 @@ if config_env() == :prod do
   config :bezgelor_db, BezgelorDb.Repo,
     url: database_url,
     pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10")
+
+  # Email configuration via Resend
+  # Set RESEND_API_KEY to enable email sending in production
+  # Get your API key at https://resend.com
+  if resend_api_key = System.get_env("RESEND_API_KEY") do
+    config :bezgelor_portal, BezgelorPortal.Mailer,
+      adapter: Swoosh.Adapters.Resend,
+      api_key: resend_api_key
+  end
+
+  # Default sender address for emails
+  config :bezgelor_portal,
+    mail_from: System.get_env("MAIL_FROM", "noreply@bezgelor.com")
 end

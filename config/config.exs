@@ -10,8 +10,11 @@ import Config
 config :bezgelor_portal,
   generators: [timestamp_type: :utc_datetime]
 
-# Swoosh mailer configuration
+# Swoosh mailer configuration (Resend in prod, Local in dev)
 config :bezgelor_portal, BezgelorPortal.Mailer, adapter: Swoosh.Adapters.Local
+
+# Swoosh API client (used by Resend adapter in production)
+config :swoosh, api_client: Swoosh.ApiClient.Finch, finch_name: Swoosh.Finch
 
 # Cloak vault for encrypting sensitive data (TOTP secrets)
 # Generate a key with: :crypto.strong_rand_bytes(32) |> Base.encode64()

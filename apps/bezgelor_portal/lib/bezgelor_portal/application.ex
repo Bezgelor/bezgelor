@@ -12,6 +12,8 @@ defmodule BezgelorPortal.Application do
       BezgelorPortalWeb.Telemetry,
       {DNSCluster, query: Application.get_env(:bezgelor_portal, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: BezgelorPortal.PubSub},
+      # HTTP client for Swoosh email (Resend adapter)
+      {Finch, name: Swoosh.Finch},
       # Rate limiting for auth actions
       {BezgelorPortal.Hammer, clean_period: :timer.minutes(10)},
       # Encryption vault for TOTP secrets

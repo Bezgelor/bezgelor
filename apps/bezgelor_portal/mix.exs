@@ -82,8 +82,7 @@ defmodule BezgelorPortal.MixProject do
 
       # Email
       {:swoosh, "~> 1.17"},
-      {:gen_smtp, "~> 1.0"},
-      {:hackney, "~> 1.9"},
+      {:finch, "~> 0.19"},
 
       # Rate limiting
       {:hammer, "~> 7.1"},
