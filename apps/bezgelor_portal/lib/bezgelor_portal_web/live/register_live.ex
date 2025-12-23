@@ -10,6 +10,7 @@ defmodule BezgelorPortalWeb.RegisterLive do
   alias BezgelorPortal.{Notifier, RateLimiter}
 
   @min_password_length 8
+  @max_password_length 16
 
   require Logger
 
@@ -299,7 +300,8 @@ defmodule BezgelorPortalWeb.RegisterLive do
     )
     |> Ecto.Changeset.validate_length(:password,
       min: @min_password_length,
-      message: "must be at least #{@min_password_length} characters"
+      max: @max_password_length,
+      message: "must be #{@min_password_length}-#{@max_password_length} characters"
     )
     |> validate_password_confirmation()
     |> validate_terms_accepted()

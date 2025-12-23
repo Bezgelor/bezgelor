@@ -14,6 +14,7 @@ defmodule BezgelorPortalWeb.SettingsLive do
   alias BezgelorPortal.{Notifier, RateLimiter}
 
   @min_password_length 8
+  @max_password_length 16
 
   def mount(_params, _session, socket) do
     account = socket.assigns.current_account
@@ -522,6 +523,13 @@ defmodule BezgelorPortalWeb.SettingsLive do
         {:noreply,
          assign(socket,
            password_error: "New password must be at least #{@min_password_length} characters.",
+           password_success: nil
+         )}
+
+      String.length(new_password) > @max_password_length ->
+        {:noreply,
+         assign(socket,
+           password_error: "New password must be at most #{@max_password_length} characters.",
            password_success: nil
          )}
 
