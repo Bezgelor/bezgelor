@@ -1,0 +1,49 @@
+# Docker build context exclusions for Bezgelor umbrella app
+
+.dockerignore
+
+# Git (keep HEAD for version info)
+.git
+!.git/HEAD
+!.git/refs
+
+# Development/test artifacts
+/cover/
+/doc/
+/docs/
+*.md
+/test/
+/tmp/
+.elixir_ls
+/.beads/
+
+# Mix artifacts
+/_build/
+/deps/
+*.ez
+
+# Logs
+/logs/
+*.log
+
+# VM crash dumps
+erl_crash.dump
+
+# Static artifacts (built inside Docker)
+/apps/bezgelor_portal/assets/node_modules/
+/apps/bezgelor_portal/priv/static/assets/
+/apps/bezgelor_portal/priv/static/cache_manifest.json
+
+# Development tools
+/tools/
+/.github/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db

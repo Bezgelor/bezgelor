@@ -1,0 +1,63 @@
+# Bezgelor Fly.io Configuration
+# See https://fly.io/docs/reference/configuration/ for reference
+
+app = "bezgelor"
+primary_region = "lax"
+
+[build]
+
+[deploy]
+  release_command = "/app/bin/migrate"
+
+[env]
+  PHX_SERVER = "true"
+  # Game server bind addresses (internal)
+  AUTH_HOST = "0.0.0.0"
+  REALM_HOST = "0.0.0.0"
+  WORLD_HOST = "0.0.0.0"
+
+[http_service]
+  internal_port = 4000
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ["app"]
+
+  [http_service.concurrency]
+    type = "connections"
+    hard_limit = 250
+    soft_limit = 200
+
+[[vm]]
+  memory = "1gb"
+  cpu_kind = "shared"
+  cpus = 1
+
+# Game server TCP ports
+# Note: These require Fly.io TCP services configuration
+# See: https://fly.io/docs/networking/services/
+
+[[services]]
+  protocol = "tcp"
+  internal_port = 6600
+  processes = ["app"]
+
+  [[services.ports]]
+    port = 6600
+
+[[services]]
+  protocol = "tcp"
+  internal_port = 23115
+  processes = ["app"]
+
+  [[services.ports]]
+    port = 23115
+
+[[services]]
+  protocol = "tcp"
+  internal_port = 24000
+  processes = ["app"]
+
+  [[services.ports]]
+    port = 24000
