@@ -91,20 +91,19 @@ defmodule BezgelorPortalWeb.RegisterLive do
         autocomplete="new-password"
       />
 
-      <div class="form-control">
-        <label class="label cursor-pointer justify-start gap-3 items-start">
-          <input
-            type="checkbox"
-            name="registration[terms_accepted]"
-            value="true"
-            checked={@form[:terms_accepted].value == "true"}
-            class="checkbox checkbox-primary mt-0.5 flex-shrink-0"
-            required
-          />
-          <span class="label-text">
-            I agree to the <a href="/terms" class="link link-primary">Terms of Service</a>
-            and <a href="/privacy" class="link link-primary">Privacy Policy</a>
-          </span>
+      <div class="flex gap-3">
+        <input
+          type="checkbox"
+          id="terms_accepted"
+          name="registration[terms_accepted]"
+          value="true"
+          checked={@form[:terms_accepted].value == "true"}
+          class="checkbox checkbox-primary"
+          required
+        />
+        <label for="terms_accepted" class="text-sm text-base-content/80 cursor-pointer">
+          I agree to the <a href="/terms" class="link link-primary">Terms of Service</a><br />
+          and <a href="/privacy" class="link link-primary">Privacy Policy</a>
         </label>
       </div>
 
