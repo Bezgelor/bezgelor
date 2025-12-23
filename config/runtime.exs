@@ -91,7 +91,8 @@ if config_env() == :prod do
 
   config :bezgelor_db, BezgelorDb.Repo,
     url: database_url,
-    pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10")
+    pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
+    socket_options: [:inet6]
 
   # Email configuration via Resend
   # Set RESEND_API_KEY to enable email sending in production
