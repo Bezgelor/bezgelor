@@ -30,9 +30,9 @@ primary_region = "lax"
     soft_limit = 200
 
 [[vm]]
-  memory = "1gb"
+  memory = "4gb"
   cpu_kind = "shared"
-  cpus = 1
+  cpus = 2
 
 # Game server TCP ports
 # Note: These require Fly.io TCP services configuration

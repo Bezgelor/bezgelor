@@ -2,6 +2,22 @@
 
 Complete guide for deploying Bezgelor to Fly.io with all services (Portal, Auth, Realm, World) running in a single container.
 
+## Quick Start with Scripts
+
+For convenience, deployment scripts are provided in `scripts/fly/`:
+
+```bash
+# Initial setup (run once)
+./scripts/fly/setup.sh
+
+# Deploy new version
+./scripts/fly/deploy.sh
+
+# Rollback to previous version
+./scripts/fly/rollback.sh
+./scripts/fly/rollback.sh 5  # Rollback to specific version
+```
+
 ## Prerequisites
 
 1. Install flyctl CLI:
@@ -40,7 +56,7 @@ fly apps list
 ```bash
 # Create Postgres database (adjust region as needed)
 fly postgres create --name bezgelor-db \
-  --region sjc \
+  --region lax \
   --initial-cluster-size 1 \
   --vm-size shared-cpu-1x \
   --volume-size 10
@@ -94,7 +110,7 @@ fly secrets set \
   SECRET_KEY_BASE="<paste-secret-from-step-1>" \
   CLOAK_KEY="<paste-key-from-step-2>" \
   WORLD_PUBLIC_ADDRESS="<IPv4-from-allocate-step>" \
-  PHX_HOST="bezgelor.fly.dev" \
+  PHX_HOST="bezgelor.com" \
   --app bezgelor
 ```
 
@@ -102,7 +118,7 @@ Replace:
 - `<paste-secret-from-step-1>` with output from `mix phx.gen.secret`
 - `<paste-key-from-step-2>` with output from the `elixir -e` command
 - `<IPv4-from-allocate-step>` with the IP from `fly ips list`
-- `bezgelor.fly.dev` with your actual Fly app hostname
+- `bezgelor.com` with your actual Fly app hostname
 
 ### Optional Secrets (Email)
 
@@ -153,7 +169,7 @@ fly status --app bezgelor
 
 ```bash
 # Comprehensive health check (includes all services)
-curl https://bezgelor.fly.dev/health
+curl https://bezgelor.com/health
 
 # Expected response:
 # {
@@ -169,7 +185,7 @@ curl https://bezgelor.fly.dev/health
 # }
 
 # Lightweight liveness check
-curl https://bezgelor.fly.dev/livez
+curl https://bezgelor.com/livez
 ```
 
 ### 3. Verify Game Server Ports
@@ -194,7 +210,7 @@ All should respond with "succeeded" or "open".
 
 ### 4. Verify Portal Access
 
-Navigate to `https://bezgelor.fly.dev` in your browser and verify:
+Navigate to `https://bezgelor.com` in your browser and verify:
 - Portal loads successfully
 - HTTPS is enforced
 - Registration/login pages work
@@ -341,7 +357,7 @@ fly ssh console --app bezgelor -C "/app/bin/migrate"
 **Diagnostics**:
 ```bash
 # Check health endpoint directly
-curl -v https://bezgelor.fly.dev/health
+curl -v https://bezgelor.com/health
 
 # Check individual service status
 fly ssh console --app bezgelor -C "netstat -tlnp"
@@ -452,7 +468,7 @@ fly deploy --no-cache --app bezgelor
 | `SECRET_KEY_BASE` | Yes | `mix phx.gen.secret` | `abc123...` (64+ chars) |
 | `CLOAK_KEY` | Yes | `elixir -e ':crypto.strong_rand_bytes(32) \| Base.encode64() \| IO.puts()'` | `def456...` (44 chars base64) |
 | `WORLD_PUBLIC_ADDRESS` | Yes | `fly ips list --app bezgelor` | `203.0.113.45` |
-| `PHX_HOST` | Yes | Your Fly app hostname | `bezgelor.fly.dev` |
+| `PHX_HOST` | Yes | Your Fly app hostname | `bezgelor.com` |
 | `RESEND_API_KEY` | No | https://resend.com | `re_...` |
 | `MAIL_FROM` | No | Your verified domain | `noreply@yourdomain.com` |
 
