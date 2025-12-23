@@ -69,7 +69,10 @@ defmodule BezgelorWorld.CreatureManager do
 
   @type state :: %{
           creatures: %{non_neg_integer() => creature_state()},
-          spawn_definitions: [map()]
+          spawn_definitions: [map()],
+          spline_index: map(),
+          loaded_worlds: MapSet.t(non_neg_integer()),
+          loading_worlds: MapSet.t(non_neg_integer())
         }
 
   # NOTE: Removed @max_creatures_per_tick - the needs_ai_processing? filter
@@ -222,7 +225,11 @@ defmodule BezgelorWorld.CreatureManager do
     state = %{
       creatures: %{},
       spawn_definitions: [],
-      spline_index: spline_index
+      spline_index: spline_index,
+      # Track which worlds have been loaded to avoid duplicate loading
+      loaded_worlds: MapSet.new(),
+      # Track worlds currently being loaded
+      loading_worlds: MapSet.new()
     }
 
     # Register with TickScheduler to receive tick notifications
@@ -337,17 +344,40 @@ defmodule BezgelorWorld.CreatureManager do
 
   @impl true
   def handle_call({:load_zone_spawns, world_id}, _from, state) do
-    case Store.get_creature_spawns(world_id) do
-      {:ok, zone_data} ->
-        {spawned_count, new_state} =
-          spawn_from_definitions(zone_data.creature_spawns, world_id, state)
+    # Check if already loaded
+    if MapSet.member?(state.loaded_worlds, world_id) do
+      Logger.debug("World #{world_id} already loaded, skipping")
+      {:reply, {:ok, 0}, state}
+    else
+      # Mark as loading
+      state = %{state | loading_worlds: MapSet.put(state.loading_worlds, world_id)}
 
-        Logger.info("Loaded #{spawned_count} creature spawns for world #{world_id}")
-        {:reply, {:ok, spawned_count}, new_state}
+      case Store.get_creature_spawns(world_id) do
+        {:ok, zone_data} ->
+          {spawned_count, new_state} =
+            spawn_from_definitions(zone_data.creature_spawns, world_id, state)
 
-      :error ->
-        Logger.warning("No spawn data found for world #{world_id}")
-        {:reply, {:error, :no_spawn_data}, state}
+          # Mark as loaded, remove from loading
+          new_state = %{
+            new_state
+            | loaded_worlds: MapSet.put(new_state.loaded_worlds, world_id),
+              loading_worlds: MapSet.delete(new_state.loading_worlds, world_id)
+          }
+
+          Logger.info("Loaded #{spawned_count} creature spawns for world #{world_id}")
+          {:reply, {:ok, spawned_count}, new_state}
+
+        :error ->
+          # Mark as loaded (no data), remove from loading
+          state = %{
+            state
+            | loaded_worlds: MapSet.put(state.loaded_worlds, world_id),
+              loading_worlds: MapSet.delete(state.loading_worlds, world_id)
+          }
+
+          Logger.debug("No spawn data found for world #{world_id}")
+          {:reply, {:error, :no_spawn_data}, state}
+      end
     end
   end
 
@@ -408,18 +438,41 @@ defmodule BezgelorWorld.CreatureManager do
 
   @impl true
   def handle_cast({:load_zone_spawns_async, world_id}, state) do
-    case Store.get_creature_spawns(world_id) do
-      {:ok, zone_data} ->
-        {spawned_count, new_state} =
-          spawn_from_definitions(zone_data.creature_spawns, world_id, state)
+    # Check if already loaded or loading
+    if MapSet.member?(state.loaded_worlds, world_id) or
+         MapSet.member?(state.loading_worlds, world_id) do
+      Logger.debug("World #{world_id} already loaded or loading, skipping")
+      {:noreply, state}
+    else
+      # Mark as loading
+      state = %{state | loading_worlds: MapSet.put(state.loading_worlds, world_id)}
 
-        Logger.info("Loaded #{spawned_count} creature spawns for world #{world_id}")
-        {:noreply, new_state}
+      case Store.get_creature_spawns(world_id) do
+        {:ok, zone_data} ->
+          {spawned_count, new_state} =
+            spawn_from_definitions(zone_data.creature_spawns, world_id, state)
 
-      :error ->
-        # Tutorial zones may not have spawn data - don't warn for known empty zones
-        Logger.debug("No spawn data found for world #{world_id}")
-        {:noreply, state}
+          # Mark as loaded
+          new_state = %{
+            new_state
+            | loaded_worlds: MapSet.put(new_state.loaded_worlds, world_id),
+              loading_worlds: MapSet.delete(new_state.loading_worlds, world_id)
+          }
+
+          Logger.info("Loaded #{spawned_count} creature spawns for world #{world_id}")
+          {:noreply, new_state}
+
+        :error ->
+          # Mark as loaded (no data)
+          state = %{
+            state
+            | loaded_worlds: MapSet.put(state.loaded_worlds, world_id),
+              loading_worlds: MapSet.delete(state.loading_worlds, world_id)
+          }
+
+          Logger.debug("No spawn data found for world #{world_id}")
+          {:noreply, state}
+      end
     end
   end
 
