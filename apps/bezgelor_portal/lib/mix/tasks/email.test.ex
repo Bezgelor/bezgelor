@@ -65,7 +65,7 @@ defmodule Mix.Tasks.Email.Test do
 
     # Temporarily configure the mailer with the provided API key
     Application.put_env(:bezgelor_portal, BezgelorPortal.Mailer,
-      adapter: Swoosh.Adapters.Resend,
+      adapter: Resend.Swoosh.Adapter,
       api_key: api_key
     )
 

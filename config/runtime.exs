@@ -98,7 +98,7 @@ if config_env() == :prod do
   # Get your API key at https://resend.com
   if resend_api_key = System.get_env("RESEND_API_KEY") do
     config :bezgelor_portal, BezgelorPortal.Mailer,
-      adapter: Swoosh.Adapters.Resend,
+      adapter: Resend.Swoosh.Adapter,
       api_key: resend_api_key
   end
 
