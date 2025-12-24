@@ -44,7 +44,6 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
   alias BezgelorWorld.TriggerManager
   alias BezgelorWorld.Cinematic.CinematicManager
   alias BezgelorWorld.WorldManager
-  alias BezgelorWorld.World.Instance, as: WorldInstance
   alias BezgelorWorld.VisibilityBroadcaster
 
   require Logger
@@ -245,9 +244,15 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
 
     # Get creatures within view range of the player's position
     # Use a short timeout to avoid blocking login if spawn loading is in progress
+    # Note: Using apply/3 to defer module lookup to runtime (avoids compile-order warning
+    # since bezgelor_protocol compiles before bezgelor_world)
     creatures =
       try do
-        WorldInstance.get_creatures_in_range(world_key, position, @creature_view_range)
+        apply(BezgelorWorld.World.Instance, :get_creatures_in_range, [
+          world_key,
+          position,
+          @creature_view_range
+        ])
       catch
         :exit, {:timeout, _} ->
           Logger.warning("World.Instance timeout - spawn loading may still be in progress")

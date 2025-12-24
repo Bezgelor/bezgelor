@@ -78,10 +78,11 @@ defmodule BezgelorCore.Zone do
   }
 
   # Dominion starting zone on Nexus (Veteran/Nexus = 3)
+  # Updated position to be near creature spawns (38 creatures within 200 units)
   @dominion_nexus_start %{
     world_id: 1387,
     zone_id: 2,
-    position: {-3835.341, -980.2174, -6050.524},
+    position: {-2732.393, -1297.762, -6048.427},
     rotation: {-0.45682, 0.0, 0.0}
   }
 

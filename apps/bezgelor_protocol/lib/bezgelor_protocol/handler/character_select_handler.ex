@@ -178,6 +178,10 @@ defmodule BezgelorProtocol.Handler.CharacterSelectHandler do
           position: spawn.position
         }
 
+        # Ensure the World.Instance exists before adding the player entity
+        # This fixes a race condition where zone initialization (async) may not
+        # have completed yet when the player logs in quickly
+        apply(BezgelorWorld.World.InstanceSupervisor, :get_or_start_instance, [spawn.world_id, 1])
         BezgelorWorld.World.Instance.add_entity({spawn.world_id, 1}, player_entity)
 
         # Send all initialization packets (order matters!)
