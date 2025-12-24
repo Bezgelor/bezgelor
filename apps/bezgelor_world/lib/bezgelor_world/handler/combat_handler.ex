@@ -25,7 +25,7 @@ defmodule BezgelorWorld.Handler.CombatHandler do
 
   alias BezgelorProtocol.{PacketReader, PacketWriter}
   alias BezgelorCore.Entity
-  alias BezgelorWorld.{CombatBroadcaster, CreatureManager}
+  alias BezgelorWorld.CombatBroadcaster
   alias BezgelorWorld.World.Instance, as: WorldInstance
 
   require Logger
@@ -69,11 +69,14 @@ defmodule BezgelorWorld.Handler.CombatHandler do
     else
       target_guid = packet.target_guid
       entity_guid = state.session_data[:entity_guid]
+      world_id = state.session_data[:world_id] || 1
+      instance_id = 1
+      world_key = {world_id, instance_id}
 
       # Validate target if not clearing
       if target_guid != 0 do
         # Check if target is a valid creature
-        if CreatureManager.creature_targetable?(target_guid) do
+        if WorldInstance.creature_targetable?(world_key, target_guid) do
           Logger.debug("Player #{entity_guid} targeting creature #{target_guid}")
           send_target_update(entity_guid, target_guid, state)
         else
