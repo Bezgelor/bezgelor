@@ -101,8 +101,15 @@ defmodule BezgelorWorld.World.Instance do
           creature_states: %{non_neg_integer() => creature_state()},
           spawn_definitions: [map()],
           spline_index: map(),
-          spawns_loaded: boolean()
+          spawns_loaded: boolean(),
+          # Phase 3: Lazy zone activation
+          lazy_loading: boolean(),
+          idle_timeout_ref: reference() | nil,
+          last_player_left_at: integer() | nil
         }
+
+  # Idle timeout: 5 minutes with no players before shutdown
+  @idle_timeout_ms 5 * 60 * 1000
 
   # Client API
 
@@ -454,6 +461,7 @@ defmodule BezgelorWorld.World.Instance do
     world_id = Keyword.fetch!(opts, :world_id)
     instance_id = Keyword.fetch!(opts, :instance_id)
     world_data = Keyword.get(opts, :world_data, %{})
+    lazy_loading = Keyword.get(opts, :lazy_loading, false)
 
     # Build spline index for this zone (for patrol path matching)
     # This is a subset of the global index filtered for this world
@@ -471,7 +479,11 @@ defmodule BezgelorWorld.World.Instance do
       creature_states: %{},
       spawn_definitions: [],
       spline_index: spline_index,
-      spawns_loaded: false
+      spawns_loaded: false,
+      # Phase 3: Lazy zone activation
+      lazy_loading: lazy_loading,
+      idle_timeout_ref: nil,
+      last_player_left_at: nil
     }
 
     # Register with TickScheduler for AI processing
@@ -481,10 +493,15 @@ defmodule BezgelorWorld.World.Instance do
       :exit, _ -> :ok
     end
 
-    Logger.info("World instance started: #{world_data[:name] || world_id} (instance #{instance_id})")
+    Logger.info("World instance started: #{world_data[:name] || world_id} (instance #{instance_id})#{if lazy_loading, do: " [lazy]", else: ""}")
 
     # Load creature spawns asynchronously after init completes
-    {:ok, state, {:continue, :load_spawns}}
+    # (unless lazy loading is enabled - then defer until first player enters)
+    if lazy_loading do
+      {:ok, state}
+    else
+      {:ok, state, {:continue, :load_spawns}}
+    end
   end
 
   @impl true
@@ -537,11 +554,15 @@ defmodule BezgelorWorld.World.Instance do
     state =
       case entity.type do
         :player ->
+          # Cancel any pending idle timeout when a player enters
+          state = cancel_idle_timeout(state)
+
           %{
             state
             | entities: entities,
               spatial_grid: spatial_grid,
-              players: MapSet.put(state.players, entity.guid)
+              players: MapSet.put(state.players, entity.guid),
+              last_player_left_at: nil
           }
 
         :creature ->
@@ -554,6 +575,15 @@ defmodule BezgelorWorld.World.Instance do
 
         _ ->
           %{state | entities: entities, spatial_grid: spatial_grid}
+      end
+
+    # If lazy loading is enabled and this is the first player, trigger spawn loading
+    state =
+      if entity.type == :player and state.lazy_loading and not state.spawns_loaded do
+        Logger.info("First player entered world #{state.world_id}, loading spawns...")
+        load_spawns_sync(state)
+      else
+        state
       end
 
     Logger.debug("Entity #{entity.guid} (#{entity.type}) added to world #{state.world_id}")
@@ -570,12 +600,21 @@ defmodule BezgelorWorld.World.Instance do
       if entity do
         case entity.type do
           :player ->
-            %{
+            new_players = MapSet.delete(state.players, guid)
+
+            state = %{
               state
               | entities: entities,
                 spatial_grid: spatial_grid,
-                players: MapSet.delete(state.players, guid)
+                players: new_players
             }
+
+            # Start idle timeout if this was the last player
+            if MapSet.size(new_players) == 0 and state.lazy_loading do
+              start_idle_timeout(state)
+            else
+              state
+            end
 
           :creature ->
             %{
@@ -944,6 +983,28 @@ defmodule BezgelorWorld.World.Instance do
     {:noreply, state}
   end
 
+  @impl true
+  def handle_info(:idle_timeout, state) do
+    # Only stop if still no players (they may have re-entered)
+    if MapSet.size(state.players) == 0 do
+      Logger.info(
+        "World instance #{state.world_id} idle timeout - stopping (lazy loading enabled)"
+      )
+
+      # Unregister from tick scheduler before stopping
+      try do
+        TickScheduler.unregister_listener(self())
+      catch
+        :exit, _ -> :ok
+      end
+
+      {:stop, :normal, state}
+    else
+      # Players re-entered, cancel the timeout
+      {:noreply, %{state | idle_timeout_ref: nil, last_player_left_at: nil}}
+    end
+  end
+
   # =====================================================================
   # Private Functions - Creature Management
   # =====================================================================
@@ -958,6 +1019,48 @@ defmodule BezgelorWorld.World.Instance do
       %{world_id => splines}
     rescue
       _ -> %{}
+    end
+  end
+
+  # =====================================================================
+  # Private Functions - Lazy Zone Activation (Phase 3)
+  # =====================================================================
+
+  # Cancel any pending idle timeout timer
+  defp cancel_idle_timeout(%{idle_timeout_ref: nil} = state), do: state
+
+  defp cancel_idle_timeout(%{idle_timeout_ref: ref} = state) when is_reference(ref) do
+    Process.cancel_timer(ref)
+    %{state | idle_timeout_ref: nil}
+  end
+
+  # Start idle timeout timer when last player leaves
+  defp start_idle_timeout(state) do
+    now = System.monotonic_time(:millisecond)
+    ref = Process.send_after(self(), :idle_timeout, @idle_timeout_ms)
+
+    Logger.debug(
+      "World instance #{state.world_id} starting idle timeout (#{div(@idle_timeout_ms, 1000)}s)"
+    )
+
+    %{state | idle_timeout_ref: ref, last_player_left_at: now}
+  end
+
+  # Load spawns synchronously (for lazy loading when first player enters)
+  defp load_spawns_sync(state) do
+    world_id = state.world_id
+
+    case Store.get_creature_spawns(world_id) do
+      {:ok, zone_data} ->
+        {spawned_count, new_state} =
+          spawn_from_definitions(zone_data.creature_spawns, state)
+
+        Logger.info("Lazy-loaded #{spawned_count} creature spawns for world #{world_id}")
+        %{new_state | spawns_loaded: true}
+
+      :error ->
+        Logger.debug("No spawn data found for world #{world_id}")
+        %{state | spawns_loaded: true}
     end
   end
 

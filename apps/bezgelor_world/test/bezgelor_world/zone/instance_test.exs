@@ -185,4 +185,177 @@ defmodule BezgelorWorld.World.InstanceTest do
       assert info.total_entities == 2
     end
   end
+
+  describe "lazy loading (Phase 3)" do
+    test "lazy_loading option defers spawn loading" do
+      # Create a lazy-loading instance
+      world_id = System.unique_integer([:positive])
+      instance_id = 1
+      world_data = %{name: "Lazy Test World"}
+
+      {:ok, pid} =
+        Instance.start_link(
+          world_id: world_id,
+          instance_id: instance_id,
+          world_data: world_data,
+          lazy_loading: true
+        )
+
+      # Give time for init to complete
+      Process.sleep(50)
+
+      # Verify instance started but spawns not loaded
+      state = :sys.get_state(pid)
+      assert state.lazy_loading == true
+      assert state.spawns_loaded == false
+
+      # Clean up
+      GenServer.stop(pid)
+    end
+
+    test "first player entering triggers spawn loading in lazy mode" do
+      # Create a lazy-loading instance
+      world_id = System.unique_integer([:positive])
+      instance_id = 1
+      world_data = %{name: "Lazy Test World"}
+
+      {:ok, pid} =
+        Instance.start_link(
+          world_id: world_id,
+          instance_id: instance_id,
+          world_data: world_data,
+          lazy_loading: true
+        )
+
+      Process.sleep(50)
+
+      # Verify spawns not loaded initially
+      state = :sys.get_state(pid)
+      assert state.spawns_loaded == false
+
+      # Add a player
+      player = %Entity{guid: 12345, type: :player, name: "Test", position: {0.0, 0.0, 0.0}}
+      Instance.add_entity(pid, player)
+      Process.sleep(50)
+
+      # Verify spawns are now loaded
+      state = :sys.get_state(pid)
+      assert state.spawns_loaded == true
+      assert MapSet.size(state.players) == 1
+
+      # Clean up
+      GenServer.stop(pid)
+    end
+
+    test "last player leaving starts idle timeout in lazy mode" do
+      # Create a lazy-loading instance
+      world_id = System.unique_integer([:positive])
+      instance_id = 1
+      world_data = %{name: "Lazy Test World"}
+
+      {:ok, pid} =
+        Instance.start_link(
+          world_id: world_id,
+          instance_id: instance_id,
+          world_data: world_data,
+          lazy_loading: true
+        )
+
+      Process.sleep(50)
+
+      # Add and then remove a player
+      player = %Entity{guid: 12345, type: :player, name: "Test", position: {0.0, 0.0, 0.0}}
+      Instance.add_entity(pid, player)
+      Process.sleep(50)
+
+      Instance.remove_entity(pid, 12345)
+      Process.sleep(50)
+
+      # Verify idle timeout is set
+      state = :sys.get_state(pid)
+      assert state.idle_timeout_ref != nil
+      assert state.last_player_left_at != nil
+      assert MapSet.size(state.players) == 0
+
+      # Clean up
+      GenServer.stop(pid)
+    end
+
+    test "player re-entering cancels idle timeout" do
+      # Create a lazy-loading instance
+      world_id = System.unique_integer([:positive])
+      instance_id = 1
+      world_data = %{name: "Lazy Test World"}
+
+      {:ok, pid} =
+        Instance.start_link(
+          world_id: world_id,
+          instance_id: instance_id,
+          world_data: world_data,
+          lazy_loading: true
+        )
+
+      Process.sleep(50)
+
+      # Add, remove, then add player again
+      player1 = %Entity{guid: 12345, type: :player, name: "Test1", position: {0.0, 0.0, 0.0}}
+      Instance.add_entity(pid, player1)
+      Process.sleep(50)
+
+      Instance.remove_entity(pid, 12345)
+      Process.sleep(50)
+
+      # Verify idle timeout is set
+      state = :sys.get_state(pid)
+      assert state.idle_timeout_ref != nil
+
+      # Add another player
+      player2 = %Entity{guid: 67890, type: :player, name: "Test2", position: {0.0, 0.0, 0.0}}
+      Instance.add_entity(pid, player2)
+      Process.sleep(50)
+
+      # Verify idle timeout is cancelled
+      state = :sys.get_state(pid)
+      assert state.idle_timeout_ref == nil
+      assert state.last_player_left_at == nil
+
+      # Clean up
+      GenServer.stop(pid)
+    end
+
+    test "non-lazy instances don't set idle timeout" do
+      # Use the instance from setup (non-lazy)
+      world_id = System.unique_integer([:positive])
+      instance_id = 1
+      world_data = %{name: "Non-Lazy Test World"}
+
+      {:ok, pid} =
+        Instance.start_link(
+          world_id: world_id,
+          instance_id: instance_id,
+          world_data: world_data,
+          lazy_loading: false
+        )
+
+      # Wait for spawns to load
+      Process.sleep(100)
+
+      # Add and remove a player
+      player = %Entity{guid: 12345, type: :player, name: "Test", position: {0.0, 0.0, 0.0}}
+      Instance.add_entity(pid, player)
+      Process.sleep(50)
+
+      Instance.remove_entity(pid, 12345)
+      Process.sleep(50)
+
+      # Verify no idle timeout in non-lazy mode
+      state = :sys.get_state(pid)
+      assert state.lazy_loading == false
+      assert state.idle_timeout_ref == nil
+
+      # Clean up
+      GenServer.stop(pid)
+    end
+  end
+
 end
