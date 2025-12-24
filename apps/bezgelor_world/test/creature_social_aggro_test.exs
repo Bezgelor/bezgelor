@@ -75,7 +75,9 @@ defmodule BezgelorWorld.CreatureSocialAggroTest do
       assert wolf2_state.ai.state == :idle
     end
 
-    test "creatures already in combat don't switch targets from social aggro", %{world_key: world_key} do
+    test "creatures already in combat don't switch targets from social aggro", %{
+      world_key: world_key
+    } do
       # Spawn two wolves near each other
       {:ok, wolf1_guid} = Instance.spawn_creature(world_key, 2, {0.0, 0.0, 0.0})
       {:ok, wolf2_guid} = Instance.spawn_creature(world_key, 2, {5.0, 0.0, 0.0})

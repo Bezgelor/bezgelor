@@ -50,7 +50,9 @@ defmodule BezgelorWorld.CreatureManager do
   @spec get_creatures_in_range({float(), float(), float()}, float()) :: [map()]
   def get_creatures_in_range(position, range) do
     # Aggregate from all instances - caller should use World.Instance directly
-    Logger.warning("CreatureManager.get_creatures_in_range/2 is deprecated - use World.Instance.get_creatures_in_range/3")
+    Logger.warning(
+      "CreatureManager.get_creatures_in_range/2 is deprecated - use World.Instance.get_creatures_in_range/3"
+    )
 
     InstanceSupervisor.list_instances()
     |> Enum.flat_map(fn {world_id, instance_id, _pid} ->

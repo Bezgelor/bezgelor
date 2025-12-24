@@ -139,11 +139,19 @@ defmodule BezgelorWorld.World.InstanceTest do
 
   describe "list_players/1" do
     test "returns only player entities", %{world_id: world_id, instance_id: instance_id} do
-      Instance.add_entity({world_id, instance_id}, %Entity{guid: 1, type: :player, name: "Player1"})
+      Instance.add_entity({world_id, instance_id}, %Entity{
+        guid: 1,
+        type: :player,
+        name: "Player1"
+      })
 
       Instance.add_entity({world_id, instance_id}, %Entity{guid: 2, type: :creature, name: "Mob"})
 
-      Instance.add_entity({world_id, instance_id}, %Entity{guid: 3, type: :player, name: "Player2"})
+      Instance.add_entity({world_id, instance_id}, %Entity{
+        guid: 3,
+        type: :player,
+        name: "Player2"
+      })
 
       players = Instance.list_players({world_id, instance_id})
 
@@ -357,5 +365,4 @@ defmodule BezgelorWorld.World.InstanceTest do
       GenServer.stop(pid)
     end
   end
-
 end
