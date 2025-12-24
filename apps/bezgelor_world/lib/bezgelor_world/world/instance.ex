@@ -372,7 +372,11 @@ defmodule BezgelorWorld.World.Instance do
         ) ::
           {:ok, :damaged | :killed, map()} | {:error, term()}
   def damage_creature(instance, creature_guid, attacker_guid, damage) when is_pid(instance) do
-    GenServer.call(instance, {:damage_creature, creature_guid, attacker_guid, damage}, @call_timeout)
+    GenServer.call(
+      instance,
+      {:damage_creature, creature_guid, attacker_guid, damage},
+      @call_timeout
+    )
   end
 
   def damage_creature({world_id, instance_id}, creature_guid, attacker_guid, damage) do
@@ -537,7 +541,11 @@ defmodule BezgelorWorld.World.Instance do
   end
 
   def harvest_node_available?({world_id, instance_id}, guid) do
-    GenServer.call(via_tuple(world_id, instance_id), {:harvest_node_available, guid}, @call_timeout)
+    GenServer.call(
+      via_tuple(world_id, instance_id),
+      {:harvest_node_available, guid},
+      @call_timeout
+    )
   end
 
   # Server Callbacks
@@ -581,7 +589,9 @@ defmodule BezgelorWorld.World.Instance do
       :exit, _ -> :ok
     end
 
-    Logger.info("World instance started: #{world_data[:name] || world_id} (instance #{instance_id})#{if lazy_loading, do: " [lazy]", else: ""}")
+    Logger.info(
+      "World instance started: #{world_data[:name] || world_id} (instance #{instance_id})#{if lazy_loading, do: " [spawns deferred]", else: ""}"
+    )
 
     # Load creature spawns asynchronously after init completes
     # (unless lazy loading is enabled - then defer until first player enters)
@@ -653,7 +663,6 @@ defmodule BezgelorWorld.World.Instance do
     # If lazy loading is enabled and this is the first player, trigger spawn loading
     state =
       if entity.type == :player and state.lazy_loading and not state.spawns_loaded do
-        Logger.info("First player entered world #{state.world_id}, loading spawns...")
         load_spawns_sync(state)
       else
         state
@@ -757,7 +766,10 @@ defmodule BezgelorWorld.World.Instance do
           # Trigger social aggro for nearby same-faction creatures
           state = trigger_social_aggro(creature_state, target_guid, state)
 
-          %{state | creature_states: Map.put(state.creature_states, creature_guid, new_creature_state)}
+          %{
+            state
+            | creature_states: Map.put(state.creature_states, creature_guid, new_creature_state)
+          }
       end
 
     {:noreply, state}
@@ -772,7 +784,11 @@ defmodule BezgelorWorld.World.Instance do
 
         creature_state ->
           new_creature_state = %{creature_state | target_position: position}
-          %{state | creature_states: Map.put(state.creature_states, creature_guid, new_creature_state)}
+
+          %{
+            state
+            | creature_states: Map.put(state.creature_states, creature_guid, new_creature_state)
+          }
       end
 
     {:noreply, state}
@@ -1032,7 +1048,9 @@ defmodule BezgelorWorld.World.Instance do
         {:reply, {:error, :depleted}, state}
 
       node_state ->
-        {result, new_node_state, new_state} = do_gather_harvest_node(node_state, gatherer_guid, state)
+        {result, new_node_state, new_state} =
+          do_gather_harvest_node(node_state, gatherer_guid, state)
+
         harvest_nodes = Map.put(state.harvest_nodes, node_guid, new_node_state)
         {:reply, result, %{new_state | harvest_nodes: harvest_nodes}}
     end
@@ -1191,6 +1209,7 @@ defmodule BezgelorWorld.World.Instance do
   # Load spawns synchronously (for lazy loading when first player enters)
   defp load_spawns_sync(state) do
     world_id = state.world_id
+    zone_name = state.world_data[:name] || world_id
 
     state =
       case Store.get_creature_spawns(world_id) do
@@ -1198,11 +1217,11 @@ defmodule BezgelorWorld.World.Instance do
           {spawned_count, new_state} =
             spawn_from_definitions(zone_data.creature_spawns, state)
 
-          Logger.info("Lazy-loaded #{spawned_count} creature spawns for world #{world_id}")
+          Logger.info("Loaded #{spawned_count} creature spawns for #{zone_name} (first player entered)")
           %{new_state | spawns_loaded: true}
 
         :error ->
-          Logger.debug("No spawn data found for world #{world_id}")
+          Logger.debug("No spawn data found for #{zone_name}")
           %{state | spawns_loaded: true}
       end
 
@@ -1609,7 +1628,11 @@ defmodule BezgelorWorld.World.Instance do
       (ai.state == :idle and template.ai_type == :aggressive and (template.aggro_range || 0.0) > 0)
   end
 
-  defp process_creature_ai(%{ai: ai, template: template, entity: entity} = creature_state, state, now) do
+  defp process_creature_ai(
+         %{ai: ai, template: template, entity: entity} = creature_state,
+         state,
+         now
+       ) do
     # For idle aggressive creatures, check for nearby players to aggro
     if ai.state == :idle and template.ai_type == :aggressive and (template.aggro_range || 0.0) > 0 do
       case check_aggro_nearby_players(creature_state, state) do
@@ -1898,6 +1921,7 @@ defmodule BezgelorWorld.World.Instance do
     )
 
     CombatBroadcaster.broadcast_entity_death(player_entity.guid, killer_guid, [player_entity.guid])
+
     :ok
   end
 
