@@ -740,6 +740,45 @@ defmodule BezgelorWorld.World.Instance do
   end
 
   @impl true
+  def handle_cast({:creature_enter_combat, creature_guid, target_guid}, state) do
+    state =
+      case Map.get(state.creature_states, creature_guid) do
+        nil ->
+          state
+
+        %{ai: ai} when ai.state == :dead ->
+          state
+
+        creature_state ->
+          # Enter combat
+          ai = AI.enter_combat(creature_state.ai, target_guid)
+          new_creature_state = %{creature_state | ai: ai}
+
+          # Trigger social aggro for nearby same-faction creatures
+          state = trigger_social_aggro(creature_state, target_guid, state)
+
+          %{state | creature_states: Map.put(state.creature_states, creature_guid, new_creature_state)}
+      end
+
+    {:noreply, state}
+  end
+
+  @impl true
+  def handle_cast({:set_target_position, creature_guid, position}, state) do
+    state =
+      case Map.get(state.creature_states, creature_guid) do
+        nil ->
+          state
+
+        creature_state ->
+          new_creature_state = %{creature_state | target_position: position}
+          %{state | creature_states: Map.put(state.creature_states, creature_guid, new_creature_state)}
+      end
+
+    {:noreply, state}
+  end
+
+  @impl true
   def handle_call(:get_state, _from, state) do
     {:reply, state, state}
   end
@@ -1009,45 +1048,6 @@ defmodule BezgelorWorld.World.Instance do
       end
 
     {:reply, result, state}
-  end
-
-  @impl true
-  def handle_cast({:creature_enter_combat, creature_guid, target_guid}, state) do
-    state =
-      case Map.get(state.creature_states, creature_guid) do
-        nil ->
-          state
-
-        %{ai: ai} when ai.state == :dead ->
-          state
-
-        creature_state ->
-          # Enter combat
-          ai = AI.enter_combat(creature_state.ai, target_guid)
-          new_creature_state = %{creature_state | ai: ai}
-
-          # Trigger social aggro for nearby same-faction creatures
-          state = trigger_social_aggro(creature_state, target_guid, state)
-
-          %{state | creature_states: Map.put(state.creature_states, creature_guid, new_creature_state)}
-      end
-
-    {:noreply, state}
-  end
-
-  @impl true
-  def handle_cast({:set_target_position, creature_guid, position}, state) do
-    state =
-      case Map.get(state.creature_states, creature_guid) do
-        nil ->
-          state
-
-        creature_state ->
-          new_creature_state = %{creature_state | target_position: position}
-          %{state | creature_states: Map.put(state.creature_states, creature_guid, new_creature_state)}
-      end
-
-    {:noreply, state}
   end
 
   # AI Tick processing

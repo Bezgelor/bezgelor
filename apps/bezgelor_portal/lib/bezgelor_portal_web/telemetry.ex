@@ -164,10 +164,14 @@ defmodule BezgelorPortalWeb.Telemetry do
         :exit, _ -> 0
       end
 
-    # Get creature count from CreatureManager if available
+    # Get creature count across all world instances
     creature_count =
       try do
-        BezgelorWorld.CreatureManager.creature_count()
+        BezgelorWorld.World.InstanceSupervisor.list_instances()
+        |> Enum.reduce(0, fn {world_id, instance_id, _pid}, acc ->
+          count = BezgelorWorld.World.Instance.creature_count({world_id, instance_id})
+          acc + count
+        end)
       rescue
         _ -> 0
       catch
