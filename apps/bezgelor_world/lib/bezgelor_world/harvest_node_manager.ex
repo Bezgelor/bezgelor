@@ -1,381 +1,153 @@
 defmodule BezgelorWorld.HarvestNodeManager do
-  @dialyzer :no_match
-
   @moduledoc """
-  Manages harvest/gathering node spawns in the world.
+  DEPRECATED: Facade for backward compatibility during per-zone migration.
 
-  ## Overview
+  This module now routes all calls to the appropriate World.Instance.
+  Callers should migrate to using World.Instance directly.
 
-  The HarvestNodeManager is responsible for:
-  - Spawning harvest nodes from resource_spawns data
-  - Tracking node state (available/depleted)
-  - Handling node gathering and respawning
+  ## Migration Guide
 
-  ## Node State
+  Replace HarvestNodeManager calls with World.Instance calls:
 
-  Each spawned node has:
-  - Entity data (GUID, position, display_info)
-  - Node type reference (for resource yields)
-  - Spawn position (for reference)
-  - State (available/depleted)
-  - Respawn timer (when depleted)
+  | Old API | New API |
+  |---------|---------|
+  | `HarvestNodeManager.get_node(guid)` | `World.Instance.get_harvest_node({world_id, 1}, guid)` |
+  | `HarvestNodeManager.gather_node(guid, gatherer)` | `World.Instance.gather_harvest_node({world_id, 1}, guid, gatherer)` |
+  | `HarvestNodeManager.node_available?(guid)` | `World.Instance.harvest_node_available?({world_id, 1}, guid)` |
+  | `HarvestNodeManager.list_nodes()` | `World.Instance.list_harvest_nodes({world_id, 1})` |
+  | `HarvestNodeManager.node_count()` | `World.Instance.harvest_node_count({world_id, 1})` |
+
+  The key difference is that World.Instance methods require a `{world_id, instance_id}` tuple.
   """
-
-  use GenServer
 
   require Logger
 
-  alias BezgelorCore.Entity
-  alias BezgelorWorld.WorldManager
-  alias BezgelorData.Store
+  alias BezgelorWorld.World.Instance, as: WorldInstance
+  alias BezgelorWorld.World.InstanceSupervisor
 
-  @type node_state :: %{
-          entity: Entity.t(),
-          node_type_id: non_neg_integer(),
-          spawn_position: {float(), float(), float()},
-          spawn_rotation: {float(), float(), float()},
-          state: :available | :depleted,
-          respawn_timer: reference() | nil,
-          respawn_time_ms: non_neg_integer()
-        }
-
-  @type state :: %{
-          nodes: %{non_neg_integer() => node_state()},
-          spawn_definitions: [map()]
-        }
-
-  ## Client API
-
-  @doc "Start the HarvestNodeManager."
-  def start_link(opts \\ []) do
-    GenServer.start_link(__MODULE__, opts, name: __MODULE__)
-  end
-
-  @doc """
-  Load all harvest node spawns for a zone from static data.
-  Returns the number of nodes spawned.
-  """
-  @spec load_zone_spawns(non_neg_integer()) :: {:ok, non_neg_integer()} | {:error, term()}
-  def load_zone_spawns(world_id) do
-    # Long timeout for slow hardware (Fly.io shared CPUs)
-    timeout = Application.get_env(:bezgelor_world, :spawn_load_timeout, 300_000)
-    GenServer.call(__MODULE__, {:load_zone_spawns, world_id}, timeout)
-  end
-
-  @doc """
-  Load all harvest node spawns for a zone asynchronously.
-  Use this when the caller doesn't need to wait for completion.
-  """
-  @spec load_zone_spawns_async(non_neg_integer()) :: :ok
-  def load_zone_spawns_async(world_id) do
-    GenServer.cast(__MODULE__, {:load_zone_spawns_async, world_id})
-  end
-
-  @doc "Get a node by GUID."
-  @spec get_node(non_neg_integer()) :: node_state() | nil
+  @deprecated "Use World.Instance.get_harvest_node/2 instead"
+  @spec get_node(non_neg_integer()) :: map() | nil
   def get_node(guid) do
-    GenServer.call(__MODULE__, {:get_node, guid})
+    # Search all instances for this harvest node
+    find_node_in_instances(guid)
   end
 
-  @doc "Get all nodes."
-  @spec list_nodes() :: [node_state()]
+  @deprecated "Use World.Instance.list_harvest_nodes/1 instead"
+  @spec list_nodes() :: [map()]
   def list_nodes do
-    GenServer.call(__MODULE__, :list_nodes)
+    # Aggregate nodes from all instances
+    InstanceSupervisor.list_instances()
+    |> Enum.flat_map(fn {world_id, instance_id, _pid} ->
+      try do
+        WorldInstance.list_harvest_nodes({world_id, instance_id})
+      catch
+        :exit, _ -> []
+      end
+    end)
   end
 
-  @doc "Get node count."
+  @deprecated "Use World.Instance.harvest_node_count/1 instead"
   @spec node_count() :: non_neg_integer()
   def node_count do
-    GenServer.call(__MODULE__, :node_count)
+    InstanceSupervisor.list_instances()
+    |> Enum.reduce(0, fn {world_id, instance_id, _pid}, acc ->
+      try do
+        acc + WorldInstance.harvest_node_count({world_id, instance_id})
+      catch
+        :exit, _ -> acc
+      end
+    end)
   end
 
-  @doc """
-  Gather from a node. Returns loot and marks node as depleted.
-  """
+  @deprecated "Use World.Instance.gather_harvest_node/3 instead"
   @spec gather_node(non_neg_integer(), non_neg_integer()) ::
           {:ok, [map()]} | {:error, :not_found | :depleted}
   def gather_node(node_guid, gatherer_guid) do
-    GenServer.call(__MODULE__, {:gather_node, node_guid, gatherer_guid})
-  end
-
-  @doc "Check if a node is available for gathering."
-  @spec node_available?(non_neg_integer()) :: boolean()
-  def node_available?(guid) do
-    GenServer.call(__MODULE__, {:node_available, guid})
-  end
-
-  @doc """
-  Clear all spawned nodes. Used for zone reset/shutdown.
-  """
-  @spec clear_all_nodes() :: :ok
-  def clear_all_nodes do
-    GenServer.call(__MODULE__, :clear_all_nodes)
-  end
-
-  ## Server Callbacks
-
-  @impl true
-  def init(_opts) do
-    state = %{
-      nodes: %{},
-      spawn_definitions: []
-    }
-
-    Logger.info("HarvestNodeManager started")
-    {:ok, state}
-  end
-
-  @impl true
-  def handle_call({:load_zone_spawns, world_id}, _from, state) do
-    resource_spawns = Store.get_resource_spawns(world_id)
-
-    if Enum.empty?(resource_spawns) do
-      Logger.debug("No resource spawns found for world #{world_id}")
-      {:reply, {:ok, 0}, state}
-    else
-      {spawned_count, new_state} = spawn_from_definitions(resource_spawns, state)
-      Logger.info("Loaded #{spawned_count} harvest node spawns for world #{world_id}")
-      {:reply, {:ok, spawned_count}, new_state}
-    end
-  end
-
-  @impl true
-  def handle_call({:get_node, guid}, _from, state) do
-    {:reply, Map.get(state.nodes, guid), state}
-  end
-
-  @impl true
-  def handle_call(:list_nodes, _from, state) do
-    {:reply, Map.values(state.nodes), state}
-  end
-
-  @impl true
-  def handle_call(:node_count, _from, state) do
-    {:reply, map_size(state.nodes), state}
-  end
-
-  @impl true
-  def handle_call({:gather_node, node_guid, gatherer_guid}, _from, state) do
-    case Map.get(state.nodes, node_guid) do
-      nil ->
-        {:reply, {:error, :not_found}, state}
-
-      %{state: :depleted} ->
-        {:reply, {:error, :depleted}, state}
-
-      node_state ->
-        {result, new_node_state, new_state} = do_gather_node(node_state, gatherer_guid, state)
-        nodes = Map.put(state.nodes, node_guid, new_node_state)
-        {:reply, result, %{new_state | nodes: nodes}}
-    end
-  end
-
-  @impl true
-  def handle_call({:node_available, guid}, _from, state) do
-    result =
-      case Map.get(state.nodes, guid) do
-        nil -> false
-        %{state: :available} -> true
-        _ -> false
-      end
-
-    {:reply, result, state}
-  end
-
-  @impl true
-  def handle_call(:clear_all_nodes, _from, state) do
-    # Cancel any pending respawn timers
-    for {_guid, %{respawn_timer: timer}} <- state.nodes, timer != nil do
-      Process.cancel_timer(timer)
-    end
-
-    Logger.info("Cleared #{map_size(state.nodes)} harvest nodes")
-    {:reply, :ok, %{state | nodes: %{}, spawn_definitions: []}}
-  end
-
-  @impl true
-  def handle_cast({:load_zone_spawns_async, world_id}, state) do
-    resource_spawns = Store.get_resource_spawns(world_id)
-
-    if Enum.empty?(resource_spawns) do
-      {:noreply, state}
-    else
-      {spawned_count, new_state} = spawn_from_definitions(resource_spawns, state)
-      Logger.info("Loaded #{spawned_count} harvest node spawns for world #{world_id}")
-      {:noreply, new_state}
-    end
-  end
-
-  @impl true
-  def handle_info({:respawn_node, guid}, state) do
-    state =
-      case Map.get(state.nodes, guid) do
-        nil ->
-          state
-
-        node_state ->
-          # Respawn the node
-          new_node_state = %{
-            node_state
-            | state: :available,
-              respawn_timer: nil
-          }
-
-          Logger.debug("Respawned harvest node #{guid}")
-          %{state | nodes: Map.put(state.nodes, guid, new_node_state)}
-      end
-
-    {:noreply, state}
-  end
-
-  ## Private Functions
-
-  defp do_gather_node(node_state, _gatherer_guid, state) do
-    # Get node type info for loot generation
-    node_type_id = node_state.node_type_id
-    loot = generate_node_loot(node_type_id)
-
-    # Schedule respawn
-    respawn_timer =
-      Process.send_after(
-        self(),
-        {:respawn_node, node_state.entity.guid},
-        node_state.respawn_time_ms
-      )
-
-    new_node_state = %{
-      node_state
-      | state: :depleted,
-        respawn_timer: respawn_timer
-    }
-
-    Logger.debug(
-      "Node #{node_state.entity.guid} gathered, respawning in #{node_state.respawn_time_ms}ms"
+    Logger.warning(
+      "HarvestNodeManager.gather_node/2 is deprecated - use World.Instance.gather_harvest_node/3"
     )
 
-    {{:ok, loot}, new_node_state, state}
-  end
+    # Find which instance has this node and delegate
+    case find_node_instance(node_guid) do
+      nil ->
+        {:error, :not_found}
 
-  defp generate_node_loot(harvest_node_id) do
-    # Look up the harvest loot by creature ID
-    case Store.get_harvest_loot(harvest_node_id) do
-      {:ok, loot_data} ->
-        loot = get_map_value(loot_data, :loot, %{})
-        primary = get_map_value(loot, :primary, [])
-        secondary = get_map_value(loot, :secondary, [])
-
-        # Always generate primary drops
-        primary_loot =
-          Enum.flat_map(primary, fn drop ->
-            roll_drop(drop)
-          end)
-
-        # Roll for secondary drops (chance-based)
-        secondary_loot =
-          Enum.flat_map(secondary, fn drop ->
-            chance = get_map_value(drop, :chance, 0.0)
-
-            if :rand.uniform() <= chance do
-              roll_drop(drop)
-            else
-              []
-            end
-          end)
-
-        primary_loot ++ secondary_loot
-
-      :error ->
-        # Fallback - generic material
-        Logger.warning("No harvest loot found for node #{harvest_node_id}, using fallback")
-        [%{item_id: 0, name: "Unknown Resource", quantity: 1}]
+      {world_id, instance_id} ->
+        WorldInstance.gather_harvest_node({world_id, instance_id}, node_guid, gatherer_guid)
     end
   end
 
-  # Roll a drop with quantity range
-  defp roll_drop(drop) do
-    item_id = get_map_value(drop, :item_id, 0)
-    name = get_map_value(drop, :name, "Unknown")
-    min_qty = get_map_value(drop, :min, 1)
-    max_qty = get_map_value(drop, :max, 1)
-
-    quantity =
-      if max_qty > min_qty do
-        Enum.random(min_qty..max_qty)
-      else
-        min_qty
+  @deprecated "Use World.Instance.harvest_node_available?/2 instead"
+  @spec node_available?(non_neg_integer()) :: boolean()
+  def node_available?(guid) do
+    # Search all instances
+    InstanceSupervisor.list_instances()
+    |> Enum.any?(fn {world_id, instance_id, _pid} ->
+      try do
+        WorldInstance.harvest_node_available?({world_id, instance_id}, guid)
+      catch
+        :exit, _ -> false
       end
-
-    [%{item_id: item_id, name: name, quantity: quantity}]
+    end)
   end
 
-  # Helper to handle both atom and string keys in maps (from JSON parsing)
-  defp get_map_value(map, key, default) when is_atom(key) do
-    case Map.get(map, key) do
-      nil -> Map.get(map, Atom.to_string(key), default)
-      value -> value
-    end
+  @deprecated "Harvest nodes are now loaded per-zone in World.Instance"
+  @spec load_zone_spawns(non_neg_integer()) :: {:ok, non_neg_integer()} | {:error, term()}
+  def load_zone_spawns(_world_id) do
+    Logger.warning(
+      "HarvestNodeManager.load_zone_spawns/1 is deprecated - spawns are now loaded per-zone in World.Instance"
+    )
+
+    {:ok, 0}
   end
 
-  # Spawn nodes from static data definitions
-  defp spawn_from_definitions(spawn_defs, state) do
-    # Store definitions for reference
-    state = %{state | spawn_definitions: state.spawn_definitions ++ spawn_defs}
+  @deprecated "Harvest nodes are now loaded per-zone in World.Instance"
+  @spec load_zone_spawns_async(non_neg_integer()) :: :ok
+  def load_zone_spawns_async(_world_id) do
+    Logger.warning(
+      "HarvestNodeManager.load_zone_spawns_async/1 is deprecated - spawns are now loaded per-zone in World.Instance"
+    )
 
-    # Spawn each node
-    {spawned_count, nodes} =
-      Enum.reduce(spawn_defs, {0, state.nodes}, fn spawn_def, {count, nodes} ->
-        {:ok, guid, node_state} = spawn_node_from_def(spawn_def)
-        {count + 1, Map.put(nodes, guid, node_state)}
-      end)
-
-    {spawned_count, %{state | nodes: nodes}}
+    :ok
   end
 
-  # Spawn a single harvest node from a spawn definition
-  defp spawn_node_from_def(spawn_def) do
-    [x, y, z] = spawn_def.position
-    position = {x, y, z}
+  @deprecated "Use World.Instance lifecycle management instead"
+  @spec clear_all_nodes() :: :ok
+  def clear_all_nodes do
+    Logger.warning(
+      "HarvestNodeManager.clear_all_nodes/0 is deprecated - nodes are cleared when World.Instance stops"
+    )
 
-    [rx, ry, rz] = spawn_def.rotation
-    rotation = {rx, ry, rz}
+    :ok
+  end
 
-    guid = WorldManager.generate_guid(:object)
-
-    # Support both node_type_id and harvest_node_id field names
-    node_type_id = spawn_def[:node_type_id] || spawn_def[:harvest_node_id] || 0
-
-    # Get node type name for entity name
-    node_name =
-      case Store.get_node_type(node_type_id) do
-        {:ok, node_type} -> node_type[:name] || "Harvest Node"
-        :error -> "Harvest Node"
+  # Private helper to find a node across all instances
+  defp find_node_in_instances(guid) do
+    InstanceSupervisor.list_instances()
+    |> Enum.find_value(fn {world_id, instance_id, _pid} ->
+      try do
+        case WorldInstance.get_harvest_node({world_id, instance_id}, guid) do
+          nil -> nil
+          node -> node
+        end
+      catch
+        :exit, _ -> nil
       end
+    end)
+  end
 
-    entity = %Entity{
-      guid: guid,
-      type: :object,
-      name: node_name,
-      display_info: spawn_def.display_info,
-      faction: 0,
-      level: 1,
-      position: position,
-      rotation: rotation,
-      health: 1,
-      max_health: 1
-    }
-
-    node_state = %{
-      entity: entity,
-      node_type_id: node_type_id,
-      spawn_position: position,
-      spawn_rotation: rotation,
-      state: :available,
-      respawn_timer: nil,
-      respawn_time_ms: spawn_def.respawn_time_ms || 60_000
-    }
-
-    Logger.debug("Spawned harvest node #{node_name} (#{guid}) at #{inspect(position)}")
-
-    {:ok, guid, node_state}
+  # Private helper to find which instance has a node
+  defp find_node_instance(guid) do
+    InstanceSupervisor.list_instances()
+    |> Enum.find_value(fn {world_id, instance_id, _pid} ->
+      try do
+        case WorldInstance.get_harvest_node({world_id, instance_id}, guid) do
+          nil -> nil
+          _node -> {world_id, instance_id}
+        end
+      catch
+        :exit, _ -> nil
+      end
+    end)
   end
 end

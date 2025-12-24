@@ -178,12 +178,36 @@ Player -> CombatHandler -> World.Instance.damage_creature(world_key, guid, ...)
 
 ## Related Considerations
 
-- **HarvestNodeManager**: Same pattern applies, could be merged into World.Instance
+- **HarvestNodeManager**: ✅ MERGED - Same pattern as CreatureManager, now per-zone in World.Instance
 - **Creature.ZoneManager**: Already exists but underutilized - evaluate if needed
 - **TickScheduler**: Currently broadcasts to all listeners; per-zone instances would each register
+- **CorpseManager**: Could be merged into World.Instance (future work)
+- **EventManager**: Could be merged into World.Instance (future work)
+
+## Implementation Status
+
+### Phase 1: Consolidate State ✅
+- Creature states merged into World.Instance
+- Spawn loading moved to per-zone
+
+### Phase 2: Deprecate Global Managers ✅
+- CreatureManager deprecated (facade routes to World.Instance)
+- HarvestNodeManager deprecated (facade routes to World.Instance)
+
+### Phase 3: Lazy Zone Activation ✅
+- Lazy loading option for World.Instance
+- Spawns deferred until first player enters
+- Idle timeout stops instance after 5 minutes with no players
+- Skip AI processing for empty zones
+
+### Additional: HarvestNodeManager Migration ✅
+- Harvest node state added to World.Instance
+- Spawn loading via Store.get_resource_spawns
+- Gather/deplete/respawn logic moved to World.Instance
+- Deprecated facade for backwards compatibility
 
 ## Decision
 
-Approved for implementation: [ ]
-Date: ___
-Notes: ___
+Approved for implementation: [X]
+Date: 2025-12-23
+Notes: All phases complete. CreatureManager and HarvestNodeManager merged into World.Instance.

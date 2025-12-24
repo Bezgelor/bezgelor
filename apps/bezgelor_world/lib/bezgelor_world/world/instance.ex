@@ -72,7 +72,7 @@ defmodule BezgelorWorld.World.Instance do
   import Bitwise
 
   alias BezgelorCore.{AI, CreatureTemplate, Entity, Movement, SpatialGrid}
-  alias BezgelorWorld.{CombatBroadcaster, CreatureDeath, HarvestNodeManager, TickScheduler, WorldManager}
+  alias BezgelorWorld.{CombatBroadcaster, CreatureDeath, TickScheduler, WorldManager}
   alias BezgelorData.Store
 
   require Logger
@@ -89,6 +89,16 @@ defmodule BezgelorWorld.World.Instance do
           world_id: non_neg_integer()
         }
 
+  @type harvest_node_state :: %{
+          entity: Entity.t(),
+          node_type_id: non_neg_integer(),
+          spawn_position: {float(), float(), float()},
+          spawn_rotation: {float(), float(), float()},
+          state: :available | :depleted,
+          respawn_timer: reference() | nil,
+          respawn_time_ms: non_neg_integer()
+        }
+
   @type state :: %{
           world_id: non_neg_integer(),
           instance_id: instance_id(),
@@ -102,6 +112,8 @@ defmodule BezgelorWorld.World.Instance do
           spawn_definitions: [map()],
           spline_index: map(),
           spawns_loaded: boolean(),
+          # Per-zone harvest node management (merged from HarvestNodeManager)
+          harvest_nodes: %{non_neg_integer() => harvest_node_state()},
           # Phase 3: Lazy zone activation
           lazy_loading: boolean(),
           idle_timeout_ref: reference() | nil,
@@ -454,6 +466,80 @@ defmodule BezgelorWorld.World.Instance do
     )
   end
 
+  # =====================================================================
+  # Harvest Node Management API (per-zone)
+  # =====================================================================
+
+  @doc """
+  Get a harvest node by GUID.
+  """
+  @spec get_harvest_node(pid() | {non_neg_integer(), instance_id()}, non_neg_integer()) ::
+          harvest_node_state() | nil
+  def get_harvest_node(instance, guid) when is_pid(instance) do
+    GenServer.call(instance, {:get_harvest_node, guid}, @call_timeout)
+  end
+
+  def get_harvest_node({world_id, instance_id}, guid) do
+    GenServer.call(via_tuple(world_id, instance_id), {:get_harvest_node, guid}, @call_timeout)
+  end
+
+  @doc """
+  Get all harvest nodes in this zone.
+  """
+  @spec list_harvest_nodes(pid() | {non_neg_integer(), instance_id()}) :: [harvest_node_state()]
+  def list_harvest_nodes(instance) when is_pid(instance) do
+    GenServer.call(instance, :list_harvest_nodes, @call_timeout)
+  end
+
+  def list_harvest_nodes({world_id, instance_id}) do
+    GenServer.call(via_tuple(world_id, instance_id), :list_harvest_nodes, @call_timeout)
+  end
+
+  @doc """
+  Get the count of harvest nodes in this zone.
+  """
+  @spec harvest_node_count(pid() | {non_neg_integer(), instance_id()}) :: non_neg_integer()
+  def harvest_node_count(instance) when is_pid(instance) do
+    GenServer.call(instance, :harvest_node_count, @call_timeout)
+  end
+
+  def harvest_node_count({world_id, instance_id}) do
+    GenServer.call(via_tuple(world_id, instance_id), :harvest_node_count, @call_timeout)
+  end
+
+  @doc """
+  Gather from a harvest node. Returns loot and marks node as depleted.
+  """
+  @spec gather_harvest_node(
+          pid() | {non_neg_integer(), instance_id()},
+          non_neg_integer(),
+          non_neg_integer()
+        ) :: {:ok, [map()]} | {:error, :not_found | :depleted}
+  def gather_harvest_node(instance, node_guid, gatherer_guid) when is_pid(instance) do
+    GenServer.call(instance, {:gather_harvest_node, node_guid, gatherer_guid}, @call_timeout)
+  end
+
+  def gather_harvest_node({world_id, instance_id}, node_guid, gatherer_guid) do
+    GenServer.call(
+      via_tuple(world_id, instance_id),
+      {:gather_harvest_node, node_guid, gatherer_guid},
+      @call_timeout
+    )
+  end
+
+  @doc """
+  Check if a harvest node is available for gathering.
+  """
+  @spec harvest_node_available?(pid() | {non_neg_integer(), instance_id()}, non_neg_integer()) ::
+          boolean()
+  def harvest_node_available?(instance, guid) when is_pid(instance) do
+    GenServer.call(instance, {:harvest_node_available, guid}, @call_timeout)
+  end
+
+  def harvest_node_available?({world_id, instance_id}, guid) do
+    GenServer.call(via_tuple(world_id, instance_id), {:harvest_node_available, guid}, @call_timeout)
+  end
+
   # Server Callbacks
 
   @impl true
@@ -480,6 +566,8 @@ defmodule BezgelorWorld.World.Instance do
       spawn_definitions: [],
       spline_index: spline_index,
       spawns_loaded: false,
+      # Per-zone harvest node management
+      harvest_nodes: %{},
       # Phase 3: Lazy zone activation
       lazy_loading: lazy_loading,
       idle_timeout_ref: nil,
@@ -524,23 +612,8 @@ defmodule BezgelorWorld.World.Instance do
           %{state | spawns_loaded: true}
       end
 
-    # Load harvest nodes (still uses HarvestNodeManager for now)
-    Task.start(fn ->
-      try do
-        case HarvestNodeManager.load_zone_spawns(world_id) do
-          {:ok, count} ->
-            Logger.info("Loaded #{count} harvest node spawns for world #{world_id}")
-
-          {:error, _reason} ->
-            :ok
-        end
-      catch
-        kind, reason ->
-          Logger.warning(
-            "Harvest node loading failed for world #{world_id}: #{inspect(kind)} #{inspect(reason)}"
-          )
-      end
-    end)
+    # Load harvest nodes (per-zone management)
+    state = load_harvest_nodes(state)
 
     {:noreply, state}
   end
@@ -891,6 +964,53 @@ defmodule BezgelorWorld.World.Instance do
     end
   end
 
+  # =====================================================================
+  # Harvest Node Management Callbacks
+  # =====================================================================
+
+  @impl true
+  def handle_call({:get_harvest_node, guid}, _from, state) do
+    {:reply, Map.get(state.harvest_nodes, guid), state}
+  end
+
+  @impl true
+  def handle_call(:list_harvest_nodes, _from, state) do
+    {:reply, Map.values(state.harvest_nodes), state}
+  end
+
+  @impl true
+  def handle_call(:harvest_node_count, _from, state) do
+    {:reply, map_size(state.harvest_nodes), state}
+  end
+
+  @impl true
+  def handle_call({:gather_harvest_node, node_guid, gatherer_guid}, _from, state) do
+    case Map.get(state.harvest_nodes, node_guid) do
+      nil ->
+        {:reply, {:error, :not_found}, state}
+
+      %{state: :depleted} ->
+        {:reply, {:error, :depleted}, state}
+
+      node_state ->
+        {result, new_node_state, new_state} = do_gather_harvest_node(node_state, gatherer_guid, state)
+        harvest_nodes = Map.put(state.harvest_nodes, node_guid, new_node_state)
+        {:reply, result, %{new_state | harvest_nodes: harvest_nodes}}
+    end
+  end
+
+  @impl true
+  def handle_call({:harvest_node_available, guid}, _from, state) do
+    result =
+      case Map.get(state.harvest_nodes, guid) do
+        nil -> false
+        %{state: :available} -> true
+        _ -> false
+      end
+
+    {:reply, result, state}
+  end
+
   @impl true
   def handle_cast({:creature_enter_combat, creature_guid, target_guid}, state) do
     state =
@@ -984,6 +1104,28 @@ defmodule BezgelorWorld.World.Instance do
   end
 
   @impl true
+  def handle_info({:respawn_harvest_node, guid}, state) do
+    state =
+      case Map.get(state.harvest_nodes, guid) do
+        nil ->
+          state
+
+        node_state ->
+          # Respawn the node
+          new_node_state = %{
+            node_state
+            | state: :available,
+              respawn_timer: nil
+          }
+
+          Logger.debug("Respawned harvest node #{guid}")
+          %{state | harvest_nodes: Map.put(state.harvest_nodes, guid, new_node_state)}
+      end
+
+    {:noreply, state}
+  end
+
+  @impl true
   def handle_info(:idle_timeout, state) do
     # Only stop if still no players (they may have re-entered)
     if MapSet.size(state.players) == 0 do
@@ -1050,18 +1192,22 @@ defmodule BezgelorWorld.World.Instance do
   defp load_spawns_sync(state) do
     world_id = state.world_id
 
-    case Store.get_creature_spawns(world_id) do
-      {:ok, zone_data} ->
-        {spawned_count, new_state} =
-          spawn_from_definitions(zone_data.creature_spawns, state)
+    state =
+      case Store.get_creature_spawns(world_id) do
+        {:ok, zone_data} ->
+          {spawned_count, new_state} =
+            spawn_from_definitions(zone_data.creature_spawns, state)
 
-        Logger.info("Lazy-loaded #{spawned_count} creature spawns for world #{world_id}")
-        %{new_state | spawns_loaded: true}
+          Logger.info("Lazy-loaded #{spawned_count} creature spawns for world #{world_id}")
+          %{new_state | spawns_loaded: true}
 
-      :error ->
-        Logger.debug("No spawn data found for world #{world_id}")
-        %{state | spawns_loaded: true}
-    end
+        :error ->
+          Logger.debug("No spawn data found for world #{world_id}")
+          %{state | spawns_loaded: true}
+      end
+
+    # Also load harvest nodes
+    load_harvest_nodes(state)
   end
 
   # Spawn creatures from static data definitions
@@ -1811,5 +1957,170 @@ defmodule BezgelorWorld.World.Instance do
     packet_data = PacketWriter.to_binary(writer)
 
     __MODULE__.broadcast({world_id, 1}, {:server_entity_command, packet_data})
+  end
+
+  # =====================================================================
+  # Private Functions - Harvest Node Management
+  # =====================================================================
+
+  # Load harvest nodes from static data
+  defp load_harvest_nodes(state) do
+    world_id = state.world_id
+    resource_spawns = Store.get_resource_spawns(world_id)
+
+    if Enum.empty?(resource_spawns) do
+      Logger.debug("No resource spawns found for world #{world_id}")
+      state
+    else
+      {spawned_count, new_state} = spawn_harvest_nodes_from_definitions(resource_spawns, state)
+      Logger.info("Loaded #{spawned_count} harvest node spawns for world #{world_id}")
+      new_state
+    end
+  end
+
+  # Spawn harvest nodes from static data definitions
+  defp spawn_harvest_nodes_from_definitions(spawn_defs, state) do
+    {spawned_count, harvest_nodes} =
+      Enum.reduce(spawn_defs, {0, state.harvest_nodes}, fn spawn_def, {count, nodes} ->
+        {:ok, guid, node_state} = spawn_harvest_node_from_def(spawn_def)
+        {count + 1, Map.put(nodes, guid, node_state)}
+      end)
+
+    {spawned_count, %{state | harvest_nodes: harvest_nodes}}
+  end
+
+  # Spawn a single harvest node from a spawn definition
+  defp spawn_harvest_node_from_def(spawn_def) do
+    [x, y, z] = spawn_def.position
+    position = {x, y, z}
+
+    [rx, ry, rz] = spawn_def.rotation
+    rotation = {rx, ry, rz}
+
+    guid = WorldManager.generate_guid(:object)
+
+    # Support both node_type_id and harvest_node_id field names
+    node_type_id = spawn_def[:node_type_id] || spawn_def[:harvest_node_id] || 0
+
+    # Get node type name for entity name
+    node_name =
+      case Store.get_node_type(node_type_id) do
+        {:ok, node_type} -> node_type[:name] || "Harvest Node"
+        :error -> "Harvest Node"
+      end
+
+    entity = %Entity{
+      guid: guid,
+      type: :object,
+      name: node_name,
+      display_info: spawn_def.display_info,
+      faction: 0,
+      level: 1,
+      position: position,
+      rotation: rotation,
+      health: 1,
+      max_health: 1
+    }
+
+    node_state = %{
+      entity: entity,
+      node_type_id: node_type_id,
+      spawn_position: position,
+      spawn_rotation: rotation,
+      state: :available,
+      respawn_timer: nil,
+      respawn_time_ms: spawn_def.respawn_time_ms || 60_000
+    }
+
+    Logger.debug("Spawned harvest node #{node_name} (#{guid}) at #{inspect(position)}")
+
+    {:ok, guid, node_state}
+  end
+
+  # Gather from a harvest node (deplete it, generate loot, schedule respawn)
+  defp do_gather_harvest_node(node_state, _gatherer_guid, state) do
+    # Get node type info for loot generation
+    node_type_id = node_state.node_type_id
+    loot = generate_harvest_node_loot(node_type_id)
+
+    # Schedule respawn
+    respawn_timer =
+      Process.send_after(
+        self(),
+        {:respawn_harvest_node, node_state.entity.guid},
+        node_state.respawn_time_ms
+      )
+
+    new_node_state = %{
+      node_state
+      | state: :depleted,
+        respawn_timer: respawn_timer
+    }
+
+    Logger.debug(
+      "Node #{node_state.entity.guid} gathered, respawning in #{node_state.respawn_time_ms}ms"
+    )
+
+    {{:ok, loot}, new_node_state, state}
+  end
+
+  # Generate loot from a harvest node
+  defp generate_harvest_node_loot(harvest_node_id) do
+    case Store.get_harvest_loot(harvest_node_id) do
+      {:ok, loot_data} ->
+        loot = get_harvest_map_value(loot_data, :loot, %{})
+        primary = get_harvest_map_value(loot, :primary, [])
+        secondary = get_harvest_map_value(loot, :secondary, [])
+
+        # Always generate primary drops
+        primary_loot =
+          Enum.flat_map(primary, fn drop ->
+            roll_harvest_drop(drop)
+          end)
+
+        # Roll for secondary drops (chance-based)
+        secondary_loot =
+          Enum.flat_map(secondary, fn drop ->
+            chance = get_harvest_map_value(drop, :chance, 0.0)
+
+            if :rand.uniform() <= chance do
+              roll_harvest_drop(drop)
+            else
+              []
+            end
+          end)
+
+        primary_loot ++ secondary_loot
+
+      :error ->
+        # Fallback - generic material
+        Logger.warning("No harvest loot found for node #{harvest_node_id}, using fallback")
+        [%{item_id: 0, name: "Unknown Resource", quantity: 1}]
+    end
+  end
+
+  # Roll a drop with quantity range
+  defp roll_harvest_drop(drop) do
+    item_id = get_harvest_map_value(drop, :item_id, 0)
+    name = get_harvest_map_value(drop, :name, "Unknown")
+    min_qty = get_harvest_map_value(drop, :min, 1)
+    max_qty = get_harvest_map_value(drop, :max, 1)
+
+    quantity =
+      if max_qty > min_qty do
+        Enum.random(min_qty..max_qty)
+      else
+        min_qty
+      end
+
+    [%{item_id: item_id, name: name, quantity: quantity}]
+  end
+
+  # Helper to handle both atom and string keys in maps (from JSON parsing)
+  defp get_harvest_map_value(map, key, default) when is_atom(key) do
+    case Map.get(map, key) do
+      nil -> Map.get(map, Atom.to_string(key), default)
+      value -> value
+    end
   end
 end
