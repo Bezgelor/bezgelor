@@ -110,7 +110,11 @@ config :bezgelor_world,
   host: System.get_env("WORLD_HOST", "0.0.0.0"),
   port: String.to_integer(System.get_env("WORLD_PORT", "24000")),
   # Public address clients connect to (defaults to host if not set)
-  public_address: System.get_env("WORLD_PUBLIC_ADDRESS", "127.0.0.1")
+  public_address: System.get_env("WORLD_PUBLIC_ADDRESS", "127.0.0.1"),
+  # Lazy zone loading - defer creature spawns until first player enters
+  # When true: zones start empty, spawns load on first player entry
+  # When false: all zones pre-load spawns at server boot
+  lazy_zone_loading: true
 
 # Tradeskill configuration
 config :bezgelor_world, :tradeskills,
