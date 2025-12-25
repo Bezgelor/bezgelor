@@ -10,7 +10,7 @@ This document provides an overview of all game content data available in Bezgelo
 | **Quest Objectives** | 10,031 | Client extraction |
 | **Quest Rewards** | 5,415 | Client extraction |
 | **Creatures** | 53,137 | Client extraction |
-| **Creature Spawns** | 41,056 | NexusForever.WorldDatabase |
+| **Creature Spawns** | 65,849 | NexusForever.WorldDatabase |
 | **Items** | 71,918 | Client extraction |
 | **NPC Vendors** | 881 | Client extraction |
 | **Vendor Inventory Items** | 35,842 | Generated |
@@ -202,18 +202,19 @@ Unlock conditions for content (level, quest completion, faction, etc.).
 
 ## World Population
 
-### Creature Spawns (41,056 records)
+### Creature Spawns (65,849 records)
 Imported from NexusForever.WorldDatabase.
 
-| World ID | Continent | Creatures | Objects |
-|----------|-----------|-----------|---------|
-| 51 | Alizar (Exile) | 20,229 | 1,833 |
-| 22 | Olyssia (Dominion) | 996 | 30 |
-| 1061 | Isigrol (Max-level) | 17,990 | 986 |
-| 990 | EverstarGrove | 1,107 | 49 |
-| 426 | NorthernWilds | 590 | 23 |
-| 870 | CrimsonIsle | 47 | 0 |
-| 1387 | LevianBay | 97 | 0 |
+| World ID | Continent | Creatures | Resources | Objects |
+|----------|-----------|-----------|-----------|---------|
+| 51 | Alizar (Exile) | 20,229 | 1,833 | 1,833 |
+| 22 | Olyssia (Dominion) | 996 | 30 | 30 |
+| 1061 | Isigrol (Max-level) | 17,990 | 986 | 986 |
+| 990 | EverstarGrove | 1,107 | 49 | 49 |
+| 426 | NorthernWilds | 673 | 82 | 23 |
+| 870 | CrimsonIsle | 47 | 0 | 0 |
+| 1387 | LevianBay | 1,367 | 121 | 0 |
+| + 3 others | Various | ~23,440 | ~1,914 | ~1,462 |
 
 ### Object Spawns (2,921 records)
 Interactive objects, chests, and world objects.

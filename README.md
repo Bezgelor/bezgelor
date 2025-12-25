@@ -45,9 +45,12 @@ This project is only possible thanks to the groundbreaking work and support of t
 - **Social** - Chat, friends, guilds, mail system
 - **Housing** - Player plots, decor placement, fabkits, neighbors
 - **Tradeskills** - 6 crafting + 3 gathering professions with coordinate-based crafting
+- **Mounts & Pets** - Summoning, customization, pet XP from combat
+- **Storefront** - Categories, purchases, promo codes, daily deals
 - **Public Events** - World bosses, invasions, territory control
 - **Dungeons** - Instance management, boss encounters DSL, group finder, loot distribution
 - **Mythic+** - Keystones, affixes, timers, score calculation
+- **PvP** - Dueling, battlegrounds, arenas (2v2/3v3/5v5), warplots, rating system, seasons
 - **Player Portal** - Web dashboard with 3D character viewer, inventory browser, achievement tracker, guild management, mail center
 - **Admin Portal** - Real-time server monitoring, user/character management, economy tools, event control, audit logs
 

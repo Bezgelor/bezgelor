@@ -1,6 +1,6 @@
 # Bezgelor Project Status
 
-**Last Updated:** 2025-12-11
+**Last Updated:** 2025-12-25
 
 ## Overview
 
@@ -410,6 +410,8 @@ tools/
 
 ## Recent Completions
 
+- **2025-12-25:** Per-Zone Creature Manager - Migrated creature/harvest state into World.Instance, lazy zone loading, idle shutdown, deprecated global managers
+- **2025-12-25:** NexusForever Converter Extended - Added parsers for entity_event, entity_property, entity_script, map_entrance, vendor tables; 65,849 creatures across 10 zones
 - **2025-12-12:** Architecture Remediation Complete - Secondary ETS indexes, zone-based chat routing, strengthened context modules, documented protocol deviations
 - **2025-12-11:** Phase 11 PvP Complete - Battleground objectives, arenas, warplots, rating system, seasons (63 tests)
 - **2025-12-11:** Phase 7 Finalization - ClientGiftItem, ClientRedeemCode, ServerPromoCodeResult packets with handler methods
