@@ -1,4 +1,9 @@
 defmodule BezgelorProtocol.Packets.Realm.ServerPacketsTest do
+  @moduledoc """
+  Tests for realm server packets.
+
+  Note: wide_string uses bit-packed format (1-bit extended + 7/15-bit length + UTF-16LE data).
+  """
   use ExUnit.Case, async: true
 
   import Bitwise
@@ -131,10 +136,15 @@ defmodule BezgelorProtocol.Packets.Realm.ServerPacketsTest do
 
       binary = PacketWriter.to_binary(writer)
 
-      # 1 message, index 0, length 2, "Hi" in UTF-16LE
-      expected_utf16 = :unicode.characters_to_binary("Hi", :utf8, {:utf16, :little})
+      # Parse: count (uint32) + index (uint32) + wide_string (bit-packed)
+      <<count::little-32, index::little-32, rest::binary>> = binary
 
-      assert <<1::little-32, 0::little-32, 2::little-32, ^expected_utf16::binary>> = binary
+      assert count == 1
+      assert index == 0
+
+      # Parse bit-packed wide string
+      {message, _remaining} = parse_wide_string(rest)
+      assert message == "Hi"
     end
 
     test "write/2 serializes multiple messages" do
@@ -178,29 +188,36 @@ defmodule BezgelorProtocol.Packets.Realm.ServerPacketsTest do
 
       binary = PacketWriter.to_binary(writer)
 
-      expected_name = :unicode.characters_to_binary("Test", :utf8, {:utf16, :little})
-
-      # Parse the binary
+      # Parse: address (u32 little) + port (u16) + session_key (16 bytes) +
+      #        account_id (u32) + realm_name (bit-packed wide_string) +
+      #        flags (u32) + type (2 bits) + note_text_id (21 bits)
       <<
-        addr::big-32,
+        addr::little-32,
         port::little-16,
         key::binary-size(16),
         account_id::little-32,
-        name_len::little-32,
-        name::binary-size(byte_size(expected_name)),
-        flags::little-32,
-        type_and_note::little-32
+        rest::binary
       >> = binary
 
-      # 127.0.0.1 in big-endian
-      assert addr == 0x7F000001
+      # Address stored as big-endian uint32 value (0x7F000001 for 127.0.0.1)
+      # but written as little-endian, so we read it back as little-endian
+      assert addr == ServerRealmInfo.ip_to_uint32("127.0.0.1")
       assert port == 24000
       assert key == session_key
       assert account_id == 42
-      assert name_len == 4
-      assert name == expected_name
+
+      # Parse bit-packed wide string for realm_name
+      {name, after_name} = parse_wide_string(rest)
+      assert name == "Test"
+
+      # Remaining: flags (u32) + type_and_note bits (padded to byte boundary)
+      <<flags::little-32, type_bits::little-size(24)>> = after_name
+
       assert flags == 0
-      assert type_and_note == 0
+
+      # Type is 2 bits, note_text_id is 21 bits, total 23 bits padded to 3 bytes
+      type_val = type_bits &&& 0x3
+      assert type_val == 0
     end
 
     test "write/2 serializes pvp realm type" do
@@ -222,15 +239,24 @@ defmodule BezgelorProtocol.Packets.Realm.ServerPacketsTest do
 
       binary = PacketWriter.to_binary(writer)
 
-      # Extract type_and_note (last uint32)
-      # Skip: address(4) + port(2) + session_key(16) + account_id(4) + name_len(4) + name(2 for "X" in UTF-16) + flags(4)
-      name_utf16 = :unicode.characters_to_binary("X", :utf8, {:utf16, :little})
-      offset = 4 + 2 + 16 + 4 + 4 + byte_size(name_utf16) + 4
+      # Skip to parse realm_name and then flags/type
+      <<
+        _addr::little-32,
+        _port::little-16,
+        _key::binary-size(16),
+        _account_id::little-32,
+        rest::binary
+      >> = binary
 
-      <<_::binary-size(offset), type_and_note::little-32>> = binary
+      # Parse bit-packed wide string
+      {_name, after_name} = parse_wide_string(rest)
+
+      # flags (u32) + type (2 bits) + note_text_id (21 bits)
+      <<_flags::little-32, type_bits::little-size(24)>> = after_name
 
       # PVP is type 1, in lowest 2 bits
-      assert (type_and_note &&& 0x3) == 1
+      type_val = type_bits &&& 0x3
+      assert type_val == 1
     end
 
     test "ip_to_uint32/1 converts IP correctly" do
@@ -245,6 +271,26 @@ defmodule BezgelorProtocol.Packets.Realm.ServerPacketsTest do
       assert ServerRealmInfo.realm_type_to_int(:pvp) == 1
       assert ServerRealmInfo.realm_type_to_int(0) == 0
       assert ServerRealmInfo.realm_type_to_int(1) == 1
+    end
+  end
+
+  # Helper to parse bit-packed wide string
+  defp parse_wide_string(<<header::8, rest::binary>>) do
+    extended = (header &&& 1) == 1
+
+    if extended do
+      <<second_byte::8, data::binary>> = rest
+      length = ((second_byte <<< 7) ||| (header >>> 1)) &&& 0x7FFF
+      byte_length = length * 2
+      <<utf16::binary-size(byte_length), remaining::binary>> = data
+      string = :unicode.characters_to_binary(utf16, {:utf16, :little}, :utf8)
+      {string, remaining}
+    else
+      length = header >>> 1
+      byte_length = length * 2
+      <<utf16::binary-size(byte_length), remaining::binary>> = rest
+      string = :unicode.characters_to_binary(utf16, {:utf16, :little}, :utf8)
+      {string, remaining}
     end
   end
 end

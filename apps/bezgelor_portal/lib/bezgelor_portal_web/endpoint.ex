@@ -12,8 +12,8 @@ defmodule BezgelorPortalWeb.Endpoint do
   ]
 
   socket "/live", Phoenix.LiveView.Socket,
-    websocket: [connect_info: [session: @session_options]],
-    longpoll: [connect_info: [session: @session_options]]
+    websocket: [connect_info: [session: @session_options], log: :debug],
+    longpoll: [connect_info: [session: @session_options], log: :debug]
 
   # Serve at "/" the static files from "priv/static" directory.
   #

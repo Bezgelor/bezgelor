@@ -19,15 +19,15 @@ defmodule BezgelorWorld.Path.SessionPathManagerTest do
 
   # Settler mission types
   @type_infrastructure 19
-  @type_civil_service 21
+  # @type_civil_service 21 - unused but kept for reference
   @type_cache 25
-  @type_project 26
+  # @type_project 26 - unused but kept for reference
   @type_depot 27
 
   # Scientist mission types
   @type_scan 2
   @type_datacube 14
-  @type_field_study 20
+  # @type_field_study 20 - unused but kept for reference
   @type_specimen 22
   @type_biology 23
   @type_archaeology 24
@@ -573,7 +573,7 @@ defmodule BezgelorWorld.Path.SessionPathManagerTest do
       assert Enum.any?(packets, fn {type, _} -> type == :server_path_mission_complete end)
 
       # Additional kills have no effect
-      {session, packets} =
+      {_session, packets} =
         SessionPathManager.process_game_event(session, :kill, %{creature_id: 123})
 
       assert packets == []

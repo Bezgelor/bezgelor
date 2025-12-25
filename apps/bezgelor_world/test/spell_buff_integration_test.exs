@@ -1,6 +1,8 @@
 defmodule BezgelorWorld.SpellBuffIntegrationTest do
   use ExUnit.Case, async: false
 
+  @moduletag :integration
+
   alias BezgelorWorld.{SpellManager, BuffManager}
   alias BezgelorCore.Spell
 

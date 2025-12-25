@@ -44,7 +44,10 @@ defmodule BezgelorWorld.Handler.QuestHandlerTest do
     end
   end
 
+  # These integration tests require database access and proper setup
   describe "SessionQuestManager integration" do
+    @describetag :integration
+
     test "accept_quest adds quest to session_data" do
       session_data = %{
         active_quests: %{},

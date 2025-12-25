@@ -1,7 +1,19 @@
 defmodule BezgelorData.StoreQuestTest do
+  @moduledoc """
+  Tests for quest-related Store functions.
+
+  These functions delegate to BezgelorData.Queries.Quests.
+  """
   use ExUnit.Case
 
   alias BezgelorData.Store
+
+  # Pre-computed field keys for test assertions
+  @quest_given_keys for i <- 0..24,
+                        do: String.to_atom("questIdGiven#{String.pad_leading(Integer.to_string(i), 2, "0")}")
+  @quest_receive_keys for i <- 0..24,
+                          do: String.to_atom("questIdReceive#{String.pad_leading(Integer.to_string(i), 2, "0")}")
+  @objective_keys for i <- 0..5, do: String.to_atom("objective#{i}")
 
   describe "get_quests_for_creature_giver/1" do
     test "returns quest IDs for creature that gives quests" do
@@ -194,11 +206,8 @@ defmodule BezgelorData.StoreQuestTest do
 
     Enum.find_value(quests, fn quest ->
       objectives =
-        0..5
-        |> Enum.map(fn i ->
-          key = String.to_atom("objective#{i}")
-          Map.get(quest, key)
-        end)
+        @objective_keys
+        |> Enum.map(&Map.get(quest, &1))
         |> Enum.reject(&(&1 == 0 or is_nil(&1)))
 
       if length(objectives) > 0, do: quest.id, else: nil
@@ -206,20 +215,14 @@ defmodule BezgelorData.StoreQuestTest do
   end
 
   defp extract_quest_given_ids(creature) do
-    0..24
-    |> Enum.map(fn i ->
-      key = String.to_atom("questIdGiven#{String.pad_leading(Integer.to_string(i), 2, "0")}")
-      Map.get(creature, key)
-    end)
+    @quest_given_keys
+    |> Enum.map(&Map.get(creature, &1))
     |> Enum.reject(&(&1 == 0 or is_nil(&1)))
   end
 
   defp extract_quest_receive_ids(creature) do
-    0..24
-    |> Enum.map(fn i ->
-      key = String.to_atom("questIdReceive#{String.pad_leading(Integer.to_string(i), 2, "0")}")
-      Map.get(creature, key)
-    end)
+    @quest_receive_keys
+    |> Enum.map(&Map.get(creature, &1))
     |> Enum.reject(&(&1 == 0 or is_nil(&1)))
   end
 end

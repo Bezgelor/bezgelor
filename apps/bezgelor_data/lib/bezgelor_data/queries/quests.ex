@@ -5,6 +5,15 @@ defmodule BezgelorData.Queries.Quests do
 
   alias BezgelorData.Store
 
+  # Pre-computed field keys for quest data extraction
+  # These match WildStar's Creature2.tbl structure - prevents runtime atom creation
+  @quest_given_keys for i <- 0..24,
+                        do: String.to_atom("questIdGiven#{String.pad_leading(Integer.to_string(i), 2, "0")}")
+  @quest_receive_keys for i <- 0..24,
+                          do:
+                            String.to_atom("questIdReceive#{String.pad_leading(Integer.to_string(i), 2, "0")}")
+  @objective_keys for i <- 0..5, do: String.to_atom("objective#{i}")
+
   # Quest queries
 
   @doc """
@@ -68,11 +77,8 @@ defmodule BezgelorData.Queries.Quests do
   def get_quests_for_creature_giver(creature_id) do
     case get_creature_full(creature_id) do
       {:ok, creature} ->
-        0..24
-        |> Enum.map(fn i ->
-          key = String.to_atom("questIdGiven#{String.pad_leading(Integer.to_string(i), 2, "0")}")
-          Map.get(creature, key)
-        end)
+        @quest_given_keys
+        |> Enum.map(&Map.get(creature, &1))
         |> Enum.reject(&(&1 == 0 or is_nil(&1)))
 
       :error ->
@@ -88,13 +94,8 @@ defmodule BezgelorData.Queries.Quests do
   def get_quests_for_creature_receiver(creature_id) do
     case get_creature_full(creature_id) do
       {:ok, creature} ->
-        0..24
-        |> Enum.map(fn i ->
-          key =
-            String.to_atom("questIdReceive#{String.pad_leading(Integer.to_string(i), 2, "0")}")
-
-          Map.get(creature, key)
-        end)
+        @quest_receive_keys
+        |> Enum.map(&Map.get(creature, &1))
         |> Enum.reject(&(&1 == 0 or is_nil(&1)))
 
       :error ->
@@ -111,11 +112,8 @@ defmodule BezgelorData.Queries.Quests do
     case Store.get(:quests, quest_id) do
       {:ok, quest} ->
         objectives =
-          0..5
-          |> Enum.map(fn i ->
-            key = String.to_atom("objective#{i}")
-            Map.get(quest, key)
-          end)
+          @objective_keys
+          |> Enum.map(&Map.get(quest, &1))
           |> Enum.reject(&(&1 == 0 or is_nil(&1)))
           |> Enum.map(&Store.get(:quest_objectives, &1))
           |> Enum.filter(&match?({:ok, _}, &1))

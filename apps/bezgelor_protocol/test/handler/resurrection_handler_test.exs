@@ -1,8 +1,17 @@
 defmodule BezgelorProtocol.Handler.ResurrectionHandlerTest do
+  @moduledoc """
+  Tests for ResurrectionHandler.
+
+  These tests require bezgelor_world to be running for DeathManager.
+  """
   use ExUnit.Case, async: false
 
   alias BezgelorProtocol.Handler.ResurrectionHandler
   alias BezgelorWorld.DeathManager
+
+  # These tests require BezgelorWorld.DeathManager which is only available
+  # when bezgelor_world application is started
+  @moduletag :requires_world
 
   @player_guid 0x1000000000000001
 

@@ -12,11 +12,12 @@ defmodule BezgelorWorld.Integration.EconomyIntegrationTest do
 
   use ExUnit.Case, async: false
 
+  @moduletag :integration
+  @moduletag :database
+
   alias BezgelorDb.{Accounts, Characters, Economy, Inventory, Repo}
   alias BezgelorWorld.Economy.Telemetry
   alias BezgelorWorld.Economy.Alerts
-
-  @moduletag :database
 
   setup do
     # Start Repo if not already started

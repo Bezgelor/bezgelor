@@ -593,9 +593,7 @@ defmodule BezgelorWorld.WorldManager do
       Task.start(fn ->
         case BezgelorDb.Characters.add_play_time(character_id, session_seconds) do
           {:ok, _} ->
-            Logger.debug(
-              "Updated play time for character #{character_id}: +#{session_seconds}s"
-            )
+            Logger.debug("Updated play time for character #{character_id}: +#{session_seconds}s")
 
           {:error, reason} ->
             Logger.warning(

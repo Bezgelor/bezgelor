@@ -10,23 +10,32 @@ defmodule BezgelorApi.Controllers.ZoneController do
   @doc """
   GET /api/v1/zones
 
-  Returns list of active zone instances.
+  Returns list of active world instances.
+
+  Note: These are world instances (maps/continents), not zone sub-regions.
+  The API uses "zones" terminology for backwards compatibility.
   """
   def index(conn) do
     instances =
-      InstanceSupervisor.list_instances()
-      |> Enum.map(fn {zone_id, instance_id, pid} ->
-        info = Instance.info(pid)
+      try do
+        InstanceSupervisor.list_instances()
+        |> Enum.map(fn {world_id, instance_id, pid} ->
+          info = Instance.info(pid)
 
-        %{
-          zone_id: zone_id,
-          instance_id: instance_id,
-          zone_name: info.zone_name,
-          player_count: info.player_count,
-          creature_count: info.creature_count,
-          total_entities: info.total_entities
-        }
-      end)
+          %{
+            zone_id: world_id,
+            instance_id: instance_id,
+            zone_name: info.world_name,
+            player_count: info.player_count,
+            creature_count: info.creature_count,
+            total_entities: info.total_entities
+          }
+        end)
+      rescue
+        _ -> []
+      catch
+        :exit, _ -> []
+      end
 
     json(conn, 200, %{zones: instances, count: length(instances)})
   end
@@ -70,20 +79,28 @@ defmodule BezgelorApi.Controllers.ZoneController do
     end
   rescue
     _ -> nil
+  catch
+    :exit, _ -> nil
   end
 
   defp get_zone_instances(zone_id) do
-    InstanceSupervisor.list_instances_for_world(zone_id)
-    |> Enum.map(fn {instance_id, pid} ->
-      info = Instance.info(pid)
+    try do
+      InstanceSupervisor.list_instances_for_world(zone_id)
+      |> Enum.map(fn {instance_id, pid} ->
+        info = Instance.info(pid)
 
-      %{
-        instance_id: instance_id,
-        player_count: info.player_count,
-        creature_count: info.creature_count,
-        total_entities: info.total_entities
-      }
-    end)
+        %{
+          instance_id: instance_id,
+          player_count: info.player_count,
+          creature_count: info.creature_count,
+          total_entities: info.total_entities
+        }
+      end)
+    rescue
+      _ -> []
+    catch
+      :exit, _ -> []
+    end
   end
 
   defp parse_id(id) when is_binary(id) do

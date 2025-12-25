@@ -1,12 +1,21 @@
 defmodule BezgelorProtocol.Packets.World.ServerItemMoveTest do
+  @moduledoc """
+  Tests for ServerItemMove packet serialization.
+
+  Wire format uses NexusForever's ItemLocationToDragDropData encoding:
+  drag_drop = (location << 8) | slot
+  """
   use ExUnit.Case, async: true
+
+  import Bitwise
 
   alias BezgelorProtocol.Packets.World.ServerItemMove
   alias BezgelorProtocol.PacketWriter
 
   describe "write/2" do
     test "encodes item move to bag" do
-      packet = ServerItemMove.new(12345, :bag, 0, 5)
+      # new/3: item_guid, location, slot
+      packet = ServerItemMove.new(12345, :bag, 5)
       writer = PacketWriter.new()
 
       assert {:ok, writer} = ServerItemMove.write(packet, writer)
@@ -17,19 +26,17 @@ defmodule BezgelorProtocol.Packets.World.ServerItemMoveTest do
 
       assert item_guid == 12345
 
-      # Decode drag_drop: location in bits 0-7, bag_index in 8-15, slot in 16+
-      location = Bitwise.band(drag_drop, 0xFF)
-      bag_index = Bitwise.band(Bitwise.bsr(drag_drop, 8), 0xFF)
-      slot = Bitwise.bsr(drag_drop, 16)
+      # Decode drag_drop: (location << 8) | slot per NexusForever
+      location = (drag_drop >>> 8) &&& 0xFF
+      slot = drag_drop &&& 0xFF
 
-      # :bag
+      # :bag = 1
       assert location == 1
-      assert bag_index == 0
       assert slot == 5
     end
 
     test "encodes item move to equipped slot" do
-      packet = ServerItemMove.new(99999, :equipped, 0, 3)
+      packet = ServerItemMove.new(99999, :equipped, 3)
       writer = PacketWriter.new()
 
       assert {:ok, writer} = ServerItemMove.write(packet, writer)
@@ -37,16 +44,16 @@ defmodule BezgelorProtocol.Packets.World.ServerItemMoveTest do
 
       <<_item_guid::little-64, drag_drop::little-64>> = binary
 
-      location = Bitwise.band(drag_drop, 0xFF)
-      slot = Bitwise.bsr(drag_drop, 16)
+      location = (drag_drop >>> 8) &&& 0xFF
+      slot = drag_drop &&& 0xFF
 
-      # :equipped
+      # :equipped = 0
       assert location == 0
       assert slot == 3
     end
 
     test "encodes item move to bank" do
-      packet = ServerItemMove.new(77777, :bank, 2, 10)
+      packet = ServerItemMove.new(77777, :bank, 10)
       writer = PacketWriter.new()
 
       assert {:ok, writer} = ServerItemMove.write(packet, writer)
@@ -54,14 +61,29 @@ defmodule BezgelorProtocol.Packets.World.ServerItemMoveTest do
 
       <<_item_guid::little-64, drag_drop::little-64>> = binary
 
-      location = Bitwise.band(drag_drop, 0xFF)
-      bag_index = Bitwise.band(Bitwise.bsr(drag_drop, 8), 0xFF)
-      slot = Bitwise.bsr(drag_drop, 16)
+      location = (drag_drop >>> 8) &&& 0xFF
+      slot = drag_drop &&& 0xFF
 
-      # :bank
+      # :bank = 2
       assert location == 2
-      assert bag_index == 2
       assert slot == 10
+    end
+
+    test "encodes item move to trade" do
+      packet = ServerItemMove.new(55555, :trade, 0)
+      writer = PacketWriter.new()
+
+      assert {:ok, writer} = ServerItemMove.write(packet, writer)
+      binary = PacketWriter.to_binary(writer)
+
+      <<_item_guid::little-64, drag_drop::little-64>> = binary
+
+      location = (drag_drop >>> 8) &&& 0xFF
+      slot = drag_drop &&& 0xFF
+
+      # :trade = 3
+      assert location == 3
+      assert slot == 0
     end
   end
 

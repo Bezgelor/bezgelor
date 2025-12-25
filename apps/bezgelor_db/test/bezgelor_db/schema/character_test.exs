@@ -7,6 +7,7 @@ defmodule BezgelorDb.Schema.CharacterTest do
     test "valid changeset with required fields" do
       attrs = %{
         account_id: 1,
+        realm_id: 1,
         name: "TestCharacter",
         sex: 0,
         race: 1,
@@ -23,6 +24,7 @@ defmodule BezgelorDb.Schema.CharacterTest do
     test "invalid with name too short" do
       attrs = %{
         account_id: 1,
+        realm_id: 1,
         name: "AB",
         sex: 0,
         race: 1,
@@ -40,6 +42,7 @@ defmodule BezgelorDb.Schema.CharacterTest do
     test "invalid with name too long" do
       attrs = %{
         account_id: 1,
+        realm_id: 1,
         name: String.duplicate("a", 25),
         sex: 0,
         race: 1,

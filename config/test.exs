@@ -41,4 +41,7 @@ config :bezgelor_world, start_server: false
 config :bezgelor_portal, start_telemetry_collector: false
 config :bezgelor_portal, start_rollup_scheduler: false
 
+# Disable Economy.Telemetry database persistence in tests (avoids sandbox errors)
+config :bezgelor_world, BezgelorWorld.Economy.Telemetry, persist: false
+
 config :logger, level: :warning

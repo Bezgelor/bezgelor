@@ -7,6 +7,8 @@ defmodule BezgelorWorld.Quest.IntegrationTest do
   """
   use ExUnit.Case, async: true
 
+  @moduletag :integration
+
   alias BezgelorWorld.Quest.{SessionQuestManager, QuestCache}
 
   # ============================================================================

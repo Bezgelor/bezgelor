@@ -78,10 +78,11 @@ defmodule BezgelorCore.Zone do
   }
 
   # Dominion starting zone on Nexus (Veteran/Nexus = 3)
+  # Location 18987 - Stormcaller Landing in Seaspine Forest, Levian Bay
   @dominion_nexus_start %{
     world_id: 1387,
-    zone_id: 2,
-    position: {-3835.341, -980.2174, -6050.524},
+    zone_id: 1411,
+    position: {-3835.341, -980.217, -6050.524},
     rotation: {-0.45682, 0.0, 0.0}
   }
 
@@ -169,7 +170,7 @@ defmodule BezgelorCore.Zone do
   ## Examples
 
       iex> Zone.default_spawn(166)
-      %{world_id: 1387, zone_id: 2, position: {-3835.341, -980.2174, -6050.524}, rotation: {-0.45682, 0.0, 0.0}}
+      %{world_id: 1387, zone_id: 1411, position: {-3835.341, -980.217, -6050.524}, rotation: {-0.45682, 0.0, 0.0}}
 
       iex> Zone.default_spawn(167)
       %{world_id: 426, zone_id: 1, position: {4110.71, -658.6249, -5145.48}, rotation: {0.317613, 0.0, 0.0}}

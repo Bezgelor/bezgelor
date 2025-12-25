@@ -1,5 +1,17 @@
 defmodule BezgelorProtocol.Packets.ServerRealmInfoTest do
+  @moduledoc """
+  Tests for ServerRealmInfo packet serialization.
+
+  Wire format:
+  - account_id:    uint32
+  - realm_id:      uint32
+  - realm_name:    wide_string (bit-packed)
+  - realm_address: null-terminated ASCII string
+  - session_key:   16 bytes
+  """
   use ExUnit.Case, async: true
+
+  import Bitwise
 
   alias BezgelorProtocol.Packets.ServerRealmInfo
   alias BezgelorProtocol.PacketWriter
@@ -20,23 +32,21 @@ defmodule BezgelorProtocol.Packets.ServerRealmInfoTest do
       {:ok, writer} = ServerRealmInfo.write(packet, writer)
       binary = PacketWriter.to_binary(writer)
 
-      # Parse it back to verify structure
+      # Parse back - bit-packed wide string format
       <<
         account_id::little-32,
         realm_id::little-32,
-        name_len::little-32,
         rest::binary
       >> = binary
 
       assert account_id == 12345
       assert realm_id == 1
-      # "Nexus" length
-      assert name_len == 5
 
-      # Skip UTF-16LE name (5 * 2 = 10 bytes)
-      <<_name::binary-size(10), after_name::binary>> = rest
+      # Parse bit-packed wide string for realm_name
+      {name, after_name} = parse_wide_string(rest)
+      assert name == "Nexus"
 
-      # Address is null-terminated string
+      # Address is null-terminated string followed by session_key
       {address, <<key::binary-size(16)>>} = split_null_string(after_name)
       assert address == "127.0.0.1:24000"
       assert key == session_key
@@ -44,6 +54,29 @@ defmodule BezgelorProtocol.Packets.ServerRealmInfoTest do
 
     test "returns correct opcode" do
       assert ServerRealmInfo.opcode() == :server_realm_info
+    end
+  end
+
+  # Parse bit-packed wide string from binary
+  # Format: 1 bit extended + 7/15 bits length + UTF-16LE data
+  defp parse_wide_string(<<header::8, rest::binary>>) do
+    extended = (header &&& 1) == 1
+
+    if extended do
+      # Long string: read second byte for full 15-bit length
+      <<second_byte::8, data::binary>> = rest
+      length = ((second_byte <<< 7) ||| (header >>> 1)) &&& 0x7FFF
+      byte_length = length * 2
+      <<utf16::binary-size(byte_length), remaining::binary>> = data
+      string = :unicode.characters_to_binary(utf16, {:utf16, :little}, :utf8)
+      {string, remaining}
+    else
+      # Short string: 7-bit length
+      length = header >>> 1
+      byte_length = length * 2
+      <<utf16::binary-size(byte_length), remaining::binary>> = rest
+      string = :unicode.characters_to_binary(utf16, {:utf16, :little}, :utf8)
+      {string, remaining}
     end
   end
 

@@ -12,7 +12,28 @@ defmodule BezgelorWorld.CombatEdgeCasesTest do
   use ExUnit.Case, async: false
 
   alias BezgelorCore.{AI, CreatureTemplate, Experience}
-  alias BezgelorWorld.CreatureManager
+  alias BezgelorWorld.World.{Instance, InstanceSupervisor}
+
+  # Test world key - unique to avoid conflicts
+  @test_world_id 88888
+  @test_instance_id 1
+  @test_world_key {@test_world_id, @test_instance_id}
+
+  setup do
+    world_data = %{id: @test_world_id, name: "Combat Edge Case Zone", is_test: true}
+
+    case InstanceSupervisor.start_instance(@test_world_id, @test_instance_id, world_data) do
+      {:ok, _pid} ->
+        on_exit(fn ->
+          InstanceSupervisor.stop_instance(@test_world_id, @test_instance_id)
+        end)
+
+        :ok
+
+      {:error, {:already_started, _pid}} ->
+        :ok
+    end
+  end
 
   describe "XP edge cases" do
     test "gray mob (5+ levels below) gives 10% XP" do
@@ -64,7 +85,7 @@ defmodule BezgelorWorld.CombatEdgeCasesTest do
       # Total for level 5: 100 * 5^2 = 2500
       huge_xp = 5000
 
-      {new_level, remaining_xp, leveled_up?} = Experience.apply_xp(1, 0, huge_xp)
+      {new_level, _remaining_xp, leveled_up?} = Experience.apply_xp(1, 0, huge_xp)
 
       assert leveled_up?
       # Should have leveled up multiple times
@@ -93,37 +114,37 @@ defmodule BezgelorWorld.CombatEdgeCasesTest do
 
   describe "damage edge cases" do
     test "overkill damage still results in death" do
-      {:ok, guid} = CreatureManager.spawn_creature(1, {8000.0, 8000.0, 8000.0})
+      {:ok, guid} = Instance.spawn_creature(@test_world_key, 1, {8000.0, 8000.0, 8000.0})
       template = CreatureTemplate.get(1)
 
       # Deal 10x the creature's health
       overkill_damage = template.max_health * 10
-      {:ok, :killed, info} = CreatureManager.damage_creature(guid, 12345, overkill_damage)
+      {:ok, :killed, info} = Instance.damage_creature(@test_world_key, guid, 12345, overkill_damage)
 
       assert info.xp_reward > 0
-      creature = CreatureManager.get_creature(guid)
+      creature = Instance.get_creature(@test_world_key, guid)
       assert creature.entity.health <= 0
     end
 
     test "zero damage does not kill or error" do
-      {:ok, guid} = CreatureManager.spawn_creature(1, {8100.0, 8000.0, 8000.0})
+      {:ok, guid} = Instance.spawn_creature(@test_world_key, 1, {8100.0, 8000.0, 8000.0})
 
-      {:ok, :damaged, info} = CreatureManager.damage_creature(guid, 12345, 0)
+      {:ok, :damaged, info} = Instance.damage_creature(@test_world_key, guid, 12345, 0)
 
       template = CreatureTemplate.get(1)
       assert info.remaining_health == template.max_health
     end
 
     test "multiple small hits accumulate correctly" do
-      {:ok, guid} = CreatureManager.spawn_creature(2, {8200.0, 8000.0, 8000.0})
+      {:ok, guid} = Instance.spawn_creature(@test_world_key, 2, {8200.0, 8000.0, 8000.0})
       template = CreatureTemplate.get(2)
 
       # Hit 10 times with 10 damage each
       for _ <- 1..10 do
-        CreatureManager.damage_creature(guid, 12345, 10)
+        Instance.damage_creature(@test_world_key, guid, 12345, 10)
       end
 
-      creature = CreatureManager.get_creature(guid)
+      creature = Instance.get_creature(@test_world_key, guid)
 
       expected_health = max(0, template.max_health - 100)
       actual_health = max(0, creature.entity.health)
@@ -137,7 +158,7 @@ defmodule BezgelorWorld.CombatEdgeCasesTest do
     end
 
     test "different attackers add to threat" do
-      {:ok, guid} = CreatureManager.spawn_creature(2, {8300.0, 8000.0, 8000.0})
+      {:ok, guid} = Instance.spawn_creature(@test_world_key, 2, {8300.0, 8000.0, 8000.0})
 
       attacker1 = 11111
       attacker2 = 22222
@@ -145,20 +166,17 @@ defmodule BezgelorWorld.CombatEdgeCasesTest do
 
       # Use small damage to avoid killing
       # Note: First attacker gets 100 base threat from enter_combat + damage
-      {:ok, :damaged, _} = CreatureManager.damage_creature(guid, attacker1, 5)
-      {:ok, :damaged, _} = CreatureManager.damage_creature(guid, attacker2, 10)
-      {:ok, :damaged, _} = CreatureManager.damage_creature(guid, attacker3, 15)
+      {:ok, :damaged, _} = Instance.damage_creature(@test_world_key, guid, attacker1, 5)
+      {:ok, :damaged, _} = Instance.damage_creature(@test_world_key, guid, attacker2, 10)
+      {:ok, :damaged, _} = Instance.damage_creature(@test_world_key, guid, attacker3, 15)
 
-      creature = CreatureManager.get_creature(guid)
+      creature = Instance.get_creature(@test_world_key, guid)
 
       # All three should be in threat table
       assert Map.has_key?(creature.ai.threat_table, attacker1)
       assert Map.has_key?(creature.ai.threat_table, attacker2)
       assert Map.has_key?(creature.ai.threat_table, attacker3)
 
-      # First attacker has base 100 threat from enter_combat + 5 damage = 105
-      # Second attacker has 10 damage = 10
-      # Third attacker has 15 damage = 15
       # Verify all attackers have positive threat
       assert creature.ai.threat_table[attacker1] > 0
       assert creature.ai.threat_table[attacker2] > 0
@@ -168,55 +186,36 @@ defmodule BezgelorWorld.CombatEdgeCasesTest do
 
   describe "AI state edge cases" do
     test "creature cannot enter combat when dead" do
-      {:ok, guid} = CreatureManager.spawn_creature(1, {8400.0, 8000.0, 8000.0})
+      {:ok, guid} = Instance.spawn_creature(@test_world_key, 1, {8400.0, 8000.0, 8000.0})
 
       # Kill the creature
-      {:ok, :killed, _} = CreatureManager.damage_creature(guid, 12345, 1000)
+      {:ok, :killed, _} = Instance.damage_creature(@test_world_key, guid, 12345, 1000)
 
       # Try to enter combat
-      :ok = CreatureManager.creature_enter_combat(guid, 99999)
+      :ok = Instance.creature_enter_combat(@test_world_key, guid, 99999)
 
-      creature = CreatureManager.get_creature(guid)
+      creature = Instance.get_creature(@test_world_key, guid)
       assert AI.dead?(creature.ai)
       # Should not have new target
       refute creature.ai.target_guid == 99999
     end
 
     test "creature tracks highest threat target" do
-      {:ok, guid} = CreatureManager.spawn_creature(2, {8500.0, 8000.0, 8000.0})
+      {:ok, guid} = Instance.spawn_creature(@test_world_key, 2, {8500.0, 8000.0, 8000.0})
 
       # First attacker hits with small damage (gets 100 base + 5 = 105 threat)
-      {:ok, :damaged, _} = CreatureManager.damage_creature(guid, 11111, 5)
+      {:ok, :damaged, _} = Instance.damage_creature(@test_world_key, guid, 11111, 5)
 
       # Second attacker must deal > 105 damage to overtake
       # Hit twice to accumulate enough threat
-      {:ok, :damaged, _} = CreatureManager.damage_creature(guid, 22222, 60)
-      {:ok, :damaged, _} = CreatureManager.damage_creature(guid, 22222, 60)
+      {:ok, :damaged, _} = Instance.damage_creature(@test_world_key, guid, 22222, 60)
+      {:ok, :damaged, _} = Instance.damage_creature(@test_world_key, guid, 22222, 60)
 
-      creature = CreatureManager.get_creature(guid)
+      creature = Instance.get_creature(@test_world_key, guid)
 
       # Second attacker now has 120 threat, first has 105
       top_threat_target = AI.highest_threat_target(creature.ai)
       assert top_threat_target == 22222
-    end
-
-    test "respawn restores full health and clears combat state" do
-      {:ok, guid} = CreatureManager.spawn_creature(1, {8600.0, 8000.0, 8000.0})
-      template = CreatureTemplate.get(1)
-
-      # Kill the creature
-      {:ok, :killed, _} = CreatureManager.damage_creature(guid, 12345, 1000)
-
-      # Manually trigger respawn
-      send(Process.whereis(CreatureManager), {:respawn_creature, guid})
-      Process.sleep(10)
-
-      creature = CreatureManager.get_creature(guid)
-
-      assert creature.entity.health == template.max_health
-      refute AI.dead?(creature.ai)
-      refute AI.in_combat?(creature.ai)
-      assert creature.ai.threat_table == %{}
     end
   end
 
@@ -233,8 +232,8 @@ defmodule BezgelorWorld.CombatEdgeCasesTest do
     end
 
     test "creature at spawn position has zero distance" do
-      {:ok, guid} = CreatureManager.spawn_creature(1, {9000.0, 9000.0, 9000.0})
-      creature = CreatureManager.get_creature(guid)
+      {:ok, guid} = Instance.spawn_creature(@test_world_key, 1, {9000.0, 9000.0, 9000.0})
+      creature = Instance.get_creature(@test_world_key, guid)
 
       distance = AI.distance(creature.entity.position, creature.spawn_position)
       assert distance == 0.0

@@ -1,5 +1,10 @@
 defmodule BezgelorProtocol.PacketReaderTest do
+  @moduledoc """
+  Tests for PacketReader binary parsing utilities.
+  """
   use ExUnit.Case, async: true
+
+  import Bitwise
 
   alias BezgelorProtocol.PacketReader
 
@@ -55,11 +60,24 @@ defmodule BezgelorProtocol.PacketReaderTest do
   end
 
   describe "read_wide_string/1" do
-    test "reads UTF-16LE string with length prefix" do
-      # Length = 5, then "hello" in UTF-16LE
-      data = <<5, 0, 0, 0>> <> :unicode.characters_to_binary("hello", :utf8, {:utf16, :little})
+    test "reads bit-packed UTF-16LE string" do
+      # Bit-packed format: 1 bit extended + 7/15 bits length + UTF-16LE data
+      # "hello" = 5 chars, extended=0, header = (5 << 1) | 0 = 10
+      data = build_wide_string("hello")
       reader = PacketReader.new(data)
       assert {:ok, "hello", _reader} = PacketReader.read_wide_string(reader)
+    end
+
+    test "reads empty string" do
+      data = build_wide_string("")
+      reader = PacketReader.new(data)
+      assert {:ok, "", _reader} = PacketReader.read_wide_string(reader)
+    end
+
+    test "reads string with special characters" do
+      data = build_wide_string("Test123!")
+      reader = PacketReader.new(data)
+      assert {:ok, "Test123!", _reader} = PacketReader.read_wide_string(reader)
     end
   end
 
@@ -71,6 +89,30 @@ defmodule BezgelorProtocol.PacketReaderTest do
       assert {:ok, 22, reader} = PacketReader.read_bits(reader, 5)
       # Read 3 bits: should get 0b110 = 6
       assert {:ok, 6, _reader} = PacketReader.read_bits(reader, 3)
+    end
+  end
+
+  # Build a bit-packed wide string matching NexusForever format:
+  # - 1 bit: extended flag (0 for length < 128, 1 for length >= 128)
+  # - 7 or 15 bits: length in characters
+  # - length * 2 bytes: UTF-16LE string data
+  defp build_wide_string("") do
+    # Empty string: extended=0, length=0, no data
+    <<0::8>>
+  end
+
+  defp build_wide_string(string) when is_binary(string) do
+    length = String.length(string)
+    utf16_data = :unicode.characters_to_binary(string, :utf8, {:utf16, :little})
+
+    if length < 128 do
+      # Short string: extended=0 (bit 0), length in bits 1-7
+      header = (length <<< 1) ||| 0
+      <<header::8>> <> utf16_data
+    else
+      # Long string: extended=1 (bit 0), length in bits 1-15
+      header = (length <<< 1) ||| 1
+      <<header::16-little>> <> utf16_data
     end
   end
 end

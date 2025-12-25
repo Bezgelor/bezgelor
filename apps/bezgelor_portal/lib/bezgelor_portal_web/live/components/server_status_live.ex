@@ -26,6 +26,8 @@ defmodule BezgelorPortalWeb.Live.Components.ServerStatusLive do
         Portal.online_player_count()
       rescue
         _ -> 0
+      catch
+        :exit, _ -> 0
       end
 
     {:ok,
@@ -42,6 +44,8 @@ defmodule BezgelorPortalWeb.Live.Components.ServerStatusLive do
         Portal.online_player_count()
       rescue
         _ -> socket.assigns.online_players
+      catch
+        :exit, _ -> socket.assigns.online_players
       end
 
     {:noreply, assign(socket, online_players: online_players)}

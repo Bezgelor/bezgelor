@@ -6,6 +6,8 @@ defmodule BezgelorWorld.AchievementIntegrationTest do
   """
   use ExUnit.Case, async: false
 
+  @moduletag :integration
+
   alias BezgelorData.{AchievementIndex, AchievementTypes}
   alias BezgelorWorld.Handler.AchievementHandler
 

@@ -121,7 +121,7 @@ defmodule BezgelorWorld.AbilitiesTest do
       by_spell = Enum.group_by(book, & &1.spell4_base_id)
 
       for {_spell_id, entries} <- by_spell do
-        spec_indices = Enum.map(entries, & &1.spec_index) |> Enum.sort()
+        _spec_indices = Enum.map(entries, & &1.spec_index) |> Enum.sort()
         # Class abilities should be in all specs (0, 1, 2, 3)
         assert length(entries) >= 1
       end

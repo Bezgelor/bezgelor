@@ -1,8 +1,12 @@
 defmodule BezgelorApiTest do
+  @moduledoc """
+  Tests for BezgelorApi REST endpoints.
+
+  Zone-related tests start a WorldRegistry to avoid errors.
+  """
   use ExUnit.Case
 
   import Plug.Test
-  import Plug.Conn
 
   alias BezgelorApi.Router
 
@@ -38,6 +42,10 @@ defmodule BezgelorApiTest do
   end
 
   describe "GET /api/v1/zones" do
+    setup do
+      start_world_registry()
+    end
+
     test "returns zone list" do
       conn =
         :get
@@ -53,6 +61,10 @@ defmodule BezgelorApiTest do
   end
 
   describe "GET /api/v1/zones/:id" do
+    setup do
+      start_world_registry()
+    end
+
     test "returns 400 for invalid ID" do
       conn =
         :get
@@ -115,6 +127,15 @@ defmodule BezgelorApiTest do
 
       body = Jason.decode!(conn.resp_body)
       assert body["error"] == "Not found"
+    end
+  end
+
+  # Start the WorldRegistry if it's not already running
+  # This allows zone-related API tests to work without starting the full World app
+  defp start_world_registry do
+    case Registry.start_link(keys: :unique, name: BezgelorWorld.WorldRegistry) do
+      {:ok, _pid} -> :ok
+      {:error, {:already_started, _pid}} -> :ok
     end
   end
 end

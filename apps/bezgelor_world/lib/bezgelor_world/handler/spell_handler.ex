@@ -47,10 +47,11 @@ defmodule BezgelorWorld.Handler.SpellHandler do
   alias BezgelorWorld.{
     BuffManager,
     CombatBroadcaster,
-    CreatureManager,
     DeathManager,
     SpellManager
   }
+
+  alias BezgelorWorld.World.Instance, as: WorldInstance
 
   import Bitwise
 
@@ -265,9 +266,14 @@ defmodule BezgelorWorld.Handler.SpellHandler do
       telegraph_positions: telegraph_positions
     )
 
+    # Get world context for creature damage
+    world_id = state.session_data[:world_id] || 1
+    instance_id = 1
+    world_key = {world_id, instance_id}
+
     # Apply effects to targets and collect kill info
     {_effect_packets, kill_info} =
-      apply_spell_effects(player_guid, player_guid, spell, result.effects)
+      apply_spell_effects(player_guid, player_guid, spell, result.effects, world_key)
 
     # Broadcast kill rewards if creature was killed
     if kill_info do
@@ -393,9 +399,9 @@ defmodule BezgelorWorld.Handler.SpellHandler do
     [{:server_entity_command, teleport_data}]
   end
 
-  # Apply spell effects to targets, calling CreatureManager for damage to creatures
+  # Apply spell effects to targets, calling World.Instance for damage to creatures
   # and BuffManager for buff/debuff effects
-  defp apply_spell_effects(caster_guid, target_guid, spell, effects) do
+  defp apply_spell_effects(caster_guid, target_guid, spell, effects, world_key) do
     Enum.reduce(effects, {[], nil}, fn effect, {packets, kill_info} ->
       target = if spell.target_type == :self, do: caster_guid, else: target_guid
       packet = build_effect_packet(caster_guid, target, spell.id, effect)
@@ -403,7 +409,7 @@ defmodule BezgelorWorld.Handler.SpellHandler do
       # Apply damage effects to creatures
       new_kill_info =
         if effect.type == :damage and is_creature_guid?(target) do
-          apply_damage_to_creature(target, caster_guid, effect.amount)
+          apply_damage_to_creature(world_key, target, caster_guid, effect.amount)
         else
           nil
         end
@@ -555,8 +561,8 @@ defmodule BezgelorWorld.Handler.SpellHandler do
     end
   end
 
-  defp apply_damage_to_creature(creature_guid, attacker_guid, damage) do
-    case CreatureManager.damage_creature(creature_guid, attacker_guid, damage) do
+  defp apply_damage_to_creature(world_key, creature_guid, attacker_guid, damage) do
+    case WorldInstance.damage_creature(world_key, creature_guid, attacker_guid, damage) do
       {:ok, :killed, result} ->
         %{creature_guid: creature_guid, rewards: result}
 

@@ -24,7 +24,8 @@ defmodule BezgelorWorld.Instance.BossEncounter do
   use GenServer
 
   alias BezgelorWorld.Instance.Registry, as: InstanceRegistry
-  alias BezgelorWorld.{CombatBroadcaster, CreatureManager, WorldManager}
+  alias BezgelorWorld.{CombatBroadcaster, WorldManager}
+  alias BezgelorWorld.World.Instance, as: WorldInstance
 
   alias BezgelorProtocol.Packets.World.{
     ServerTelegraph,
@@ -762,14 +763,17 @@ defmodule BezgelorWorld.Instance.BossEncounter do
     # Calculate spawn positions
     positions = calculate_spawn_positions(boss_x, boss_y, boss_z, count, spread, spread_radius)
 
-    # Spawn each add via CreatureManager
+    # Get world_key from zone_id
+    world_key = {state.zone_id || 1, 1}
+
+    # Spawn each add via World.Instance
     new_adds =
       positions
       |> Enum.map(fn position ->
-        case CreatureManager.spawn_creature(creature_id, position) do
+        case WorldInstance.spawn_creature(world_key, creature_id, position) do
           {:ok, guid} ->
             # Set initial aggro based on type
-            set_add_aggro(state, guid, aggro_type)
+            set_add_aggro(state, guid, aggro_type, world_key)
 
             %{
               guid: guid,
@@ -827,7 +831,7 @@ defmodule BezgelorWorld.Instance.BossEncounter do
     end
   end
 
-  defp set_add_aggro(state, creature_guid, aggro_type) do
+  defp set_add_aggro(state, creature_guid, aggro_type, world_key) do
     target_guid =
       case aggro_type do
         :tank -> get_role_guids(state, :tank) |> List.first()
@@ -838,7 +842,7 @@ defmodule BezgelorWorld.Instance.BossEncounter do
       end
 
     if target_guid do
-      CreatureManager.creature_enter_combat(creature_guid, target_guid)
+      WorldInstance.creature_enter_combat(world_key, creature_guid, target_guid)
     end
   end
 
@@ -1113,11 +1117,14 @@ defmodule BezgelorWorld.Instance.BossEncounter do
   end
 
   defp despawn_adds(state) do
+    # Get world_key from zone_id
+    world_key = {state.zone_id || 1, 1}
+
     state.active_adds
     |> Enum.filter(fn add -> Map.get(add, :despawn_on_boss_death, true) end)
     |> Enum.each(fn add ->
       # Kill the add by dealing massive damage
-      case CreatureManager.damage_creature(add.guid, state.boss_guid || 0, 999_999_999) do
+      case WorldInstance.damage_creature(world_key, add.guid, state.boss_guid || 0, 999_999_999) do
         {:ok, :killed, _} ->
           Logger.debug("Despawned add #{add.guid}")
 

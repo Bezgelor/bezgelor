@@ -1,6 +1,8 @@
 defmodule BezgelorWorld.DuelManagerTest do
   use ExUnit.Case, async: true
 
+  @moduletag :integration
+
   alias BezgelorWorld.PvP.DuelManager
 
   # Use unique GUIDs per test to avoid conflicts with other tests

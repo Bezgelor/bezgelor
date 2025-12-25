@@ -88,4 +88,71 @@ defmodule BezgelorWorld.EventManagerTest do
       assert :ok = EventManager.record_boss_damage(manager, 999, 1, 100)
     end
   end
+
+  # =====================================================================
+  # Objective Type Security Tests
+  # =====================================================================
+
+  describe "valid_objective_types/0" do
+    test "returns list of valid objective types" do
+      types = EventManager.valid_objective_types()
+
+      assert is_list(types)
+      assert :kill in types
+      assert :damage in types
+      assert :collect in types
+      assert :interact in types
+      assert :territory in types
+      assert :escort in types
+      assert :defend in types
+      assert :survive in types
+      assert :timer in types
+      assert length(types) == 9
+    end
+  end
+
+  describe "safe_objective_type/1" do
+    test "returns :kill for nil" do
+      assert EventManager.safe_objective_type(nil) == :kill
+    end
+
+    test "returns valid atom types unchanged" do
+      assert EventManager.safe_objective_type(:kill) == :kill
+      assert EventManager.safe_objective_type(:damage) == :damage
+      assert EventManager.safe_objective_type(:collect) == :collect
+      assert EventManager.safe_objective_type(:interact) == :interact
+      assert EventManager.safe_objective_type(:territory) == :territory
+      assert EventManager.safe_objective_type(:escort) == :escort
+      assert EventManager.safe_objective_type(:defend) == :defend
+      assert EventManager.safe_objective_type(:survive) == :survive
+      assert EventManager.safe_objective_type(:timer) == :timer
+    end
+
+    test "returns :kill for invalid atom types" do
+      assert EventManager.safe_objective_type(:invalid) == :kill
+      assert EventManager.safe_objective_type(:malicious) == :kill
+      assert EventManager.safe_objective_type(:anything_else) == :kill
+    end
+
+    test "converts valid string types to atoms" do
+      assert EventManager.safe_objective_type("kill") == :kill
+      assert EventManager.safe_objective_type("damage") == :damage
+      assert EventManager.safe_objective_type("collect") == :collect
+    end
+
+    test "returns :kill for invalid string types (prevents atom table exhaustion)" do
+      # These strings don't exist as atoms, so String.to_existing_atom will fail
+      # This is the security feature - we don't create new atoms from untrusted input
+      assert EventManager.safe_objective_type("malicious_type_12345") == :kill
+      assert EventManager.safe_objective_type("random_string_xyz") == :kill
+      assert EventManager.safe_objective_type("") == :kill
+    end
+
+    test "returns :kill for valid existing atoms not in whitelist" do
+      # These atoms exist in the atom table but aren't in the whitelist
+      assert EventManager.safe_objective_type("true") == :kill
+      assert EventManager.safe_objective_type("false") == :kill
+      assert EventManager.safe_objective_type("nil") == :kill
+    end
+  end
 end

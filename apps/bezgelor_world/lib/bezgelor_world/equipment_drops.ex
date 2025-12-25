@@ -105,14 +105,14 @@ defmodule BezgelorWorld.EquipmentDrops do
     items =
       get_equipment_pool()
       |> Enum.filter(fn item ->
-        item_level = item.required_level || 0
-        item_quality = item.quality_id || 2
+        item_level = item.requiredLevel || 0
+        item_quality = item.itemQualityId || 2
 
         in_level_range = item_level >= level_min and item_level <= level_max
         matches_quality = item_quality == quality
 
         matches_class =
-          class_id == nil or item.class_required == 0 or item.class_required == class_id
+          class_id == nil or item.classRequired == 0 or item.classRequired == class_id
 
         in_level_range and matches_quality and matches_class
       end)
@@ -130,7 +130,7 @@ defmodule BezgelorWorld.EquipmentDrops do
   def is_equipment?(item_id) do
     case Store.get(:items, item_id) do
       {:ok, item} ->
-        family = item.family_id || 0
+        family = item.item2FamilyId || 0
         family == @armor_family or family == @weapon_family
 
       _ ->
@@ -154,12 +154,23 @@ defmodule BezgelorWorld.EquipmentDrops do
   end
 
   defp get_equipment_pool do
-    # Get all items from store
-    items = Store.list(:items)
+    # Use persistent_term cache for equipment pool since it's static data
+    case :persistent_term.get({__MODULE__, :equipment_pool}, nil) do
+      nil ->
+        pool = build_equipment_pool()
+        :persistent_term.put({__MODULE__, :equipment_pool}, pool)
+        pool
 
-    # Filter to equipment families
-    Enum.filter(items, fn item ->
-      family = item.family_id || 0
+      pool ->
+        pool
+    end
+  end
+
+  defp build_equipment_pool do
+    # Get all items from store and filter to equipment families
+    Store.list(:items)
+    |> Enum.filter(fn item ->
+      family = item.item2FamilyId || 0
       family == @armor_family or family == @weapon_family
     end)
   end

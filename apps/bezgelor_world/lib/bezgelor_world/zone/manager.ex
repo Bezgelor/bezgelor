@@ -49,7 +49,8 @@ defmodule BezgelorWorld.Zone.Manager do
     # Start zones that have spawn data (from NexusForever WorldDatabase)
     spawn_zones = BezgelorData.Store.get_all_spawn_zones()
 
-    zone_timeout = Application.get_env(:bezgelor_world, :zone_start_timeout, @default_zone_start_timeout)
+    zone_timeout =
+      Application.get_env(:bezgelor_world, :zone_start_timeout, @default_zone_start_timeout)
 
     Logger.info(
       "Starting #{length(spawn_zones)} spawn zones (concurrency=#{@max_concurrent_zone_starts}, timeout=#{zone_timeout}ms)..."

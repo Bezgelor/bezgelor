@@ -476,7 +476,7 @@ defmodule BezgelorCore.AI do
         chase_start_time: start,
         chase_duration: duration
       })
-      when is_list(path) and is_integer(start) and is_integer(duration) do
+      when is_list(path) and is_integer(start) and is_integer(duration) and duration > 0 do
     elapsed = System.monotonic_time(:millisecond) - start
     progress = min(elapsed / duration, 1.0)
     BezgelorCore.Movement.interpolate_path(path, progress)

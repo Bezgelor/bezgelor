@@ -1,6 +1,8 @@
 defmodule BezgelorWorld.BattlegroundTest do
   use ExUnit.Case, async: true
 
+  @moduletag :integration
+
   alias BezgelorWorld.PvP.BattlegroundQueue
   alias BezgelorWorld.PvP.BattlegroundInstance
 

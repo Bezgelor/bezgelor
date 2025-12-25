@@ -1,7 +1,52 @@
 defmodule BezgelorWorld.Economy.TelemetryTest do
+  @moduledoc """
+  Unit tests for the Economy.Telemetry GenServer.
+
+  Tests cover event handling, metric updates, batch management, and flush behavior.
+  Uses Ecto sandbox mode with proper test fixtures to avoid FK violations.
+  """
   use ExUnit.Case, async: false
 
+  alias BezgelorDb.{Accounts, Characters, Inventory, Repo}
   alias BezgelorWorld.Economy.Telemetry
+
+  @moduletag :database
+
+  setup do
+    # Start Repo if not already started
+    case Repo.start_link([]) do
+      {:ok, _pid} -> :ok
+      {:error, {:already_started, _pid}} -> :ok
+    end
+
+    # Checkout database connection
+    :ok = Ecto.Adapters.SQL.Sandbox.checkout(Repo)
+    Ecto.Adapters.SQL.Sandbox.mode(Repo, {:shared, self()})
+
+    # Create test account and character
+    email = "telemetry_test_#{System.unique_integer([:positive])}@test.com"
+    {:ok, account} = Accounts.create_account(email, "password123")
+
+    # Use shorter name with unique suffix that fits in 24 char limit
+    unique_id = :erlang.unique_integer([:positive]) |> rem(99999)
+
+    {:ok, character} =
+      Characters.create_character(account.id, %{
+        name: "Telem#{unique_id}",
+        sex: 0,
+        race: 1,
+        class: 0,
+        faction_id: 167,
+        realm_id: 1,
+        world_id: 1,
+        world_zone_id: 1
+      })
+
+    # Initialize currency for character
+    _currency = Inventory.get_or_create_currency(character.id)
+
+    {:ok, character: character}
+  end
 
   # Use a unique name for each test's GenServer to prevent conflicts
   def unique_name do
@@ -59,28 +104,26 @@ defmodule BezgelorWorld.Economy.TelemetryTest do
       stop_telemetry(pid)
     end
 
-    test "respects custom batch_size configuration" do
+    test "respects custom batch_size configuration", %{character: character} do
       {pid, name} = start_telemetry(batch_size: 50)
 
       # Access state indirectly by filling batch to just below threshold
       # Send 49 events (batch_size is 50, so no auto-flush)
       for _ <- 1..49 do
-        send_event(name, [:bezgelor, :economy, :currency, :transaction], %{amount: 10, balance_after: 100, duration_ms: 0}, %{character_id: 1, currency_type: :credits, source_type: :quest, source_id: 1})
+        send_event(name, [:bezgelor, :economy, :currency, :transaction], %{amount: 10, balance_after: 100, duration_ms: 0}, %{character_id: character.id, currency_type: :credits, source_type: :quest, source_id: 1})
       end
 
       metrics = GenServer.call(name, :get_metrics_summary)
       assert metrics.pending_events == 49
 
       # Send one more to trigger auto-flush at batch_size 50
-      send_event(name, [:bezgelor, :economy, :currency, :transaction], %{amount: 10, balance_after: 110, duration_ms: 0}, %{character_id: 1, currency_type: :credits, source_type: :quest, source_id: 1})
+      send_event(name, [:bezgelor, :economy, :currency, :transaction], %{amount: 10, balance_after: 110, duration_ms: 0}, %{character_id: character.id, currency_type: :credits, source_type: :quest, source_id: 1})
 
       # Give time for flush to attempt
       Process.sleep(50)
 
       metrics = GenServer.call(name, :get_metrics_summary)
-      # Note: Batch will remain non-empty because database persistence fails in tests
-      # The important thing is that the flush was attempted when batch_size was reached
-      # We verify this by checking that currency_transactions counter was updated correctly
+      # Verify flush was attempted when batch_size was reached
       assert metrics.currency_transactions == 50
       # last_flush should be set, indicating flush was attempted
       assert metrics.last_flush != nil
@@ -88,10 +131,10 @@ defmodule BezgelorWorld.Economy.TelemetryTest do
       stop_telemetry(pid)
     end
 
-    test "respects custom flush_interval_ms configuration" do
+    test "respects custom flush_interval_ms configuration", %{character: character} do
       {pid, name} = start_telemetry(flush_interval_ms: 100)
 
-      send_event(name, [:bezgelor, :economy, :currency, :transaction], %{amount: 10, balance_after: 100, duration_ms: 0}, %{character_id: 1, currency_type: :credits, source_type: :quest, source_id: 1})
+      send_event(name, [:bezgelor, :economy, :currency, :transaction], %{amount: 10, balance_after: 100, duration_ms: 0}, %{character_id: character.id, currency_type: :credits, source_type: :quest, source_id: 1})
 
       metrics_before = GenServer.call(name, :get_metrics_summary)
       assert metrics_before.pending_events == 1
@@ -111,14 +154,14 @@ defmodule BezgelorWorld.Economy.TelemetryTest do
   end
 
   describe "metric updates - currency transactions" do
-    test "currency transaction events increment currency_transactions counter" do
+    test "currency transaction events increment currency_transactions counter", %{character: character} do
       {pid, name} = start_telemetry()
 
       send_event(
         name,
         [:bezgelor, :economy, :currency, :transaction],
         %{amount: 100, balance_after: 500, duration_ms: 0},
-        %{character_id: 1, currency_type: :credits, source_type: :quest, source_id: 10}
+        %{character_id: character.id, currency_type: :credits, source_type: :quest, source_id: 10}
       )
 
       metrics = GenServer.call(name, :get_metrics_summary)
@@ -129,7 +172,7 @@ defmodule BezgelorWorld.Economy.TelemetryTest do
         name,
         [:bezgelor, :economy, :currency, :transaction],
         %{amount: 50, balance_after: 550, duration_ms: 0},
-        %{character_id: 1, currency_type: :credits, source_type: :loot, source_id: 20}
+        %{character_id: character.id, currency_type: :credits, source_type: :loot, source_id: 20}
       )
 
       metrics = GenServer.call(name, :get_metrics_summary)
@@ -138,14 +181,14 @@ defmodule BezgelorWorld.Economy.TelemetryTest do
       stop_telemetry(pid)
     end
 
-    test "positive amounts update total_currency_gained" do
+    test "positive amounts update total_currency_gained", %{character: character} do
       {pid, name} = start_telemetry()
 
       send_event(
         name,
         [:bezgelor, :economy, :currency, :transaction],
         %{amount: 100, balance_after: 500, duration_ms: 0},
-        %{character_id: 1, currency_type: :credits, source_type: :quest, source_id: 10}
+        %{character_id: character.id, currency_type: :credits, source_type: :quest, source_id: 10}
       )
 
       metrics = GenServer.call(name, :get_metrics_summary)
@@ -157,7 +200,7 @@ defmodule BezgelorWorld.Economy.TelemetryTest do
         name,
         [:bezgelor, :economy, :currency, :transaction],
         %{amount: 250, balance_after: 750, duration_ms: 0},
-        %{character_id: 1, currency_type: :credits, source_type: :loot, source_id: 20}
+        %{character_id: character.id, currency_type: :credits, source_type: :loot, source_id: 20}
       )
 
       metrics = GenServer.call(name, :get_metrics_summary)
@@ -167,14 +210,14 @@ defmodule BezgelorWorld.Economy.TelemetryTest do
       stop_telemetry(pid)
     end
 
-    test "negative amounts update total_currency_spent" do
+    test "negative amounts update total_currency_spent", %{character: character} do
       {pid, name} = start_telemetry()
 
       send_event(
         name,
         [:bezgelor, :economy, :currency, :transaction],
         %{amount: -50, balance_after: 450, duration_ms: 0},
-        %{character_id: 1, currency_type: :credits, source_type: :vendor, source_id: 5}
+        %{character_id: character.id, currency_type: :credits, source_type: :vendor, source_id: 5}
       )
 
       metrics = GenServer.call(name, :get_metrics_summary)
@@ -186,7 +229,7 @@ defmodule BezgelorWorld.Economy.TelemetryTest do
         name,
         [:bezgelor, :economy, :currency, :transaction],
         %{amount: -100, balance_after: 350, duration_ms: 0},
-        %{character_id: 1, currency_type: :credits, source_type: :vendor, source_id: 6}
+        %{character_id: character.id, currency_type: :credits, source_type: :vendor, source_id: 6}
       )
 
       metrics = GenServer.call(name, :get_metrics_summary)
@@ -196,14 +239,14 @@ defmodule BezgelorWorld.Economy.TelemetryTest do
       stop_telemetry(pid)
     end
 
-    test "zero amounts do not update currency flow" do
+    test "zero amounts do not update currency flow", %{character: character} do
       {pid, name} = start_telemetry()
 
       send_event(
         name,
         [:bezgelor, :economy, :currency, :transaction],
         %{amount: 0, balance_after: 500, duration_ms: 0},
-        %{character_id: 1, currency_type: :credits, source_type: :system, source_id: 0}
+        %{character_id: character.id, currency_type: :credits, source_type: :system, source_id: 0}
       )
 
       metrics = GenServer.call(name, :get_metrics_summary)
@@ -214,7 +257,7 @@ defmodule BezgelorWorld.Economy.TelemetryTest do
       stop_telemetry(pid)
     end
 
-    test "mixed positive and negative amounts update both totals correctly" do
+    test "mixed positive and negative amounts update both totals correctly", %{character: character} do
       {pid, name} = start_telemetry()
 
       # Gain 100
@@ -222,7 +265,7 @@ defmodule BezgelorWorld.Economy.TelemetryTest do
         name,
         [:bezgelor, :economy, :currency, :transaction],
         %{amount: 100, balance_after: 600, duration_ms: 0},
-        %{character_id: 1, currency_type: :credits, source_type: :quest, source_id: 10}
+        %{character_id: character.id, currency_type: :credits, source_type: :quest, source_id: 10}
       )
 
       # Spend 30
@@ -230,7 +273,7 @@ defmodule BezgelorWorld.Economy.TelemetryTest do
         name,
         [:bezgelor, :economy, :currency, :transaction],
         %{amount: -30, balance_after: 570, duration_ms: 0},
-        %{character_id: 1, currency_type: :credits, source_type: :vendor, source_id: 5}
+        %{character_id: character.id, currency_type: :credits, source_type: :vendor, source_id: 5}
       )
 
       # Gain 50
@@ -238,7 +281,7 @@ defmodule BezgelorWorld.Economy.TelemetryTest do
         name,
         [:bezgelor, :economy, :currency, :transaction],
         %{amount: 50, balance_after: 620, duration_ms: 0},
-        %{character_id: 1, currency_type: :credits, source_type: :loot, source_id: 20}
+        %{character_id: character.id, currency_type: :credits, source_type: :loot, source_id: 20}
       )
 
       metrics = GenServer.call(name, :get_metrics_summary)
@@ -251,14 +294,14 @@ defmodule BezgelorWorld.Economy.TelemetryTest do
   end
 
   describe "metric updates - vendor transactions" do
-    test "vendor transaction events increment vendor_transactions counter" do
+    test "vendor transaction events increment vendor_transactions counter", %{character: character} do
       {pid, name} = start_telemetry()
 
       send_event(
         name,
         [:bezgelor, :economy, :vendor, :transaction],
         %{total_cost: 100, item_count: 3, duration_ms: 50},
-        %{character_id: 1, vendor_id: 5, transaction_type: :buy}
+        %{character_id: character.id, vendor_id: 5, transaction_type: :buy}
       )
 
       metrics = GenServer.call(name, :get_metrics_summary)
@@ -268,7 +311,7 @@ defmodule BezgelorWorld.Economy.TelemetryTest do
         name,
         [:bezgelor, :economy, :vendor, :transaction],
         %{total_cost: 50, item_count: 1, duration_ms: 25},
-        %{character_id: 1, vendor_id: 6, transaction_type: :sell}
+        %{character_id: character.id, vendor_id: 6, transaction_type: :sell}
       )
 
       metrics = GenServer.call(name, :get_metrics_summary)
@@ -279,14 +322,14 @@ defmodule BezgelorWorld.Economy.TelemetryTest do
   end
 
   describe "metric updates - loot drops" do
-    test "loot drop events increment loot_drops counter" do
+    test "loot drop events increment loot_drops counter", %{character: character} do
       {pid, name} = start_telemetry()
 
       send_event(
         name,
         [:bezgelor, :economy, :loot, :drop],
         %{item_value: 50, currency_amount: 25},
-        %{character_id: 1, creature_id: 100, world_id: 1, zone_id: 10}
+        %{character_id: character.id, creature_id: 100, world_id: 1, zone_id: 10}
       )
 
       metrics = GenServer.call(name, :get_metrics_summary)
@@ -296,7 +339,7 @@ defmodule BezgelorWorld.Economy.TelemetryTest do
         name,
         [:bezgelor, :economy, :loot, :drop],
         %{item_value: 100, currency_amount: 50},
-        %{character_id: 1, creature_id: 101, world_id: 1, zone_id: 10}
+        %{character_id: character.id, creature_id: 101, world_id: 1, zone_id: 10}
       )
 
       metrics = GenServer.call(name, :get_metrics_summary)
@@ -305,7 +348,7 @@ defmodule BezgelorWorld.Economy.TelemetryTest do
       stop_telemetry(pid)
     end
 
-    test "loot drop events update currency flow based on currency_amount" do
+    test "loot drop events update currency flow based on currency_amount", %{character: character} do
       {pid, name} = start_telemetry()
 
       # Loot with positive currency
@@ -313,7 +356,7 @@ defmodule BezgelorWorld.Economy.TelemetryTest do
         name,
         [:bezgelor, :economy, :loot, :drop],
         %{item_value: 50, currency_amount: 25},
-        %{character_id: 1, creature_id: 100, world_id: 1, zone_id: 10}
+        %{character_id: character.id, creature_id: 100, world_id: 1, zone_id: 10}
       )
 
       metrics = GenServer.call(name, :get_metrics_summary)
@@ -325,7 +368,7 @@ defmodule BezgelorWorld.Economy.TelemetryTest do
         name,
         [:bezgelor, :economy, :loot, :drop],
         %{item_value: 100, currency_amount: 75},
-        %{character_id: 1, creature_id: 101, world_id: 1, zone_id: 10}
+        %{character_id: character.id, creature_id: 101, world_id: 1, zone_id: 10}
       )
 
       metrics = GenServer.call(name, :get_metrics_summary)
@@ -335,14 +378,14 @@ defmodule BezgelorWorld.Economy.TelemetryTest do
       stop_telemetry(pid)
     end
 
-    test "loot drop events with zero currency do not update currency flow" do
+    test "loot drop events with zero currency do not update currency flow", %{character: character} do
       {pid, name} = start_telemetry()
 
       send_event(
         name,
         [:bezgelor, :economy, :loot, :drop],
         %{item_value: 50, currency_amount: 0},
-        %{character_id: 1, creature_id: 100, world_id: 1, zone_id: 10}
+        %{character_id: character.id, creature_id: 100, world_id: 1, zone_id: 10}
       )
 
       metrics = GenServer.call(name, :get_metrics_summary)
@@ -355,14 +398,14 @@ defmodule BezgelorWorld.Economy.TelemetryTest do
   end
 
   describe "metric updates - all event types" do
-    test "auction events increment auction_events counter" do
+    test "auction events increment auction_events counter", %{character: character} do
       {pid, name} = start_telemetry()
 
       send_event(
         name,
         [:bezgelor, :economy, :auction, :event],
         %{price: 1000, fee: 50},
-        %{character_id: 1, item_id: 301, event_type: :list}
+        %{character_id: character.id, item_id: 301, event_type: :list}
       )
 
       metrics = GenServer.call(name, :get_metrics_summary)
@@ -372,7 +415,7 @@ defmodule BezgelorWorld.Economy.TelemetryTest do
         name,
         [:bezgelor, :economy, :auction, :event],
         %{price: 1200, fee: 60},
-        %{character_id: 2, item_id: 302, event_type: :buyout}
+        %{character_id: character.id, item_id: 302, event_type: :buyout}
       )
 
       metrics = GenServer.call(name, :get_metrics_summary)
@@ -381,14 +424,14 @@ defmodule BezgelorWorld.Economy.TelemetryTest do
       stop_telemetry(pid)
     end
 
-    test "trade completion events increment trade_completions counter" do
+    test "trade completion events increment trade_completions counter", %{character: character} do
       {pid, name} = start_telemetry()
 
       send_event(
         name,
         [:bezgelor, :economy, :trade, :complete],
         %{items_exchanged: 3, currency_exchanged: 500, duration_ms: 1000},
-        %{initiator_id: 1, acceptor_id: 2}
+        %{initiator_id: character.id, acceptor_id: character.id}
       )
 
       metrics = GenServer.call(name, :get_metrics_summary)
@@ -397,14 +440,14 @@ defmodule BezgelorWorld.Economy.TelemetryTest do
       stop_telemetry(pid)
     end
 
-    test "mail sent events increment mail_sent counter" do
+    test "mail sent events increment mail_sent counter", %{character: character} do
       {pid, name} = start_telemetry()
 
       send_event(
         name,
         [:bezgelor, :economy, :mail, :sent],
         %{currency_attached: 100, item_count: 2, cod_amount: 0},
-        %{sender_id: 1, recipient_id: 2}
+        %{sender_id: character.id, recipient_id: character.id}
       )
 
       metrics = GenServer.call(name, :get_metrics_summary)
@@ -414,7 +457,7 @@ defmodule BezgelorWorld.Economy.TelemetryTest do
         name,
         [:bezgelor, :economy, :mail, :sent],
         %{currency_attached: 0, item_count: 1, cod_amount: 50},
-        %{sender_id: 2, recipient_id: 3}
+        %{sender_id: character.id, recipient_id: character.id}
       )
 
       metrics = GenServer.call(name, :get_metrics_summary)
@@ -423,14 +466,14 @@ defmodule BezgelorWorld.Economy.TelemetryTest do
       stop_telemetry(pid)
     end
 
-    test "crafting completion events increment crafting_completions counter" do
+    test "crafting completion events increment crafting_completions counter", %{character: character} do
       {pid, name} = start_telemetry()
 
       send_event(
         name,
         [:bezgelor, :economy, :crafting, :complete],
         %{materials_cost: 200, result_value: 350},
-        %{character_id: 1, schematic_id: 55, success: true}
+        %{character_id: character.id, schematic_id: 55, success: true}
       )
 
       metrics = GenServer.call(name, :get_metrics_summary)
@@ -440,7 +483,7 @@ defmodule BezgelorWorld.Economy.TelemetryTest do
         name,
         [:bezgelor, :economy, :crafting, :complete],
         %{materials_cost: 150, result_value: 0},
-        %{character_id: 1, schematic_id: 56, success: false}
+        %{character_id: character.id, schematic_id: 56, success: false}
       )
 
       metrics = GenServer.call(name, :get_metrics_summary)
@@ -449,14 +492,14 @@ defmodule BezgelorWorld.Economy.TelemetryTest do
       stop_telemetry(pid)
     end
 
-    test "repair completion events increment repair_completions counter" do
+    test "repair completion events increment repair_completions counter", %{character: character} do
       {pid, name} = start_telemetry()
 
       send_event(
         name,
         [:bezgelor, :economy, :repair, :complete],
         %{repair_cost: 75, items_repaired: 3},
-        %{character_id: 1, vendor_id: 101}
+        %{character_id: character.id, vendor_id: 101}
       )
 
       metrics = GenServer.call(name, :get_metrics_summary)
@@ -495,7 +538,7 @@ defmodule BezgelorWorld.Economy.TelemetryTest do
   end
 
   describe "batch management" do
-    test "events are added to batch" do
+    test "events are added to batch", %{character: character} do
       {pid, name} = start_telemetry()
 
       metrics_before = GenServer.call(name, :get_metrics_summary)
@@ -505,7 +548,7 @@ defmodule BezgelorWorld.Economy.TelemetryTest do
         name,
         [:bezgelor, :economy, :currency, :transaction],
         %{amount: 100, balance_after: 500, duration_ms: 0},
-        %{character_id: 1, currency_type: :credits, source_type: :quest, source_id: 10}
+        %{character_id: character.id, currency_type: :credits, source_type: :quest, source_id: 10}
       )
 
       metrics_after = GenServer.call(name, :get_metrics_summary)
@@ -514,7 +557,7 @@ defmodule BezgelorWorld.Economy.TelemetryTest do
       stop_telemetry(pid)
     end
 
-    test "batch flushes when batch_size is reached" do
+    test "batch flushes when batch_size is reached", %{character: character} do
       {pid, name} = start_telemetry(batch_size: 3)
 
       # Send 2 events (below threshold)
@@ -522,14 +565,14 @@ defmodule BezgelorWorld.Economy.TelemetryTest do
         name,
         [:bezgelor, :economy, :currency, :transaction],
         %{amount: 100, balance_after: 500, duration_ms: 0},
-        %{character_id: 1, currency_type: :credits, source_type: :quest, source_id: 10}
+        %{character_id: character.id, currency_type: :credits, source_type: :quest, source_id: 10}
       )
 
       send_event(
         name,
         [:bezgelor, :economy, :currency, :transaction],
         %{amount: 50, balance_after: 550, duration_ms: 0},
-        %{character_id: 1, currency_type: :credits, source_type: :loot, source_id: 20}
+        %{character_id: character.id, currency_type: :credits, source_type: :loot, source_id: 20}
       )
 
       metrics = GenServer.call(name, :get_metrics_summary)
@@ -541,7 +584,7 @@ defmodule BezgelorWorld.Economy.TelemetryTest do
         name,
         [:bezgelor, :economy, :currency, :transaction],
         %{amount: 25, balance_after: 575, duration_ms: 0},
-        %{character_id: 1, currency_type: :credits, source_type: :loot, source_id: 21}
+        %{character_id: character.id, currency_type: :credits, source_type: :loot, source_id: 21}
       )
 
       # Give time for flush attempt to complete
@@ -556,7 +599,7 @@ defmodule BezgelorWorld.Economy.TelemetryTest do
       stop_telemetry(pid)
     end
 
-    test "get_metrics_summary returns correct pending_events count" do
+    test "get_metrics_summary returns correct pending_events count", %{character: character} do
       {pid, name} = start_telemetry()
 
       # Add multiple events
@@ -565,7 +608,7 @@ defmodule BezgelorWorld.Economy.TelemetryTest do
           name,
           [:bezgelor, :economy, :currency, :transaction],
           %{amount: i * 10, balance_after: 500 + i * 10, duration_ms: 0},
-          %{character_id: 1, currency_type: :credits, source_type: :quest, source_id: i}
+          %{character_id: character.id, currency_type: :credits, source_type: :quest, source_id: i}
         )
       end
 
@@ -577,7 +620,7 @@ defmodule BezgelorWorld.Economy.TelemetryTest do
   end
 
   describe "flush behavior" do
-    test "manual flush via flush/0 works" do
+    test "manual flush via flush/0 works", %{character: character} do
       {pid, name} = start_telemetry()
 
       # Add some events
@@ -585,14 +628,14 @@ defmodule BezgelorWorld.Economy.TelemetryTest do
         name,
         [:bezgelor, :economy, :currency, :transaction],
         %{amount: 100, balance_after: 500, duration_ms: 0},
-        %{character_id: 1, currency_type: :credits, source_type: :quest, source_id: 10}
+        %{character_id: character.id, currency_type: :credits, source_type: :quest, source_id: 10}
       )
 
       send_event(
         name,
         [:bezgelor, :economy, :vendor, :transaction],
         %{total_cost: 50, item_count: 1, duration_ms: 25},
-        %{character_id: 1, vendor_id: 5, transaction_type: :buy}
+        %{character_id: character.id, vendor_id: 5, transaction_type: :buy}
       )
 
       metrics_before = GenServer.call(name, :get_metrics_summary)
@@ -612,7 +655,7 @@ defmodule BezgelorWorld.Economy.TelemetryTest do
       stop_telemetry(pid)
     end
 
-    test "flush updates last_flush timestamp" do
+    test "flush updates last_flush timestamp", %{character: character} do
       {pid, name} = start_telemetry()
 
       metrics_before = GenServer.call(name, :get_metrics_summary)
@@ -623,7 +666,7 @@ defmodule BezgelorWorld.Economy.TelemetryTest do
         name,
         [:bezgelor, :economy, :currency, :transaction],
         %{amount: 100, balance_after: 500, duration_ms: 0},
-        %{character_id: 1, currency_type: :credits, source_type: :quest, source_id: 10}
+        %{character_id: character.id, currency_type: :credits, source_type: :quest, source_id: 10}
       )
 
       :ok = GenServer.call(name, :flush)
@@ -688,7 +731,7 @@ defmodule BezgelorWorld.Economy.TelemetryTest do
   end
 
   describe "integration - multiple event types" do
-    test "handles mixed event types correctly" do
+    test "handles mixed event types correctly", %{character: character} do
       {pid, name} = start_telemetry()
 
       # Currency transaction
@@ -696,7 +739,7 @@ defmodule BezgelorWorld.Economy.TelemetryTest do
         name,
         [:bezgelor, :economy, :currency, :transaction],
         %{amount: 100, balance_after: 600, duration_ms: 0},
-        %{character_id: 1, currency_type: :credits, source_type: :quest, source_id: 10}
+        %{character_id: character.id, currency_type: :credits, source_type: :quest, source_id: 10}
       )
 
       # Vendor transaction
@@ -704,7 +747,7 @@ defmodule BezgelorWorld.Economy.TelemetryTest do
         name,
         [:bezgelor, :economy, :vendor, :transaction],
         %{total_cost: 50, item_count: 2, duration_ms: 30},
-        %{character_id: 1, vendor_id: 5, transaction_type: :buy}
+        %{character_id: character.id, vendor_id: 5, transaction_type: :buy}
       )
 
       # Loot drop
@@ -712,7 +755,7 @@ defmodule BezgelorWorld.Economy.TelemetryTest do
         name,
         [:bezgelor, :economy, :loot, :drop],
         %{item_value: 75, currency_amount: 25},
-        %{character_id: 1, creature_id: 100, world_id: 1, zone_id: 10}
+        %{character_id: character.id, creature_id: 100, world_id: 1, zone_id: 10}
       )
 
       # Auction event
@@ -720,7 +763,7 @@ defmodule BezgelorWorld.Economy.TelemetryTest do
         name,
         [:bezgelor, :economy, :auction, :event],
         %{price: 1000, fee: 50},
-        %{character_id: 1, item_id: 301, event_type: :list}
+        %{character_id: character.id, item_id: 301, event_type: :list}
       )
 
       # Trade
@@ -728,7 +771,7 @@ defmodule BezgelorWorld.Economy.TelemetryTest do
         name,
         [:bezgelor, :economy, :trade, :complete],
         %{items_exchanged: 1, currency_exchanged: 200, duration_ms: 500},
-        %{initiator_id: 1, acceptor_id: 2}
+        %{initiator_id: character.id, acceptor_id: character.id}
       )
 
       # Mail
@@ -736,7 +779,7 @@ defmodule BezgelorWorld.Economy.TelemetryTest do
         name,
         [:bezgelor, :economy, :mail, :sent],
         %{currency_attached: 50, item_count: 1, cod_amount: 0},
-        %{sender_id: 1, recipient_id: 2}
+        %{sender_id: character.id, recipient_id: character.id}
       )
 
       # Crafting
@@ -744,7 +787,7 @@ defmodule BezgelorWorld.Economy.TelemetryTest do
         name,
         [:bezgelor, :economy, :crafting, :complete],
         %{materials_cost: 100, result_value: 150},
-        %{character_id: 1, schematic_id: 55, success: true}
+        %{character_id: character.id, schematic_id: 55, success: true}
       )
 
       # Repair
@@ -752,7 +795,7 @@ defmodule BezgelorWorld.Economy.TelemetryTest do
         name,
         [:bezgelor, :economy, :repair, :complete],
         %{repair_cost: 40, items_repaired: 2},
-        %{character_id: 1, vendor_id: 101}
+        %{character_id: character.id, vendor_id: 101}
       )
 
       metrics = GenServer.call(name, :get_metrics_summary)

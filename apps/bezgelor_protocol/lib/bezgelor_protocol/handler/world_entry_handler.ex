@@ -24,7 +24,6 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
               BezgelorWorld.Cinematic.CinematicManager,
               BezgelorWorld.TriggerManager,
               BezgelorWorld.Creature.ZoneManager,
-              BezgelorWorld.CreatureManager,
               BezgelorWorld.WorldManager,
               BezgelorWorld.VisibilityBroadcaster
             ]}
@@ -44,7 +43,6 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
   alias BezgelorWorld.Quest.QuestCache
   alias BezgelorWorld.TriggerManager
   alias BezgelorWorld.Cinematic.CinematicManager
-  alias BezgelorWorld.CreatureManager
   alias BezgelorWorld.WorldManager
   alias BezgelorWorld.VisibilityBroadcaster
 
@@ -206,7 +204,7 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
     cinematic_packets = build_cinematic_packets(state.session_data, zone_id)
 
     # Build creature spawn packets for creatures near the player
-    creature_packets = build_creature_packets(spawn.position)
+    creature_packets = build_creature_packets({world_id, instance_id}, spawn.position)
 
     Logger.debug(
       "Sending #{length(creature_packets)} creature entity packets to player at #{inspect(spawn.position)}"
@@ -241,17 +239,23 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
   # Also sends movement packets for creatures that are already moving
   @creature_view_range 200.0
 
-  defp build_creature_packets(position) do
+  defp build_creature_packets(world_key, position) do
     alias BezgelorProtocol.Packets.World.ServerEntityCommand
 
     # Get creatures within view range of the player's position
     # Use a short timeout to avoid blocking login if spawn loading is in progress
+    # Note: Using apply/3 to defer module lookup to runtime (avoids compile-order warning
+    # since bezgelor_protocol compiles before bezgelor_world)
     creatures =
       try do
-        CreatureManager.get_creatures_in_range(position, @creature_view_range)
+        apply(BezgelorWorld.World.Instance, :get_creatures_in_range, [
+          world_key,
+          position,
+          @creature_view_range
+        ])
       catch
         :exit, {:timeout, _} ->
-          Logger.warning("CreatureManager timeout - spawn loading may still be in progress")
+          Logger.warning("World.Instance timeout - spawn loading may still be in progress")
           []
 
         :exit, _ ->
@@ -436,7 +440,7 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
 
       # Only send if we have a valid path
       if length(adjusted_path) >= 2 do
-        # Build movement commands (same as CreatureManager.broadcast_creature_movement)
+        # Build movement commands for creatures in motion
         state_command = %{type: :set_state, state: 0x02}
         move_defaults = %{type: :set_move_defaults, blend: false}
         rotation_defaults = %{type: :set_rotation_defaults, blend: false}

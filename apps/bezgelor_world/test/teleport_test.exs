@@ -1,6 +1,8 @@
 defmodule BezgelorWorld.TeleportTest do
   use ExUnit.Case, async: false
 
+  @moduletag :integration
+
   alias BezgelorWorld.Teleport
   alias BezgelorWorld.World.InstanceSupervisor
   alias BezgelorCore.Entity

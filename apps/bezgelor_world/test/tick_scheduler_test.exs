@@ -1,6 +1,8 @@
 defmodule BezgelorWorld.TickSchedulerTest do
   use ExUnit.Case, async: false
 
+  @moduletag :integration
+
   alias BezgelorWorld.TickScheduler
 
   # Note: TickScheduler is started by the application supervisor with 1000ms interval.

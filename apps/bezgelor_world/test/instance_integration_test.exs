@@ -7,6 +7,8 @@ defmodule BezgelorWorld.InstanceIntegrationTest do
 
   use ExUnit.Case
 
+  @moduletag :integration
+
   alias BezgelorWorld.GroupFinder.Matcher
   alias BezgelorWorld.Loot.LootRules
   alias BezgelorWorld.MythicPlus.{Keystone, Affix}

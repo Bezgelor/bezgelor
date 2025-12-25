@@ -38,18 +38,29 @@ defmodule BezgelorWorld.World.InstanceSupervisor do
 
   @doc """
   Start a new world instance.
+
+  ## Options
+
+    * `:lazy_loading` - Override lazy loading setting (default: from config)
   """
-  @spec start_instance(non_neg_integer(), non_neg_integer(), map()) ::
+  @spec start_instance(non_neg_integer(), non_neg_integer(), map(), keyword()) ::
           {:ok, pid()} | {:error, term()}
-  def start_instance(world_id, instance_id, world_data \\ %{}) do
+  def start_instance(world_id, instance_id, world_data \\ %{}, opts \\ []) do
+    lazy_loading =
+      Keyword.get(
+        opts,
+        :lazy_loading,
+        Application.get_env(:bezgelor_world, :lazy_zone_loading, false)
+      )
+
     child_spec = {
       Instance,
-      [world_id: world_id, instance_id: instance_id, world_data: world_data]
+      [world_id: world_id, instance_id: instance_id, world_data: world_data, lazy_loading: lazy_loading]
     }
 
     case DynamicSupervisor.start_child(__MODULE__, child_spec) do
       {:ok, pid} ->
-        Logger.info("Started world instance: world=#{world_id} instance=#{instance_id}")
+        Logger.debug("Started world instance: world=#{world_id} instance=#{instance_id}")
 
         # Start a per-world creature manager for AI processing
         start_creature_manager(world_id, instance_id)

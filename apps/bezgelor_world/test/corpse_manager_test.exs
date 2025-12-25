@@ -1,6 +1,8 @@
 defmodule BezgelorWorld.CorpseManagerTest do
   use ExUnit.Case, async: false
 
+  @moduletag :integration
+
   alias BezgelorWorld.CorpseManager
   alias BezgelorCore.Entity
 

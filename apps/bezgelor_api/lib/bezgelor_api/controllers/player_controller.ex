@@ -37,6 +37,8 @@ defmodule BezgelorApi.Controllers.PlayerController do
       WorldManager.list_sessions()
     rescue
       _ -> %{}
+    catch
+      :exit, _ -> %{}
     end
   end
 

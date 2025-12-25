@@ -271,7 +271,7 @@ defmodule BezgelorData do
   @spec spells_by_base(non_neg_integer()) :: [map()]
   def spells_by_base(base_spell_id) do
     list_spells()
-    |> Enum.filter(fn s -> s.base_spell_id == base_spell_id end)
+    |> Enum.filter(fn s -> s.spell4BaseIdBaseSpell == base_spell_id end)
   end
 
   # Items
@@ -309,7 +309,7 @@ defmodule BezgelorData do
   @spec items_by_type(non_neg_integer()) :: [map()]
   def items_by_type(type_id) do
     list_items()
-    |> Enum.filter(fn i -> i.type_id == type_id end)
+    |> Enum.filter(fn i -> i.item2TypeId == type_id end)
   end
 
   @doc """
@@ -318,7 +318,7 @@ defmodule BezgelorData do
   @spec items_by_quality(non_neg_integer()) :: [map()]
   def items_by_quality(quality_id) do
     list_items()
-    |> Enum.filter(fn i -> i.quality_id == quality_id end)
+    |> Enum.filter(fn i -> i.itemQualityId == quality_id end)
   end
 
   @doc """
@@ -327,7 +327,7 @@ defmodule BezgelorData do
   @spec items_by_family(non_neg_integer()) :: [map()]
   def items_by_family(family_id) do
     list_items()
-    |> Enum.filter(fn i -> i.family_id == family_id end)
+    |> Enum.filter(fn i -> i.item2FamilyId == family_id end)
   end
 
   @doc """
@@ -336,7 +336,7 @@ defmodule BezgelorData do
   @spec items_by_category(non_neg_integer()) :: [map()]
   def items_by_category(category_id) do
     list_items()
-    |> Enum.filter(fn i -> i.category_id == category_id end)
+    |> Enum.filter(fn i -> i.item2CategoryId == category_id end)
   end
 
   # Texts

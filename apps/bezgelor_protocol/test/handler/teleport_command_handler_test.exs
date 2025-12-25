@@ -1,7 +1,16 @@
 defmodule BezgelorProtocol.Handler.TeleportCommandHandlerTest do
+  @moduledoc """
+  Tests for TeleportCommandHandler.
+
+  These tests require bezgelor_world to be running for Teleport module.
+  """
   use ExUnit.Case, async: true
 
   alias BezgelorProtocol.Handler.TeleportCommandHandler
+
+  # These tests require BezgelorWorld.Teleport which is only available
+  # when bezgelor_world application is started
+  @moduletag :requires_world
 
   describe "handle/2" do
     setup do

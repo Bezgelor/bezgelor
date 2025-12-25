@@ -53,7 +53,6 @@ defmodule BezgelorProtocol.Handler.MovementHandler do
   defp do_process_movement(packet, state) do
     entity = state.session_data[:entity]
     character_id = state.session_data[:character_id]
-
     # Get old position before update
     old_position = if entity, do: entity.position, else: {0.0, 0.0, 0.0}
 
@@ -73,6 +72,7 @@ defmodule BezgelorProtocol.Handler.MovementHandler do
 
     {:ok, state}
   end
+
 
   # Check if player entered any trigger volumes
   defp check_trigger_volumes(old_position, new_position, state) do

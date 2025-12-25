@@ -1,6 +1,8 @@
 defmodule BezgelorWorld.ArenaTest do
   use ExUnit.Case, async: true
 
+  @moduletag :integration
+
   alias BezgelorWorld.PvP.Rating
 
   # =============================================
@@ -211,7 +213,7 @@ defmodule BezgelorWorld.ArenaTest do
 
     test "bracket_size for different brackets", ctx do
       # 2v2
-      {:ok, pid2v2} =
+      {:ok, _pid2v2} =
         ArenaInstance.start_instance(ctx.match_id <> "-2v2", "2v2", ctx.team1, ctx.team2)
 
       state2v2 = ArenaInstance.get_state(ctx.match_id <> "-2v2")
@@ -223,7 +225,7 @@ defmodule BezgelorWorld.ArenaTest do
       team1_3v3 = %{ctx.team1 | members: [1001, 1002, 1003]}
       team2_3v3 = %{ctx.team2 | members: [2001, 2002, 2003]}
 
-      {:ok, pid3v3} =
+      {:ok, _pid3v3} =
         ArenaInstance.start_instance(ctx.match_id <> "-3v3", "3v3", team1_3v3, team2_3v3)
 
       state3v3 = ArenaInstance.get_state(ctx.match_id <> "-3v3")

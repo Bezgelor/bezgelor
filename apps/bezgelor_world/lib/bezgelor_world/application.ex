@@ -34,15 +34,15 @@ defmodule BezgelorWorld.Application do
     # This breaks the compile-time dependency from protocol to world layer
     BezgelorWorld.HandlerRegistration.register_all()
 
-    # Always start WorldManager, CreatureManager, HarvestNodeManager, and Zone infrastructure
+    # Always start WorldManager and Zone infrastructure
+    # Note: CreatureManager and HarvestNodeManager are deprecated - now managed per-zone in World.Instance
     base_children = [
       # Realm health monitor (marks current realm online, monitors others)
       BezgelorWorld.RealmMonitor,
       BezgelorWorld.WorldManager,
-      # TickScheduler must start before CreatureManager and BuffManager (they register with it)
+      # TickScheduler must start before BuffManager and World.Instance (they register with it)
       BezgelorWorld.TickScheduler,
-      BezgelorWorld.CreatureManager,
-      BezgelorWorld.HarvestNodeManager,
+      # Note: CreatureManager and HarvestNodeManager removed - both managed per-zone in World.Instance
       BezgelorWorld.BuffManager,
       # Spell casting manager
       BezgelorWorld.SpellManager,

@@ -1,9 +1,18 @@
 defmodule BezgelorProtocol.Handler.AuthHandlerTest do
+  @moduledoc """
+  Tests for AuthHandler packet processing.
+
+  Tests use bit-packed wide string format for email.
+  """
   # Cannot be async because it uses the database
   use ExUnit.Case, async: false
 
+  import Bitwise
+
   alias BezgelorProtocol.Handler.AuthHandler
   alias BezgelorDb.Repo
+
+  @moduletag :database
 
   setup do
     # Checkout a connection for this test
@@ -63,20 +72,34 @@ defmodule BezgelorProtocol.Handler.AuthHandlerTest do
     end
   end
 
-  # Build a ClientHelloAuth packet payload
+  # Build a ClientHelloAuth packet payload using bit-packed wide string
   defp build_client_hello_auth(build, email) do
     client_key_a = :crypto.strong_rand_bytes(128)
     client_proof_m1 = :crypto.strong_rand_bytes(32)
 
-    utf16_email = :unicode.characters_to_binary(email, :utf8, {:utf16, :little})
-    email_length = String.length(email)
-
     <<
       build::little-32,
-      email_length::little-32,
-      utf16_email::binary,
+      build_wide_string(email)::binary,
       client_key_a::binary-size(128),
       client_proof_m1::binary-size(32)
     >>
+  end
+
+  # Build a bit-packed wide string matching NexusForever format
+  defp build_wide_string("") do
+    <<0::8>>
+  end
+
+  defp build_wide_string(string) when is_binary(string) do
+    length = String.length(string)
+    utf16_data = :unicode.characters_to_binary(string, :utf8, {:utf16, :little})
+
+    if length < 128 do
+      header = (length <<< 1) ||| 0
+      <<header::8>> <> utf16_data
+    else
+      header = (length <<< 1) ||| 1
+      <<header::16-little>> <> utf16_data
+    end
   end
 end
