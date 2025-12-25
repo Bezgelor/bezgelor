@@ -44,6 +44,12 @@ Create a feature branch and implement tasks:
 - Run tests after each significant change
 - Commit frequently with descriptive messages
 
+### 5. Code Review
+Use Claude Code's `/review` command to review changes before merging:
+- Run the review at least 3 times to catch issues that emerge after fixes
+- Address only issues within the scope of the plan/PR
+- Resist scope creep - save unrelated improvements for future work
+
 ## Getting Started
 
 1. Fork the repository
