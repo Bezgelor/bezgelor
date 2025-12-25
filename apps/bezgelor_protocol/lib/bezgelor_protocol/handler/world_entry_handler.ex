@@ -242,15 +242,8 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
   defp build_creature_packets(world_key, position) do
     alias BezgelorProtocol.Packets.World.ServerEntityCommand
 
-    # Ensure spawns are loaded before querying (for lazy-loading zones)
-    # This blocks until the async add_entity cast has completed spawn loading
-    try do
-      apply(BezgelorWorld.World.Instance, :ensure_spawns_loaded, [world_key])
-    catch
-      :exit, _ -> :ok
-    end
-
     # Get creatures within view range of the player's position
+    # Use a short timeout to avoid blocking login if spawn loading is in progress
     # Note: Using apply/3 to defer module lookup to runtime (avoids compile-order warning
     # since bezgelor_protocol compiles before bezgelor_world)
     creatures =
@@ -262,7 +255,7 @@ defmodule BezgelorProtocol.Handler.WorldEntryHandler do
         ])
       catch
         :exit, {:timeout, _} ->
-          Logger.warning("World.Instance timeout getting creatures")
+          Logger.warning("World.Instance timeout - spawn loading may still be in progress")
           []
 
         :exit, _ ->
