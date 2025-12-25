@@ -105,6 +105,50 @@ defmodule BezgelorWorld.EventManager do
           next_instance_id: non_neg_integer()
         }
 
+  # Valid objective types - prevents atom table exhaustion from malicious event data
+  @valid_objective_types ~w(kill damage collect interact territory escort defend survive timer)a
+
+  @doc """
+  Get the list of valid objective types.
+
+  Used for testing and documentation. These are the only objective types
+  that will be accepted - any other type defaults to :kill for safety.
+  """
+  @spec valid_objective_types() :: [atom()]
+  def valid_objective_types, do: @valid_objective_types
+
+  @doc """
+  Safely convert an objective type to an atom.
+
+  Returns a valid objective type atom, or :kill as a fallback.
+  This function is exposed publicly for testing but is primarily
+  used internally by parse_objectives/1.
+
+  ## Examples
+
+      iex> EventManager.safe_objective_type("kill")
+      :kill
+
+      iex> EventManager.safe_objective_type("invalid")
+      :kill
+
+      iex> EventManager.safe_objective_type(nil)
+      :kill
+  """
+  @spec safe_objective_type(String.t() | atom() | nil) :: atom()
+  def safe_objective_type(nil), do: :kill
+  def safe_objective_type(type) when is_atom(type) and type in @valid_objective_types, do: type
+  def safe_objective_type(type) when is_atom(type), do: :kill
+
+  def safe_objective_type(type) when is_binary(type) do
+    try do
+      atom = String.to_existing_atom(type)
+      if atom in @valid_objective_types, do: atom, else: :kill
+    rescue
+      ArgumentError -> :kill
+    end
+  end
+
   ## Client API
 
   @doc "Start the EventManager for a zone instance."
@@ -1333,13 +1377,14 @@ defmodule BezgelorWorld.EventManager do
     |> Enum.map(fn {obj, index} ->
       %{
         index: index,
-        type: String.to_atom(obj["type"] || "kill"),
+        type: safe_objective_type(obj["type"]),
         target: obj["target"] || 0,
         target_id: obj["target_id"],
         current: 0
       }
     end)
   end
+
 
   defp maybe_start_time_limit(event_state, instance_id) do
     time_limit = event_state.event_def["time_limit_ms"]

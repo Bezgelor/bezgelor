@@ -71,8 +71,9 @@ defmodule BezgelorWorld.World.Instance do
   use GenServer
   import Bitwise
 
-  alias BezgelorCore.{AI, CreatureTemplate, Entity, Movement, SpatialGrid}
+  alias BezgelorCore.{AI, CreatureTemplate, Entity, SpatialGrid}
   alias BezgelorWorld.{CombatBroadcaster, CreatureDeath, TickScheduler, WorldManager}
+  alias BezgelorWorld.World.CreatureState
   alias BezgelorData.Store
 
   require Logger
@@ -115,8 +116,13 @@ defmodule BezgelorWorld.World.Instance do
           # Per-zone harvest node management (merged from HarvestNodeManager)
           harvest_nodes: %{non_neg_integer() => harvest_node_state()},
           # Phase 3: Lazy zone activation
+          # When lazy_loading is true:
+          # - Spawns are deferred until first player enters
+          # - Instance stops after idle_timeout_ms when players leave
           lazy_loading: boolean(),
+          # Timer ref for idle shutdown (when lazy_loading is true)
           idle_timeout_ref: reference() | nil,
+          # Timestamp when last player left (for metrics/debugging)
           last_player_left_at: integer() | nil
         }
 
@@ -980,7 +986,7 @@ defmodule BezgelorWorld.World.Instance do
           type: :creature,
           name: template.name,
           display_info: template.display_info,
-          faction: faction_to_int(template.faction),
+          faction: CreatureState.faction_to_int(template.faction),
           level: template.level,
           position: position,
           creature_id: template_id,
@@ -1272,294 +1278,26 @@ defmodule BezgelorWorld.World.Instance do
   end
 
   # Spawn a single creature from a spawn definition
+  # Delegates to CreatureState for the actual creation logic
   defp spawn_creature_from_def(spawn_def, world_id, spline_index) do
-    creature_id = spawn_def.creature_id
-    [x, y, z] = spawn_def.position
-    position = {x, y, z}
-
-    case get_creature_template(creature_id, spawn_def) do
-      {:error, reason} ->
-        {:error, reason}
-
-      {:ok, template, display_info, outfit_info} ->
-        guid = WorldManager.generate_guid(:creature)
-
-        entity = %Entity{
-          guid: guid,
-          type: :creature,
-          name: template.name,
-          display_info: display_info,
-          outfit_info: outfit_info,
-          faction: spawn_def[:faction1] || faction_to_int(template.faction),
-          level: template.level,
-          position: position,
-          creature_id: creature_id,
-          health: template.max_health,
-          max_health: template.max_health
-        }
-
-        # Build AI options, including patrol path if specified
-        ai_opts = build_ai_options(spawn_def, world_id, position, spline_index)
-        ai = AI.new(position, ai_opts)
-
-        creature_state = %{
-          entity: entity,
-          template: template,
-          ai: ai,
-          spawn_position: position,
-          respawn_timer: nil,
-          spawn_def: spawn_def,
-          world_id: world_id,
-          target_position: nil
-        }
-
-        {:ok, guid, creature_state}
-    end
+    CreatureState.build_from_spawn_def(spawn_def, world_id, spline_index)
   end
 
-  # Get creature template
-  defp get_creature_template(creature_id, spawn_def) do
-    case CreatureTemplate.get(creature_id) do
-      nil ->
-        # Fall back to BezgelorData
-        case BezgelorData.get_creature(creature_id) do
-          {:ok, creature_data} ->
-            build_template_from_data(creature_id, creature_data, spawn_def)
+  # =====================================================================
+  # Creature State Helpers (delegates to CreatureState module)
+  # =====================================================================
 
-          :error ->
-            {:error, :template_not_found}
-        end
-
-      template ->
-        display_info =
-          if spawn_def[:display_info] && spawn_def.display_info > 0 do
-            spawn_def.display_info
-          else
-            template.display_info
-          end
-
-        outfit_info = spawn_def[:outfit_info] || 0
-        {:ok, template, display_info, outfit_info}
-    end
-  end
-
-  # Build a CreatureTemplate from BezgelorData creature
-  defp build_template_from_data(creature_id, creature_data, spawn_def) do
-    name = get_creature_name(creature_data)
-    tier_id = Map.get(creature_data, :tier_id, 1)
-    difficulty_id = Map.get(creature_data, :difficulty_id, 1)
-    level = tier_to_level(tier_id)
-    max_health = calculate_max_health(tier_id, difficulty_id, level)
-    {damage_min, damage_max} = calculate_damage(level, difficulty_id)
-    ai_type = archetype_to_ai_type(Map.get(creature_data, :archetype_id, 0))
-
-    template = %CreatureTemplate{
-      id: creature_id,
-      name: name,
-      level: level,
-      max_health: max_health,
-      faction: :hostile,
-      display_info: Map.get(creature_data, :display_group_id, 0),
-      ai_type: ai_type,
-      aggro_range: if(ai_type == :aggressive, do: 15.0, else: 0.0),
-      leash_range: 40.0,
-      respawn_time: 60_000,
-      xp_reward: level * 10,
-      loot_table_id: nil,
-      damage_min: damage_min,
-      damage_max: damage_max,
-      attack_speed: 2000
-    }
-
-    display_info =
-      if spawn_def[:display_info] && spawn_def.display_info > 0 do
-        spawn_def.display_info
-      else
-        template.display_info
-      end
-
-    outfit_info =
-      if spawn_def[:outfit_info] && spawn_def.outfit_info > 0 do
-        spawn_def.outfit_info
-      else
-        Map.get(creature_data, :outfit_group_id, 0)
-      end
-
-    {:ok, template, display_info, outfit_info}
-  end
-
-  defp get_creature_name(creature_data) do
-    name_text_id = Map.get(creature_data, :name_text_id, 0)
-
-    case BezgelorData.get_text(name_text_id) do
-      {:ok, text} -> text
-      :error -> "Creature #{Map.get(creature_data, :id, 0)}"
-    end
-  end
-
-  defp tier_to_level(tier_id) do
-    case tier_id do
-      1 -> Enum.random(1..10)
-      2 -> Enum.random(10..20)
-      3 -> Enum.random(20..35)
-      4 -> Enum.random(35..50)
-      _ -> Enum.random(1..50)
-    end
-  end
-
-  defp calculate_max_health(tier_id, difficulty_id, level) do
-    base_health = 50 + level * 20
-
-    tier_mult =
-      case tier_id do
-        1 -> 1.0
-        2 -> 1.5
-        3 -> 2.0
-        4 -> 3.0
-        _ -> 1.0
-      end
-
-    difficulty_mult =
-      case difficulty_id do
-        1 -> 1.0
-        2 -> 2.0
-        3 -> 5.0
-        4 -> 10.0
-        _ -> 1.0
-      end
-
-    round(base_health * tier_mult * difficulty_mult)
-  end
-
-  defp calculate_damage(level, difficulty_id) do
-    base_min = 5 + level
-    base_max = 10 + level * 2
-
-    mult =
-      case difficulty_id do
-        1 -> 1.0
-        2 -> 1.5
-        3 -> 2.0
-        4 -> 3.0
-        _ -> 1.0
-      end
-
-    {round(base_min * mult), round(base_max * mult)}
-  end
-
-  defp archetype_to_ai_type(archetype_id) do
-    case archetype_id do
-      30 -> :passive
-      31 -> :defensive
-      _ -> :aggressive
-    end
-  end
-
-  defp faction_to_int(:hostile), do: 0
-  defp faction_to_int(:neutral), do: 1
-  defp faction_to_int(:friendly), do: 2
-  defp faction_to_int(_), do: 0
-
-  # Build AI options from spawn definition
-  defp build_ai_options(spawn_def, world_id, position, spline_index) do
-    waypoints = Map.get(spawn_def, :patrol_waypoints)
-
-    cond do
-      is_list(waypoints) and length(waypoints) > 1 ->
-        [
-          patrol_waypoints: waypoints,
-          patrol_speed: Map.get(spawn_def, :patrol_speed, 3.0),
-          patrol_mode: Map.get(spawn_def, :patrol_mode, :cyclic)
-        ]
-
-      spline_id = Map.get(spawn_def, :spline_id) ->
-        case Store.get_spline_as_patrol(spline_id) do
-          {:ok, patrol_data} ->
-            [
-              patrol_waypoints: patrol_data.waypoints,
-              patrol_speed: Map.get(spawn_def, :spline_speed, patrol_data.speed),
-              patrol_mode: Map.get(spawn_def, :spline_mode, patrol_data.mode)
-            ]
-
-          :error ->
-            []
-        end
-
-      path_name = Map.get(spawn_def, :patrol_path) ->
-        case Store.get_patrol_path(path_name) do
-          {:ok, patrol_data} ->
-            [
-              patrol_waypoints: patrol_data.waypoints,
-              patrol_speed: patrol_data.speed,
-              patrol_mode: patrol_data.mode
-            ]
-
-          :error ->
-            []
-        end
-
-      Map.get(spawn_def, :auto_spline, true) ->
-        find_auto_spline(spline_index, world_id, position)
-
-      true ->
-        []
-    end
-  end
-
-  defp find_auto_spline(spline_index, world_id, position) do
-    case Store.find_nearest_spline_indexed(spline_index, world_id, position, max_distance: 15.0) do
-      {:ok, spline_id, _distance} ->
-        case Store.get_spline_as_patrol(spline_id) do
-          {:ok, patrol_data} ->
-            [
-              patrol_waypoints: patrol_data.waypoints,
-              patrol_speed: patrol_data.speed,
-              patrol_mode: patrol_data.mode
-            ]
-
-          :error ->
-            []
-        end
-
-      :none ->
-        []
-    end
-  end
-
-  # Apply damage to a creature
+  # Apply damage to a creature - delegates to CreatureState
   defp apply_damage_to_creature(creature_state, attacker_guid, damage, state) do
-    entity = Entity.apply_damage(creature_state.entity, damage)
-    ai = AI.add_threat(creature_state.ai, attacker_guid, damage)
+    killer_level = get_killer_level(attacker_guid, creature_state.template.level, state)
 
-    # Enter combat if not already
-    ai =
-      if not AI.in_combat?(ai) do
-        AI.enter_combat(ai, attacker_guid)
-      else
-        ai
-      end
+    case CreatureState.apply_damage(creature_state, attacker_guid, damage, killer_level: killer_level) do
+      {:ok, :damaged, result_info, new_creature_state} ->
+        {{:ok, :damaged, result_info}, new_creature_state, state}
 
-    if Entity.dead?(entity) do
-      handle_creature_death(creature_state, entity, attacker_guid, state)
-    else
-      new_creature_state = %{creature_state | entity: entity, ai: ai}
-
-      result_info = %{
-        remaining_health: entity.health,
-        max_health: entity.max_health
-      }
-
-      {{:ok, :damaged, result_info}, new_creature_state, state}
+      {:ok, :killed, result_info, new_creature_state} ->
+        {{:ok, :killed, result_info}, new_creature_state, state}
     end
-  end
-
-  defp handle_creature_death(creature_state, entity, killer_guid, state) do
-    killer_level = get_killer_level(killer_guid, creature_state.template.level, state)
-
-    {result, new_creature_state} =
-      CreatureDeath.handle_death(creature_state, entity, killer_guid, killer_level)
-
-    {result, new_creature_state, state}
   end
 
   defp get_killer_level(killer_guid, default_level, state) do
@@ -1594,23 +1332,33 @@ defmodule BezgelorWorld.World.Instance do
   end
 
   # Process AI tick for all creatures in this zone
+  # Delegates to CreatureState for individual creature processing
   defp process_ai_tick(state) do
     now = System.monotonic_time(:millisecond)
+
+    ai_context = %{
+      entities: state.entities,
+      players: state.players,
+      world_id: state.world_id,
+      instance_id: state.instance_id
+    }
 
     creatures_needing_update =
       state.creature_states
       |> Enum.filter(fn {_guid, creature_state} ->
-        needs_ai_processing?(creature_state, now)
+        CreatureState.needs_processing?(creature_state)
       end)
 
     creature_states =
       Enum.reduce(creatures_needing_update, state.creature_states, fn {guid, creature_state},
                                                                       creature_states ->
-        case process_creature_ai(creature_state, state, now) do
+        case CreatureState.process_ai_tick(creature_state, ai_context, now) do
           {:no_change, _} ->
             creature_states
 
-          {:updated, new_creature_state} ->
+          {:updated, new_creature_state, actions} ->
+            # Execute any side-effect actions
+            execute_ai_actions(actions, state)
             Map.put(creature_states, guid, new_creature_state)
         end
       end)
@@ -1618,246 +1366,23 @@ defmodule BezgelorWorld.World.Instance do
     %{state | creature_states: creature_states}
   end
 
-  defp needs_ai_processing?(%{ai: ai, template: template}, _now) do
-    ai.state == :combat or
-      ai.state == :evade or
-      ai.state == :wandering or
-      ai.state == :patrol or
-      map_size(ai.threat_table) > 0 or
-      (ai.state == :idle and ai.patrol_enabled) or
-      (ai.state == :idle and template.ai_type == :aggressive and (template.aggro_range || 0.0) > 0)
-  end
+  # Execute actions returned by CreatureState.process_ai_tick
+  defp execute_ai_actions(actions, state) do
+    Enum.each(actions, fn action ->
+      case action do
+        {:broadcast_movement, guid, path, speed} ->
+          broadcast_creature_movement(guid, path, speed, state.world_id, state.instance_id)
 
-  defp process_creature_ai(
-         %{ai: ai, template: template, entity: entity} = creature_state,
-         state,
-         now
-       ) do
-    # For idle aggressive creatures, check for nearby players to aggro
-    if ai.state == :idle and template.ai_type == :aggressive and (template.aggro_range || 0.0) > 0 do
-      case check_aggro_nearby_players(creature_state, state) do
-        {:aggro, player_guid} ->
-          new_ai = AI.enter_combat(ai, player_guid)
-          {:updated, %{creature_state | ai: new_ai}}
+        {:broadcast_stop, guid} ->
+          broadcast_creature_stop(guid, state.world_id, state.instance_id)
 
-        nil ->
-          process_creature_ai_tick(creature_state, ai, template, entity, state, now)
-      end
-    else
-      process_creature_ai_tick(creature_state, ai, template, entity, state, now)
-    end
-  end
-
-  defp check_aggro_nearby_players(creature_state, state) do
-    creature_pos = creature_state.entity.position
-    aggro_range = creature_state.template.aggro_range || 15.0
-    creature_faction = creature_state.template.faction || :hostile
-
-    nearby_players = get_nearby_players(state, creature_pos, aggro_range)
-    AI.check_aggro_with_faction(creature_state.ai, nearby_players, aggro_range, creature_faction)
-  end
-
-  defp get_nearby_players(state, position, range) do
-    state.players
-    |> MapSet.to_list()
-    |> Enum.map(&Map.get(state.entities, &1))
-    |> Enum.reject(&is_nil/1)
-    |> Enum.filter(fn e -> AI.distance(e.position, position) <= range end)
-    |> Enum.map(fn e ->
-      %{
-        guid: e.guid,
-        position: e.position,
-        faction: Map.get(e, :faction, :exile)
-      }
-    end)
-  end
-
-  defp process_creature_ai_tick(creature_state, ai, template, entity, state, now) do
-    if ai.state == :combat do
-      current_pos = entity.position
-      leash_range = template.leash_range || 40.0
-
-      case AI.check_leash(ai, current_pos, leash_range) do
-        :evade ->
-          new_ai = AI.start_evade(ai)
-          {:updated, %{creature_state | ai: new_ai}}
-
-        :ok ->
-          process_combat_ai_tick(creature_state, ai, template, entity, state)
-      end
-    else
-      process_normal_ai_tick(creature_state, ai, template, entity, state, now)
-    end
-  end
-
-  defp process_combat_ai_tick(creature_state, ai, template, entity, state) do
-    target_pos = get_target_position(creature_state, state)
-    attack_range = CreatureTemplate.attack_range(template)
-
-    case AI.combat_action(ai, target_pos, attack_range) do
-      :none ->
-        {:no_change, creature_state}
-
-      :wait ->
-        {:no_change, creature_state}
-
-      {:attack, target_guid} ->
-        current_pos = entity.position
-        {tx, ty, tz} = target_pos
-        {cx, cy, cz} = current_pos
-
-        current_distance =
-          :math.sqrt((tx - cx) * (tx - cx) + (ty - cy) * (ty - cy) + (tz - cz) * (tz - cz))
-
-        min_range = if template.is_ranged, do: attack_range * 0.5, else: 0.0
-
-        if template.is_ranged and current_distance < min_range do
-          path = Movement.ranged_position_path(current_pos, target_pos, min_range, attack_range)
-
-          if length(path) > 1 do
-            path_length = Movement.path_length(path)
-            duration = CreatureTemplate.movement_duration(template, path_length)
-            new_ai = AI.start_chase(ai, path, duration)
-            speed = CreatureTemplate.movement_speed(template)
-            broadcast_creature_movement(entity.guid, path, speed, state.world_id)
-            end_pos = List.last(path)
-            new_entity = %{entity | position: end_pos}
-            {:updated, %{creature_state | ai: new_ai, entity: new_entity}}
-          else
-            {:no_change, creature_state}
-          end
-        else
-          if AI.chasing?(ai) do
-            broadcast_creature_stop(entity.guid, state.world_id)
-          end
-
-          new_ai = AI.record_attack(ai) |> AI.complete_chase()
+        {:creature_attack, entity, template, target_guid} ->
           apply_creature_attack(entity, template, target_guid, state)
-          {:updated, %{creature_state | ai: new_ai}}
-        end
 
-      {:chase, chase_target_pos} ->
-        current_pos = entity.position
-
-        path =
-          if template.is_ranged do
-            min_range = attack_range * 0.5
-            Movement.ranged_position_path(current_pos, chase_target_pos, min_range, attack_range)
-          else
-            Movement.chase_path(current_pos, chase_target_pos, attack_range)
-          end
-
-        if length(path) > 1 do
-          path_length = Movement.path_length(path)
-          duration = CreatureTemplate.movement_duration(template, path_length)
-          new_ai = AI.start_chase(ai, path, duration)
-          speed = CreatureTemplate.movement_speed(template)
-          broadcast_creature_movement(entity.guid, path, speed, state.world_id)
-          end_pos = List.last(path)
-          new_entity = %{entity | position: end_pos}
-          {:updated, %{creature_state | ai: new_ai, entity: new_entity}}
-        else
-          {:no_change, creature_state}
-        end
-    end
-  end
-
-  defp get_target_position(creature_state, state) do
-    case Map.get(creature_state, :target_position) do
-      nil ->
-        target_guid = creature_state.ai.target_guid
-
-        case Map.get(state.entities, target_guid) do
-          nil -> creature_state.entity.position
-          target -> target.position
-        end
-
-      pos ->
-        pos
-    end
-  end
-
-  defp process_normal_ai_tick(creature_state, ai, template, entity, state, _now) do
-    context = %{
-      attack_speed: template.attack_speed,
-      position: entity.position
-    }
-
-    case AI.tick(ai, context) do
-      :none ->
-        {:no_change, creature_state}
-
-      {:move_to, target_pos} ->
-        current_pos = entity.position
-        dist_to_target = AI.distance(current_pos, target_pos)
-
-        if dist_to_target < 2.0 do
-          if ai.state == :evade do
-            new_ai = AI.complete_evade(ai)
-
-            new_entity = %{
-              entity
-              | health: template.max_health,
-                position: target_pos
-            }
-
-            {:updated, %{creature_state | ai: new_ai, entity: new_entity}}
-          else
-            {:no_change, creature_state}
-          end
-        else
-          new_pos = move_toward(current_pos, target_pos, 5.0)
-          new_entity = %{entity | position: new_pos}
-          {:updated, %{creature_state | entity: new_entity}}
-        end
-
-      {:start_wander, new_ai} ->
-        broadcast_creature_movement(
-          entity.guid,
-          new_ai.movement_path,
-          new_ai.wander_speed,
-          state.world_id
-        )
-
-        end_position = List.last(new_ai.movement_path) || entity.position
-        new_entity = %{entity | position: end_position}
-        {:updated, %{creature_state | ai: new_ai, entity: new_entity}}
-
-      {:wander_complete, new_ai} ->
-        {:updated, %{creature_state | ai: new_ai}}
-
-      {:start_patrol, new_ai} ->
-        broadcast_creature_movement(
-          entity.guid,
-          new_ai.movement_path,
-          new_ai.patrol_speed,
-          state.world_id
-        )
-
-        end_position = List.last(new_ai.movement_path) || entity.position
-        new_entity = %{entity | position: end_position}
-        {:updated, %{creature_state | ai: new_ai, entity: new_entity}}
-
-      {:patrol_segment_complete, new_ai} ->
-        {:updated, %{creature_state | ai: new_ai}}
-
-      _ ->
-        {:no_change, creature_state}
-    end
-  end
-
-  defp move_toward({x1, y1, z1}, {x2, y2, z2}, step_distance) do
-    dx = x2 - x1
-    dy = y2 - y1
-    dz = z2 - z1
-    length = :math.sqrt(dx * dx + dy * dy + dz * dz)
-
-    if length <= step_distance do
-      {x2, y2, z2}
-    else
-      ratio = step_distance / length
-      {x1 + dx * ratio, y1 + dy * ratio, z1 + dz * ratio}
-    end
+        _ ->
+          :ok
+      end
+    end)
   end
 
   defp apply_creature_attack(creature_entity, template, target_guid, state) do
@@ -1926,7 +1451,8 @@ defmodule BezgelorWorld.World.Instance do
   end
 
   # Broadcast creature movement to players in the zone
-  defp broadcast_creature_movement(creature_guid, path, speed, world_id) when length(path) > 1 do
+  defp broadcast_creature_movement(creature_guid, path, speed, world_id, instance_id)
+       when length(path) > 1 do
     alias BezgelorProtocol.Packets.World.ServerEntityCommand
     alias BezgelorProtocol.PacketWriter
 
@@ -1956,12 +1482,12 @@ defmodule BezgelorWorld.World.Instance do
     {:ok, writer} = ServerEntityCommand.write(packet, writer)
     packet_data = PacketWriter.to_binary(writer)
 
-    __MODULE__.broadcast({world_id, 1}, {:server_entity_command, packet_data})
+    __MODULE__.broadcast({world_id, instance_id}, {:server_entity_command, packet_data})
   end
 
-  defp broadcast_creature_movement(_creature_guid, _path, _speed, _world_id), do: :ok
+  defp broadcast_creature_movement(_creature_guid, _path, _speed, _world_id, _instance_id), do: :ok
 
-  defp broadcast_creature_stop(creature_guid, world_id) do
+  defp broadcast_creature_stop(creature_guid, world_id, instance_id) do
     alias BezgelorProtocol.Packets.World.ServerEntityCommand
     alias BezgelorProtocol.PacketWriter
 
@@ -1980,7 +1506,7 @@ defmodule BezgelorWorld.World.Instance do
     {:ok, writer} = ServerEntityCommand.write(packet, writer)
     packet_data = PacketWriter.to_binary(writer)
 
-    __MODULE__.broadcast({world_id, 1}, {:server_entity_command, packet_data})
+    __MODULE__.broadcast({world_id, instance_id}, {:server_entity_command, packet_data})
   end
 
   # =====================================================================

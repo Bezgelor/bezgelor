@@ -38,11 +38,20 @@ defmodule BezgelorWorld.World.InstanceSupervisor do
 
   @doc """
   Start a new world instance.
+
+  ## Options
+
+    * `:lazy_loading` - Override lazy loading setting (default: from config)
   """
-  @spec start_instance(non_neg_integer(), non_neg_integer(), map()) ::
+  @spec start_instance(non_neg_integer(), non_neg_integer(), map(), keyword()) ::
           {:ok, pid()} | {:error, term()}
-  def start_instance(world_id, instance_id, world_data \\ %{}) do
-    lazy_loading = Application.get_env(:bezgelor_world, :lazy_zone_loading, false)
+  def start_instance(world_id, instance_id, world_data \\ %{}, opts \\ []) do
+    lazy_loading =
+      Keyword.get(
+        opts,
+        :lazy_loading,
+        Application.get_env(:bezgelor_world, :lazy_zone_loading, false)
+      )
 
     child_spec = {
       Instance,

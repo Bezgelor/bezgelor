@@ -7,6 +7,30 @@ defmodule BezgelorWorld.Encounter.Generator do
   using the BezgelorWorld.Encounter.DSL macro system.
   """
 
+  # Whitelists for safe atom conversion - prevents atom table exhaustion
+  # from malicious or corrupted JSON encounter data
+
+  @valid_shapes ~w(circle cone line donut cross room_wide)a
+  @valid_colors ~w(red orange yellow blue green purple white gray)a
+  @valid_damage_types ~w(magic physical fire frost nature shadow holy)a
+  @valid_movement_types ~w(knockback pull charge dash leap teleport)a
+  @valid_spawn_types ~w(add minion elite boss)a
+  @valid_coordination_types ~w(stack spread soak chain)a
+
+  # Safe atom conversion with whitelist validation
+  defp safe_to_atom(value, whitelist, default) when is_binary(value) do
+    atom = String.to_existing_atom(value)
+    if atom in whitelist, do: atom, else: default
+  rescue
+    ArgumentError -> default
+  end
+
+  defp safe_to_atom(value, whitelist, default) when is_atom(value) do
+    if value in whitelist, do: value, else: default
+  end
+
+  defp safe_to_atom(_value, _whitelist, default), do: default
+
   @doc """
   Generate a complete boss module from boss data and encounter context.
   """
@@ -420,8 +444,8 @@ defmodule BezgelorWorld.Encounter.Generator do
           "radius: #{radius}"
       end
 
-    shape_atom = if is_atom(shape), do: shape, else: String.to_atom(shape)
-    color_atom = if is_atom(color), do: color, else: String.to_atom(color)
+    shape_atom = safe_to_atom(shape, @valid_shapes, :circle)
+    color_atom = safe_to_atom(color, @valid_colors, :red)
 
     if params == "" do
       "        telegraph :#{shape_atom}, duration: #{duration}, color: :#{color_atom}"
@@ -433,7 +457,7 @@ defmodule BezgelorWorld.Encounter.Generator do
   defp generate_damage_effect(effect, default_level) do
     amount = effect["amount"] || effect[:amount] || estimate_damage(default_level, :medium)
     damage_type = effect["damage_type"] || effect[:damage_type] || "magic"
-    type_atom = if is_atom(damage_type), do: damage_type, else: String.to_atom(damage_type)
+    type_atom = safe_to_atom(damage_type, @valid_damage_types, :magic)
 
     "        damage #{amount}, type: :#{type_atom}"
   end
@@ -464,9 +488,7 @@ defmodule BezgelorWorld.Encounter.Generator do
   defp generate_movement_effect(effect) do
     movement_type = effect["movement_type"] || effect[:movement_type] || "knockback"
     distance = effect["distance"] || effect[:distance] || 10
-
-    type_atom =
-      if is_atom(movement_type), do: movement_type, else: String.to_atom(movement_type)
+    type_atom = safe_to_atom(movement_type, @valid_movement_types, :knockback)
 
     "        movement :#{type_atom}, distance: #{distance}"
   end
@@ -475,15 +497,14 @@ defmodule BezgelorWorld.Encounter.Generator do
     spawn_type = effect["spawn_type"] || effect[:spawn_type] || "add"
     creature_id = effect["creature_id"] || effect[:creature_id] || 0
     count = effect["count"] || effect[:count] || 1
-
-    type_atom = if is_atom(spawn_type), do: spawn_type, else: String.to_atom(spawn_type)
+    type_atom = safe_to_atom(spawn_type, @valid_spawn_types, :add)
 
     "        spawn :#{type_atom}, creature_id: #{creature_id}, count: #{count}"
   end
 
   defp generate_coordination_effect(effect) do
     coord_type = effect["coordination_type"] || effect[:coordination_type] || "stack"
-    type_atom = if is_atom(coord_type), do: coord_type, else: String.to_atom(coord_type)
+    type_atom = safe_to_atom(coord_type, @valid_coordination_types, :stack)
 
     case type_atom do
       :stack ->
