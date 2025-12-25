@@ -30,6 +30,8 @@ Move to `/superpowers:write-plan` to create a detailed implementation plan. This
 
 **Aggressively review and iterate on plans.** A good plan prevents wasted implementation effort.
 
+The implementation plan should be committed to `docs/plans/` alongside the code.
+
 ### 3. Issue Tracking
 Create [Beads](https://github.com/steveyegge/beads) issues from the plan:
 - Each task becomes a trackable issue
