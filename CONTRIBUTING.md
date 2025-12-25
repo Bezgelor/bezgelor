@@ -45,26 +45,16 @@ Create a feature branch and implement tasks:
 
 ## Code Guidelines
 
-### Elixir Style
-- Follow standard Elixir conventions
-- Use `mix format` before committing
-- Keep functions small and focused
-- Prefer pattern matching over conditionals
+[Claude Code](https://github.com/anthropics/claude-code) handles most of this automatically with minor developer oversight:
 
-### Testing
-- Write tests for new functionality
-- Run affected tests: `mix test apps/APP_NAME/test/`
-- Don't run the full test suite after every change
-
-### Commits
-- Use conventional commit format: `type(scope): description`
-- Types: `feat`, `fix`, `refactor`, `docs`, `test`, `chore`
-- Keep commits atomic - one logical change per commit
+- **Formatting**: `mix format` applied before commits
+- **Testing**: Runs affected tests after changes, not the full suite
+- **Commits**: Conventional commit format (`type(scope): description`)
+- **Style**: Standard Elixir conventions, pattern matching over conditionals
 
 ### Pull Requests
 - Reference related issues
 - Describe what changed and why
-- Include test coverage for new code
 - Ensure all tests pass
 
 ## Architecture
