@@ -10,7 +10,7 @@ This project uses an AI-assisted development workflow built on:
 - [Superpowers](https://github.com/obra/superpowers) - Jesse Vincent's skills and workflows for Claude Code
 - [Beads](https://github.com/steveyegge/beads) - Steve Yegge's git-native issue tracking
 
-The process is inspired by [Steve Yegge's work on AI-driven development](https://steve-yegge.medium.com/) and emphasizes thorough planning before implementation:
+The process is inspired by [Steve Yegge's work on AI-driven development](https://steve-yegge.medium.com/) and follows his [5x iteration guidance](https://steve-yegge.medium.com/six-new-tips-for-better-coding-with-agents-d4e9c86e42a9) - reviewing plans and code 4-5 times until it converges. This emphasizes thorough planning before implementation:
 
 ### 1. Brainstorming Phase
 Start any significant feature or fix with `/superpowers:brainstorm`. This exploratory phase:
