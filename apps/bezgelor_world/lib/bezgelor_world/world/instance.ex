@@ -172,6 +172,22 @@ defmodule BezgelorWorld.World.Instance do
     GenServer.cast(via_tuple(world_id, instance_id), {:remove_entity, guid})
   end
 
+  @doc """
+  Ensure spawns are loaded for lazy-loading zones.
+
+  This is a synchronous call that blocks until spawns are loaded.
+  Use this before querying creatures in a zone that may be lazily loaded.
+  Returns :ok when spawns are ready.
+  """
+  @spec ensure_spawns_loaded(pid() | {non_neg_integer(), instance_id()}) :: :ok
+  def ensure_spawns_loaded(instance) when is_pid(instance) do
+    GenServer.call(instance, :ensure_spawns_loaded, 30_000)
+  end
+
+  def ensure_spawns_loaded({world_id, instance_id}) do
+    GenServer.call(via_tuple(world_id, instance_id), :ensure_spawns_loaded, 30_000)
+  end
+
   # Timeout for GenServer calls to prevent deadlocks (10 seconds)
   @call_timeout 10_000
 
@@ -803,6 +819,19 @@ defmodule BezgelorWorld.World.Instance do
   @impl true
   def handle_call(:get_state, _from, state) do
     {:reply, state, state}
+  end
+
+  @impl true
+  def handle_call(:ensure_spawns_loaded, _from, state) do
+    # If lazy loading and spawns not loaded, load them now
+    state =
+      if state.lazy_loading and not state.spawns_loaded do
+        load_spawns_sync(state)
+      else
+        state
+      end
+
+    {:reply, :ok, state}
   end
 
   @impl true
