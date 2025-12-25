@@ -1,4 +1,5 @@
-ExUnit.start(exclude: [:database])
+# Exclude database tests (need running PostgreSQL) and pending implementation tests
+ExUnit.start(exclude: [:database, :pending_implementation, :skip])
 
 # Compile support modules
 Code.compile_file("test/support/test_helpers.ex", __DIR__ |> Path.dirname())

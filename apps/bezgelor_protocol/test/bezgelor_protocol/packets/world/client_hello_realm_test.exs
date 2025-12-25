@@ -1,5 +1,17 @@
 defmodule BezgelorProtocol.Packets.World.ClientHelloRealmTest do
+  @moduledoc """
+  Tests for ClientHelloRealm packet parsing.
+
+  Wire format:
+  - account_id:  uint32
+  - session_key: 16 bytes
+  - unused:      uint64 (always 0)
+  - email:       wide_string (bit-packed)
+  - always3:     uint32 (always 3)
+  """
   use ExUnit.Case, async: true
+
+  import Bitwise
 
   alias BezgelorProtocol.Packets.World.ClientHelloRealm
   alias BezgelorProtocol.PacketReader
@@ -23,6 +35,8 @@ defmodule BezgelorProtocol.Packets.World.ClientHelloRealmTest do
       assert packet.account_id == account_id
       assert packet.session_key == session_key
       assert packet.email == email
+      assert packet.unused == 0
+      assert packet.always3 == 3
     end
 
     test "preserves session key bytes exactly" do
@@ -61,16 +75,41 @@ defmodule BezgelorProtocol.Packets.World.ClientHelloRealmTest do
     end
   end
 
-  # Helper to build a test packet
+  # Build a complete test packet matching wire format
   defp build_packet(account_id, session_key, email) do
-    utf16_email = :unicode.characters_to_binary(email, :utf8, {:utf16, :little})
-    email_length = String.length(email)
+    email_data = build_wide_string(email)
 
     <<
       account_id::little-32,
       session_key::binary-size(16),
-      email_length::little-32,
-      utf16_email::binary
+      # unused: uint64 always 0
+      0::little-64,
+      email_data::binary,
+      # always3: uint32 always 3
+      3::little-32
     >>
+  end
+
+  # Build a bit-packed wide string matching NexusForever format:
+  # - 1 bit: extended flag (0 for length < 128, 1 for length >= 128)
+  # - 7 or 15 bits: length in characters
+  # - length * 2 bytes: UTF-16LE string data
+  defp build_wide_string("") do
+    <<0::8>>
+  end
+
+  defp build_wide_string(string) when is_binary(string) do
+    length = String.length(string)
+    utf16_data = :unicode.characters_to_binary(string, :utf8, {:utf16, :little})
+
+    if length < 128 do
+      # Short string: extended=0 (bit 0), length in bits 1-7
+      header = (length <<< 1) ||| 0
+      <<header::8>> <> utf16_data
+    else
+      # Long string: extended=1 (bit 0), length in bits 1-15
+      header = (length <<< 1) ||| 1
+      <<header::16-little>> <> utf16_data
+    end
   end
 end

@@ -98,7 +98,7 @@ defmodule BezgelorDataTest do
     test "get_spell returns spell by ID" do
       {:ok, spell} = BezgelorData.get_spell(1)
       assert spell.id == 1
-      assert is_integer(spell.tier_index)
+      assert is_integer(spell.tierIndex)
     end
 
     test "get_spell returns :error for missing spell" do
@@ -114,7 +114,7 @@ defmodule BezgelorDataTest do
     test "spells_by_base filters by base spell ID" do
       spells = BezgelorData.spells_by_base(0)
       assert is_list(spells)
-      assert Enum.all?(spells, fn s -> s.base_spell_id == 0 end)
+      assert Enum.all?(spells, fn s -> s.spell4BaseIdBaseSpell == 0 end)
     end
   end
 
@@ -122,8 +122,8 @@ defmodule BezgelorDataTest do
     test "get_item returns item by ID" do
       {:ok, item} = BezgelorData.get_item(1)
       assert item.id == 1
-      assert is_integer(item.name_text_id)
-      assert is_integer(item.quality_id)
+      assert is_integer(item.localizedTextIdName)
+      assert is_integer(item.itemQualityId)
     end
 
     test "get_item returns :error for missing item" do
@@ -139,26 +139,26 @@ defmodule BezgelorDataTest do
     test "items_by_type filters by type ID" do
       items = BezgelorData.items_by_type(1)
       assert is_list(items)
-      assert Enum.all?(items, fn i -> i.type_id == 1 end)
+      assert Enum.all?(items, fn i -> i.item2TypeId == 1 end)
     end
 
     test "items_by_quality filters by quality ID" do
       # Quality 3 = epic
       items = BezgelorData.items_by_quality(3)
       assert is_list(items)
-      assert Enum.all?(items, fn i -> i.quality_id == 3 end)
+      assert Enum.all?(items, fn i -> i.itemQualityId == 3 end)
     end
 
     test "items_by_family filters by family ID" do
       items = BezgelorData.items_by_family(1)
       assert is_list(items)
-      assert Enum.all?(items, fn i -> i.family_id == 1 end)
+      assert Enum.all?(items, fn i -> i.item2FamilyId == 1 end)
     end
 
     test "items_by_category filters by category ID" do
       items = BezgelorData.items_by_category(1)
       assert is_list(items)
-      assert Enum.all?(items, fn i -> i.category_id == 1 end)
+      assert Enum.all?(items, fn i -> i.item2CategoryId == 1 end)
     end
   end
 

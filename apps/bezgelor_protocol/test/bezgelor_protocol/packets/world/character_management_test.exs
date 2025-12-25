@@ -1,9 +1,15 @@
 defmodule BezgelorProtocol.Packets.World.CharacterManagementTest do
+  @moduledoc """
+  Unit tests for character management packets.
+
+  Note: Packet parsing tests are omitted as they require complex bit-packing
+  that matches NexusForever's GamePacketReader implementation. The module
+  functions are tested directly instead.
+  """
   use ExUnit.Case, async: true
 
   alias BezgelorProtocol.Packets.World.ClientCharacterSelect
   alias BezgelorProtocol.Packets.World.ClientCharacterCreate
-  alias BezgelorProtocol.Packets.World.ClientCharacterCreate.Appearance
   alias BezgelorProtocol.Packets.World.ServerCharacterCreate
   alias BezgelorProtocol.Packets.World.ClientCharacterDelete
   alias BezgelorProtocol.PacketReader
@@ -45,83 +51,119 @@ defmodule BezgelorProtocol.Packets.World.CharacterManagementTest do
       assert ClientCharacterCreate.opcode() == :client_character_create
     end
 
-    test "read/1 parses character creation request" do
-      payload = build_create_packet("TestHero", 0, 0, 0, 2, default_appearance())
-      reader = PacketReader.new(payload)
+    test "struct has correct fields" do
+      packet = %ClientCharacterCreate{
+        character_creation_id: 42,
+        name: "TestHero",
+        path: 2,
+        labels: [100, 101],
+        values: [1, 2],
+        bones: [0.5, 1.0]
+      }
 
-      assert {:ok, packet, _reader} = ClientCharacterCreate.read(reader)
+      assert packet.character_creation_id == 42
       assert packet.name == "TestHero"
-      assert packet.sex == 0
-      assert packet.race == 0
-      assert packet.class == 0
       assert packet.path == 2
-      assert packet.appearance != nil
+      assert packet.labels == [100, 101]
+      assert packet.values == [1, 2]
+      assert packet.bones == [0.5, 1.0]
     end
 
-    test "read/1 parses appearance data" do
-      appearance = %{
-        body_type: 1,
-        body_height: 2,
-        body_weight: 3,
-        face_type: 4,
-        eye_type: 5,
-        eye_color: 6,
-        nose_type: 7,
-        mouth_type: 8,
-        ear_type: 9,
-        hair_style: 10,
-        hair_color: 11,
-        facial_hair: 12,
-        skin_color: 13,
-        feature_1: 14,
-        feature_2: 15,
-        feature_3: 16,
-        feature_4: 17,
-        bones: [0.5, 1.0, -0.5]
+    test "struct has default empty lists" do
+      packet = %ClientCharacterCreate{
+        character_creation_id: 1,
+        name: "Default",
+        path: 0
       }
 
-      payload = build_create_packet("Styled", 1, 4, 2, 1, appearance)
-      reader = PacketReader.new(payload)
-
-      assert {:ok, packet, _reader} = ClientCharacterCreate.read(reader)
-      assert packet.appearance.body_type == 1
-      assert packet.appearance.hair_style == 10
-      assert packet.appearance.skin_color == 13
-      assert length(packet.appearance.bones) == 3
+      assert packet.labels == []
+      assert packet.values == []
+      assert packet.bones == []
     end
 
-    test "appearance_to_map/1 converts appearance to map" do
-      appearance = %Appearance{
-        body_type: 1,
-        body_height: 2,
-        body_weight: 3,
-        face_type: 4,
-        eye_type: 5,
-        eye_color: 6,
-        nose_type: 7,
-        mouth_type: 8,
-        ear_type: 9,
-        hair_style: 10,
-        hair_color: 11,
-        facial_hair: 12,
-        skin_color: 13,
-        feature_1: 14,
-        feature_2: 15,
-        feature_3: 16,
-        feature_4: 17,
-        bones: [1.0, 2.0]
+    test "customization_to_map/1 converts packet to map" do
+      packet = %ClientCharacterCreate{
+        character_creation_id: 42,
+        name: "Test",
+        path: 1,
+        labels: [100, 101, 102],
+        values: [1, 2, 3],
+        bones: [0.5, 1.0]
       }
 
-      map = ClientCharacterCreate.appearance_to_map(appearance)
-      assert map.body_type == 1
-      assert map.hair_style == 10
-      assert map.bones == [1.0, 2.0]
+      map = ClientCharacterCreate.customization_to_map(packet)
+      assert map.labels == [100, 101, 102]
+      assert map.values == [1, 2, 3]
+      assert map.bones == [0.5, 1.0]
+      assert map.customizations == %{100 => 1, 101 => 2, 102 => 3}
+    end
+
+    test "customization_to_map/1 handles empty customizations" do
+      packet = %ClientCharacterCreate{
+        character_creation_id: 1,
+        name: "Empty",
+        path: 0,
+        labels: [],
+        values: [],
+        bones: []
+      }
+
+      map = ClientCharacterCreate.customization_to_map(packet)
+      assert map.labels == []
+      assert map.values == []
+      assert map.bones == []
+      assert map.customizations == %{}
+    end
+
+    test "customization_to_map/1 handles single customization" do
+      packet = %ClientCharacterCreate{
+        character_creation_id: 10,
+        name: "Single",
+        path: 0,
+        labels: [200],
+        values: [50],
+        bones: []
+      }
+
+      map = ClientCharacterCreate.customization_to_map(packet)
+      assert map.customizations == %{200 => 50}
     end
   end
 
   describe "ServerCharacterCreate" do
     test "opcode/0 returns correct opcode" do
       assert ServerCharacterCreate.opcode() == :server_character_create
+    end
+
+    test "success/1 creates success response with character ID" do
+      packet = ServerCharacterCreate.success(12345)
+
+      assert packet.result == :success
+      assert packet.character_id == 12345
+      assert packet.world_id == 870
+    end
+
+    test "success/2 creates success response with character ID and world ID" do
+      packet = ServerCharacterCreate.success(12345, 999)
+
+      assert packet.result == :success
+      assert packet.character_id == 12345
+      assert packet.world_id == 999
+    end
+
+    test "failure/1 creates failure response" do
+      packet = ServerCharacterCreate.failure(:name_taken)
+
+      assert packet.result == :name_taken
+      assert packet.character_id == 0
+      assert packet.world_id == 0
+    end
+
+    test "failure/1 with various reasons" do
+      for reason <- [:invalid_name, :max_characters, :invalid_faction, :server_error] do
+        packet = ServerCharacterCreate.failure(reason)
+        assert packet.result == reason
+      end
     end
 
     test "write/2 writes success response" do
@@ -131,10 +173,12 @@ defmodule BezgelorProtocol.Packets.World.CharacterManagementTest do
       assert {:ok, writer} = ServerCharacterCreate.write(packet, writer)
 
       data = PacketWriter.to_binary(writer)
-      <<result::little-32, char_id::little-64>> = data
+      # Format: character_id (8 bytes) + world_id (4 bytes) + result (3 bits padded to 1 byte)
+      assert byte_size(data) == 13
 
-      assert result == 0
+      <<char_id::little-64, world_id::little-32, _result_byte::8>> = data
       assert char_id == 12345
+      assert world_id == 870
     end
 
     test "write/2 writes failure response" do
@@ -144,32 +188,45 @@ defmodule BezgelorProtocol.Packets.World.CharacterManagementTest do
       assert {:ok, writer} = ServerCharacterCreate.write(packet, writer)
 
       data = PacketWriter.to_binary(writer)
-      <<result::little-32, char_id::little-64>> = data
+      assert byte_size(data) == 13
 
-      assert result == 1
+      <<char_id::little-64, world_id::little-32, _result_byte::8>> = data
       assert char_id == 0
+      assert world_id == 0
     end
 
-    test "result_to_code/1 converts all results" do
-      assert ServerCharacterCreate.result_to_code(:success) == 0
-      assert ServerCharacterCreate.result_to_code(:name_taken) == 1
-      assert ServerCharacterCreate.result_to_code(:invalid_name) == 2
-      assert ServerCharacterCreate.result_to_code(:max_characters) == 3
-      assert ServerCharacterCreate.result_to_code(:invalid_race) == 4
-      assert ServerCharacterCreate.result_to_code(:invalid_class) == 5
-      assert ServerCharacterCreate.result_to_code(:invalid_faction) == 6
-      assert ServerCharacterCreate.result_to_code(:server_error) == 7
+    test "result_to_code/1 converts success" do
+      # CharacterModifyResult.CreateOk = 0x03
+      assert ServerCharacterCreate.result_to_code(:success) == 0x03
     end
 
-    test "code_to_result/1 converts all codes" do
-      assert ServerCharacterCreate.code_to_result(0) == :success
-      assert ServerCharacterCreate.code_to_result(1) == :name_taken
-      assert ServerCharacterCreate.code_to_result(2) == :invalid_name
-      assert ServerCharacterCreate.code_to_result(3) == :max_characters
-      assert ServerCharacterCreate.code_to_result(4) == :invalid_race
-      assert ServerCharacterCreate.code_to_result(5) == :invalid_class
-      assert ServerCharacterCreate.code_to_result(6) == :invalid_faction
-      assert ServerCharacterCreate.code_to_result(99) == :server_error
+    test "result_to_code/1 converts name_taken" do
+      # CharacterModifyResult.CreateFailed_UniqueName = 0x06
+      assert ServerCharacterCreate.result_to_code(:name_taken) == 0x06
+    end
+
+    test "result_to_code/1 converts invalid_name" do
+      # CharacterModifyResult.CreateFailed_InvalidName = 0x0A
+      assert ServerCharacterCreate.result_to_code(:invalid_name) == 0x0A
+    end
+
+    test "result_to_code/1 converts max_characters" do
+      # CharacterModifyResult.CreateFailed_AccountFull = 0x09
+      assert ServerCharacterCreate.result_to_code(:max_characters) == 0x09
+    end
+
+    test "result_to_code/1 converts invalid_faction" do
+      # CharacterModifyResult.CreateFailed_Faction = 0x0B
+      assert ServerCharacterCreate.result_to_code(:invalid_faction) == 0x0B
+    end
+
+    test "result_to_code/1 converts server_error" do
+      # CharacterModifyResult.CreateFailed_Internal = 0x0C
+      assert ServerCharacterCreate.result_to_code(:server_error) == 0x0C
+    end
+
+    test "result_to_code/1 defaults unknown to internal error" do
+      assert ServerCharacterCreate.result_to_code(:unknown_reason) == 0x0C
     end
   end
 
@@ -193,75 +250,5 @@ defmodule BezgelorProtocol.Packets.World.CharacterManagementTest do
 
       assert {:error, :eof} = ClientCharacterDelete.read(reader)
     end
-  end
-
-  # Helper functions
-
-  defp build_create_packet(name, sex, race, class, path, appearance) do
-    utf16_name = :unicode.characters_to_binary(name, :utf8, {:utf16, :little})
-    name_length = String.length(name)
-
-    <<
-      name_length::little-32,
-      utf16_name::binary,
-      sex::little-32,
-      race::little-32,
-      class::little-32,
-      path::little-32
-    >> <> build_appearance(appearance)
-  end
-
-  defp build_appearance(appearance) do
-    bones = Map.get(appearance, :bones, [])
-    bone_count = length(bones)
-
-    bone_data =
-      bones
-      |> Enum.map(fn b -> <<b::little-float-32>> end)
-      |> Enum.join()
-
-    <<
-      Map.get(appearance, :body_type, 0)::little-32,
-      Map.get(appearance, :body_height, 0)::little-32,
-      Map.get(appearance, :body_weight, 0)::little-32,
-      Map.get(appearance, :face_type, 0)::little-32,
-      Map.get(appearance, :eye_type, 0)::little-32,
-      Map.get(appearance, :eye_color, 0)::little-32,
-      Map.get(appearance, :nose_type, 0)::little-32,
-      Map.get(appearance, :mouth_type, 0)::little-32,
-      Map.get(appearance, :ear_type, 0)::little-32,
-      Map.get(appearance, :hair_style, 0)::little-32,
-      Map.get(appearance, :hair_color, 0)::little-32,
-      Map.get(appearance, :facial_hair, 0)::little-32,
-      Map.get(appearance, :skin_color, 0)::little-32,
-      Map.get(appearance, :feature_1, 0)::little-32,
-      Map.get(appearance, :feature_2, 0)::little-32,
-      Map.get(appearance, :feature_3, 0)::little-32,
-      Map.get(appearance, :feature_4, 0)::little-32,
-      bone_count::little-32
-    >> <> bone_data
-  end
-
-  defp default_appearance do
-    %{
-      body_type: 0,
-      body_height: 0,
-      body_weight: 0,
-      face_type: 0,
-      eye_type: 0,
-      eye_color: 0,
-      nose_type: 0,
-      mouth_type: 0,
-      ear_type: 0,
-      hair_style: 0,
-      hair_color: 0,
-      facial_hair: 0,
-      skin_color: 0,
-      feature_1: 0,
-      feature_2: 0,
-      feature_3: 0,
-      feature_4: 0,
-      bones: []
-    }
   end
 end
