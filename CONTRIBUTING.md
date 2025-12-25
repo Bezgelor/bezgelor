@@ -4,7 +4,13 @@ Thank you for your interest in contributing to Bezgelor! This document outlines 
 
 ## Development Process
 
-This project uses an AI-assisted development workflow inspired by [Steve Yegge's work on AI-driven development](https://steve-yegge.medium.com/). The process emphasizes thorough planning before implementation:
+This project uses an AI-assisted development workflow built on:
+
+- [Claude Code](https://github.com/anthropics/claude-code) - Anthropic's AI coding assistant
+- [Superpowers](https://github.com/obra/superpowers) - Jesse Vincent's skills and workflows for Claude Code
+- [Beads](https://github.com/steveyegge/beads) - Steve Yegge's git-native issue tracking
+
+The process is inspired by [Steve Yegge's work on AI-driven development](https://steve-yegge.medium.com/) and emphasizes thorough planning before implementation:
 
 ### 1. Brainstorming Phase
 Start any significant feature or fix with `/superpowers:brainstorm`. This exploratory phase:
