@@ -816,13 +816,25 @@ defmodule BezgelorWorld.World.Instance do
   # Handle batch entity updates from ZoneManager (async)
   @impl true
   def handle_cast({:update_creature_entities, entity_updates}, state) do
-    # Update entities map with new creature positions/health
-    entities =
-      Enum.reduce(entity_updates, state.entities, fn {guid, entity}, entities ->
-        Map.put(entities, guid, entity)
+    # Update entities map and spatial grid with new creature positions
+    {entities, spatial_grid} =
+      Enum.reduce(entity_updates, {state.entities, state.spatial_grid}, fn {guid, entity},
+                                                                            {entities, grid} ->
+        old_entity = Map.get(entities, guid)
+        new_entities = Map.put(entities, guid, entity)
+
+        # Update spatial grid if position changed
+        new_grid =
+          if old_entity && old_entity.position != entity.position do
+            SpatialGrid.update(grid, guid, entity.position)
+          else
+            grid
+          end
+
+        {new_entities, new_grid}
       end)
 
-    {:noreply, %{state | entities: entities}}
+    {:noreply, %{state | entities: entities, spatial_grid: spatial_grid}}
   end
 
   @impl true

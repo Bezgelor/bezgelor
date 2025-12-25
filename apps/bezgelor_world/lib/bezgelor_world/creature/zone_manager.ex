@@ -504,8 +504,12 @@ defmodule BezgelorWorld.Creature.ZoneManager do
         {:ok, {guid, new_creature_state, entity}}, {creatures, updates} ->
           {Map.put(creatures, guid, new_creature_state), [{guid, entity} | updates]}
 
-        {:exit, _reason}, acc ->
-          # Task timed out or crashed - skip this creature
+        {:exit, reason}, acc ->
+          # Task timed out or crashed - log and skip this creature
+          Logger.warning(
+            "Creature AI task failed in zone #{state.zone_id}: #{inspect(reason)}"
+          )
+
           acc
       end)
 
