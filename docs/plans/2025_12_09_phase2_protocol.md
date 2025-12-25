@@ -93,7 +93,7 @@ This phase creates the `bezgelor_protocol` app which handles:
 
 Run:
 ```bash
-cd /Users/jrimmer/work/bezgelor/apps
+cd ./apps
 mix new bezgelor_protocol --sup
 ```
 
@@ -139,7 +139,7 @@ end
 
 Run:
 ```bash
-cd /Users/jrimmer/work/bezgelor
+cd .
 mix deps.get
 ```
 

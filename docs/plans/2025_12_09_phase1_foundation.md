@@ -24,7 +24,7 @@
 
 Run:
 ```bash
-cd /Users/jrimmer/work/bezgelor
+cd .
 rm -rf .git docs  # Clean slate, we'll recreate
 mix new bezgelor --umbrella
 ```
@@ -35,8 +35,8 @@ Expected: Creates umbrella project structure with `apps/` directory.
 
 Run:
 ```bash
-ls -la /Users/jrimmer/work/bezgelor
-ls -la /Users/jrimmer/work/bezgelor/apps
+ls -la .
+ls -la ./apps
 ```
 
 Expected: See `mix.exs`, `apps/`, `config/` directories.
@@ -45,7 +45,7 @@ Expected: See `mix.exs`, `apps/`, `config/` directories.
 
 Run:
 ```bash
-mkdir -p /Users/jrimmer/work/bezgelor/docs/plans
+mkdir -p ./docs/plans
 ```
 
 Then restore the design document from git reflog or rewrite it.
@@ -54,7 +54,7 @@ Then restore the design document from git reflog or rewrite it.
 
 Run:
 ```bash
-cd /Users/jrimmer/work/bezgelor
+cd .
 git init
 git add .
 git commit -m "chore: Initialize Bezgelor umbrella project"
@@ -75,7 +75,7 @@ Expected: Initial commit created.
 
 Run:
 ```bash
-cd /Users/jrimmer/work/bezgelor/apps
+cd ./apps
 mix new bezgelor_core --sup
 ```
 
@@ -85,7 +85,7 @@ Expected: Creates `bezgelor_core` app with supervision tree.
 
 Run:
 ```bash
-ls -la /Users/jrimmer/work/bezgelor/apps/bezgelor_core/lib/bezgelor_core/
+ls -la ./apps/bezgelor_core/lib/bezgelor_core/
 ```
 
 Expected: See `application.ex`.
@@ -94,7 +94,7 @@ Expected: See `application.ex`.
 
 Run:
 ```bash
-cd /Users/jrimmer/work/bezgelor
+cd .
 git add apps/bezgelor_core
 git commit -m "chore: Add bezgelor_core app skeleton"
 ```
@@ -145,7 +145,7 @@ end
 
 Run:
 ```bash
-cd /Users/jrimmer/work/bezgelor
+cd .
 mix test apps/bezgelor_core/test/bezgelor_core/types_test.exs
 ```
 
@@ -217,7 +217,7 @@ end
 
 Run:
 ```bash
-cd /Users/jrimmer/work/bezgelor
+cd .
 mix test apps/bezgelor_core/test/bezgelor_core/types_test.exs
 ```
 
@@ -227,7 +227,7 @@ Expected: PASS - 3 tests, 0 failures.
 
 Run:
 ```bash
-cd /Users/jrimmer/work/bezgelor
+cd .
 git add apps/bezgelor_core/lib/bezgelor_core/types.ex
 git add apps/bezgelor_core/test/bezgelor_core/types_test.exs
 git commit -m "feat(core): Add Vector3 type with distance calculation"
@@ -278,7 +278,7 @@ end
 
 Run:
 ```bash
-cd /Users/jrimmer/work/bezgelor
+cd .
 mix test apps/bezgelor_core/test/bezgelor_core/config_test.exs
 ```
 
@@ -342,7 +342,7 @@ end
 
 Run:
 ```bash
-cd /Users/jrimmer/work/bezgelor
+cd .
 mix test apps/bezgelor_core/test/bezgelor_core/config_test.exs
 ```
 
@@ -352,7 +352,7 @@ Expected: PASS - 3 tests, 0 failures.
 
 Run:
 ```bash
-cd /Users/jrimmer/work/bezgelor
+cd .
 git add apps/bezgelor_core/lib/bezgelor_core/config.ex
 git add apps/bezgelor_core/test/bezgelor_core/config_test.exs
 git commit -m "feat(core): Add Config module for application configuration"
@@ -370,7 +370,7 @@ git commit -m "feat(core): Add Config module for application configuration"
 
 Run:
 ```bash
-cd /Users/jrimmer/work/bezgelor/apps
+cd ./apps
 mix new bezgelor_crypto
 ```
 
@@ -380,7 +380,7 @@ Expected: Creates `bezgelor_crypto` app.
 
 Run:
 ```bash
-cd /Users/jrimmer/work/bezgelor
+cd .
 git add apps/bezgelor_crypto
 git commit -m "chore: Add bezgelor_crypto app skeleton"
 ```
@@ -438,7 +438,7 @@ end
 
 Run:
 ```bash
-cd /Users/jrimmer/work/bezgelor
+cd .
 mix test apps/bezgelor_crypto/test/bezgelor_crypto/random_test.exs
 ```
 
@@ -534,7 +534,7 @@ end
 
 Run:
 ```bash
-cd /Users/jrimmer/work/bezgelor
+cd .
 mix test apps/bezgelor_crypto/test/bezgelor_crypto/random_test.exs
 ```
 
@@ -544,7 +544,7 @@ Expected: PASS - 4 tests, 0 failures.
 
 Run:
 ```bash
-cd /Users/jrimmer/work/bezgelor
+cd .
 git add apps/bezgelor_crypto/lib/bezgelor_crypto/random.ex
 git add apps/bezgelor_crypto/test/bezgelor_crypto/random_test.exs
 git commit -m "feat(crypto): Add Random module for secure random generation"
@@ -633,7 +633,7 @@ end
 
 Run:
 ```bash
-cd /Users/jrimmer/work/bezgelor
+cd .
 mix test apps/bezgelor_crypto/test/bezgelor_crypto/srp6_test.exs
 ```
 
@@ -996,7 +996,7 @@ end
 
 Run:
 ```bash
-cd /Users/jrimmer/work/bezgelor
+cd .
 mix test apps/bezgelor_crypto/test/bezgelor_crypto/srp6_test.exs
 ```
 
@@ -1006,7 +1006,7 @@ Expected: PASS - 5 tests, 0 failures.
 
 Run:
 ```bash
-cd /Users/jrimmer/work/bezgelor
+cd .
 git add apps/bezgelor_crypto/lib/bezgelor_crypto/srp6.ex
 git add apps/bezgelor_crypto/test/bezgelor_crypto/srp6_test.exs
 git commit -m "feat(crypto): Add SRP6 authentication protocol implementation"
@@ -1087,7 +1087,7 @@ end
 
 Run:
 ```bash
-cd /Users/jrimmer/work/bezgelor
+cd .
 mix test apps/bezgelor_crypto/test/bezgelor_crypto/packet_crypt_test.exs
 ```
 
@@ -1332,7 +1332,7 @@ end
 
 Run:
 ```bash
-cd /Users/jrimmer/work/bezgelor
+cd .
 mix test apps/bezgelor_crypto/test/bezgelor_crypto/packet_crypt_test.exs
 ```
 
@@ -1342,7 +1342,7 @@ Expected: PASS - 5 tests, 0 failures.
 
 Run:
 ```bash
-cd /Users/jrimmer/work/bezgelor
+cd .
 git add apps/bezgelor_crypto/lib/bezgelor_crypto/packet_crypt.ex
 git add apps/bezgelor_crypto/test/bezgelor_crypto/packet_crypt_test.exs
 git commit -m "feat(crypto): Add PacketCrypt for WildStar packet encryption"
@@ -1405,7 +1405,7 @@ end
 
 Run:
 ```bash
-cd /Users/jrimmer/work/bezgelor
+cd .
 mix test apps/bezgelor_crypto/test/bezgelor_crypto/password_test.exs
 ```
 
@@ -1483,7 +1483,7 @@ end
 
 Run:
 ```bash
-cd /Users/jrimmer/work/bezgelor
+cd .
 mix test apps/bezgelor_crypto/test/bezgelor_crypto/password_test.exs
 ```
 
@@ -1493,7 +1493,7 @@ Expected: PASS - 4 tests, 0 failures.
 
 Run:
 ```bash
-cd /Users/jrimmer/work/bezgelor
+cd .
 git add apps/bezgelor_crypto/lib/bezgelor_crypto/password.ex
 git add apps/bezgelor_crypto/test/bezgelor_crypto/password_test.exs
 git commit -m "feat(crypto): Add Password module for salt/verifier generation"
@@ -1512,7 +1512,7 @@ git commit -m "feat(crypto): Add Password module for salt/verifier generation"
 
 Run:
 ```bash
-cd /Users/jrimmer/work/bezgelor/apps
+cd ./apps
 mix new bezgelor_db --sup
 ```
 
@@ -1568,7 +1568,7 @@ end
 
 Run:
 ```bash
-cd /Users/jrimmer/work/bezgelor
+cd .
 mix deps.get
 ```
 
@@ -1702,7 +1702,7 @@ end
 
 Run:
 ```bash
-cd /Users/jrimmer/work/bezgelor
+cd .
 mix ecto.create
 ```
 
@@ -1712,7 +1712,7 @@ Expected: Database `bezgelor_dev` created.
 
 Run:
 ```bash
-cd /Users/jrimmer/work/bezgelor
+cd .
 git add apps/bezgelor_db
 git add config/
 git commit -m "feat(db): Add bezgelor_db app with Ecto and PostgreSQL"
@@ -1731,7 +1731,7 @@ git commit -m "feat(db): Add bezgelor_db app with Ecto and PostgreSQL"
 
 Run:
 ```bash
-cd /Users/jrimmer/work/bezgelor
+cd .
 mix ecto.gen.migration create_accounts --migrations-path apps/bezgelor_db/priv/repo/migrations
 ```
 
@@ -1765,7 +1765,7 @@ end
 
 Run:
 ```bash
-cd /Users/jrimmer/work/bezgelor
+cd .
 mix ecto.migrate
 ```
 
@@ -1834,7 +1834,7 @@ end
 
 Run:
 ```bash
-cd /Users/jrimmer/work/bezgelor
+cd .
 mix test apps/bezgelor_db/test/bezgelor_db/schema/account_test.exs
 ```
 
@@ -1931,7 +1931,7 @@ end
 
 Run:
 ```bash
-cd /Users/jrimmer/work/bezgelor
+cd .
 mix test apps/bezgelor_db/test/bezgelor_db/schema/account_test.exs
 ```
 
@@ -1941,7 +1941,7 @@ Expected: PASS - 4 tests, 0 failures.
 
 Run:
 ```bash
-cd /Users/jrimmer/work/bezgelor
+cd .
 git add apps/bezgelor_db/lib/bezgelor_db/schema/account.ex
 git add apps/bezgelor_db/test/bezgelor_db/schema/account_test.exs
 git add apps/bezgelor_db/priv/repo/migrations/
@@ -1961,7 +1961,7 @@ git commit -m "feat(db): Add Account schema with SRP6 fields"
 
 Run:
 ```bash
-cd /Users/jrimmer/work/bezgelor
+cd .
 mix ecto.gen.migration create_characters --migrations-path apps/bezgelor_db/priv/repo/migrations
 ```
 
@@ -2024,7 +2024,7 @@ end
 
 Run:
 ```bash
-cd /Users/jrimmer/work/bezgelor
+cd .
 mix ecto.migrate
 ```
 
@@ -2125,7 +2125,7 @@ end
 
 Run:
 ```bash
-cd /Users/jrimmer/work/bezgelor
+cd .
 mix test apps/bezgelor_db/test/bezgelor_db/schema/character_test.exs
 ```
 
@@ -2298,7 +2298,7 @@ end
 
 Run:
 ```bash
-cd /Users/jrimmer/work/bezgelor
+cd .
 mix test apps/bezgelor_db/test/bezgelor_db/schema/character_test.exs
 ```
 
@@ -2308,7 +2308,7 @@ Expected: PASS - 4 tests, 0 failures.
 
 Run:
 ```bash
-cd /Users/jrimmer/work/bezgelor
+cd .
 git add apps/bezgelor_db/lib/bezgelor_db/schema/character.ex
 git add apps/bezgelor_db/test/bezgelor_db/schema/character_test.exs
 git add apps/bezgelor_db/priv/repo/migrations/
@@ -2323,7 +2323,7 @@ git commit -m "feat(db): Add Character schema with position and progression fiel
 
 Run:
 ```bash
-cd /Users/jrimmer/work/bezgelor
+cd .
 mix test
 ```
 
@@ -2333,7 +2333,7 @@ Expected: All tests pass.
 
 Run:
 ```bash
-cd /Users/jrimmer/work/bezgelor
+cd .
 mix test --cover
 ```
 
@@ -2343,7 +2343,7 @@ Review coverage report.
 
 Run:
 ```bash
-cd /Users/jrimmer/work/bezgelor
+cd .
 mix format
 ```
 
@@ -2351,7 +2351,7 @@ mix format
 
 Run:
 ```bash
-cd /Users/jrimmer/work/bezgelor
+cd .
 git add -A
 git status
 # If any changes from formatting:

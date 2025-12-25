@@ -143,7 +143,7 @@ end
 ### Run Test (Expect Fail)
 
 ```bash
-cd /Users/jrimmer/work/bezgelor && MIX_ENV=test mix test apps/bezgelor_world/test/handler/spell_handler_integration_test.exs --trace
+cd . && MIX_ENV=test mix test apps/bezgelor_world/test/handler/spell_handler_integration_test.exs --trace
 ```
 
 ### Implementation
@@ -264,7 +264,7 @@ import Bitwise
 ### Run Test (Expect Pass)
 
 ```bash
-cd /Users/jrimmer/work/bezgelor && MIX_ENV=test mix test apps/bezgelor_world/test/handler/spell_handler_integration_test.exs --trace
+cd . && MIX_ENV=test mix test apps/bezgelor_world/test/handler/spell_handler_integration_test.exs --trace
 ```
 
 ### Commit
@@ -351,7 +351,7 @@ end
 ### Run Test (Expect Fail)
 
 ```bash
-cd /Users/jrimmer/work/bezgelor && MIX_ENV=test mix test apps/bezgelor_world/test/creature_manager_death_test.exs --trace
+cd . && MIX_ENV=test mix test apps/bezgelor_world/test/creature_manager_death_test.exs --trace
 ```
 
 ### Implementation
@@ -411,7 +411,7 @@ end
 ### Run Test (Expect Pass)
 
 ```bash
-cd /Users/jrimmer/work/bezgelor && MIX_ENV=test mix test apps/bezgelor_world/test/creature_manager_death_test.exs --trace
+cd . && MIX_ENV=test mix test apps/bezgelor_world/test/creature_manager_death_test.exs --trace
 ```
 
 ### Commit
@@ -479,7 +479,7 @@ end
 ### Run Test (Expect Fail)
 
 ```bash
-cd /Users/jrimmer/work/bezgelor && MIX_ENV=test mix test apps/bezgelor_world/test/combat_broadcaster_test.exs --trace
+cd . && MIX_ENV=test mix test apps/bezgelor_world/test/combat_broadcaster_test.exs --trace
 ```
 
 ### Implementation
@@ -623,7 +623,7 @@ end
 ### Run Test (Expect Pass)
 
 ```bash
-cd /Users/jrimmer/work/bezgelor && MIX_ENV=test mix test apps/bezgelor_world/test/combat_broadcaster_test.exs --trace
+cd . && MIX_ENV=test mix test apps/bezgelor_world/test/combat_broadcaster_test.exs --trace
 ```
 
 ### Commit
@@ -704,7 +704,7 @@ end
 ### Run Test (Expect Pass - already works with Task 3)
 
 ```bash
-cd /Users/jrimmer/work/bezgelor && MIX_ENV=test mix test apps/bezgelor_world/test/handler/spell_handler_broadcast_test.exs --trace
+cd . && MIX_ENV=test mix test apps/bezgelor_world/test/handler/spell_handler_broadcast_test.exs --trace
 ```
 
 ### Implementation
@@ -802,7 +802,7 @@ end
 ### Run Test (Expect Pass)
 
 ```bash
-cd /Users/jrimmer/work/bezgelor && MIX_ENV=test mix test apps/bezgelor_world/test/handler/spell_handler_broadcast_test.exs --trace
+cd . && MIX_ENV=test mix test apps/bezgelor_world/test/handler/spell_handler_broadcast_test.exs --trace
 ```
 
 ### Commit
@@ -899,7 +899,7 @@ end
 ### Run Test (Expect Fail)
 
 ```bash
-cd /Users/jrimmer/work/bezgelor && MIX_ENV=test mix test apps/bezgelor_world/test/creature_attack_test.exs --trace
+cd . && MIX_ENV=test mix test apps/bezgelor_world/test/creature_attack_test.exs --trace
 ```
 
 ### Implementation
@@ -1001,7 +1001,7 @@ import Bitwise
 ### Run Test (Expect Pass)
 
 ```bash
-cd /Users/jrimmer/work/bezgelor && MIX_ENV=test mix test apps/bezgelor_world/test/creature_attack_test.exs --trace
+cd . && MIX_ENV=test mix test apps/bezgelor_world/test/creature_attack_test.exs --trace
 ```
 
 ### Commit
@@ -1085,7 +1085,7 @@ end
 ### Run Test (Expect Pass - already works)
 
 ```bash
-cd /Users/jrimmer/work/bezgelor && MIX_ENV=test mix test apps/bezgelor_world/test/player_death_test.exs --trace
+cd . && MIX_ENV=test mix test apps/bezgelor_world/test/player_death_test.exs --trace
 ```
 
 ### Implementation
@@ -1229,7 +1229,7 @@ end
 ### Run Test (Expect Fail)
 
 ```bash
-cd /Users/jrimmer/work/bezgelor && MIX_ENV=test mix test apps/bezgelor_world/test/handler/respawn_handler_test.exs --trace
+cd . && MIX_ENV=test mix test apps/bezgelor_world/test/handler/respawn_handler_test.exs --trace
 ```
 
 ### Implementation
@@ -1328,7 +1328,7 @@ server_respawn: 0x0???  # Need actual opcode value
 ### Run Test (Expect Pass)
 
 ```bash
-cd /Users/jrimmer/work/bezgelor && MIX_ENV=test mix test apps/bezgelor_world/test/handler/respawn_handler_test.exs --trace
+cd . && MIX_ENV=test mix test apps/bezgelor_world/test/handler/respawn_handler_test.exs --trace
 ```
 
 ### Commit
@@ -1348,7 +1348,7 @@ Verify all combat loop tests pass together.
 ### Commands
 
 ```bash
-cd /Users/jrimmer/work/bezgelor
+cd .
 
 # Run all integration tests
 MIX_ENV=test mix test --only integration --trace

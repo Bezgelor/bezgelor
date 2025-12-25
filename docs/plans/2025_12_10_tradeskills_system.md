@@ -47,7 +47,7 @@ Two distinct crafting interfaces:
 
 **Step 1: Generate migration file**
 
-Run: `cd /Users/jrimmer/work/bezgelor && mix ecto.gen.migration create_tradeskill_tables --migrations-path apps/bezgelor_db/priv/repo/migrations`
+Run: `cd . && mix ecto.gen.migration create_tradeskill_tables --migrations-path apps/bezgelor_db/priv/repo/migrations`
 
 **Step 2: Write migration content**
 
@@ -104,7 +104,7 @@ end
 
 **Step 3: Run migration**
 
-Run: `cd /Users/jrimmer/work/bezgelor && MIX_ENV=test mix ecto.migrate`
+Run: `cd . && MIX_ENV=test mix ecto.migrate`
 Expected: Migration completes successfully
 
 **Step 4: Commit**
@@ -447,7 +447,7 @@ end
 
 **Step 2: Run test to verify it fails**
 
-Run: `cd /Users/jrimmer/work/bezgelor && MIX_ENV=test mix test apps/bezgelor_db/test/tradeskills_test.exs --trace`
+Run: `cd . && MIX_ENV=test mix test apps/bezgelor_db/test/tradeskills_test.exs --trace`
 Expected: FAIL with "module BezgelorDb.Tradeskills is not available"
 
 **Step 3: Write minimal implementation**
@@ -533,7 +533,7 @@ end
 
 **Step 4: Run test to verify it passes**
 
-Run: `cd /Users/jrimmer/work/bezgelor && MIX_ENV=test mix test apps/bezgelor_db/test/tradeskills_test.exs --trace`
+Run: `cd . && MIX_ENV=test mix test apps/bezgelor_db/test/tradeskills_test.exs --trace`
 Expected: All tests pass
 
 **Step 5: Commit**
@@ -610,7 +610,7 @@ Append to `apps/bezgelor_db/test/tradeskills_test.exs`:
 
 **Step 2: Run test to verify it fails**
 
-Run: `cd /Users/jrimmer/work/bezgelor && MIX_ENV=test mix test apps/bezgelor_db/test/tradeskills_test.exs --trace`
+Run: `cd . && MIX_ENV=test mix test apps/bezgelor_db/test/tradeskills_test.exs --trace`
 Expected: FAIL with "function Tradeskills.unlock_recipe/2 is undefined"
 
 **Step 3: Add recipe functions to context**
@@ -676,7 +676,7 @@ Add to `apps/bezgelor_db/lib/bezgelor_db/tradeskills.ex`:
 
 **Step 4: Run test to verify it passes**
 
-Run: `cd /Users/jrimmer/work/bezgelor && MIX_ENV=test mix test apps/bezgelor_db/test/tradeskills_test.exs --trace`
+Run: `cd . && MIX_ENV=test mix test apps/bezgelor_db/test/tradeskills_test.exs --trace`
 Expected: All tests pass
 
 **Step 5: Commit**
@@ -778,7 +778,7 @@ Append to `apps/bezgelor_db/test/tradeskills_test.exs`:
 
 **Step 2: Run test to verify it fails**
 
-Run: `cd /Users/jrimmer/work/bezgelor && MIX_ENV=test mix test apps/bezgelor_db/test/tradeskills_test.exs --trace`
+Run: `cd . && MIX_ENV=test mix test apps/bezgelor_db/test/tradeskills_test.exs --trace`
 Expected: FAIL with "function Tradeskills.queue_craft/4 is undefined"
 
 **Step 3: Add crafting queue functions to context**
@@ -878,7 +878,7 @@ Add to `apps/bezgelor_db/lib/bezgelor_db/tradeskills.ex`:
 
 **Step 4: Run test to verify it passes**
 
-Run: `cd /Users/jrimmer/work/bezgelor && MIX_ENV=test mix test apps/bezgelor_db/test/tradeskills_test.exs --trace`
+Run: `cd . && MIX_ENV=test mix test apps/bezgelor_db/test/tradeskills_test.exs --trace`
 Expected: All tests pass
 
 **Step 5: Commit**
@@ -941,7 +941,7 @@ Append to `apps/bezgelor_db/test/tradeskills_test.exs`:
 
 **Step 2: Run test to verify it fails**
 
-Run: `cd /Users/jrimmer/work/bezgelor && MIX_ENV=test mix test apps/bezgelor_db/test/tradeskills_test.exs --trace`
+Run: `cd . && MIX_ENV=test mix test apps/bezgelor_db/test/tradeskills_test.exs --trace`
 Expected: FAIL with "function Tradeskills.award_xp/3 is undefined"
 
 **Step 3: Add XP functions to context**
@@ -1006,7 +1006,7 @@ Add to `apps/bezgelor_db/lib/bezgelor_db/tradeskills.ex`:
 
 **Step 4: Run test to verify it passes**
 
-Run: `cd /Users/jrimmer/work/bezgelor && MIX_ENV=test mix test apps/bezgelor_db/test/tradeskills_test.exs --trace`
+Run: `cd . && MIX_ENV=test mix test apps/bezgelor_db/test/tradeskills_test.exs --trace`
 Expected: All tests pass
 
 **Step 5: Commit**
@@ -1626,12 +1626,12 @@ git commit -m "feat(world): add TradeskillHandler"
 
 **Step 1: Run all tradeskill tests**
 
-Run: `cd /Users/jrimmer/work/bezgelor && MIX_ENV=test mix test apps/bezgelor_db/test/tradeskills_test.exs --trace`
+Run: `cd . && MIX_ENV=test mix test apps/bezgelor_db/test/tradeskills_test.exs --trace`
 Expected: All tests pass
 
 **Step 2: Run full test suite**
 
-Run: `cd /Users/jrimmer/work/bezgelor && MIX_ENV=test mix test`
+Run: `cd . && MIX_ENV=test mix test`
 Expected: All tests pass
 
 **Step 3: Commit any fixes**

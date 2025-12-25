@@ -472,7 +472,7 @@ fly deploy --no-cache --app bezgelor
 | `RESEND_API_KEY` | No | https://resend.com | `re_...` |
 | `MAIL_FROM` | No | Your verified domain | `noreply@yourdomain.com` |
 
-See `/Users/jrimmer/work/bezgelor/docs/production_setup.md` for complete environment variable reference.
+See `./docs/production_setup.md` for complete environment variable reference.
 
 ## Cost Estimate
 
@@ -491,6 +491,6 @@ Actual costs may vary based on region and usage. Check current pricing at https:
 - [Fly.io Documentation](https://fly.io/docs/)
 - [Elixir Releases Guide](https://hexdocs.pm/mix/Mix.Tasks.Release.html)
 - [Phoenix Deployment Guide](https://hexdocs.pm/phoenix/deployment.html)
-- [Production Setup Guide](/Users/jrimmer/work/bezgelor/docs/production_setup.md)
-- [Rollback Procedures](/Users/jrimmer/work/bezgelor/docs/plans/2025-12-21-fly-io-deployment.md#task-11-create-rollback-procedures-documentation)
-- [Backup Strategy](/Users/jrimmer/work/bezgelor/docs/plans/2025-12-21-fly-io-deployment.md#task-10-configure-fly-postgres-backups)
+- [Production Setup Guide](./docs/production_setup.md)
+- [Rollback Procedures](./docs/plans/2025-12-21-fly-io-deployment.md#task-11-create-rollback-procedures-documentation)
+- [Backup Strategy](./docs/plans/2025-12-21-fly-io-deployment.md#task-10-configure-fly-postgres-backups)

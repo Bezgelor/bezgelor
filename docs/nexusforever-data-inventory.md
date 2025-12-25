@@ -182,7 +182,7 @@ python3 tools/spawn_importer/nexusforever_converter.py convert \
 
 # Merge all SQL files into single JSON
 python3 tools/spawn_importer/nexusforever_converter.py merge \
-  /Users/jrimmer/work/NexusForever.WorldDatabase \
+  ../NexusForever.WorldDatabase \
   apps/bezgelor_data/priv/data/creature_spawns.json
 ```
 

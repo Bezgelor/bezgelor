@@ -49,7 +49,7 @@ Key mechanics:
 
 **Step 1: Generate migration file**
 
-Run: `cd /Users/jrimmer/work/bezgelor && mix ecto.gen.migration create_public_event_tables --migrations-path apps/bezgelor_db/priv/repo/migrations`
+Run: `cd . && mix ecto.gen.migration create_public_event_tables --migrations-path apps/bezgelor_db/priv/repo/migrations`
 
 **Step 2: Write migration content**
 
@@ -109,7 +109,7 @@ end
 
 **Step 3: Run migration**
 
-Run: `cd /Users/jrimmer/work/bezgelor && MIX_ENV=test mix ecto.migrate`
+Run: `cd . && MIX_ENV=test mix ecto.migrate`
 Expected: Migration completes successfully
 
 **Step 4: Commit**
@@ -498,7 +498,7 @@ end
 
 **Step 2: Run test to verify it fails**
 
-Run: `cd /Users/jrimmer/work/bezgelor && MIX_ENV=test mix test apps/bezgelor_db/test/public_events_test.exs --trace`
+Run: `cd . && MIX_ENV=test mix test apps/bezgelor_db/test/public_events_test.exs --trace`
 Expected: FAIL with "module BezgelorDb.PublicEvents is not available"
 
 **Step 3: Write minimal implementation**
@@ -769,7 +769,7 @@ end
 
 **Step 4: Run test to verify it passes**
 
-Run: `cd /Users/jrimmer/work/bezgelor && MIX_ENV=test mix test apps/bezgelor_db/test/public_events_test.exs --trace`
+Run: `cd . && MIX_ENV=test mix test apps/bezgelor_db/test/public_events_test.exs --trace`
 Expected: All tests pass
 
 **Step 5: Commit**
@@ -1515,12 +1515,12 @@ git commit -m "feat(world): integrate event kill recording into combat"
 
 **Step 1: Run public events tests**
 
-Run: `cd /Users/jrimmer/work/bezgelor && MIX_ENV=test mix test apps/bezgelor_db/test/public_events_test.exs --trace`
+Run: `cd . && MIX_ENV=test mix test apps/bezgelor_db/test/public_events_test.exs --trace`
 Expected: All tests pass
 
 **Step 2: Run full test suite**
 
-Run: `cd /Users/jrimmer/work/bezgelor && MIX_ENV=test mix test`
+Run: `cd . && MIX_ENV=test mix test`
 Expected: All tests pass
 
 **Step 3: Commit any fixes**
