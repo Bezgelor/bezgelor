@@ -280,17 +280,27 @@ Each active world shard runs as its own **World.Instance process**:
 │  │ Players: 45      │  │ Players: 23      │  │ Players: 5     │ │
 │  │ Creatures: 105   │  │ Creatures: 66    │  │ Creatures: 7   │ │
 │  │ HarvestNodes: 30 │  │ HarvestNodes: 15 │  │ HarvestNodes: 0│ │
-│  │ AI Ticks: ✓      │  │ AI Ticks: ✓      │  │ AI Ticks: ✓    │ │
+│  └──────────────────┘  └──────────────────┘  └────────────────┘ │
+│           │                    │                    │           │
+│           ▼                    ▼                    ▼           │
+│  ┌──────────────────┐  ┌──────────────────┐  ┌────────────────┐ │
+│  │ ZoneManager      │  │ ZoneManager      │  │ ZoneManager    │ │
+│  │ (AI Processing)  │  │ (AI Processing)  │  │ (AI Processing)│ │
+│  │ Parallel Tasks   │  │ Parallel Tasks   │  │ Parallel Tasks │ │
 │  └──────────────────┘  └──────────────────┘  └────────────────┘ │
 │                                                                 │
 │  Registry: {world_id, instance_id} → pid                        │
 │                                                                 │
-│  Each World.Instance manages:                                   │
-│  - Creature spawns, AI ticks, and state (per-zone)              │
-│  - Harvest node spawns and respawn timers                       │
-│  - Spatial grid for proximity queries                           │
+│  Architecture:                                                  │
+│  - World.Instance: entity state, player broadcasts, queries     │
+│  - ZoneManager: creature AI state, parallel tick processing     │
+│  - Async communication: ZoneManager casts updates to Instance   │
+│                                                                 │
+│  Features:                                                      │
 │  - Lazy loading: spawns load on first player entry              │
 │  - Idle shutdown: stops after 5 min with no players             │
+│  - Parallel AI: Task.async_stream across CPU cores              │
+│  - Non-blocking: World.Instance stays responsive during AI      │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -311,6 +321,9 @@ BezgelorWorld.Supervisor (one_for_one)
 │
 ├── TickScheduler (GenServer)
 │   └── Master periodic game tick (buffs, AI, etc.)
+│
+├── Creature.ZoneManager (per-zone GenServer)
+│   └── Creature AI state, parallel tick processing
 │
 ├── BuffManager (GenServer)
 │   └── Tracks temporary effects on entities
@@ -1259,7 +1272,7 @@ Bezgelor's architecture leverages Elixir/OTP's strengths:
 | Fast static data access | ETS tables |
 | Player session tracking | Central registry (WorldManager) |
 | Zone management         | Per-zone World.Instance with lazy loading |
-| Creature/AI management  | Per-zone in World.Instance (no global manager) |
+| Creature/AI management  | Per-zone ZoneManager with parallel Task.async_stream |
 | Circular dependencies   | Runtime handler registration |
 | Code organization       | Umbrella apps with clear boundaries |
 
