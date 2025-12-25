@@ -71,7 +71,7 @@ defmodule BezgelorWorld.World.Instance do
   use GenServer
 
   alias BezgelorCore.{AI, CreatureTemplate, Entity, SpatialGrid}
-  alias BezgelorWorld.{CreatureDeath, TickScheduler, WorldManager}
+  alias BezgelorWorld.{CreatureDeath, WorldManager}
   alias BezgelorWorld.World.CreatureState
   alias BezgelorData.Store
 
@@ -601,13 +601,6 @@ defmodule BezgelorWorld.World.Instance do
       last_player_left_at: nil
     }
 
-    # Register with TickScheduler for AI processing
-    try do
-      TickScheduler.register_listener(self())
-    catch
-      :exit, _ -> :ok
-    end
-
     Logger.info(
       "World instance started: #{world_data[:name] || world_id} (instance #{instance_id})#{if lazy_loading, do: " [spawns deferred]", else: ""}"
     )
@@ -1111,15 +1104,6 @@ defmodule BezgelorWorld.World.Instance do
     {:reply, result, state}
   end
 
-  # Tick processing - creature AI is now handled by ZoneManager
-  # This handler remains for future non-creature tick processing
-  @impl true
-  def handle_info({:tick, _tick_number}, state) do
-    # Creature AI ticks are handled by ZoneManager
-    # Entity updates are pushed back via handle_cast({:update_creature_entities, ...})
-    {:noreply, state}
-  end
-
   @impl true
   def handle_info({:respawn_creature, guid}, state) do
     state =
@@ -1190,13 +1174,6 @@ defmodule BezgelorWorld.World.Instance do
       Logger.info(
         "World instance #{state.world_id} idle timeout - stopping (lazy loading enabled)"
       )
-
-      # Unregister from tick scheduler before stopping
-      try do
-        TickScheduler.unregister_listener(self())
-      catch
-        :exit, _ -> :ok
-      end
 
       {:stop, :normal, state}
     else
