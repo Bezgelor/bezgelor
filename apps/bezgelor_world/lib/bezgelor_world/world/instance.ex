@@ -69,10 +69,9 @@ defmodule BezgelorWorld.World.Instance do
   """
 
   use GenServer
-  import Bitwise
 
   alias BezgelorCore.{AI, CreatureTemplate, Entity, SpatialGrid}
-  alias BezgelorWorld.{CombatBroadcaster, CreatureDeath, TickScheduler, WorldManager}
+  alias BezgelorWorld.{CreatureDeath, TickScheduler, WorldManager}
   alias BezgelorWorld.World.CreatureState
   alias BezgelorData.Store
 
@@ -814,6 +813,18 @@ defmodule BezgelorWorld.World.Instance do
     {:noreply, state}
   end
 
+  # Handle batch entity updates from ZoneManager (async)
+  @impl true
+  def handle_cast({:update_creature_entities, entity_updates}, state) do
+    # Update entities map with new creature positions/health
+    entities =
+      Enum.reduce(entity_updates, state.entities, fn {guid, entity}, entities ->
+        Map.put(entities, guid, entity)
+      end)
+
+    {:noreply, %{state | entities: entities}}
+  end
+
   @impl true
   def handle_call(:get_state, _from, state) do
     {:reply, state, state}
@@ -1088,18 +1099,6 @@ defmodule BezgelorWorld.World.Instance do
     {:reply, result, state}
   end
 
-  # Handle batch entity updates from ZoneManager (async)
-  @impl true
-  def handle_cast({:update_creature_entities, entity_updates}, state) do
-    # Update entities map with new creature positions/health
-    entities =
-      Enum.reduce(entity_updates, state.entities, fn {guid, entity}, entities ->
-        Map.put(entities, guid, entity)
-      end)
-
-    {:noreply, %{state | entities: entities}}
-  end
-
   # Tick processing - creature AI is now handled by ZoneManager
   # This handler remains for future non-creature tick processing
   @impl true
@@ -1352,130 +1351,6 @@ defmodule BezgelorWorld.World.Instance do
       new_cs = %{cs | ai: new_ai}
       %{acc_state | creature_states: Map.put(acc_state.creature_states, guid, new_cs)}
     end)
-  end
-
-  defp apply_creature_attack(creature_entity, template, target_guid, state) do
-    if CreatureDeath.is_player_guid?(target_guid) do
-      base_damage = CreatureTemplate.roll_damage(template)
-      final_damage = apply_damage_mitigation(target_guid, base_damage, state)
-
-      case Map.get(state.entities, target_guid) do
-        nil ->
-          :ok
-
-        player_entity ->
-          updated_entity = Entity.apply_damage(player_entity, final_damage)
-          send_creature_attack_effect(creature_entity.guid, target_guid, final_damage)
-
-          if Entity.dead?(updated_entity) do
-            handle_player_death(updated_entity, creature_entity.guid)
-          end
-      end
-    end
-
-    :ok
-  end
-
-  defp apply_damage_mitigation(player_guid, base_damage, state) do
-    target_stats = get_target_defensive_stats(player_guid, state)
-    armor = Map.get(target_stats, :armor, 0.0)
-    mitigation = min(armor, 0.75)
-    final_damage = round(base_damage * (1 - mitigation))
-    max(final_damage, 1)
-  end
-
-  defp get_target_defensive_stats(player_guid, _state) do
-    case WorldManager.get_session_by_entity_guid(player_guid) do
-      nil ->
-        %{armor: 0.0}
-
-      session ->
-        character = session[:character]
-
-        if character do
-          BezgelorCore.CharacterStats.compute_combat_stats(%{
-            level: character.level || 1,
-            class: character.class || 1,
-            race: character.race || 0
-          })
-        else
-          %{armor: 0.0}
-        end
-    end
-  end
-
-  defp send_creature_attack_effect(creature_guid, player_guid, damage) do
-    effect = %{type: :damage, amount: damage, is_crit: false}
-    CombatBroadcaster.send_spell_effect(creature_guid, player_guid, 0, effect, [player_guid])
-  end
-
-  defp handle_player_death(player_entity, killer_guid) do
-    Logger.info(
-      "Player #{player_entity.name} (#{player_entity.guid}) killed by creature #{killer_guid}"
-    )
-
-    CombatBroadcaster.broadcast_entity_death(player_entity.guid, killer_guid, [player_entity.guid])
-
-    :ok
-  end
-
-  # Broadcast creature movement to players in the zone
-  defp broadcast_creature_movement(creature_guid, path, speed, world_id, instance_id)
-       when length(path) > 1 do
-    alias BezgelorProtocol.Packets.World.ServerEntityCommand
-    alias BezgelorProtocol.PacketWriter
-
-    state_command = %{type: :set_state, state: 0x02}
-    move_defaults = %{type: :set_move_defaults, blend: false}
-    rotation_defaults = %{type: :set_rotation_defaults, blend: false}
-
-    path_command = %{
-      type: :set_position_path,
-      positions: path,
-      speed: speed,
-      spline_type: :linear,
-      spline_mode: :one_shot,
-      offset: 0,
-      blend: true
-    }
-
-    packet = %ServerEntityCommand{
-      guid: creature_guid,
-      time: System.system_time(:millisecond) |> band(0xFFFFFFFF),
-      time_reset: false,
-      server_controlled: true,
-      commands: [state_command, move_defaults, rotation_defaults, path_command]
-    }
-
-    writer = PacketWriter.new()
-    {:ok, writer} = ServerEntityCommand.write(packet, writer)
-    packet_data = PacketWriter.to_binary(writer)
-
-    __MODULE__.broadcast({world_id, instance_id}, {:server_entity_command, packet_data})
-  end
-
-  defp broadcast_creature_movement(_creature_guid, _path, _speed, _world_id, _instance_id), do: :ok
-
-  defp broadcast_creature_stop(creature_guid, world_id, instance_id) do
-    alias BezgelorProtocol.Packets.World.ServerEntityCommand
-    alias BezgelorProtocol.PacketWriter
-
-    state_command = %{type: :set_state, state: 0x00}
-    move_defaults = %{type: :set_move_defaults, blend: false}
-
-    packet = %ServerEntityCommand{
-      guid: creature_guid,
-      time: System.monotonic_time(:millisecond) |> rem(0xFFFFFFFF),
-      time_reset: false,
-      server_controlled: true,
-      commands: [state_command, move_defaults]
-    }
-
-    writer = PacketWriter.new()
-    {:ok, writer} = ServerEntityCommand.write(packet, writer)
-    packet_data = PacketWriter.to_binary(writer)
-
-    __MODULE__.broadcast({world_id, instance_id}, {:server_entity_command, packet_data})
   end
 
   # =====================================================================
