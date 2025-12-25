@@ -73,7 +73,8 @@ defmodule BezgelorWorld.Economy.Telemetry do
           batch_size: non_neg_integer(),
           flush_interval_ms: non_neg_integer(),
           flush_timer: reference() | nil,
-          metrics: metrics()
+          metrics: metrics(),
+          persist: boolean()
         }
 
   ## Client API
@@ -129,13 +130,16 @@ defmodule BezgelorWorld.Economy.Telemetry do
     config = Application.get_env(:bezgelor_world, __MODULE__, [])
     batch_size = Keyword.get(opts, :batch_size) || Keyword.get(config, :batch_size, @default_batch_size)
     flush_interval_ms = Keyword.get(opts, :flush_interval_ms) || Keyword.get(config, :flush_interval_ms, @default_flush_interval_ms)
+    # Allow disabling persistence (e.g., in tests to avoid Ecto sandbox issues)
+    persist = Keyword.get(opts, :persist) || Keyword.get(config, :persist, true)
 
     state = %{
       batch: [],
       batch_size: batch_size,
       flush_interval_ms: flush_interval_ms,
       flush_timer: nil,
-      metrics: initial_metrics()
+      metrics: initial_metrics(),
+      persist: persist
     }
 
     # Attach telemetry handlers
@@ -269,16 +273,22 @@ defmodule BezgelorWorld.Economy.Telemetry do
       # Reverse batch to get chronological order
       events = Enum.reverse(state.batch)
 
-      # Convert events to database records and insert
-      case persist_events(events) do
-        {:ok, count} ->
-          Logger.debug("Economy.Telemetry flushed #{count} events to database")
-          %{state | batch: []}
+      # Skip persistence if disabled (e.g., in tests)
+      if state.persist do
+        # Convert events to database records and insert
+        case persist_events(events) do
+          {:ok, count} ->
+            Logger.debug("Economy.Telemetry flushed #{count} events to database")
+            %{state | batch: []}
 
-        {:error, reason} ->
-          Logger.error("Economy.Telemetry flush failed: #{inspect(reason)}")
-          # Keep events in batch for retry
-          state
+          {:error, reason} ->
+            Logger.error("Economy.Telemetry flush failed: #{inspect(reason)}")
+            # Keep events in batch for retry
+            state
+        end
+      else
+        # Persistence disabled - just clear the batch
+        %{state | batch: []}
       end
     end
   end
