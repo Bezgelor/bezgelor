@@ -1,6 +1,8 @@
 defmodule BezgelorWorld.TriggerManagerIntegrationTest do
   use ExUnit.Case, async: false
 
+  @moduletag :integration
+
   alias BezgelorWorld.TriggerManager
 
   describe "load_zone_triggers/1" do

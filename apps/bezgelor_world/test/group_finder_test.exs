@@ -1,7 +1,7 @@
 defmodule BezgelorWorld.GroupFinderTest do
   use ExUnit.Case, async: true
 
-  alias BezgelorWorld.GroupFinder.{GroupFinder, Matcher}
+  alias BezgelorWorld.GroupFinder.Matcher
 
   describe "Matcher.find_dungeon_match/2" do
     test "finds match when roles are satisfied (1 tank, 1 healer, 3 dps)" do

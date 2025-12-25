@@ -10,6 +10,8 @@ defmodule BezgelorWorld.Handler.SpellHandlerIntegrationTest do
   """
   use ExUnit.Case, async: false
 
+  @moduletag :integration
+
   alias BezgelorWorld.{SpellManager, BuffManager}
   alias BezgelorWorld.Handler.SpellHandler
   alias BezgelorCore.Spell

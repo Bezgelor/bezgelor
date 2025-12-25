@@ -11,6 +11,8 @@ defmodule BezgelorWorld.Integration.CombatMovementTest do
   """
   use ExUnit.Case, async: false
 
+  @moduletag :integration
+
   alias BezgelorWorld.World.{Instance, InstanceSupervisor}
   alias BezgelorCore.{AI, CreatureTemplate, Entity}
 

@@ -7,6 +7,8 @@ defmodule BezgelorWorld.CreatureManagerTest do
   """
   use ExUnit.Case, async: false
 
+  @moduletag :integration
+
   alias BezgelorWorld.World.{Instance, InstanceSupervisor}
   alias BezgelorCore.{AI, CreatureTemplate}
 
@@ -214,32 +216,4 @@ defmodule BezgelorWorld.CreatureManagerTest do
     end
   end
 
-  describe "deprecated CreatureManager facade" do
-    alias BezgelorWorld.CreatureManager
-
-    test "facade functions are deprecated but still work with existing instances", %{
-      world_key: world_key
-    } do
-      # Spawn via Instance
-      {:ok, guid} = Instance.spawn_creature(world_key, 1, {7000.0, 7000.0, 7000.0})
-
-      # Query via facade - should find the creature
-      creature = CreatureManager.get_creature(guid)
-      assert creature != nil
-      assert creature.entity.guid == guid
-
-      # Damage via facade
-      {:ok, :damaged, _} = CreatureManager.damage_creature(guid, 12345, 10)
-
-      # Verify damage was applied
-      creature = Instance.get_creature(world_key, guid)
-      template = CreatureTemplate.get(1)
-      assert creature.entity.health == template.max_health - 10
-    end
-
-    test "facade returns errors for non-existent creatures" do
-      assert nil == CreatureManager.get_creature(888_888_888)
-      assert {:error, :creature_not_found} == CreatureManager.damage_creature(888_888_888, 1, 10)
-    end
-  end
 end

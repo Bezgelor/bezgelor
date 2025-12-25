@@ -1,6 +1,8 @@
 defmodule BezgelorWorld.BuffManagerPeriodicTest do
   use ExUnit.Case, async: false
 
+  @moduletag :integration
+
   alias BezgelorWorld.BuffManager
   alias BezgelorCore.BuffDebuff
 

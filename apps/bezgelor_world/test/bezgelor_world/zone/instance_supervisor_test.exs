@@ -1,6 +1,8 @@
 defmodule BezgelorWorld.World.InstanceSupervisorTest do
   use ExUnit.Case, async: false
 
+  @moduletag :integration
+
   alias BezgelorWorld.World.{Instance, InstanceSupervisor}
   alias BezgelorCore.Entity
 

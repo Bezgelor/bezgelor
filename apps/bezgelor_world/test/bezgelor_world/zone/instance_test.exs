@@ -1,4 +1,4 @@
-defmodule BezgelorWorld.World.InstanceTest do
+defmodule BezgelorWorld.Zone.InstanceTest do
   use ExUnit.Case, async: false
 
   alias BezgelorWorld.World.{Instance, InstanceSupervisor}
@@ -360,6 +360,155 @@ defmodule BezgelorWorld.World.InstanceTest do
       state = :sys.get_state(pid)
       assert state.lazy_loading == false
       assert state.idle_timeout_ref == nil
+
+      # Clean up
+      GenServer.stop(pid)
+    end
+
+    test "rapid player enter/exit maintains correct state" do
+      # Edge case: rapid add/remove cycles
+      world_id = System.unique_integer([:positive])
+      instance_id = 1
+      world_data = %{name: "Rapid Test World"}
+
+      {:ok, pid} =
+        Instance.start_link(
+          world_id: world_id,
+          instance_id: instance_id,
+          world_data: world_data,
+          lazy_loading: true
+        )
+
+      Process.sleep(50)
+
+      # Rapidly add and remove multiple players
+      for i <- 1..10 do
+        player = %Entity{guid: i, type: :player, name: "Player#{i}", position: {0.0, 0.0, 0.0}}
+        Instance.add_entity(pid, player)
+      end
+
+      Process.sleep(50)
+
+      # All 10 players should be present
+      state = :sys.get_state(pid)
+      assert MapSet.size(state.players) == 10
+      assert state.spawns_loaded == true
+
+      # Rapidly remove all players
+      for i <- 1..10 do
+        Instance.remove_entity(pid, i)
+      end
+
+      Process.sleep(50)
+
+      # No players, idle timeout should be set
+      state = :sys.get_state(pid)
+      assert MapSet.size(state.players) == 0
+      assert state.idle_timeout_ref != nil
+
+      # Clean up
+      GenServer.stop(pid)
+    end
+
+    test "concurrent first player entries only load spawns once" do
+      # Edge case: multiple players enter before spawns finish loading
+      world_id = System.unique_integer([:positive])
+      instance_id = 1
+      world_data = %{name: "Concurrent Test World"}
+
+      {:ok, pid} =
+        Instance.start_link(
+          world_id: world_id,
+          instance_id: instance_id,
+          world_data: world_data,
+          lazy_loading: true
+        )
+
+      Process.sleep(50)
+
+      # Add multiple players "simultaneously" (as close as we can in test)
+      tasks =
+        for i <- 1..5 do
+          Task.async(fn ->
+            player = %Entity{guid: i, type: :player, name: "Player#{i}", position: {0.0, 0.0, 0.0}}
+            Instance.add_entity(pid, player)
+          end)
+        end
+
+      # Wait for all tasks
+      Enum.each(tasks, &Task.await/1)
+      Process.sleep(100)
+
+      # Verify state is consistent
+      state = :sys.get_state(pid)
+      assert state.spawns_loaded == true
+      assert MapSet.size(state.players) == 5
+
+      # Clean up
+      GenServer.stop(pid)
+    end
+
+    test "adding creature does not trigger spawn loading in lazy mode" do
+      # Edge case: only players should trigger spawn loading
+      world_id = System.unique_integer([:positive])
+      instance_id = 1
+      world_data = %{name: "Creature Test World"}
+
+      {:ok, pid} =
+        Instance.start_link(
+          world_id: world_id,
+          instance_id: instance_id,
+          world_data: world_data,
+          lazy_loading: true
+        )
+
+      Process.sleep(50)
+
+      # Add a creature (not a player)
+      creature = %Entity{guid: 99999, type: :creature, name: "TestMob", position: {0.0, 0.0, 0.0}}
+      Instance.add_entity(pid, creature)
+      Process.sleep(50)
+
+      # Spawns should NOT be loaded - only players trigger loading
+      state = :sys.get_state(pid)
+      assert state.spawns_loaded == false
+      assert MapSet.size(state.creatures) == 1
+
+      # Clean up
+      GenServer.stop(pid)
+    end
+
+    test "removing non-player entity does not affect idle timeout" do
+      # Edge case: only player removal should trigger idle timeout
+      world_id = System.unique_integer([:positive])
+      instance_id = 1
+      world_data = %{name: "Entity Test World"}
+
+      {:ok, pid} =
+        Instance.start_link(
+          world_id: world_id,
+          instance_id: instance_id,
+          world_data: world_data,
+          lazy_loading: true
+        )
+
+      Process.sleep(50)
+
+      # Add a player and a creature
+      player = %Entity{guid: 1, type: :player, name: "Player", position: {0.0, 0.0, 0.0}}
+      creature = %Entity{guid: 2, type: :creature, name: "Mob", position: {0.0, 0.0, 0.0}}
+      Instance.add_entity(pid, player)
+      Instance.add_entity(pid, creature)
+      Process.sleep(50)
+
+      # Remove the creature
+      Instance.remove_entity(pid, 2)
+      Process.sleep(50)
+
+      # Idle timeout should NOT be set (player still present)
+      state = :sys.get_state(pid)
+      assert state.idle_timeout_ref == nil
+      assert MapSet.size(state.players) == 1
 
       # Clean up
       GenServer.stop(pid)

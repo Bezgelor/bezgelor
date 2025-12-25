@@ -5,7 +5,7 @@ defmodule BezgelorWorld.Integration.CreatureAttackTest do
   use ExUnit.Case, async: false
 
   alias BezgelorWorld.{CombatBroadcaster, WorldManager}
-  alias BezgelorWorld.Zone.{Instance, InstanceSupervisor}
+  alias BezgelorWorld.World.{Instance, InstanceSupervisor}
   alias BezgelorCore.Entity
 
   @moduletag :integration
