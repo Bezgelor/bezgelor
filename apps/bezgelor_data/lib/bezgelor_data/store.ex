@@ -2417,7 +2417,14 @@ defmodule BezgelorData.Store do
           case load_json_raw(json_path) do
             {:ok, data} ->
               items = Map.get(data, :item2, [])
-              tuples = Enum.map(items, fn item -> {Map.get(item, :ID), item} end)
+
+              tuples =
+                Enum.map(items, fn item ->
+                  id = Map.get(item, :ID)
+                  normalized = item |> Map.put(:id, id) |> Map.delete(:ID)
+                  {id, normalized}
+                end)
+
               {:ok, tuples}
 
             {:error, reason} ->
@@ -2460,7 +2467,14 @@ defmodule BezgelorData.Store do
           case load_json_raw(json_path) do
             {:ok, data} ->
               spells = Map.get(data, :spell4, [])
-              tuples = Enum.map(spells, fn spell -> {Map.get(spell, :ID), spell} end)
+
+              tuples =
+                Enum.map(spells, fn spell ->
+                  id = Map.get(spell, :ID)
+                  normalized = spell |> Map.put(:id, id) |> Map.delete(:ID)
+                  {id, normalized}
+                end)
+
               {:ok, tuples}
 
             {:error, reason} ->
@@ -2588,7 +2602,7 @@ defmodule BezgelorData.Store do
           |> Enum.filter(fn item -> Map.has_key?(item, :ID) end)
           |> Enum.map(fn item ->
             id = Map.get(item, :ID)
-            normalized = Map.put(item, :id, id)
+            normalized = item |> Map.put(:id, id) |> Map.delete(:ID)
             {id, normalized}
           end)
 
@@ -2643,7 +2657,7 @@ defmodule BezgelorData.Store do
           |> Enum.filter(fn item -> Map.has_key?(item, :ID) end)
           |> Enum.map(fn item ->
             id = Map.get(item, :ID)
-            normalized = Map.put(item, :id, id)
+            normalized = item |> Map.put(:id, id) |> Map.delete(:ID)
             {id, normalized}
           end)
 
@@ -2688,7 +2702,7 @@ defmodule BezgelorData.Store do
           |> Enum.filter(fn item -> Map.has_key?(item, :ID) end)
           |> Enum.map(fn item ->
             id = Map.get(item, :ID)
-            normalized = Map.put(item, :id, id)
+            normalized = item |> Map.put(:id, id) |> Map.delete(:ID)
             {id, normalized}
           end)
 

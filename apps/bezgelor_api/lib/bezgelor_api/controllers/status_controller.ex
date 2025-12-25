@@ -36,6 +36,8 @@ defmodule BezgelorApi.Controllers.StatusController do
       WorldManager.session_count()
     rescue
       _ -> 0
+    catch
+      :exit, _ -> 0
     end
   end
 
@@ -44,6 +46,8 @@ defmodule BezgelorApi.Controllers.StatusController do
       InstanceSupervisor.instance_count()
     rescue
       _ -> 0
+    catch
+      :exit, _ -> 0
     end
   end
 
@@ -52,6 +56,8 @@ defmodule BezgelorApi.Controllers.StatusController do
       BezgelorData.stats()
     rescue
       _ -> %{}
+    catch
+      :exit, _ -> %{}
     end
   end
 
