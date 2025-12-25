@@ -279,9 +279,18 @@ Each active world shard runs as its own **World.Instance process**:
 │  │ Entities: 150    │  │ Entities: 89     │  │ Entities: 12   │ │
 │  │ Players: 45      │  │ Players: 23      │  │ Players: 5     │ │
 │  │ Creatures: 105   │  │ Creatures: 66    │  │ Creatures: 7   │ │
+│  │ HarvestNodes: 30 │  │ HarvestNodes: 15 │  │ HarvestNodes: 0│ │
+│  │ AI Ticks: ✓      │  │ AI Ticks: ✓      │  │ AI Ticks: ✓    │ │
 │  └──────────────────┘  └──────────────────┘  └────────────────┘ │
 │                                                                 │
 │  Registry: {world_id, instance_id} → pid                        │
+│                                                                 │
+│  Each World.Instance manages:                                   │
+│  - Creature spawns, AI ticks, and state (per-zone)              │
+│  - Harvest node spawns and respawn timers                       │
+│  - Spatial grid for proximity queries                           │
+│  - Lazy loading: spawns load on first player entry              │
+│  - Idle shutdown: stops after 5 min with no players             │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -302,12 +311,6 @@ BezgelorWorld.Supervisor (one_for_one)
 │
 ├── TickScheduler (GenServer)
 │   └── Master periodic game tick (buffs, AI, etc.)
-│
-├── CreatureManager (GenServer)
-│   └── Spawns and manages NPC creatures
-│
-├── HarvestNodeManager (GenServer)
-│   └── Manages gathering/harvesting nodes
 │
 ├── BuffManager (GenServer)
 │   └── Tracks temporary effects on entities
@@ -892,7 +895,7 @@ The **bezgelor_portal** application provides a web interface for players and adm
 ┌─────────────────────────────────────────────────────────────────────┐
 │                    bezgelor_world (Port 24000)                      │
 │                                                                     │
-│  WorldManager, CreatureManager, World.Instance, BuffManager, etc.   │
+│  WorldManager, World.Instance (per-zone), BuffManager, SpellManager │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -1252,10 +1255,11 @@ Bezgelor's architecture leverages Elixir/OTP's strengths:
 |-------------------------|-------------------------------------|
 | Many concurrent players | Process per connection |
 | Crash isolation         | Supervision trees |
-| Shared game state.      | Message passing, no locks |
+| Shared game state       | Message passing, no locks |
 | Fast static data access | ETS tables |
 | Player session tracking | Central registry (WorldManager) |
-| Zone management         | Process per zone instance |
+| Zone management         | Per-zone World.Instance with lazy loading |
+| Creature/AI management  | Per-zone in World.Instance (no global manager) |
 | Circular dependencies   | Runtime handler registration |
 | Code organization       | Umbrella apps with clear boundaries |
 
