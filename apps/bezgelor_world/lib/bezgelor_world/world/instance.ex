@@ -254,6 +254,20 @@ defmodule BezgelorWorld.World.Instance do
   end
 
   @doc """
+  Batch update creature entities from ZoneManager.
+  This is called asynchronously by ZoneManager after AI tick processing
+  to keep World.Instance's entity map in sync for broadcasting.
+  """
+  @spec update_creature_entities(non_neg_integer(), instance_id(), [{non_neg_integer(), Entity.t()}]) ::
+          :ok
+  def update_creature_entities(world_id, instance_id, entity_updates) do
+    GenServer.cast(
+      via_tuple(world_id, instance_id),
+      {:update_creature_entities, entity_updates}
+    )
+  end
+
+  @doc """
   Find entities within range of a position.
   """
   @spec entities_in_range(pid() | {non_neg_integer(), instance_id()}, Entity.position(), float()) ::
@@ -1074,16 +1088,25 @@ defmodule BezgelorWorld.World.Instance do
     {:reply, result, state}
   end
 
-  # AI Tick processing
+  # Handle batch entity updates from ZoneManager (async)
+  @impl true
+  def handle_cast({:update_creature_entities, entity_updates}, state) do
+    # Update entities map with new creature positions/health
+    entities =
+      Enum.reduce(entity_updates, state.entities, fn {guid, entity}, entities ->
+        Map.put(entities, guid, entity)
+      end)
+
+    {:noreply, %{state | entities: entities}}
+  end
+
+  # Tick processing - creature AI is now handled by ZoneManager
+  # This handler remains for future non-creature tick processing
   @impl true
   def handle_info({:tick, _tick_number}, state) do
-    # Skip AI processing if no players in zone
-    if MapSet.size(state.players) == 0 do
-      {:noreply, state}
-    else
-      state = process_ai_tick(state)
-      {:noreply, state}
-    end
+    # Creature AI ticks are handled by ZoneManager
+    # Entity updates are pushed back via handle_cast({:update_creature_entities, ...})
+    {:noreply, state}
   end
 
   @impl true
@@ -1329,82 +1352,6 @@ defmodule BezgelorWorld.World.Instance do
       new_cs = %{cs | ai: new_ai}
       %{acc_state | creature_states: Map.put(acc_state.creature_states, guid, new_cs)}
     end)
-  end
-
-  # Process AI tick for all creatures in this zone
-  # Uses parallel processing via Task.async_stream for better performance
-  # with many active creatures
-  defp process_ai_tick(state) do
-    now = System.monotonic_time(:millisecond)
-
-    ai_context = %{
-      entities: state.entities,
-      players: state.players,
-      world_id: state.world_id,
-      instance_id: state.instance_id
-    }
-
-    creatures_needing_update =
-      state.creature_states
-      |> Enum.filter(fn {_guid, creature_state} ->
-        CreatureState.needs_processing?(creature_state)
-      end)
-
-    # Process creatures in parallel across available CPU cores
-    # Each task computes the AI update independently
-    results =
-      creatures_needing_update
-      |> Task.async_stream(
-        fn {guid, creature_state} ->
-          case CreatureState.process_ai_tick(creature_state, ai_context, now) do
-            {:no_change, _} ->
-              nil
-
-            {:updated, new_creature_state, actions} ->
-              {guid, new_creature_state, actions}
-          end
-        end,
-        max_concurrency: System.schedulers_online(),
-        timeout: 500,
-        on_timeout: :kill_task
-      )
-      |> Enum.reduce({state.creature_states, []}, fn
-        {:ok, nil}, acc ->
-          acc
-
-        {:ok, {guid, new_creature_state, actions}}, {creature_states, all_actions} ->
-          {Map.put(creature_states, guid, new_creature_state), [actions | all_actions]}
-
-        {:exit, _reason}, acc ->
-          # Task timed out or crashed - skip this creature
-          acc
-      end)
-
-    {creature_states, all_actions} = results
-
-    # Execute all actions after parallel processing completes
-    all_actions
-    |> List.flatten()
-    |> Enum.each(&execute_ai_action(&1, state))
-
-    %{state | creature_states: creature_states}
-  end
-
-  # Execute a single action returned by CreatureState.process_ai_tick
-  defp execute_ai_action(action, state) do
-    case action do
-      {:broadcast_movement, guid, path, speed} ->
-        broadcast_creature_movement(guid, path, speed, state.world_id, state.instance_id)
-
-      {:broadcast_stop, guid} ->
-        broadcast_creature_stop(guid, state.world_id, state.instance_id)
-
-      {:creature_attack, entity, template, target_guid} ->
-        apply_creature_attack(entity, template, target_guid, state)
-
-      _ ->
-        :ok
-    end
   end
 
   defp apply_creature_attack(creature_entity, template, target_guid, state) do

@@ -360,7 +360,17 @@ defmodule BezgelorWorld.Creature.ZoneManager do
   def handle_info({:tick, _tick_number}, state) do
     # Process AI for all creatures in this zone on the shared tick
     # This keeps creature AI in sync with buffs and other periodic effects
-    state = process_ai_tick(state)
+    {state, entity_updates} = process_ai_tick(state)
+
+    # Push entity updates to World.Instance for broadcasting
+    if entity_updates != [] do
+      WorldInstance.update_creature_entities(
+        state.zone_id,
+        state.instance_id,
+        entity_updates
+      )
+    end
+
     {:noreply, state}
   end
 
@@ -469,7 +479,8 @@ defmodule BezgelorWorld.Creature.ZoneManager do
       end)
 
     # Process creatures in parallel across available CPU cores
-    creatures =
+    # Collect both updated creatures and entity updates for World.Instance
+    {creatures, entity_updates} =
       creatures_needing_update
       |> Task.async_stream(
         fn {guid, creature_state} ->
@@ -478,26 +489,27 @@ defmodule BezgelorWorld.Creature.ZoneManager do
               nil
 
             {:updated, new_creature_state} ->
-              {guid, new_creature_state}
+              # Return both the guid/state and the entity for World.Instance update
+              {guid, new_creature_state, new_creature_state.entity}
           end
         end,
         max_concurrency: System.schedulers_online(),
         timeout: 500,
         on_timeout: :kill_task
       )
-      |> Enum.reduce(state.creatures, fn
-        {:ok, nil}, creatures ->
-          creatures
+      |> Enum.reduce({state.creatures, []}, fn
+        {:ok, nil}, acc ->
+          acc
 
-        {:ok, {guid, new_creature_state}}, creatures ->
-          Map.put(creatures, guid, new_creature_state)
+        {:ok, {guid, new_creature_state, entity}}, {creatures, updates} ->
+          {Map.put(creatures, guid, new_creature_state), [{guid, entity} | updates]}
 
-        {:exit, _reason}, creatures ->
+        {:exit, _reason}, acc ->
           # Task timed out or crashed - skip this creature
-          creatures
+          acc
       end)
 
-    %{state | creatures: creatures}
+    {%{state | creatures: creatures}, entity_updates}
   end
 
   # Determine if a creature needs AI processing this tick
