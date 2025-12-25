@@ -69,10 +69,9 @@ defmodule BezgelorWorld.World.Instance do
   """
 
   use GenServer
-  import Bitwise
 
   alias BezgelorCore.{AI, CreatureTemplate, Entity, SpatialGrid}
-  alias BezgelorWorld.{CombatBroadcaster, CreatureDeath, TickScheduler, WorldManager}
+  alias BezgelorWorld.{CreatureDeath, WorldManager}
   alias BezgelorWorld.World.CreatureState
   alias BezgelorData.Store
 
@@ -250,6 +249,20 @@ defmodule BezgelorWorld.World.Instance do
       via_tuple(world_id, instance_id),
       {:update_entity_position, guid, position},
       @call_timeout
+    )
+  end
+
+  @doc """
+  Batch update creature entities from ZoneManager.
+  This is called asynchronously by ZoneManager after AI tick processing
+  to keep World.Instance's entity map in sync for broadcasting.
+  """
+  @spec update_creature_entities(non_neg_integer(), instance_id(), [{non_neg_integer(), Entity.t()}]) ::
+          :ok
+  def update_creature_entities(world_id, instance_id, entity_updates) do
+    GenServer.cast(
+      via_tuple(world_id, instance_id),
+      {:update_creature_entities, entity_updates}
     )
   end
 
@@ -588,13 +601,6 @@ defmodule BezgelorWorld.World.Instance do
       last_player_left_at: nil
     }
 
-    # Register with TickScheduler for AI processing
-    try do
-      TickScheduler.register_listener(self())
-    catch
-      :exit, _ -> :ok
-    end
-
     Logger.info(
       "World instance started: #{world_data[:name] || world_id} (instance #{instance_id})#{if lazy_loading, do: " [spawns deferred]", else: ""}"
     )
@@ -798,6 +804,30 @@ defmodule BezgelorWorld.World.Instance do
       end
 
     {:noreply, state}
+  end
+
+  # Handle batch entity updates from ZoneManager (async)
+  @impl true
+  def handle_cast({:update_creature_entities, entity_updates}, state) do
+    # Update entities map and spatial grid with new creature positions
+    {entities, spatial_grid} =
+      Enum.reduce(entity_updates, {state.entities, state.spatial_grid}, fn {guid, entity},
+                                                                            {entities, grid} ->
+        old_entity = Map.get(entities, guid)
+        new_entities = Map.put(entities, guid, entity)
+
+        # Update spatial grid if position changed
+        new_grid =
+          if old_entity && old_entity.position != entity.position do
+            SpatialGrid.update(grid, guid, entity.position)
+          else
+            grid
+          end
+
+        {new_entities, new_grid}
+      end)
+
+    {:noreply, %{state | entities: entities, spatial_grid: spatial_grid}}
   end
 
   @impl true
@@ -1074,18 +1104,6 @@ defmodule BezgelorWorld.World.Instance do
     {:reply, result, state}
   end
 
-  # AI Tick processing
-  @impl true
-  def handle_info({:tick, _tick_number}, state) do
-    # Skip AI processing if no players in zone
-    if MapSet.size(state.players) == 0 do
-      {:noreply, state}
-    else
-      state = process_ai_tick(state)
-      {:noreply, state}
-    end
-  end
-
   @impl true
   def handle_info({:respawn_creature, guid}, state) do
     state =
@@ -1156,13 +1174,6 @@ defmodule BezgelorWorld.World.Instance do
       Logger.info(
         "World instance #{state.world_id} idle timeout - stopping (lazy loading enabled)"
       )
-
-      # Unregister from tick scheduler before stopping
-      try do
-        TickScheduler.unregister_listener(self())
-      catch
-        :exit, _ -> :ok
-      end
 
       {:stop, :normal, state}
     else
@@ -1329,184 +1340,6 @@ defmodule BezgelorWorld.World.Instance do
       new_cs = %{cs | ai: new_ai}
       %{acc_state | creature_states: Map.put(acc_state.creature_states, guid, new_cs)}
     end)
-  end
-
-  # Process AI tick for all creatures in this zone
-  # Delegates to CreatureState for individual creature processing
-  defp process_ai_tick(state) do
-    now = System.monotonic_time(:millisecond)
-
-    ai_context = %{
-      entities: state.entities,
-      players: state.players,
-      world_id: state.world_id,
-      instance_id: state.instance_id
-    }
-
-    creatures_needing_update =
-      state.creature_states
-      |> Enum.filter(fn {_guid, creature_state} ->
-        CreatureState.needs_processing?(creature_state)
-      end)
-
-    creature_states =
-      Enum.reduce(creatures_needing_update, state.creature_states, fn {guid, creature_state},
-                                                                      creature_states ->
-        case CreatureState.process_ai_tick(creature_state, ai_context, now) do
-          {:no_change, _} ->
-            creature_states
-
-          {:updated, new_creature_state, actions} ->
-            # Execute any side-effect actions
-            execute_ai_actions(actions, state)
-            Map.put(creature_states, guid, new_creature_state)
-        end
-      end)
-
-    %{state | creature_states: creature_states}
-  end
-
-  # Execute actions returned by CreatureState.process_ai_tick
-  defp execute_ai_actions(actions, state) do
-    Enum.each(actions, fn action ->
-      case action do
-        {:broadcast_movement, guid, path, speed} ->
-          broadcast_creature_movement(guid, path, speed, state.world_id, state.instance_id)
-
-        {:broadcast_stop, guid} ->
-          broadcast_creature_stop(guid, state.world_id, state.instance_id)
-
-        {:creature_attack, entity, template, target_guid} ->
-          apply_creature_attack(entity, template, target_guid, state)
-
-        _ ->
-          :ok
-      end
-    end)
-  end
-
-  defp apply_creature_attack(creature_entity, template, target_guid, state) do
-    if CreatureDeath.is_player_guid?(target_guid) do
-      base_damage = CreatureTemplate.roll_damage(template)
-      final_damage = apply_damage_mitigation(target_guid, base_damage, state)
-
-      case Map.get(state.entities, target_guid) do
-        nil ->
-          :ok
-
-        player_entity ->
-          updated_entity = Entity.apply_damage(player_entity, final_damage)
-          send_creature_attack_effect(creature_entity.guid, target_guid, final_damage)
-
-          if Entity.dead?(updated_entity) do
-            handle_player_death(updated_entity, creature_entity.guid)
-          end
-      end
-    end
-
-    :ok
-  end
-
-  defp apply_damage_mitigation(player_guid, base_damage, state) do
-    target_stats = get_target_defensive_stats(player_guid, state)
-    armor = Map.get(target_stats, :armor, 0.0)
-    mitigation = min(armor, 0.75)
-    final_damage = round(base_damage * (1 - mitigation))
-    max(final_damage, 1)
-  end
-
-  defp get_target_defensive_stats(player_guid, _state) do
-    case WorldManager.get_session_by_entity_guid(player_guid) do
-      nil ->
-        %{armor: 0.0}
-
-      session ->
-        character = session[:character]
-
-        if character do
-          BezgelorCore.CharacterStats.compute_combat_stats(%{
-            level: character.level || 1,
-            class: character.class || 1,
-            race: character.race || 0
-          })
-        else
-          %{armor: 0.0}
-        end
-    end
-  end
-
-  defp send_creature_attack_effect(creature_guid, player_guid, damage) do
-    effect = %{type: :damage, amount: damage, is_crit: false}
-    CombatBroadcaster.send_spell_effect(creature_guid, player_guid, 0, effect, [player_guid])
-  end
-
-  defp handle_player_death(player_entity, killer_guid) do
-    Logger.info(
-      "Player #{player_entity.name} (#{player_entity.guid}) killed by creature #{killer_guid}"
-    )
-
-    CombatBroadcaster.broadcast_entity_death(player_entity.guid, killer_guid, [player_entity.guid])
-
-    :ok
-  end
-
-  # Broadcast creature movement to players in the zone
-  defp broadcast_creature_movement(creature_guid, path, speed, world_id, instance_id)
-       when length(path) > 1 do
-    alias BezgelorProtocol.Packets.World.ServerEntityCommand
-    alias BezgelorProtocol.PacketWriter
-
-    state_command = %{type: :set_state, state: 0x02}
-    move_defaults = %{type: :set_move_defaults, blend: false}
-    rotation_defaults = %{type: :set_rotation_defaults, blend: false}
-
-    path_command = %{
-      type: :set_position_path,
-      positions: path,
-      speed: speed,
-      spline_type: :linear,
-      spline_mode: :one_shot,
-      offset: 0,
-      blend: true
-    }
-
-    packet = %ServerEntityCommand{
-      guid: creature_guid,
-      time: System.system_time(:millisecond) |> band(0xFFFFFFFF),
-      time_reset: false,
-      server_controlled: true,
-      commands: [state_command, move_defaults, rotation_defaults, path_command]
-    }
-
-    writer = PacketWriter.new()
-    {:ok, writer} = ServerEntityCommand.write(packet, writer)
-    packet_data = PacketWriter.to_binary(writer)
-
-    __MODULE__.broadcast({world_id, instance_id}, {:server_entity_command, packet_data})
-  end
-
-  defp broadcast_creature_movement(_creature_guid, _path, _speed, _world_id, _instance_id), do: :ok
-
-  defp broadcast_creature_stop(creature_guid, world_id, instance_id) do
-    alias BezgelorProtocol.Packets.World.ServerEntityCommand
-    alias BezgelorProtocol.PacketWriter
-
-    state_command = %{type: :set_state, state: 0x00}
-    move_defaults = %{type: :set_move_defaults, blend: false}
-
-    packet = %ServerEntityCommand{
-      guid: creature_guid,
-      time: System.monotonic_time(:millisecond) |> rem(0xFFFFFFFF),
-      time_reset: false,
-      server_controlled: true,
-      commands: [state_command, move_defaults]
-    }
-
-    writer = PacketWriter.new()
-    {:ok, writer} = ServerEntityCommand.write(packet, writer)
-    packet_data = PacketWriter.to_binary(writer)
-
-    __MODULE__.broadcast({world_id, instance_id}, {:server_entity_command, packet_data})
   end
 
   # =====================================================================

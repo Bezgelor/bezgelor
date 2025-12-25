@@ -134,4 +134,4 @@ The loot tables can be updated to reflect accurate boss→item mappings. The cur
 
 - Extracted client data: `/tmp/loot_extract/`
 - Item database: `apps/bezgelor_data/priv/data/items.json`
-- NexusForever source: `/Users/jrimmer/work/nexusforever/`
+- NexusForever source: `../nexusforever/`

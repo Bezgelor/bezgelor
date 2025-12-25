@@ -77,7 +77,8 @@ This project is only possible thanks to the groundbreaking work and support of t
 - **Contexts** - Domain modules (`BezgelorDb.Accounts`, `BezgelorDb.Characters`, etc.) provide the public API
 - **Packets** - Implement `Readable`/`Writable` behaviours for binary protocol parsing
 - **Handlers** - Process incoming packets and dispatch responses
-- **World Instances** - GenServers managing entities, spawns, and broadcasts per world
+- **World Instances** - GenServers managing entities, spawns, and broadcasts per zone
+- **Zone Managers** - Per-zone creature AI with parallel `Task.async_stream` processing, async updates to World.Instance
 - **Supervision Trees** - OTP supervision for fault tolerance
 
 ## Requirements
