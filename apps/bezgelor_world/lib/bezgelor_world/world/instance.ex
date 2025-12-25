@@ -1332,7 +1332,8 @@ defmodule BezgelorWorld.World.Instance do
   end
 
   # Process AI tick for all creatures in this zone
-  # Delegates to CreatureState for individual creature processing
+  # Uses parallel processing via Task.async_stream for better performance
+  # with many active creatures
   defp process_ai_tick(state) do
     now = System.monotonic_time(:millisecond)
 
@@ -1349,40 +1350,61 @@ defmodule BezgelorWorld.World.Instance do
         CreatureState.needs_processing?(creature_state)
       end)
 
-    creature_states =
-      Enum.reduce(creatures_needing_update, state.creature_states, fn {guid, creature_state},
-                                                                      creature_states ->
-        case CreatureState.process_ai_tick(creature_state, ai_context, now) do
-          {:no_change, _} ->
-            creature_states
+    # Process creatures in parallel across available CPU cores
+    # Each task computes the AI update independently
+    results =
+      creatures_needing_update
+      |> Task.async_stream(
+        fn {guid, creature_state} ->
+          case CreatureState.process_ai_tick(creature_state, ai_context, now) do
+            {:no_change, _} ->
+              nil
 
-          {:updated, new_creature_state, actions} ->
-            # Execute any side-effect actions
-            execute_ai_actions(actions, state)
-            Map.put(creature_states, guid, new_creature_state)
-        end
+            {:updated, new_creature_state, actions} ->
+              {guid, new_creature_state, actions}
+          end
+        end,
+        max_concurrency: System.schedulers_online(),
+        timeout: 500,
+        on_timeout: :kill_task
+      )
+      |> Enum.reduce({state.creature_states, []}, fn
+        {:ok, nil}, acc ->
+          acc
+
+        {:ok, {guid, new_creature_state, actions}}, {creature_states, all_actions} ->
+          {Map.put(creature_states, guid, new_creature_state), [actions | all_actions]}
+
+        {:exit, _reason}, acc ->
+          # Task timed out or crashed - skip this creature
+          acc
       end)
+
+    {creature_states, all_actions} = results
+
+    # Execute all actions after parallel processing completes
+    all_actions
+    |> List.flatten()
+    |> Enum.each(&execute_ai_action(&1, state))
 
     %{state | creature_states: creature_states}
   end
 
-  # Execute actions returned by CreatureState.process_ai_tick
-  defp execute_ai_actions(actions, state) do
-    Enum.each(actions, fn action ->
-      case action do
-        {:broadcast_movement, guid, path, speed} ->
-          broadcast_creature_movement(guid, path, speed, state.world_id, state.instance_id)
+  # Execute a single action returned by CreatureState.process_ai_tick
+  defp execute_ai_action(action, state) do
+    case action do
+      {:broadcast_movement, guid, path, speed} ->
+        broadcast_creature_movement(guid, path, speed, state.world_id, state.instance_id)
 
-        {:broadcast_stop, guid} ->
-          broadcast_creature_stop(guid, state.world_id, state.instance_id)
+      {:broadcast_stop, guid} ->
+        broadcast_creature_stop(guid, state.world_id, state.instance_id)
 
-        {:creature_attack, entity, template, target_guid} ->
-          apply_creature_attack(entity, template, target_guid, state)
+      {:creature_attack, entity, template, target_guid} ->
+        apply_creature_attack(entity, template, target_guid, state)
 
-        _ ->
-          :ok
-      end
-    end)
+      _ ->
+        :ok
+    end
   end
 
   defp apply_creature_attack(creature_entity, template, target_guid, state) do

@@ -47,9 +47,6 @@ defmodule BezgelorWorld.Creature.ZoneManager do
           spawn_definitions: [map()]
         }
 
-  # Maximum creatures to process per tick (batching for fairness)
-  @max_creatures_per_tick 100
-
   # Combat timeout - creatures exit combat after this many ms without activity
   @combat_timeout_ms 30_000
 
@@ -470,19 +467,34 @@ defmodule BezgelorWorld.Creature.ZoneManager do
       |> Enum.filter(fn {_guid, creature_state} ->
         needs_ai_processing?(creature_state, now)
       end)
-      |> Enum.take(@max_creatures_per_tick)
 
-    # Process the filtered creatures
+    # Process creatures in parallel across available CPU cores
     creatures =
-      Enum.reduce(creatures_needing_update, state.creatures, fn {guid, creature_state},
-                                                                creatures ->
-        case process_creature_ai(creature_state, state, now) do
-          {:no_change, _} ->
-            creatures
+      creatures_needing_update
+      |> Task.async_stream(
+        fn {guid, creature_state} ->
+          case process_creature_ai(creature_state, state, now) do
+            {:no_change, _} ->
+              nil
 
-          {:updated, new_creature_state} ->
-            Map.put(creatures, guid, new_creature_state)
-        end
+            {:updated, new_creature_state} ->
+              {guid, new_creature_state}
+          end
+        end,
+        max_concurrency: System.schedulers_online(),
+        timeout: 500,
+        on_timeout: :kill_task
+      )
+      |> Enum.reduce(state.creatures, fn
+        {:ok, nil}, creatures ->
+          creatures
+
+        {:ok, {guid, new_creature_state}}, creatures ->
+          Map.put(creatures, guid, new_creature_state)
+
+        {:exit, _reason}, creatures ->
+          # Task timed out or crashed - skip this creature
+          creatures
       end)
 
     %{state | creatures: creatures}
