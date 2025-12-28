@@ -67,6 +67,7 @@ defmodule BezgelorData.Store do
     :class_entries,
     :spell4_entries,
     :spell4_bases,
+    :spell4_effects,
     :spell_levels,
     :creation_armor_sets,
     :texts,
@@ -188,7 +189,9 @@ defmodule BezgelorData.Store do
     # Spline nodes indexed by spline_id for efficient lookup
     :spline_nodes_by_spline,
     # Telegraph lookups by spell ID
-    :telegraphs_by_spell
+    :telegraphs_by_spell,
+    # Spell effect lookups by spell ID
+    :spell4_effects_by_spell
   ]
 
   # Client API
@@ -557,9 +560,50 @@ defmodule BezgelorData.Store do
   def get_telegraph_shapes_for_spell(spell_id) do
     spell_id
     |> get_telegraphs_for_spell()
-    |> Enum.map(fn tid ->
-      case get_telegraph_damage(tid) do
-        {:ok, data} -> data
+  end
+
+  # Spell Effects
+
+  @doc """
+  Get a spell effect entry by ID.
+  """
+  @spec get_spell4_effect(non_neg_integer()) :: {:ok, map()} | :error
+  def get_spell4_effect(effect_id) do
+    get(:spell4_effects, effect_id)
+  end
+
+  @doc """
+  Get all spell effect IDs associated with a spell.
+
+  Returns a list of effect IDs that should be applied when this spell is cast.
+  A single spell may have multiple effects (damage, buff, debuff, etc.).
+  """
+  @spec get_spell_effect_ids(non_neg_integer()) :: [non_neg_integer()]
+  def get_spell_effect_ids(spell_id) do
+    case :ets.lookup(index_table_name(:spell4_effects_by_spell), spell_id) do
+      [{^spell_id, effect_ids}] -> effect_ids
+      [] -> []
+    end
+  end
+
+  @doc """
+  Get all spell effect definitions for a spell.
+
+  Returns a list of complete spell effect definitions with all properties:
+  - effectType: The type of effect (1=damage, 2=heal, 3=directDamage, etc.)
+  - damageType: Type of damage (0=physical, 1=magic, 2=tech)
+  - tickTime: Milliseconds between ticks for DoT/HoT effects
+  - durationTime: Total duration in milliseconds
+  - dataBits00-09: Effect-specific data (damage amounts, etc.)
+  - threatMultiplier: Threat generation multiplier
+  """
+  @spec get_spell_effects(non_neg_integer()) :: [map()]
+  def get_spell_effects(spell_id) do
+    spell_id
+    |> get_spell_effect_ids()
+    |> Enum.map(fn id ->
+      case get_spell4_effect(id) do
+        {:ok, effect} -> effect
         :error -> nil
       end
     end)
@@ -1831,6 +1875,18 @@ defmodule BezgelorData.Store do
             "Spell4Base_part2.json"
           ],
           "spell4base"
+        )
+      end,
+      fn ->
+        load_client_table_parts(
+          :spell4_effects,
+          [
+            "Spell4Effects_part1.json",
+            "Spell4Effects_part2.json",
+            "Spell4Effects_part3.json",
+            "Spell4Effects_part4.json"
+          ],
+          "spell4effects"
         )
       end,
       fn -> load_client_table(:spell_levels, "SpellLevel.json", "spelllevel") end,
@@ -3418,7 +3474,9 @@ defmodule BezgelorData.Store do
       fn -> build_index(:world_locations, :world_locations_by_world, :worldId) end,
       fn -> build_index(:world_locations, :world_locations_by_zone, :worldZoneId) end,
       # Spline node index
-      fn -> build_index(:spline_nodes, :spline_nodes_by_spline, :spline_id) end
+      fn -> build_index(:spline_nodes, :spline_nodes_by_spline, :spline_id) end,
+      # Spell effect index (by spell ID for fast lookup)
+      fn -> build_index(:spell4_effects, :spell4_effects_by_spell, :spellId) end
     ]
 
     Enum.each(index_builders, fn builder -> builder.() end)
