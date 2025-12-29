@@ -53,9 +53,16 @@ defmodule BezgelorData.Store do
   use GenServer
 
   require Logger
-  import Bitwise
 
   alias BezgelorData.Compiler
+  alias BezgelorData.Store.Core
+  alias BezgelorData.Store.Creatures
+  alias BezgelorData.Store.Events
+  alias BezgelorData.Store.Index
+  alias BezgelorData.Store.Items
+  alias BezgelorData.Store.Loader
+  alias BezgelorData.Store.Spells
+  alias BezgelorData.Store.Splines
 
   @tables [
     :creatures,
@@ -67,6 +74,7 @@ defmodule BezgelorData.Store do
     :class_entries,
     :spell4_entries,
     :spell4_bases,
+    :spell4_effects,
     :spell_levels,
     :creation_armor_sets,
     :texts,
@@ -188,7 +196,9 @@ defmodule BezgelorData.Store do
     # Spline nodes indexed by spline_id for efficient lookup
     :spline_nodes_by_spline,
     # Telegraph lookups by spell ID
-    :telegraphs_by_spell
+    :telegraphs_by_spell,
+    # Spell effect lookups by spell ID
+    :spell4_effects_by_spell
   ]
 
   # Client API
@@ -200,21 +210,7 @@ defmodule BezgelorData.Store do
   @doc """
   Get an item by ID from the specified table.
   """
-  @spec get(atom(), non_neg_integer()) :: {:ok, map()} | :error
-  def get(table, id) do
-    ets_table = table_name(table)
-
-    case :ets.info(ets_table) do
-      :undefined ->
-        :error
-
-      _ ->
-        case :ets.lookup(ets_table, id) do
-          [{^id, data}] -> {:ok, data}
-          [] -> :error
-        end
-    end
-  end
+  defdelegate get(table, id), to: Core
 
   @doc """
   List all items from the specified table.
@@ -222,125 +218,40 @@ defmodule BezgelorData.Store do
   Note: For large tables, consider using `list_paginated/2` instead to avoid
   loading 50,000+ items into memory at once.
   """
-  @spec list(atom()) :: [map()]
-  def list(table) do
-    :ets.tab2list(table_name(table))
-    |> Enum.map(fn {_id, data} -> data end)
-  end
-
-  @default_page_size 100
+  defdelegate list(table), to: Core
 
   @doc """
   List items with pagination.
 
   Returns `{items, continuation}` where continuation is nil when no more pages.
   Uses ETS match with continuation for memory-efficient iteration over large tables.
-
-  ## Example
-
-      {items, cont} = Store.list_paginated(:items, 50)
-      {more_items, cont2} = Store.list_continue(cont)
   """
-  @spec list_paginated(atom(), pos_integer()) :: {[map()], term() | nil}
-  def list_paginated(table, limit \\ @default_page_size) do
-    table_name = table_name(table)
-
-    case :ets.match(table_name, {:"$1", :"$2"}, limit) do
-      {matches, continuation} ->
-        items = Enum.map(matches, fn [_id, data] -> data end)
-        {items, continuation}
-
-      :"$end_of_table" ->
-        {[], nil}
-    end
-  end
+  defdelegate list_paginated(table, limit \\ 100), to: Core
 
   @doc """
   Continue paginated iteration from a previous call.
-
-  Returns `{items, continuation}` where continuation is nil when no more pages.
   """
-  @spec list_continue(term()) :: {[map()], term() | nil}
-  def list_continue(nil), do: {[], nil}
-
-  def list_continue(continuation) do
-    case :ets.match(continuation) do
-      {matches, new_continuation} ->
-        items = Enum.map(matches, fn [_id, data] -> data end)
-        {items, new_continuation}
-
-      :"$end_of_table" ->
-        {[], nil}
-    end
-  end
+  defdelegate list_continue(continuation), to: Core
 
   @doc """
   List items matching a filter with pagination.
-
-  Uses `:ets.select/3` for efficient server-side iteration with filtering
-  applied in-memory. For simple equality filters on indexed fields,
-  consider using a specific query function instead.
   """
-  @spec list_filtered(atom(), (map() -> boolean()), pos_integer()) :: {[map()], term() | nil}
-  def list_filtered(table, filter_fn, limit \\ @default_page_size) do
-    table_name = table_name(table)
-
-    # Use match_spec to retrieve all values, then filter in Elixir
-    # This is still more efficient than tab2list as we process in batches
-    match_spec = [
-      {
-        {:"$1", :"$2"},
-        [],
-        [:"$2"]
-      }
-    ]
-
-    case :ets.select(table_name, match_spec, limit) do
-      {items, continuation} ->
-        filtered = Enum.filter(items, filter_fn)
-        {filtered, {:filtered, continuation, filter_fn}}
-
-      :"$end_of_table" ->
-        {[], nil}
-    end
-  end
+  defdelegate list_filtered(table, filter_fn, limit \\ 100), to: Core
 
   @doc """
   Continue filtered pagination from a previous call.
   """
-  @spec list_filtered_continue(term()) :: {[map()], term() | nil}
-  def list_filtered_continue(nil), do: {[], nil}
-
-  def list_filtered_continue({:filtered, continuation, filter_fn}) do
-    case :ets.select(continuation) do
-      {items, new_continuation} ->
-        filtered = Enum.filter(items, filter_fn)
-        {filtered, {:filtered, new_continuation, filter_fn}}
-
-      :"$end_of_table" ->
-        {[], nil}
-    end
-  end
+  defdelegate list_filtered_continue(continuation), to: Core
 
   @doc """
   Collect all pages into a list (convenience function for small filtered results).
-
-  Use with caution on large tables - this will load all matching items into memory.
   """
-  @spec collect_all_pages({[map()], term() | nil}, (term() -> {[map()], term() | nil})) :: [map()]
-  def collect_all_pages({items, nil}, _continue_fn), do: items
-
-  def collect_all_pages({items, continuation}, continue_fn) do
-    items ++ collect_all_pages(continue_fn.(continuation), continue_fn)
-  end
+  defdelegate collect_all_pages(result, continue_fn), to: Core
 
   @doc """
   Get the count of items in a table.
   """
-  @spec count(atom()) :: non_neg_integer()
-  def count(table) do
-    :ets.info(table_name(table), :size)
-  end
+  defdelegate count(table), to: Core
 
   @doc """
   Reload data from files. Used for development/testing.
@@ -374,100 +285,17 @@ defmodule BezgelorData.Store do
 
   # Public Events queries
 
-  @doc """
-  Get a public event definition by ID.
-  """
-  @spec get_public_event(non_neg_integer()) :: {:ok, map()} | :error
-  def get_public_event(id), do: get(:public_events, id)
-
-  @doc """
-  Get all public events for a zone.
-
-  Uses secondary index for O(1) lookup instead of scanning all events.
-  """
-  @spec get_zone_public_events(non_neg_integer()) :: [map()]
-  def get_zone_public_events(zone_id) do
-    ids = lookup_index(:events_by_zone, zone_id)
-    fetch_by_ids(:public_events, ids)
-  end
-
-  @doc """
-  Get a world boss definition by ID.
-  """
-  @spec get_world_boss(non_neg_integer()) :: {:ok, map()} | :error
-  def get_world_boss(id), do: get(:world_bosses, id)
-
-  @doc """
-  Get all world bosses for a zone.
-
-  Uses secondary index for O(1) lookup instead of scanning all bosses.
-  """
-  @spec get_zone_world_bosses(non_neg_integer()) :: [map()]
-  def get_zone_world_bosses(zone_id) do
-    ids = lookup_index(:world_bosses_by_zone, zone_id)
-    fetch_by_ids(:world_bosses, ids)
-  end
-
-  @doc """
-  Get spawn points for a zone.
-  """
-  @spec get_event_spawn_points(non_neg_integer()) :: {:ok, map()} | :error
-  def get_event_spawn_points(zone_id), do: get(:event_spawn_points, zone_id)
-
-  @doc """
-  Get specific spawn point group.
-  """
-  @spec get_spawn_point_group(non_neg_integer(), String.t()) :: [map()]
-  def get_spawn_point_group(zone_id, group_name) do
-    case get_event_spawn_points(zone_id) do
-      {:ok, data} -> Map.get(data.spawn_point_groups, group_name, [])
-      :error -> []
-    end
-  end
-
-  @doc """
-  Get an event loot table by ID.
-  """
-  @spec get_event_loot_table(non_neg_integer()) :: {:ok, map()} | :error
-  def get_event_loot_table(id), do: get(:event_loot_tables, id)
-
-  @doc """
-  Get loot table for an event.
-  """
-  @spec get_loot_table_for_event(non_neg_integer()) :: {:ok, map()} | :error
-  def get_loot_table_for_event(event_id) do
-    case Enum.find(list(:event_loot_tables), fn lt -> lt.event_id == event_id end) do
-      nil -> :error
-      loot_table -> {:ok, loot_table}
-    end
-  end
-
-  @doc """
-  Get loot table for a world boss.
-  """
-  @spec get_loot_table_for_world_boss(non_neg_integer()) :: {:ok, map()} | :error
-  def get_loot_table_for_world_boss(boss_id) do
-    case Enum.find(list(:event_loot_tables), fn lt -> lt[:world_boss_id] == boss_id end) do
-      nil -> :error
-      loot_table -> {:ok, loot_table}
-    end
-  end
-
-  @doc """
-  Get tier drops from a loot table.
-  """
-  @spec get_tier_drops(non_neg_integer(), atom()) :: [map()]
-  def get_tier_drops(loot_table_id, tier)
-      when tier in [:gold, :silver, :bronze, :participation] do
-    case get_event_loot_table(loot_table_id) do
-      {:ok, loot_table} ->
-        tier_key = Atom.to_string(tier)
-        Map.get(loot_table.tier_drops, String.to_atom(tier_key), [])
-
-      :error ->
-        []
-    end
-  end
+  # Event and World Boss queries - delegated to Store.Events
+  defdelegate get_public_event(id), to: Events
+  defdelegate get_zone_public_events(zone_id), to: Events
+  defdelegate get_world_boss(id), to: Events
+  defdelegate get_zone_world_bosses(zone_id), to: Events
+  defdelegate get_event_spawn_points(zone_id), to: Events
+  defdelegate get_spawn_point_group(zone_id, group_name), to: Events
+  defdelegate get_event_loot_table(id), to: Events
+  defdelegate get_loot_table_for_event(event_id), to: Events
+  defdelegate get_loot_table_for_world_boss(boss_id), to: Events
+  defdelegate get_tier_drops(loot_table_id, tier), to: Events
 
   # Instance/Dungeon queries - delegated to Queries.Instances module
   defdelegate get_instance(id), to: BezgelorData.Queries.Instances
@@ -517,333 +345,26 @@ defmodule BezgelorData.Store do
   defdelegate find_nearest_bindpoint(world_id, position), to: BezgelorData.Queries.Spawns
   defdelegate get_bindpoint_by_creature_id(creature_id), to: BezgelorData.Queries.Spawns
 
-  # Telegraph queries (shape-based spell targeting)
+  # Telegraph and Spell queries - delegated to Store.Spells
+  defdelegate get_telegraph_damage(telegraph_id), to: Spells
+  defdelegate get_telegraphs_for_spell(spell_id), to: Spells
+  defdelegate get_telegraph_shapes_for_spell(spell_id), to: Spells
+  defdelegate get_spell4_effect(effect_id), to: Spells
+  defdelegate get_spell_effect_ids(spell_id), to: Spells
+  defdelegate get_spell_effects(spell_id), to: Spells
+  defdelegate spell_has_telegraphs?(spell_id), to: Spells
 
-  @doc """
-  Get a telegraph damage shape definition by ID.
-
-  Returns the telegraph shape data including:
-  - damageShapeEnum: Shape type (0=Circle, 2=Square, 4=Cone, 5=Pie, 7=Rectangle, 8=LongCone)
-  - param00-param05: Shape parameters (radius, angle, dimensions vary by shape)
-  - telegraphTimeStartMs/EndMs: Telegraph timing
-  - xPositionOffset/yPositionOffset/zPositionOffset: Position offsets from caster
-  - rotationDegrees: Rotation offset
-  """
-  @spec get_telegraph_damage(non_neg_integer()) :: {:ok, map()} | :error
-  def get_telegraph_damage(telegraph_id) do
-    get(:telegraph_damage, telegraph_id)
-  end
-
-  @doc """
-  Get all telegraph damage IDs associated with a spell.
-
-  Returns a list of telegraph_damage IDs that should be checked for this spell.
-  A single spell may have multiple telegraphs (e.g., different phases).
-  """
-  @spec get_telegraphs_for_spell(non_neg_integer()) :: [non_neg_integer()]
-  def get_telegraphs_for_spell(spell_id) do
-    case :ets.lookup(index_table_name(:telegraphs_by_spell), spell_id) do
-      [{^spell_id, telegraph_ids}] -> telegraph_ids
-      [] -> []
-    end
-  end
-
-  @doc """
-  Get all telegraph damage definitions for a spell.
-
-  Returns a list of complete telegraph damage definitions.
-  """
-  @spec get_telegraph_shapes_for_spell(non_neg_integer()) :: [map()]
-  def get_telegraph_shapes_for_spell(spell_id) do
-    spell_id
-    |> get_telegraphs_for_spell()
-    |> Enum.map(fn tid ->
-      case get_telegraph_damage(tid) do
-        {:ok, data} -> data
-        :error -> nil
-      end
-    end)
-    |> Enum.reject(&is_nil/1)
-  end
-
-  @doc """
-  Check if a spell has any telegraph definitions.
-  """
-  @spec spell_has_telegraphs?(non_neg_integer()) :: boolean()
-  def spell_has_telegraphs?(spell_id) do
-    get_telegraphs_for_spell(spell_id) != []
-  end
-
-  # Patrol path queries
-
-  @doc """
-  Get a patrol path by name.
-  Returns the path definition with waypoints, mode, speed etc.
-  """
-  @spec get_patrol_path(String.t()) :: {:ok, map()} | :error
-  def get_patrol_path(path_name) do
-    case :ets.lookup(table_name(:patrol_paths), path_name) do
-      [{^path_name, data}] -> {:ok, data}
-      [] -> :error
-    end
-  end
-
-  @doc """
-  Get all patrol paths.
-  """
-  @spec list_patrol_paths() :: [map()]
-  def list_patrol_paths do
-    table_name(:patrol_paths)
-    |> :ets.tab2list()
-    |> Enum.map(fn {_name, data} -> data end)
-  end
-
-  # Spline queries (from WildStar client Spline2.tbl / Spline2Node.tbl)
-
-  @doc """
-  Get a spline definition by ID.
-  Returns the spline with its waypoints (nodes).
-  """
-  @spec get_spline(non_neg_integer()) :: {:ok, map()} | :error
-  def get_spline(spline_id) do
-    case get(:splines, spline_id) do
-      {:ok, spline} ->
-        nodes = get_spline_nodes(spline_id)
-        {:ok, Map.put(spline, :nodes, nodes)}
-
-      :error ->
-        :error
-    end
-  end
-
-  @doc """
-  Get spline nodes for a spline ID.
-  Returns nodes sorted by ordinal (waypoint order).
-  """
-  @spec get_spline_nodes(non_neg_integer()) :: [map()]
-  def get_spline_nodes(spline_id) do
-    ids = lookup_index(:spline_nodes_by_spline, spline_id)
-
-    fetch_by_ids(:spline_nodes, ids)
-    |> Enum.sort_by(& &1.ordinal)
-  end
-
-  @doc """
-  Get all splines for a world/zone.
-  """
-  @spec get_splines_for_world(non_neg_integer()) :: [map()]
-  def get_splines_for_world(world_id) do
-    list(:splines)
-    |> Enum.filter(fn s -> s.world_id == world_id end)
-  end
-
-  @doc """
-  Find the nearest spline to a position in a given world.
-  Returns {:ok, spline_id, distance} if found within max_distance, :none otherwise.
-
-  Options:
-    - max_distance: maximum distance to search (default: 5.0 units)
-  """
-  @spec find_nearest_spline(non_neg_integer(), {float(), float(), float()}, keyword()) ::
-          {:ok, non_neg_integer(), float()} | :none
-  def find_nearest_spline(world_id, {px, py, pz} = _position, opts \\ []) do
-    max_distance = Keyword.get(opts, :max_distance, 5.0)
-
-    # Get all splines for this world with their first node position
-    splines_with_start =
-      get_splines_for_world(world_id)
-      |> Enum.map(fn spline ->
-        nodes = get_spline_nodes(spline.id)
-
-        case nodes do
-          [first | _] ->
-            {spline.id, {first.position0, first.position1, first.position2}}
-
-          [] ->
-            nil
-        end
-      end)
-      |> Enum.reject(&is_nil/1)
-
-    # Find the closest spline by distance to first waypoint
-    result =
-      splines_with_start
-      |> Enum.map(fn {spline_id, {sx, sy, sz}} ->
-        distance =
-          :math.sqrt(:math.pow(px - sx, 2) + :math.pow(py - sy, 2) + :math.pow(pz - sz, 2))
-
-        {spline_id, distance}
-      end)
-      |> Enum.filter(fn {_id, dist} -> dist <= max_distance end)
-      |> Enum.min_by(fn {_id, dist} -> dist end, fn -> nil end)
-
-    case result do
-      {spline_id, distance} -> {:ok, spline_id, distance}
-      nil -> :none
-    end
-  end
-
-  @doc """
-  Build a spatial index of spline starting positions for efficient lookups.
-  Returns a map of %{world_id => [{spline_id, {x, y, z}}]}.
-  """
-  @spec build_spline_spatial_index() :: map()
-  def build_spline_spatial_index do
-    list(:splines)
-    |> Enum.reduce(%{}, fn spline, acc ->
-      nodes = get_spline_nodes(spline.id)
-
-      case nodes do
-        [first | _] ->
-          entry = {spline.id, {first.position0, first.position1, first.position2}}
-          world_entries = Map.get(acc, spline.world_id, [])
-          Map.put(acc, spline.world_id, [entry | world_entries])
-
-        [] ->
-          acc
-      end
-    end)
-  end
-
-  @doc """
-  Find nearest spline using a pre-built spatial index (more efficient for batch lookups).
-  """
-  @spec find_nearest_spline_indexed(
-          map(),
-          non_neg_integer(),
-          {float(), float(), float()},
-          keyword()
-        ) ::
-          {:ok, non_neg_integer(), float()} | :none
-  def find_nearest_spline_indexed(spatial_index, world_id, {px, py, pz}, opts \\ []) do
-    max_distance = Keyword.get(opts, :max_distance, 5.0)
-
-    case Map.get(spatial_index, world_id, []) do
-      [] ->
-        :none
-
-      splines ->
-        result =
-          splines
-          |> Enum.map(fn {spline_id, {sx, sy, sz}} ->
-            distance =
-              :math.sqrt(:math.pow(px - sx, 2) + :math.pow(py - sy, 2) + :math.pow(pz - sz, 2))
-
-            {spline_id, distance}
-          end)
-          |> Enum.filter(fn {_id, dist} -> dist <= max_distance end)
-          |> Enum.min_by(fn {_id, dist} -> dist end, fn -> nil end)
-
-        case result do
-          {spline_id, distance} -> {:ok, spline_id, distance}
-          nil -> :none
-        end
-    end
-  end
-
-  @doc """
-  Get spline as patrol path format (compatible with AI patrol system).
-  Converts spline nodes to waypoints with position and pause_ms.
-  """
-  @spec get_spline_as_patrol(non_neg_integer()) :: {:ok, map()} | :error
-  def get_spline_as_patrol(spline_id) do
-    case get_spline(spline_id) do
-      {:ok, spline} ->
-        waypoints =
-          Enum.map(spline.nodes, fn node ->
-            %{
-              position: {node.position0, node.position1, node.position2},
-              pause_ms: trunc(node.delay * 1000)
-            }
-          end)
-
-        patrol = %{
-          name: "spline_#{spline_id}",
-          display_name: "Spline #{spline_id}",
-          world_id: spline.world_id,
-          spline_type: spline.spline_type,
-          waypoints: waypoints,
-          mode: :cyclic,
-          speed: 3.0
-        }
-
-        {:ok, patrol}
-
-      :error ->
-        :error
-    end
-  end
-
-  @doc """
-  Look up entity spline configuration by world_id, creature_id, and position.
-
-  Returns {:ok, spline_config} if a matching entity spline is found, :none otherwise.
-  Matches entities within 5 units of the given position (to handle minor coordinate differences).
-
-  The spline_config contains:
-  - spline_id: The spline path to follow
-  - mode: SplineMode (0=OneShot, 1=BackAndForth, 2=Cyclic, etc.)
-  - speed: Movement speed (units/second), -1 means use default
-  - fx, fy, fz: Formation offsets from path
-  """
-  @spec find_entity_spline(non_neg_integer(), non_neg_integer(), {float(), float(), float()}) ::
-          {:ok, map()} | :none
-  def find_entity_spline(world_id, creature_id, {px, py, pz}) do
-    table_name = table_name(:entity_splines)
-
-    case :ets.lookup(table_name, world_id) do
-      [{^world_id, entities}] ->
-        # Find entity matching creature_id and position (within tolerance)
-        match =
-          Enum.find(entities, fn entity ->
-            entity_creature_id = entity[:creature_id] || entity["creature_id"]
-            position = entity[:position] || entity["position"]
-
-            # Handle both list and tuple positions
-            {ex, ey, ez} =
-              case position do
-                [x, y, z] -> {x, y, z}
-                {x, y, z} -> {x, y, z}
-                _ -> {0, 0, 0}
-              end
-
-            entity_creature_id == creature_id and
-              position_match?({px, py, pz}, {ex, ey, ez}, 5.0)
-          end)
-
-        case match do
-          nil ->
-            :none
-
-          entity ->
-            spline = entity[:spline] || entity["spline"]
-            {:ok, normalize_spline_config(spline)}
-        end
-
-      [] ->
-        :none
-    end
-  end
-
-  # Check if two positions are within distance of each other
-  defp position_match?({x1, y1, z1}, {x2, y2, z2}, max_dist) do
-    dx = x2 - x1
-    dy = y2 - y1
-    dz = z2 - z1
-    :math.sqrt(dx * dx + dy * dy + dz * dz) <= max_dist
-  end
-
-  # Normalize spline config from JSON (handles both atom and string keys)
-  defp normalize_spline_config(spline) do
-    %{
-      spline_id: spline[:spline_id] || spline["spline_id"],
-      mode: spline[:mode] || spline["mode"],
-      speed: spline[:speed] || spline["speed"],
-      fx: spline[:fx] || spline["fx"] || 0,
-      fy: spline[:fy] || spline["fy"] || 0,
-      fz: spline[:fz] || spline["fz"] || 0
-    }
-  end
+  # Patrol path and spline queries - delegated to Store.Splines
+  defdelegate get_patrol_path(path_name), to: Splines
+  defdelegate list_patrol_paths(), to: Splines
+  defdelegate get_spline(spline_id), to: Splines
+  defdelegate get_spline_nodes(spline_id), to: Splines
+  defdelegate get_splines_for_world(world_id), to: Splines
+  defdelegate find_nearest_spline(world_id, position, opts \\ []), to: Splines
+  defdelegate build_spline_spatial_index(), to: Splines
+  defdelegate find_nearest_spline_indexed(spatial_index, world_id, position, opts \\ []), to: Splines
+  defdelegate get_spline_as_patrol(spline_id), to: Splines
+  defdelegate find_entity_spline(world_id, creature_id, position), to: Splines
 
   # Quest queries - delegated to Queries.Quests module
   defdelegate get_quest(id), to: BezgelorData.Queries.Quests
@@ -956,73 +477,34 @@ defmodule BezgelorData.Store do
   @doc """
   Get creature loot rules configuration.
   """
-  @spec get_creature_loot_rules() :: map() | nil
-  def get_creature_loot_rules do
-    case :ets.lookup(table_name(:creature_loot_rules), :rules) do
-      [{:rules, rules}] -> rules
-      [] -> nil
-    end
-  end
+  defdelegate get_creature_loot_rules(), to: Creatures
 
   @doc """
   Get loot table override for a specific creature.
   """
-  @spec get_creature_loot_override(non_neg_integer()) :: map() | nil
-  def get_creature_loot_override(creature_id) do
-    case :ets.lookup(table_name(:creature_loot_rules), {:override, creature_id}) do
-      [{{:override, ^creature_id}, override}] ->
-        override
-
-      _ ->
-        # Try alternate key format
-        case :ets.match(table_name(:creature_loot_rules), {:override, creature_id, :"$1"}) do
-          [[override]] -> override
-          _ -> nil
-        end
-    end
-  end
+  defdelegate get_creature_loot_override(creature_id), to: Creatures
 
   @doc """
   Get loot category tables mapping.
   """
-  @spec get_loot_category_tables() :: map() | nil
-  def get_loot_category_tables do
-    case :ets.lookup(table_name(:creature_loot_rules), :categories) do
-      [{:categories, categories}] -> categories
-      [] -> nil
-    end
-  end
+  defdelegate get_loot_category_tables(), to: Creatures
 
   # Harvest node loot queries
 
   @doc """
   Get harvest node loot data by creature ID.
-
-  Returns loot configuration for a harvest node including:
-  - tradeskill_id: The gathering profession (13=Mining, 15=Survivalist, 18=Relic Hunter, 20=Farming)
-  - tradeskill_name: Human-readable profession name
-  - tier: Skill tier (1-5)
-  - loot: Map with :primary and :secondary drop lists
   """
-  @spec get_harvest_loot(non_neg_integer()) :: {:ok, map()} | :error
-  def get_harvest_loot(creature_id), do: get(:harvest_loot, creature_id)
+  defdelegate get_harvest_loot(creature_id), to: Creatures
 
   @doc """
   Get all harvest loot mappings.
   """
-  @spec get_all_harvest_loot() :: [map()]
-  def get_all_harvest_loot, do: list(:harvest_loot)
+  defdelegate get_all_harvest_loot(), to: Creatures
 
   @doc """
   Get harvest loot by tradeskill ID.
   """
-  @spec get_harvest_loot_by_tradeskill(non_neg_integer()) :: [map()]
-  def get_harvest_loot_by_tradeskill(tradeskill_id) do
-    list(:harvest_loot)
-    |> Enum.filter(fn data ->
-      Map.get(data, :tradeskill_id) == tradeskill_id
-    end)
-  end
+  defdelegate get_harvest_loot_by_tradeskill(tradeskill_id), to: Creatures
 
   # Character Creation API
 
@@ -1039,455 +521,18 @@ defmodule BezgelorData.Store do
   @spec get_all_character_creations() :: [map()]
   def get_all_character_creations, do: list(:character_creations)
 
-  @doc """
-  Get item visuals for character customization.
-
-  Converts a list of (label, value) pairs into ItemVisual entries (slot, displayId)
-  based on the CharacterCustomization table for the given race and sex.
-
-  This is used during character creation to generate the appearance data
-  that gets stored and sent back in the character list.
-
-  ## Parameters
-
-  - `race` - Race ID (1=Human, 3=Granok, etc.)
-  - `sex` - Sex (0=Male, 1=Female)
-  - `customizations` - List of {label, value} tuples from character creation
-
-  ## Returns
-
-  List of `%{slot: slot_id, display_id: display_id}` maps.
-  """
-  @spec get_item_visuals(non_neg_integer(), non_neg_integer(), [
-          {non_neg_integer(), non_neg_integer()}
-        ]) :: [map()]
-  def get_item_visuals(race, sex, customizations) do
-    # Get all customization entries for this race/sex combo
-    # Race 0 entries are defaults that apply to all races
-    race_entries = get_customizations_for_race_sex(race, sex)
-    default_entries = get_customizations_for_race_sex(0, sex)
-    all_entries = race_entries ++ default_entries
-
-    # Convert customizations list to a map for efficient lookup
-    custom_map = Map.new(customizations)
-
-    # For each entry that matches a customization, return the slot/displayId
-    # Filter entries where flags = 2 (enabled) and the label/value matches
-    all_entries
-    |> Enum.filter(fn entry ->
-      # Entry is enabled (flags = 2)
-      # And matches at least one customization
-      entry.flags == 2 &&
-        matches_customization?(entry, custom_map)
-    end)
-    |> Enum.map(fn entry ->
-      %{slot: entry.itemSlotId, display_id: entry.itemDisplayId}
-    end)
-    |> Enum.uniq_by(fn %{slot: slot} -> slot end)
-  end
-
-  # Check if an entry matches the given customizations
-  defp matches_customization?(entry, custom_map) do
-    label0 = entry.characterCustomizationLabelId00
-    value0 = entry.value00
-    label1 = entry.characterCustomizationLabelId01
-    value1 = entry.value01
-
-    # Match if label0/value0 matches (ignoring 0 labels)
-    match0 = label0 == 0 || Map.get(custom_map, label0) == value0
-
-    # Match if label1/value1 matches (ignoring 0 labels)
-    match1 = label1 == 0 || Map.get(custom_map, label1) == value1
-
-    # Both must match (or be 0/ignored)
-    match0 && match1 && (label0 != 0 || label1 != 0)
-  end
-
-  # Get customizations indexed by race/sex
-  defp get_customizations_for_race_sex(race, sex) do
-    case :ets.lookup(index_table_name(:customizations_by_race_sex), {race, sex}) do
-      [{{^race, ^sex}, entries}] -> entries
-      [] -> []
-    end
-  end
-
-  @doc """
-  Get the equipment slot for an item.
-
-  Uses the item's type_id to look up the slot from Item2Type table.
-
-  ## Parameters
-
-  - `item_id` - The item ID
-
-  ## Returns
-
-  The ItemSlot ID (e.g., 1=ArmorChest, 20=WeaponPrimary) or nil if not found.
-  """
-  @spec get_item_slot(non_neg_integer()) :: non_neg_integer() | nil
-  def get_item_slot(item_id) do
-    with {:ok, item} <- get(:items, item_id),
-         type_id when type_id > 0 <- get_item_type_id(item),
-         {:ok, item_type} <- get(:item_types, type_id) do
-      # item_type has itemSlotId field
-      get_slot_id(item_type)
-    else
-      _ -> nil
-    end
-  end
-
-  defp get_item_type_id(item) do
-    # Field is item2TypeId in the JSON data (loaded with keys: :atoms)
-    Map.get(item, :item2TypeId, 0)
-  end
-
-  defp get_slot_id(item_type) do
-    Map.get(item_type, :itemSlotId, 0)
-  end
-
-  @doc """
-  Get the EquippedItem slot index for an item.
-
-  Uses the item's `equippedSlotFlags` bitmask to determine which equipped slot
-  the item goes into. The lowest set bit determines the primary slot.
-
-  ## Parameters
-
-  - `item_id` - The item ID
-
-  ## Returns
-
-  The EquippedItem slot index (0=Chest, 1=Legs, 2=Head, etc.) or nil if not equippable.
-  """
-  @spec get_item_equipped_slot(non_neg_integer()) :: non_neg_integer() | nil
-  def get_item_equipped_slot(item_id) do
-    case get(:items, item_id) do
-      {:ok, item} ->
-        flags = Map.get(item, :equippedSlotFlags, 0)
-
-        if flags > 0 do
-          # Find the lowest set bit (primary equipped slot)
-          find_lowest_bit(flags)
-        else
-          nil
-        end
-
-      _ ->
-        nil
-    end
-  end
-
-  # Find the position of the lowest set bit in a flags value
-  defp find_lowest_bit(flags) when flags > 0 do
-    do_find_lowest_bit(flags, 0)
-  end
-
-  defp find_lowest_bit(_), do: nil
-
-  defp do_find_lowest_bit(flags, position) when position < 32 do
-    if band(flags, 1) == 1 do
-      position
-    else
-      do_find_lowest_bit(bsr(flags, 1), position + 1)
-    end
-  end
-
-  defp do_find_lowest_bit(_, _), do: nil
-
-  @doc """
-  Get default gear visuals for a character class.
-
-  Uses CharacterCreationArmorSet to get display IDs for starting gear.
-  Returns visuals for the Arkship creation type (gear set 0).
-
-  ## Parameters
-
-  - `class_id` - The class ID (1=Warrior, 2=Esper, etc.)
-
-  ## Returns
-
-  List of `%{slot: slot_id, display_id: display_id}` maps.
-  """
-  @spec get_class_gear_visuals(non_neg_integer()) :: [map()]
-  def get_class_gear_visuals(class_id) do
-    # Find armor set for this class with creationGearSetEnum = 0 (Arkship)
-    armor_sets = list(:creation_armor_sets)
-
-    armor_set =
-      Enum.find(armor_sets, fn set ->
-        set_class = Map.get(set, :classId, 0)
-        gear_set = Map.get(set, :creationGearSetEnum, 0)
-        set_class == class_id && gear_set == 0
-      end)
-
-    if armor_set do
-      # Map display IDs to slots
-      # ItemDisplayId00 = WeaponPrimary (slot 20)
-      # ItemDisplayId01 = ArmorChest (slot 1)
-      # ItemDisplayId02 = ArmorLegs (slot 2)
-      # ItemDisplayId03 = ArmorHead (slot 3)
-      # ItemDisplayId04 = ArmorShoulder (slot 4)
-      # ItemDisplayId05 = ArmorFeet (slot 5)
-      # ItemDisplayId06 = ArmorHands (slot 6)
-      slot_mapping = [
-        # WeaponPrimary
-        {:itemDisplayId00, 20},
-        # ArmorChest
-        {:itemDisplayId01, 1},
-        # ArmorLegs
-        {:itemDisplayId02, 2},
-        # ArmorHead
-        {:itemDisplayId03, 3},
-        # ArmorShoulder
-        {:itemDisplayId04, 4},
-        # ArmorFeet
-        {:itemDisplayId05, 5},
-        # ArmorHands
-        {:itemDisplayId06, 6}
-      ]
-
-      slot_mapping
-      |> Enum.map(fn {key, slot} ->
-        display_id = Map.get(armor_set, key, 0)
-        if display_id > 0, do: %{slot: slot, display_id: display_id}, else: nil
-      end)
-      |> Enum.reject(&is_nil/1)
-    else
-      []
-    end
-  end
-
-  @doc """
-  Get the display ID for an item, resolving through ItemDisplaySource if needed.
-
-  Items with `item_source_id > 0` use the ItemDisplaySourceEntry table to
-  look up level-scaled visuals. Items with `item_source_id = 0` use their
-  direct `display_id` field.
-
-  ## Parameters
-
-  - `item_id` - The item ID
-  - `power_level` - Optional power level for level-based lookups (defaults to item's power_level)
-
-  ## Returns
-
-  The display ID for the item, or 0 if not found.
-
-  ## Example
-
-      # Item with direct display_id
-      Store.get_item_display_id(81344) #=> 4160
-
-      # Item with item_source_id (level-scaled)
-      Store.get_item_display_id(28366, 50) #=> varies by level
-  """
-  @spec get_item_display_id(non_neg_integer(), non_neg_integer() | nil) :: non_neg_integer()
-  def get_item_display_id(item_id, power_level \\ nil) do
-    case get(:items, item_id) do
-      {:ok, item} ->
-        item_source_id = Map.get(item, :itemSourceId) || 0
-        display_id = Map.get(item, :itemDisplayId) || 0
-        item_power_level = power_level || Map.get(item, :powerLevel) || 0
-        type_id = Map.get(item, :item2TypeId) || 0
-
-        if item_source_id > 0 do
-          resolve_display_from_source(item_source_id, type_id, item_power_level, display_id)
-        else
-          display_id
-        end
-
-      :error ->
-        0
-    end
-  end
-
-  @doc """
-  Get the display ID and visual slot for an item.
-
-  Returns {display_id, visual_slot} where visual_slot comes from Item2Type.itemSlotId.
-  This is used for building ItemVisual structs for entity creation.
-  """
-  @spec get_item_visual_info(non_neg_integer(), non_neg_integer() | nil) ::
-          {non_neg_integer(), non_neg_integer()}
-  def get_item_visual_info(item_id, power_level \\ nil) do
-    case get(:items, item_id) do
-      {:ok, item} ->
-        display_id = get_item_display_id(item_id, power_level)
-        type_id = Map.get(item, :item2TypeId) || 0
-        visual_slot = get_item_slot_id(type_id)
-        {display_id, visual_slot}
-
-      :error ->
-        {0, 0}
-    end
-  end
-
-  # Get the visual slot ID (ItemSlot) from Item2Type
-  defp get_item_slot_id(type_id) when type_id > 0 do
-    case get(:item_types, type_id) do
-      {:ok, item_type} ->
-        Map.get(item_type, :itemSlotId) || 0
-
-      :error ->
-        0
-    end
-  end
-
-  defp get_item_slot_id(_), do: 0
-
-  # Resolve display_id from ItemDisplaySourceEntry table
-  defp resolve_display_from_source(source_id, type_id, power_level, fallback_display_id) do
-    entries = get_display_source_entries(source_id)
-
-    matching_entries =
-      Enum.filter(entries, fn entry ->
-        entry_type_id = Map.get(entry, :item2TypeId) || 0
-        entry_type_id == type_id
-      end)
-
-    case matching_entries do
-      [] ->
-        # No entries, use fallback
-        fallback_display_id
-
-      [single] ->
-        # Single entry, use its display_id
-        Map.get(single, :itemDisplayId) || fallback_display_id
-
-      multiple when is_list(multiple) ->
-        # Multiple entries - check if we have an explicit display_id first
-        if fallback_display_id > 0 do
-          fallback_display_id
-        else
-          # Find entry matching level range
-          level_match =
-            Enum.find(multiple, fn entry ->
-              min_level = Map.get(entry, :itemMinLevel) || 0
-              max_level = Map.get(entry, :itemMaxLevel) || 999
-              power_level >= min_level and power_level <= max_level
-            end)
-
-          if level_match do
-            Map.get(level_match, :itemDisplayId) || fallback_display_id
-          else
-            fallback_display_id
-          end
-        end
-    end
-  end
-
-  # Get display source entries for a source_id (uses index)
-  defp get_display_source_entries(source_id) do
-    require Logger
-    index_name = index_table_name(:display_sources_by_source_id)
-    table_size = :ets.info(index_name, :size)
-
-    if table_size == 0 do
-      Logger.warning("get_display_source_entries: INDEX IS EMPTY! Table: #{index_name}")
-    end
-
-    case :ets.lookup(index_name, source_id) do
-      [{^source_id, entries}] -> entries
-      [] -> []
-    end
-  end
-
-  # Helper to get item field with both atom and string key support
-  defp get_item_field(item, field) when is_atom(field) do
-    Map.get(item, field) || Map.get(item, Atom.to_string(field))
-  end
-
-  @doc """
-  Get the 3D model path for an item by item ID.
-
-  Resolves the display ID (handling level-scaled items) and looks up the
-  model path from the ItemDisplay table.
-
-  ## Parameters
-
-  - `item_id` - The item ID
-  - `power_level` - Optional power level for level-based lookups (defaults to item's power_level)
-
-  ## Returns
-
-  A map with model information, or nil if not found:
-  - `:model_path` - Path to the .m3 model file (uses objectModelL or skinnedModelL)
-  - `:display_id` - The resolved display ID
-  - `:description` - Model description from ItemDisplay
-
-  ## Example
-
-      Store.get_item_model_path(1)
-      #=> %{model_path: "Art\\Item\\Armor\\Light\\...", display_id: 3954, description: "AMR_D_Light_012_Chest"}
-
-      Store.get_item_model_path(999999) #=> nil
-  """
-  @spec get_item_model_path(non_neg_integer(), non_neg_integer() | nil) :: map() | nil
-  def get_item_model_path(item_id, power_level \\ nil) do
-    display_id = get_item_display_id(item_id, power_level)
-
-    if display_id > 0 do
-      get_display_model_path(display_id)
-    else
-      nil
-    end
-  end
-
-  @doc """
-  Get the 3D model path for a display ID directly.
-
-  Looks up the model path from the ItemDisplay table by display ID.
-
-  ## Parameters
-
-  - `display_id` - The ItemDisplay ID
-
-  ## Returns
-
-  A map with model information, or nil if not found:
-  - `:model_path` - Path to the .m3 model file
-  - `:display_id` - The display ID
-  - `:description` - Model description
-
-  ## Example
-
-      Store.get_display_model_path(3954)
-      #=> %{model_path: "Art\\Item\\Armor\\Light\\...", display_id: 3954, description: "..."}
-  """
-  @spec get_display_model_path(non_neg_integer()) :: map() | nil
-  def get_display_model_path(display_id) when is_integer(display_id) and display_id > 0 do
-    case :ets.lookup(table_name(:item_displays), display_id) do
-      [{^display_id, display}] ->
-        # Prefer objectModelL (world model), fall back to skinnedModelL (equipped model)
-        model_path =
-          get_display_field(display, :objectModelL) ||
-            get_display_field(display, :skinnedModelL) ||
-            get_display_field(display, :objectModel) ||
-            get_display_field(display, :skinnedModel) ||
-            ""
-
-        if model_path != "" do
-          %{
-            model_path: model_path,
-            display_id: display_id,
-            description: get_display_field(display, :description) || ""
-          }
-        else
-          nil
-        end
-
-      [] ->
-        nil
-    end
-  end
-
-  def get_display_model_path(_), do: nil
-
-  # Helper to get display field with both atom and string key support
-  defp get_display_field(display, field) when is_atom(field) do
-    value = Map.get(display, field) || Map.get(display, Atom.to_string(field))
-    if value == "", do: nil, else: value
-  end
+  defdelegate get_item_visuals(race, sex, customizations), to: Items
+
+  defdelegate get_item_slot(item_id), to: Items
+  defdelegate get_item_equipped_slot(item_id), to: Items
+  defdelegate get_class_gear_visuals(class_id), to: Items
+  defdelegate get_item_display_id(item_id), to: Items
+  defdelegate get_item_display_id(item_id, power_level), to: Items
+  defdelegate get_item_visual_info(item_id), to: Items
+  defdelegate get_item_visual_info(item_id, power_level), to: Items
+  defdelegate get_item_model_path(item_id), to: Items
+  defdelegate get_item_model_path(item_id, power_level), to: Items
+  defdelegate get_display_model_path(display_id), to: Items
 
   @doc """
   Get localized text by ID.
@@ -1608,6 +653,11 @@ defmodule BezgelorData.Store do
     end
   end
 
+  # Helper to get item field with both atom and string key support
+  defp get_item_field(item, field) when is_atom(field) do
+    Map.get(item, field) || Map.get(item, Atom.to_string(field))
+  end
+
   defp add_item_name(item) do
     name = get_item_name(item)
     item_id = Map.get(item, :ID) || Map.get(item, :id, 0)
@@ -1628,112 +678,7 @@ defmodule BezgelorData.Store do
     end
   end
 
-  @doc """
-  Resolve loot table for a creature based on rules.
-
-  Returns the loot table ID and modifiers for a creature based on:
-  1. Direct override (if creature has a specific loot table assigned)
-  2. Rule-based resolution using race_id, tier_id, and difficulty_id
-
-  Returns {:ok, %{loot_table_id, gold_multiplier, drop_bonus}} or :error
-  """
-  @spec resolve_creature_loot(non_neg_integer()) :: {:ok, map()} | :error
-  def resolve_creature_loot(creature_id) do
-    # Check for direct override first
-    case get_creature_loot_override(creature_id) do
-      nil ->
-        # Use rule-based resolution
-        resolve_loot_by_rules(creature_id)
-
-      override ->
-        {:ok,
-         %{
-           loot_table_id: override.loot_table_id,
-           gold_multiplier: Map.get(override, :gold_multiplier, 1.0),
-           drop_bonus: Map.get(override, :drop_bonus, 0)
-         }}
-    end
-  end
-
-  defp resolve_loot_by_rules(creature_id) do
-    rules = get_creature_loot_rules()
-
-    if rules do
-      # Get creature data
-      case get(:creatures, creature_id) do
-        {:ok, creature} ->
-          race_id = creature.race_id
-          tier_id = creature.tier_id
-          difficulty_id = creature.difficulty_id
-
-          race_mappings = get_rule_map(rules, :race_mappings)
-          tier_modifiers = get_rule_map(rules, :tier_modifiers)
-          difficulty_modifiers = get_rule_map(rules, :difficulty_modifiers)
-
-          # Get race mapping (try integer key, string key, then default)
-          race_mapping = get_rule_value(race_mappings, race_id, %{base_table: 1})
-
-          base_table = get_map_value(race_mapping, :base_table, 1)
-
-          # Get tier modifier
-          tier_mod = get_rule_value(tier_modifiers, tier_id, %{})
-
-          # Get difficulty modifier
-          diff_mod = get_rule_value(difficulty_modifiers, difficulty_id, %{})
-
-          # Calculate final values
-          table_offset = get_map_value(tier_mod, :table_offset, 0)
-          final_table = base_table + table_offset
-
-          tier_gold_mult = get_map_value(tier_mod, :gold_multiplier, 1.0)
-          diff_gold_mult = get_map_value(diff_mod, :gold_multiplier, 1.0)
-          final_gold_mult = tier_gold_mult * diff_gold_mult
-
-          tier_drop_bonus = get_map_value(tier_mod, :drop_bonus, 0)
-          diff_drop_bonus = get_map_value(diff_mod, :drop_bonus, 0)
-          final_drop_bonus = tier_drop_bonus + diff_drop_bonus
-
-          {:ok,
-           %{
-             loot_table_id: final_table,
-             gold_multiplier: final_gold_mult,
-             drop_bonus: final_drop_bonus,
-             extra_table: get_map_value(tier_mod, :extra_table, nil)
-           }}
-
-        :error ->
-          # Creature not found, use default
-          {:ok, %{loot_table_id: 1, gold_multiplier: 1.0, drop_bonus: 0}}
-      end
-    else
-      # No rules loaded, use default
-      {:ok, %{loot_table_id: 1, gold_multiplier: 1.0, drop_bonus: 0}}
-    end
-  end
-
-  # Helper to get rule map, handling both atom and string keys
-  defp get_rule_map(rules, key) when is_atom(key) do
-    Map.get(rules, key) || Map.get(rules, Atom.to_string(key), %{})
-  end
-
-  # Helper to get value from rule map, trying integer, string, atom keys, then default
-  defp get_rule_value(rule_map, key, default) when is_integer(key) do
-    str_key = Integer.to_string(key)
-
-    Map.get(rule_map, key) ||
-      Map.get(rule_map, str_key) ||
-      Map.get(rule_map, String.to_atom(str_key)) ||
-      Map.get(rule_map, :default) ||
-      Map.get(rule_map, "default", default)
-  end
-
-  # Helper to get value from map, handling both atom and string keys
-  defp get_map_value(map, key, default) when is_atom(key) do
-    case Map.get(map, key) do
-      nil -> Map.get(map, Atom.to_string(key), default)
-      value -> value
-    end
-  end
+  defdelegate resolve_creature_loot(creature_id), to: Creatures
 
   # Server callbacks
 
@@ -1767,15 +712,13 @@ defmodule BezgelorData.Store do
   Get the ETS table name for a data table.
   Used by query modules for direct ETS access.
   """
-  @spec table_name(atom()) :: atom()
-  def table_name(table), do: :"bezgelor_data_#{table}"
+  defdelegate table_name(table), to: Core
 
   @doc """
   Get the ETS table name for an index table.
   Used by query modules for direct ETS access.
   """
-  @spec index_table_name(atom()) :: atom()
-  def index_table_name(table), do: :"bezgelor_index_#{table}"
+  defdelegate index_table_name(table), to: Index
 
   defp load_all_data do
     start_time = System.monotonic_time(:millisecond)
@@ -1831,6 +774,18 @@ defmodule BezgelorData.Store do
             "Spell4Base_part2.json"
           ],
           "spell4base"
+        )
+      end,
+      fn ->
+        load_client_table_parts(
+          :spell4_effects,
+          [
+            "Spell4Effects_part1.json",
+            "Spell4Effects_part2.json",
+            "Spell4Effects_part3.json",
+            "Spell4Effects_part4.json"
+          ],
+          "spell4effects"
         )
       end,
       fn -> load_client_table(:spell_levels, "SpellLevel.json", "spelllevel") end,
@@ -1983,150 +938,11 @@ defmodule BezgelorData.Store do
     Logger.info("Game data loaded in #{total_time}ms: #{inspect(stats())}")
   end
 
-  defp load_table(table, json_file, key) do
-    table_name = table_name(table)
-
-    # Clear existing data
-    :ets.delete_all_objects(table_name)
-
-    case Compiler.load_data(json_file, key) do
-      {:ok, items} when is_list(items) ->
-        # Bulk insert is much faster than individual inserts
-        tuples = Enum.map(items, fn item -> {item.id, item} end)
-        :ets.insert(table_name, tuples)
-        Logger.debug("Loaded #{length(items)} #{key}")
-
-      {:ok, items} when is_map(items) ->
-        # Texts table is a map of id -> string - bulk convert and insert
-        tuples =
-          Enum.map(items, fn {id, text} ->
-            int_id =
-              cond do
-                is_integer(id) -> id
-                is_binary(id) -> String.to_integer(id)
-                is_atom(id) -> id |> Atom.to_string() |> String.to_integer()
-              end
-
-            {int_id, text}
-          end)
-
-        :ets.insert(table_name, tuples)
-        Logger.debug("Loaded #{map_size(items)} #{key}")
-
-      {:error, reason} ->
-        Logger.warning("Failed to load #{key}: #{inspect(reason)}")
-    end
-  end
-
-  defp load_table_by_zone(table, json_file, key) do
-    table_name = table_name(table)
-
-    # Clear existing data
-    :ets.delete_all_objects(table_name)
-
-    case Compiler.load_data(json_file, key) do
-      {:ok, items} when is_list(items) ->
-        # Bulk insert indexed by zone_id
-        tuples = Enum.map(items, fn item -> {item.zone_id, item} end)
-        :ets.insert(table_name, tuples)
-        Logger.debug("Loaded #{length(items)} #{key}")
-
-      {:error, reason} ->
-        Logger.warning("Failed to load #{key}: #{inspect(reason)}")
-    end
-  end
-
-  # Load tables from WildStar client data (uses uppercase ID field)
-  defp load_client_table(table, json_file, key) do
-    table_name = table_name(table)
-
-    # Clear existing data
-    :ets.delete_all_objects(table_name)
-
-    json_path = Path.join(data_directory(), json_file)
-
-    case load_json_raw(json_path) do
-      {:ok, data} ->
-        items = Map.get(data, String.to_atom(key), [])
-
-        # Bulk insert with ID normalization
-        tuples =
-          items
-          |> Enum.filter(fn item -> Map.has_key?(item, :ID) end)
-          |> Enum.map(fn item ->
-            id = Map.get(item, :ID)
-            normalized = item |> Map.put(:id, id) |> Map.delete(:ID)
-            {id, normalized}
-          end)
-
-        :ets.insert(table_name, tuples)
-        Logger.debug("Loaded #{length(tuples)} #{key}")
-
-      {:error, reason} ->
-        Logger.warning("Failed to load #{key} from #{json_file}: #{inspect(reason)}")
-    end
-  end
-
-  defp load_client_table_parts(table, json_files, key) do
-    table_name = table_name(table)
-
-    :ets.delete_all_objects(table_name)
-
-    Enum.each(json_files, fn json_file ->
-      json_path = Path.join(data_directory(), json_file)
-
-      case load_json_raw(json_path) do
-        {:ok, data} ->
-          items = Map.get(data, String.to_atom(key), [])
-
-          tuples =
-            items
-            |> Enum.filter(fn item -> Map.has_key?(item, :ID) end)
-            |> Enum.map(fn item ->
-              id = Map.get(item, :ID)
-              normalized = item |> Map.put(:id, id) |> Map.delete(:ID)
-              {id, normalized}
-            end)
-
-          :ets.insert(table_name, tuples)
-          Logger.debug("Loaded #{length(tuples)} #{key} from #{json_file}")
-
-        {:error, reason} ->
-          Logger.warning("Failed to load #{key} from #{json_file}: #{inspect(reason)}")
-      end
-    end)
-  end
-
-  # Load client table that needs a foreign key index (e.g., quest_rewards by quest_id)
-  defp load_client_table_with_fk(table, json_file, key, _fk_field) do
-    table_name = table_name(table)
-
-    # Clear existing data
-    :ets.delete_all_objects(table_name)
-
-    json_path = Path.join(data_directory(), json_file)
-
-    case load_json_raw(json_path) do
-      {:ok, data} ->
-        items = Map.get(data, String.to_atom(key), [])
-
-        # Bulk insert with ID normalization
-        tuples =
-          items
-          |> Enum.filter(fn item -> Map.has_key?(item, :ID) end)
-          |> Enum.map(fn item ->
-            id = Map.get(item, :ID)
-            normalized = item |> Map.put(:id, id) |> Map.delete(:ID)
-            {id, normalized}
-          end)
-
-        :ets.insert(table_name, tuples)
-        Logger.debug("Loaded #{length(tuples)} #{key}")
-
-      {:error, reason} ->
-        Logger.warning("Failed to load #{key} from #{json_file}: #{inspect(reason)}")
-    end
-  end
+  defp load_table(table, json_file, key), do: Loader.load_table(table, json_file, key)
+  defp load_table_by_zone(table, json_file, key), do: Loader.load_table_by_zone(table, json_file, key)
+  defp load_client_table(table, json_file, key), do: Loader.load_client_table(table, json_file, key)
+  defp load_client_table_parts(table, json_files, key), do: Loader.load_client_table_parts(table, json_files, key)
+  defp load_client_table_with_fk(table, json_file, key, fk_field), do: Loader.load_client_table_with_fk(table, json_file, key, fk_field)
 
   defp load_vendor_inventories do
     table_name = table_name(:vendor_inventories)
@@ -2185,64 +1001,8 @@ defmodule BezgelorData.Store do
     end
   end
 
-  # Load JSON with ETF caching for faster subsequent loads
-  defp load_json_raw(path) do
-    etf_path = etf_cache_path(path)
-
-    # Try loading from ETF cache first
-    case load_etf_cache(path, etf_path) do
-      {:ok, data} ->
-        {:ok, data}
-
-      :stale ->
-        # Parse JSON and cache to ETF
-        with {:ok, content} <- File.read(path),
-             {:ok, data} <- decode_trusted_json(content) do
-          cache_to_etf(etf_path, data)
-          {:ok, data}
-        end
-    end
-  end
-
-  # Get the compiled/cached ETF directory path
-  defp compiled_directory do
-    Application.app_dir(:bezgelor_data, "priv/compiled")
-  end
-
-  # Generate ETF cache path for a JSON file
-  defp etf_cache_path(json_path) do
-    compiled_dir = compiled_directory()
-    basename = Path.basename(json_path, ".json") <> ".etf"
-    Path.join(compiled_dir, basename)
-  end
-
-  # Load from ETF cache if fresh, returns :stale if cache is missing or outdated
-  defp load_etf_cache(json_path, etf_path) do
-    with {:ok, json_stat} <- File.stat(json_path),
-         {:ok, etf_stat} <- File.stat(etf_path),
-         true <- etf_stat.mtime >= json_stat.mtime,
-         {:ok, content} <- File.read(etf_path) do
-      try do
-        # Use [:safe] to prevent arbitrary code execution from tampered cache files
-        {:ok, :erlang.binary_to_term(content, [:safe])}
-      rescue
-        _ -> :stale
-      end
-    else
-      _ -> :stale
-    end
-  end
-
-  # Cache parsed data to ETF file
-  defp cache_to_etf(etf_path, data) do
-    compiled_dir = Path.dirname(etf_path)
-    File.mkdir_p!(compiled_dir)
-    etf_content = :erlang.term_to_binary(data, [:compressed])
-    File.write(etf_path, etf_content)
-  rescue
-    # Silently ignore cache write failures
-    _ -> :ok
-  end
+  # Delegate to Loader for JSON/ETF handling
+  defp load_json_raw(path), do: Loader.load_json_raw(path)
 
   defp load_battlegrounds do
     table_name = table_name(:battlegrounds)
@@ -3087,6 +1847,18 @@ defmodule BezgelorData.Store do
   defp spline_mode_to_atom(8), do: :cyclic
   defp spline_mode_to_atom(_), do: :cyclic
 
+  # Normalize spline config from JSON (handles both atom and string keys)
+  defp normalize_spline_config(spline) do
+    %{
+      spline_id: spline[:spline_id] || spline["spline_id"],
+      mode: spline[:mode] || spline["mode"],
+      speed: spline[:speed] || spline["speed"],
+      fx: spline[:fx] || spline["fx"] || 0,
+      fy: spline[:fy] || spline["fy"] || 0,
+      fz: spline[:fz] || spline["fz"] || 0
+    }
+  end
+
   # Load harvest spawns from separate file and merge by world_id
   defp load_harvest_spawns(path) do
     case load_json_raw(path) do
@@ -3418,7 +2190,9 @@ defmodule BezgelorData.Store do
       fn -> build_index(:world_locations, :world_locations_by_world, :worldId) end,
       fn -> build_index(:world_locations, :world_locations_by_zone, :worldZoneId) end,
       # Spline node index
-      fn -> build_index(:spline_nodes, :spline_nodes_by_spline, :spline_id) end
+      fn -> build_index(:spline_nodes, :spline_nodes_by_spline, :spline_id) end,
+      # Spell effect index (by spell ID for fast lookup)
+      fn -> build_index(:spell4_effects, :spell4_effects_by_spell, :spellId) end
     ]
 
     Enum.each(index_builders, fn builder -> builder.() end)
@@ -3426,93 +2200,23 @@ defmodule BezgelorData.Store do
     Logger.debug("Built #{length(index_builders)} secondary indexes")
   end
 
-  # Build an index from a source table to an index table using an integer key field
-  defp build_index(source_table, index_table, key_field) do
-    source_name = table_name(source_table)
-    index_name = index_table_name(index_table)
-
-    # Group items by the key field and bulk insert
-    tuples =
-      :ets.tab2list(source_name)
-      |> Enum.group_by(fn {_id, data} -> Map.get(data, key_field) end, fn {id, _data} -> id end)
-      |> Enum.filter(fn {key, _ids} -> not is_nil(key) end)
-      |> Enum.map(fn {key, ids} -> {key, ids} end)
-
-    :ets.insert(index_name, tuples)
-  end
-
-  # Build an index using a string key field (converted to atom for storage)
-  defp build_index_string(source_table, index_table, key_field) do
-    source_name = table_name(source_table)
-    index_name = index_table_name(index_table)
-
-    # Group items by the key field (string keys) and bulk insert
-    tuples =
-      :ets.tab2list(source_name)
-      |> Enum.group_by(fn {_id, data} -> Map.get(data, key_field) end, fn {id, _data} -> id end)
-      |> Enum.filter(fn {key, _ids} -> not is_nil(key) end)
-      |> Enum.map(fn {key, ids} -> {key, ids} end)
-
-    :ets.insert(index_name, tuples)
-  end
-
-  # Build a composite index using multiple key fields as a tuple key
-  defp build_composite_index(source_table, index_table, key_fields) do
-    source_name = table_name(source_table)
-    index_name = index_table_name(index_table)
-
-    # Group items by a tuple of the key field values and bulk insert
-    tuples =
-      :ets.tab2list(source_name)
-      |> Enum.group_by(
-        fn {_id, data} ->
-          Enum.map(key_fields, &Map.get(data, &1)) |> List.to_tuple()
-        end,
-        fn {id, _data} -> id end
-      )
-      |> Enum.filter(fn {key, _ids} -> not Enum.any?(Tuple.to_list(key), &is_nil/1) end)
-      |> Enum.map(fn {key, ids} -> {key, ids} end)
-
-    :ets.insert(index_name, tuples)
-  end
+  # Delegate index building to Index module
+  defp build_index(source_table, index_table, key_field), do: Index.build_index(source_table, index_table, key_field)
+  defp build_index_string(source_table, index_table, key_field), do: Index.build_index_string(source_table, index_table, key_field)
+  defp build_composite_index(source_table, index_table, key_fields), do: Index.build_composite_index(source_table, index_table, key_fields)
 
   @doc """
   Lookup IDs from a secondary index table.
-
-  Returns empty list if key not found. Used by query modules to perform
-  indexed lookups before fetching full records.
   """
-  @spec lookup_index(atom(), term()) :: [non_neg_integer()]
-  def lookup_index(index_table, key) do
-    case :ets.lookup(index_table_name(index_table), key) do
-      [{^key, ids}] -> ids
-      [] -> []
-    end
-  end
+  defdelegate lookup_index(index_table, key), to: Index
 
   @doc """
   Fetch full records from a table for a list of IDs.
-
-  Returns only the records that exist (nil results are filtered out).
-  Used by query modules after looking up IDs from an index.
   """
-  @spec fetch_by_ids(atom(), [non_neg_integer()]) :: [map()]
-  def fetch_by_ids(table, ids) do
-    table_name = table_name(table)
+  defdelegate fetch_by_ids(table, ids), to: Index
 
-    ids
-    |> Enum.map(fn id ->
-      case :ets.lookup(table_name, id) do
-        [{^id, data}] -> data
-        [] -> nil
-      end
-    end)
-    |> Enum.reject(&is_nil/1)
-  end
-
-  defp data_directory do
-    Application.app_dir(:bezgelor_data, "priv/data")
-  end
+  defp data_directory, do: Loader.data_directory()
+  defp compiled_directory, do: Loader.compiled_directory()
 
   defp stats do
     for table <- @tables, into: %{} do
@@ -3520,16 +2224,4 @@ defmodule BezgelorData.Store do
     end
   end
 
-  # Decode trusted game data JSON with atom keys.
-  #
-  # SECURITY NOTE: Uses `keys: :atoms` which creates atoms from JSON keys.
-  # This is acceptable here because:
-  # 1. Game data files are shipped with the application (not user-uploadable)
-  # 2. Files have known, stable structures with predictable keys
-  # 3. Data is loaded once at startup and cached to ETF
-  #
-  # DO NOT use this for user-controlled or external JSON data.
-  defp decode_trusted_json(content) do
-    Jason.decode(content, keys: :atoms)
-  end
 end

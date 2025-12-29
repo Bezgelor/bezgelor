@@ -274,6 +274,38 @@ defmodule BezgelorData do
     |> Enum.filter(fn s -> s.spell4BaseIdBaseSpell == base_spell_id end)
   end
 
+  @doc """
+  Get a spell effect entry by ID.
+  """
+  @spec get_spell4_effect(non_neg_integer()) :: {:ok, map()} | :error
+  def get_spell4_effect(effect_id) do
+    Store.get_spell4_effect(effect_id)
+  end
+
+  @doc """
+  Get all spell effects for a spell ID.
+
+  Returns a list of effect definitions with properties like:
+  - effectType: The type of effect (1=damage, 2=heal, 3=directDamage, 8=debuff, etc.)
+  - damageType: Type of damage (0=physical, 1=magic, 2=tech)
+  - tickTime: Milliseconds between ticks for DoT/HoT effects
+  - durationTime: Total duration in milliseconds
+  - dataBits00-09: Effect-specific data (damage amounts, scaling, etc.)
+  - threatMultiplier: Threat generation multiplier
+  """
+  @spec get_spell_effects(non_neg_integer()) :: [map()]
+  def get_spell_effects(spell_id) do
+    Store.get_spell_effects(spell_id)
+  end
+
+  @doc """
+  Get all spell effect IDs for a spell (without loading full effect data).
+  """
+  @spec get_spell_effect_ids(non_neg_integer()) :: [non_neg_integer()]
+  def get_spell_effect_ids(spell_id) do
+    Store.get_spell_effect_ids(spell_id)
+  end
+
   # Items
 
   @doc """
@@ -990,6 +1022,7 @@ defmodule BezgelorData do
       creatures: Store.count(:creatures),
       zones: Store.count(:zones),
       spells: Store.count(:spells),
+      spell4_effects: Store.count(:spell4_effects),
       items: Store.count(:items),
       texts: Store.count(:texts),
       house_types: Store.count(:house_types),
