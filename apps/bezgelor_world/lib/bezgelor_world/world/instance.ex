@@ -71,8 +71,9 @@ defmodule BezgelorWorld.World.Instance do
   use GenServer
 
   alias BezgelorCore.{AI, CreatureTemplate, Entity, SpatialGrid}
-  alias BezgelorWorld.{CreatureDeath, WorldManager}
+  alias BezgelorWorld.WorldManager
   alias BezgelorWorld.World.CreatureState
+  alias BezgelorWorld.World.Instance.{Creatures, Entities, HarvestNodes, Spawning}
   alias BezgelorData.Store
 
   require Logger
@@ -680,7 +681,7 @@ defmodule BezgelorWorld.World.Instance do
         state
       end
 
-    Logger.debug("Entity #{entity.guid} (#{entity.type}) added to world #{state.world_id}")
+    Entities.log_added(entity, state.world_id)
     {:noreply, state}
   end
 
@@ -725,7 +726,7 @@ defmodule BezgelorWorld.World.Instance do
         %{state | entities: entities, spatial_grid: spatial_grid}
       end
 
-    Logger.debug("Entity #{guid} removed from world #{state.world_id}")
+    Entities.log_removed(guid, state.world_id)
     {:noreply, state}
   end
 
@@ -812,13 +813,12 @@ defmodule BezgelorWorld.World.Instance do
     # Update entities map and spatial grid with new creature positions
     {entities, spatial_grid} =
       Enum.reduce(entity_updates, {state.entities, state.spatial_grid}, fn {guid, entity},
-                                                                            {entities, grid} ->
-        old_entity = Map.get(entities, guid)
-        new_entities = Map.put(entities, guid, entity)
+                                                                            {ents, grid} ->
+        old_entity = Map.get(ents, guid)
+        new_entities = Map.put(ents, guid, entity)
 
-        # Update spatial grid if position changed
         new_grid =
-          if old_entity && old_entity.position != entity.position do
+          if Entities.position_changed?(old_entity, entity) do
             SpatialGrid.update(grid, guid, entity.position)
           else
             grid
@@ -837,30 +837,12 @@ defmodule BezgelorWorld.World.Instance do
 
   @impl true
   def handle_call({:get_entity, guid}, _from, state) do
-    result =
-      case Map.get(state.entities, guid) do
-        nil -> :error
-        entity -> {:ok, entity}
-      end
-
-    {:reply, result, state}
+    {:reply, Entities.lookup(state.entities, guid), state}
   end
 
   @impl true
   def handle_call({:get_entity_creature_id, guid}, _from, state) do
-    result =
-      case Map.get(state.entities, guid) do
-        nil ->
-          :error
-
-        %{type: :creature, creature_id: creature_id} when not is_nil(creature_id) ->
-          {:ok, creature_id}
-
-        _ ->
-          :error
-      end
-
-    {:reply, result, state}
+    {:reply, Entities.get_creature_id(state.entities, guid), state}
   end
 
   @impl true
@@ -873,9 +855,8 @@ defmodule BezgelorWorld.World.Instance do
         updated_entity = update_fn.(entity)
         entities = Map.put(state.entities, guid, updated_entity)
 
-        # Update spatial grid if position changed
         spatial_grid =
-          if entity.position != updated_entity.position do
+          if Entities.position_changed?(entity, updated_entity) do
             SpatialGrid.update(state.spatial_grid, guid, updated_entity.position)
           else
             state.spatial_grid
@@ -903,24 +884,12 @@ defmodule BezgelorWorld.World.Instance do
   def handle_call({:entities_in_range, position, radius}, _from, state) do
     # Use spatial grid for O(k) lookup instead of O(n) iteration
     guids = SpatialGrid.entities_in_range(state.spatial_grid, position, radius)
-
-    entities =
-      guids
-      |> Enum.map(&Map.get(state.entities, &1))
-      |> Enum.reject(&is_nil/1)
-
-    {:reply, entities, state}
+    {:reply, Entities.filter_existing(state.entities, guids), state}
   end
 
   @impl true
   def handle_call(:list_players, _from, state) do
-    players =
-      state.players
-      |> MapSet.to_list()
-      |> Enum.map(&Map.get(state.entities, &1))
-      |> Enum.reject(&is_nil/1)
-
-    {:reply, players, state}
+    {:reply, Entities.from_set(state.entities, state.players), state}
   end
 
   @impl true
@@ -958,13 +927,7 @@ defmodule BezgelorWorld.World.Instance do
 
   @impl true
   def handle_call({:get_creatures_in_range, position, range}, _from, state) do
-    creatures =
-      state.creature_states
-      |> Map.values()
-      |> Enum.filter(fn %{entity: entity, ai: ai} ->
-        not AI.dead?(ai) and AI.distance(entity.position, position) <= range
-      end)
-
+    creatures = Creatures.alive_in_range(state.creature_states, position, range)
     {:reply, creatures, state}
   end
 
@@ -1080,15 +1043,16 @@ defmodule BezgelorWorld.World.Instance do
       nil ->
         {:reply, {:error, :not_found}, state}
 
-      %{state: :depleted} ->
-        {:reply, {:error, :depleted}, state}
-
       node_state ->
-        {result, new_node_state, new_state} =
-          do_gather_harvest_node(node_state, gatherer_guid, state)
+        if HarvestNodes.available?(node_state) do
+          {result, new_node_state, new_state} =
+            do_gather_harvest_node(node_state, gatherer_guid, state)
 
-        harvest_nodes = Map.put(state.harvest_nodes, node_guid, new_node_state)
-        {:reply, result, %{new_state | harvest_nodes: harvest_nodes}}
+          harvest_nodes = Map.put(state.harvest_nodes, node_guid, new_node_state)
+          {:reply, result, %{new_state | harvest_nodes: harvest_nodes}}
+        else
+          {:reply, {:error, :depleted}, state}
+        end
     end
   end
 
@@ -1097,8 +1061,7 @@ defmodule BezgelorWorld.World.Instance do
     result =
       case Map.get(state.harvest_nodes, guid) do
         nil -> false
-        %{state: :available} -> true
-        _ -> false
+        node_state -> HarvestNodes.available?(node_state)
       end
 
     {:reply, result, state}
@@ -1112,27 +1075,14 @@ defmodule BezgelorWorld.World.Instance do
           state
 
         creature_state ->
-          # Respawn the creature
-          new_entity = %{
-            creature_state.entity
-            | health: creature_state.template.max_health,
-              position: creature_state.spawn_position
-          }
-
-          new_ai = AI.respawn(creature_state.ai)
-
-          new_creature_state = %{
-            creature_state
-            | entity: new_entity,
-              ai: new_ai,
-              respawn_timer: nil
-          }
+          new_creature_state = Creatures.build_respawn_state(creature_state)
+          new_entity = new_creature_state.entity
 
           # Update entities map too
           entities = Map.put(state.entities, guid, new_entity)
           spatial_grid = SpatialGrid.update(state.spatial_grid, guid, new_entity.position)
 
-          Logger.debug("Respawned creature #{new_entity.name} (#{guid})")
+          Creatures.log_respawn(new_entity.name, guid)
 
           %{
             state
@@ -1153,13 +1103,7 @@ defmodule BezgelorWorld.World.Instance do
           state
 
         node_state ->
-          # Respawn the node
-          new_node_state = %{
-            node_state
-            | state: :available,
-              respawn_timer: nil
-          }
-
+          new_node_state = HarvestNodes.respawn_node(node_state)
           Logger.debug("Respawned harvest node #{guid}")
           %{state | harvest_nodes: Map.put(state.harvest_nodes, guid, new_node_state)}
       end
@@ -1229,17 +1173,17 @@ defmodule BezgelorWorld.World.Instance do
     zone_name = state.world_data[:name] || world_id
 
     state =
-      case Store.get_creature_spawns(world_id) do
+      case Spawning.load_creature_spawns(world_id) do
         {:ok, zone_data} ->
           {spawned_count, new_state} =
             spawn_from_definitions(zone_data.creature_spawns, state)
 
-          Logger.info("Loaded #{spawned_count} creature spawns for #{zone_name} (first player entered)")
-          %{new_state | spawns_loaded: true}
+          Spawning.log_spawn_success(spawned_count, zone_name, "first player entered")
+          Spawning.mark_spawns_loaded(new_state)
 
         :error ->
-          Logger.debug("No spawn data found for #{zone_name}")
-          %{state | spawns_loaded: true}
+          Spawning.log_no_spawn_data(zone_name)
+          Spawning.mark_spawns_loaded(state)
       end
 
     # Also load harvest nodes
@@ -1249,7 +1193,7 @@ defmodule BezgelorWorld.World.Instance do
   # Spawn creatures from static data definitions
   defp spawn_from_definitions(spawn_defs, state) do
     # Store definitions for reference
-    state = %{state | spawn_definitions: state.spawn_definitions ++ spawn_defs}
+    state = Spawning.append_spawn_definitions(state, spawn_defs)
 
     world_id = state.world_id
     spline_index = state.spline_index
@@ -1257,7 +1201,7 @@ defmodule BezgelorWorld.World.Instance do
     # Spawn each creature
     {spawned_count, state} =
       Enum.reduce(spawn_defs, {0, state}, fn spawn_def, {count, state} ->
-        case spawn_creature_from_def(spawn_def, world_id, spline_index) do
+        case Spawning.spawn_creature_from_def(spawn_def, world_id, spline_index) do
           {:ok, guid, creature_state} ->
             # Add entity to entities map
             entity = creature_state.entity
@@ -1277,10 +1221,7 @@ defmodule BezgelorWorld.World.Instance do
             {count + 1, state}
 
           {:error, reason} ->
-            Logger.warning(
-              "Failed to spawn creature #{spawn_def.creature_id} at #{inspect(spawn_def.position)}: #{inspect(reason)}"
-            )
-
+            Spawning.log_spawn_failure(spawn_def, reason)
             {count, state}
         end
       end)
@@ -1288,19 +1229,13 @@ defmodule BezgelorWorld.World.Instance do
     {spawned_count, state}
   end
 
-  # Spawn a single creature from a spawn definition
-  # Delegates to CreatureState for the actual creation logic
-  defp spawn_creature_from_def(spawn_def, world_id, spline_index) do
-    CreatureState.build_from_spawn_def(spawn_def, world_id, spline_index)
-  end
-
   # =====================================================================
-  # Creature State Helpers (delegates to CreatureState module)
+  # Creature State Helpers (delegates to CreatureState and Creatures modules)
   # =====================================================================
 
   # Apply damage to a creature - delegates to CreatureState
   defp apply_damage_to_creature(creature_state, attacker_guid, damage, state) do
-    killer_level = get_killer_level(attacker_guid, creature_state.template.level, state)
+    killer_level = Creatures.get_killer_level(attacker_guid, creature_state.template.level, state.entities)
 
     case CreatureState.apply_damage(creature_state, attacker_guid, damage, killer_level: killer_level) do
       {:ok, :damaged, result_info, new_creature_state} ->
@@ -1311,33 +1246,11 @@ defmodule BezgelorWorld.World.Instance do
     end
   end
 
-  defp get_killer_level(killer_guid, default_level, state) do
-    if CreatureDeath.is_player_guid?(killer_guid) do
-      case Map.get(state.entities, killer_guid) do
-        nil -> default_level
-        player_entity -> player_entity.level
-      end
-    else
-      default_level
-    end
-  end
-
   # Trigger social aggro for nearby creatures of the same faction
   defp trigger_social_aggro(aggressor_state, target_guid, state) do
-    aggressor_faction = aggressor_state.template.faction
-    aggressor_pos = aggressor_state.entity.position
-    social_range = CreatureTemplate.social_aggro_range(aggressor_state.template)
-
-    state.creature_states
-    |> Enum.filter(fn {guid, cs} ->
-      guid != aggressor_state.entity.guid and
-        cs.template.faction == aggressor_faction and
-        cs.ai.state == :idle and
-        AI.distance(aggressor_pos, cs.entity.position) <= social_range
-    end)
+    Creatures.find_social_aggro_targets(aggressor_state, target_guid, state.creature_states)
     |> Enum.reduce(state, fn {guid, cs}, acc_state ->
-      new_ai = AI.social_aggro(cs.ai, target_guid)
-      new_cs = %{cs | ai: new_ai}
+      new_cs = Creatures.apply_social_aggro(cs, target_guid)
       %{acc_state | creature_states: Map.put(acc_state.creature_states, guid, new_cs)}
     end)
   end
@@ -1349,14 +1262,14 @@ defmodule BezgelorWorld.World.Instance do
   # Load harvest nodes from static data
   defp load_harvest_nodes(state) do
     world_id = state.world_id
-    resource_spawns = Store.get_resource_spawns(world_id)
+    resource_spawns = HarvestNodes.load_resource_spawns(world_id)
 
     if Enum.empty?(resource_spawns) do
-      Logger.debug("No resource spawns found for world #{world_id}")
+      HarvestNodes.log_no_spawns(world_id)
       state
     else
       {spawned_count, new_state} = spawn_harvest_nodes_from_definitions(resource_spawns, state)
-      Logger.info("Loaded #{spawned_count} harvest node spawns for world #{world_id}")
+      HarvestNodes.log_load_success(spawned_count, world_id)
       new_state
     end
   end
@@ -1365,66 +1278,17 @@ defmodule BezgelorWorld.World.Instance do
   defp spawn_harvest_nodes_from_definitions(spawn_defs, state) do
     {spawned_count, harvest_nodes} =
       Enum.reduce(spawn_defs, {0, state.harvest_nodes}, fn spawn_def, {count, nodes} ->
-        {:ok, guid, node_state} = spawn_harvest_node_from_def(spawn_def)
+        {:ok, guid, node_state} = HarvestNodes.spawn_from_def(spawn_def)
         {count + 1, Map.put(nodes, guid, node_state)}
       end)
 
     {spawned_count, %{state | harvest_nodes: harvest_nodes}}
   end
 
-  # Spawn a single harvest node from a spawn definition
-  defp spawn_harvest_node_from_def(spawn_def) do
-    [x, y, z] = spawn_def.position
-    position = {x, y, z}
-
-    [rx, ry, rz] = spawn_def.rotation
-    rotation = {rx, ry, rz}
-
-    guid = WorldManager.generate_guid(:object)
-
-    # Support both node_type_id and harvest_node_id field names
-    node_type_id = spawn_def[:node_type_id] || spawn_def[:harvest_node_id] || 0
-
-    # Get node type name for entity name
-    node_name =
-      case Store.get_node_type(node_type_id) do
-        {:ok, node_type} -> node_type[:name] || "Harvest Node"
-        :error -> "Harvest Node"
-      end
-
-    entity = %Entity{
-      guid: guid,
-      type: :object,
-      name: node_name,
-      display_info: spawn_def.display_info,
-      faction: 0,
-      level: 1,
-      position: position,
-      rotation: rotation,
-      health: 1,
-      max_health: 1
-    }
-
-    node_state = %{
-      entity: entity,
-      node_type_id: node_type_id,
-      spawn_position: position,
-      spawn_rotation: rotation,
-      state: :available,
-      respawn_timer: nil,
-      respawn_time_ms: spawn_def.respawn_time_ms || 60_000
-    }
-
-    Logger.debug("Spawned harvest node #{node_name} (#{guid}) at #{inspect(position)}")
-
-    {:ok, guid, node_state}
-  end
-
   # Gather from a harvest node (deplete it, generate loot, schedule respawn)
   defp do_gather_harvest_node(node_state, _gatherer_guid, state) do
-    # Get node type info for loot generation
-    node_type_id = node_state.node_type_id
-    loot = generate_harvest_node_loot(node_type_id)
+    # Generate loot from node type
+    loot = HarvestNodes.generate_loot(node_state.node_type_id)
 
     # Schedule respawn
     respawn_timer =
@@ -1434,76 +1298,9 @@ defmodule BezgelorWorld.World.Instance do
         node_state.respawn_time_ms
       )
 
-    new_node_state = %{
-      node_state
-      | state: :depleted,
-        respawn_timer: respawn_timer
-    }
-
-    Logger.debug(
-      "Node #{node_state.entity.guid} gathered, respawning in #{node_state.respawn_time_ms}ms"
-    )
+    new_node_state = HarvestNodes.deplete_node(node_state, respawn_timer)
+    HarvestNodes.log_gathered(node_state.entity.guid, node_state.respawn_time_ms)
 
     {{:ok, loot}, new_node_state, state}
-  end
-
-  # Generate loot from a harvest node
-  defp generate_harvest_node_loot(harvest_node_id) do
-    case Store.get_harvest_loot(harvest_node_id) do
-      {:ok, loot_data} ->
-        loot = get_harvest_map_value(loot_data, :loot, %{})
-        primary = get_harvest_map_value(loot, :primary, [])
-        secondary = get_harvest_map_value(loot, :secondary, [])
-
-        # Always generate primary drops
-        primary_loot =
-          Enum.flat_map(primary, fn drop ->
-            roll_harvest_drop(drop)
-          end)
-
-        # Roll for secondary drops (chance-based)
-        secondary_loot =
-          Enum.flat_map(secondary, fn drop ->
-            chance = get_harvest_map_value(drop, :chance, 0.0)
-
-            if :rand.uniform() <= chance do
-              roll_harvest_drop(drop)
-            else
-              []
-            end
-          end)
-
-        primary_loot ++ secondary_loot
-
-      :error ->
-        # Fallback - generic material
-        Logger.warning("No harvest loot found for node #{harvest_node_id}, using fallback")
-        [%{item_id: 0, name: "Unknown Resource", quantity: 1}]
-    end
-  end
-
-  # Roll a drop with quantity range
-  defp roll_harvest_drop(drop) do
-    item_id = get_harvest_map_value(drop, :item_id, 0)
-    name = get_harvest_map_value(drop, :name, "Unknown")
-    min_qty = get_harvest_map_value(drop, :min, 1)
-    max_qty = get_harvest_map_value(drop, :max, 1)
-
-    quantity =
-      if max_qty > min_qty do
-        Enum.random(min_qty..max_qty)
-      else
-        min_qty
-      end
-
-    [%{item_id: item_id, name: name, quantity: quantity}]
-  end
-
-  # Helper to handle both atom and string keys in maps (from JSON parsing)
-  defp get_harvest_map_value(map, key, default) when is_atom(key) do
-    case Map.get(map, key) do
-      nil -> Map.get(map, Atom.to_string(key), default)
-      value -> value
-    end
   end
 end

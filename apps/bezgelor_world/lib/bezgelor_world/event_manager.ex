@@ -34,6 +34,7 @@ defmodule BezgelorWorld.EventManager do
   use GenServer
 
   alias BezgelorDb.PublicEvents
+  alias BezgelorWorld.Event.{Objectives, Rewards, Territory, Waves, WorldBoss}
 
   require Logger
 
@@ -105,49 +106,9 @@ defmodule BezgelorWorld.EventManager do
           next_instance_id: non_neg_integer()
         }
 
-  # Valid objective types - prevents atom table exhaustion from malicious event data
-  @valid_objective_types ~w(kill damage collect interact territory escort defend survive timer)a
-
-  @doc """
-  Get the list of valid objective types.
-
-  Used for testing and documentation. These are the only objective types
-  that will be accepted - any other type defaults to :kill for safety.
-  """
-  @spec valid_objective_types() :: [atom()]
-  def valid_objective_types, do: @valid_objective_types
-
-  @doc """
-  Safely convert an objective type to an atom.
-
-  Returns a valid objective type atom, or :kill as a fallback.
-  This function is exposed publicly for testing but is primarily
-  used internally by parse_objectives/1.
-
-  ## Examples
-
-      iex> EventManager.safe_objective_type("kill")
-      :kill
-
-      iex> EventManager.safe_objective_type("invalid")
-      :kill
-
-      iex> EventManager.safe_objective_type(nil)
-      :kill
-  """
-  @spec safe_objective_type(String.t() | atom() | nil) :: atom()
-  def safe_objective_type(nil), do: :kill
-  def safe_objective_type(type) when is_atom(type) and type in @valid_objective_types, do: type
-  def safe_objective_type(type) when is_atom(type), do: :kill
-
-  def safe_objective_type(type) when is_binary(type) do
-    try do
-      atom = String.to_existing_atom(type)
-      if atom in @valid_objective_types, do: atom, else: :kill
-    rescue
-      ArgumentError -> :kill
-    end
-  end
+  # Delegate objective functions to the Objectives module
+  defdelegate valid_objective_types(), to: Objectives
+  defdelegate safe_objective_type(type), to: Objectives
 
   ## Client API
 
@@ -839,25 +800,17 @@ defmodule BezgelorWorld.EventManager do
         {:reply, {:error, :event_not_found}, state}
 
       event_state ->
-        waves = event_state.event_def["waves"] || []
+        total_waves = Waves.total_waves(event_state.event_def)
 
-        if wave_number <= length(waves) do
-          wave_def = Enum.at(waves, wave_number - 1)
-          enemy_count = wave_def["enemy_count"] || 10
-
-          wave_state = %{
-            current_wave: wave_number,
-            total_waves: length(waves),
-            enemies_spawned: enemy_count,
-            enemies_killed: 0,
-            wave_timer: nil
-          }
+        if wave_number <= total_waves do
+          wave_def = Waves.get_wave_def(event_state.event_def, wave_number)
+          wave_state = Waves.create_wave_state(wave_number, wave_def, total_waves)
 
           # Start wave timer if defined
           wave_state =
             if wave_time = wave_def["time_limit_ms"] do
               timer_ref = Process.send_after(self(), {:wave_timeout, instance_id}, wave_time)
-              %{wave_state | wave_timer: timer_ref}
+              Waves.set_wave_timer(wave_state, timer_ref)
             else
               wave_state
             end
@@ -865,7 +818,7 @@ defmodule BezgelorWorld.EventManager do
           event_state = %{event_state | wave_state: wave_state}
           events = Map.put(state.events, instance_id, event_state)
 
-          Logger.info("Started wave #{wave_number}/#{length(waves)} for event #{instance_id}")
+          Logger.info("Started wave #{wave_number}/#{total_waves} for event #{instance_id}")
           {:reply, {:ok, wave_state}, %{state | events: events}}
         else
           {:reply, {:error, :invalid_wave}, state}
@@ -883,14 +836,13 @@ defmodule BezgelorWorld.EventManager do
         {:reply, {:error, :no_wave_active}, state}
 
       event_state ->
-        wave_state = event_state.wave_state
-        wave_state = %{wave_state | enemies_killed: wave_state.enemies_killed + 1}
+        wave_state = Waves.record_enemy_killed(event_state.wave_state)
 
         # Track contribution
         state = track_participant_contribution(state, character_id, 10)
 
         # Check if wave complete
-        if wave_state.enemies_killed >= wave_state.enemies_spawned do
+        if Waves.is_wave_complete?(wave_state) do
           # Cancel wave timer
           if wave_state.wave_timer do
             Process.cancel_timer(wave_state.wave_timer)
@@ -900,7 +852,7 @@ defmodule BezgelorWorld.EventManager do
 
           # Check if more waves
           state =
-            if wave_state.current_wave < wave_state.total_waves do
+            if Waves.has_more_waves?(wave_state) do
               # Auto-start next wave after delay
               Process.send_after(self(), {:start_next_wave, instance_id}, 5_000)
               state
@@ -921,7 +873,7 @@ defmodule BezgelorWorld.EventManager do
            {:ok,
             %{
               wave_complete: false,
-              remaining: wave_state.enemies_spawned - wave_state.enemies_killed
+              remaining: Waves.remaining_enemies(wave_state)
             }}, %{state | events: events}}
         end
     end
@@ -950,18 +902,15 @@ defmodule BezgelorWorld.EventManager do
         # Initialize territory state if needed
         event_state = maybe_init_territory_state(event_state)
 
-        case get_territory_point(event_state.territory_state, territory_index) do
-          nil ->
+        case Territory.add_player_to_territory(
+               event_state.territory_state,
+               territory_index,
+               character_id
+             ) do
+          {:error, :territory_not_found} ->
             {:reply, {:error, :territory_not_found}, state}
 
-          territory ->
-            # Add player to territory zone
-            players = MapSet.put(territory.players_in_zone, character_id)
-            territory = %{territory | players_in_zone: players}
-
-            territory_state =
-              update_territory_point(event_state.territory_state, territory_index, territory)
-
+          {:ok, territory, territory_state} ->
             # Start capture tick timer if not running and players present
             territory_state = maybe_start_capture_tick(territory_state, instance_id)
 
@@ -987,18 +936,15 @@ defmodule BezgelorWorld.EventManager do
         {:reply, :ok, state}
 
       event_state ->
-        case get_territory_point(event_state.territory_state, territory_index) do
-          nil ->
+        case Territory.remove_player_from_territory(
+               event_state.territory_state,
+               territory_index,
+               character_id
+             ) do
+          {:error, :territory_not_found} ->
             {:reply, :ok, state}
 
-          territory ->
-            # Remove player from territory zone
-            players = MapSet.delete(territory.players_in_zone, character_id)
-            territory = %{territory | players_in_zone: players}
-
-            territory_state =
-              update_territory_point(event_state.territory_state, territory_index, territory)
-
+          {:ok, _territory, territory_state} ->
             event_state = %{event_state | territory_state: territory_state}
             events = Map.put(state.events, instance_id, event_state)
 
@@ -1080,10 +1026,10 @@ defmodule BezgelorWorld.EventManager do
         {:noreply, state}
 
       event_state ->
-        territory_state = process_territory_tick(event_state.territory_state)
+        territory_state = Territory.process_capture_tick(event_state.territory_state)
 
         # Check if all territories captured (for territory objectives)
-        all_captured = all_territories_captured?(territory_state)
+        all_captured = Territory.all_territories_captured?(territory_state)
 
         event_state = %{event_state | territory_state: territory_state}
         events = Map.put(state.events, instance_id, event_state)
@@ -1101,7 +1047,7 @@ defmodule BezgelorWorld.EventManager do
 
         # Schedule next tick if there are still players in any territory
         state =
-          if any_players_in_territories?(territory_state) do
+          if Territory.any_players_in_territories?(territory_state) do
             event_state = Map.get(state.events, instance_id)
 
             if event_state do
@@ -1113,11 +1059,11 @@ defmodule BezgelorWorld.EventManager do
               state
             end
           else
-            # Cancel the timer reference
+            # Clear the timer reference
             event_state = Map.get(state.events, instance_id)
 
             if event_state && event_state.territory_state do
-              territory_state = %{event_state.territory_state | capture_tick_timer: nil}
+              territory_state = Territory.set_capture_tick_timer(event_state.territory_state, nil)
               event_state = %{event_state | territory_state: territory_state}
               events = Map.put(state.events, instance_id, event_state)
               %{state | events: events}
@@ -1272,9 +1218,7 @@ defmodule BezgelorWorld.EventManager do
         {:error, :no_wave_active}
 
       event_state ->
-        wave_state = event_state.wave_state
-        new_killed = wave_state.enemies_killed + 1
-        wave_state = %{wave_state | enemies_killed: new_killed}
+        wave_state = Waves.record_enemy_killed(event_state.wave_state)
 
         # Update participant contribution
         participant =
@@ -1294,7 +1238,7 @@ defmodule BezgelorWorld.EventManager do
 
         # Check wave completion
         state =
-          if new_killed >= wave_state.enemies_spawned do
+          if Waves.is_wave_complete?(wave_state) do
             # Cancel wave timer
             if wave_state.wave_timer do
               Process.cancel_timer(wave_state.wave_timer)
@@ -1303,7 +1247,7 @@ defmodule BezgelorWorld.EventManager do
             Logger.info("Wave #{wave_state.current_wave} completed for event #{instance_id}")
 
             # Check if more waves
-            if wave_state.current_wave < wave_state.total_waves do
+            if Waves.has_more_waves?(wave_state) do
               # Auto-start next wave after delay
               Process.send_after(self(), {:start_next_wave, instance_id}, 5_000)
               state
@@ -1321,24 +1265,16 @@ defmodule BezgelorWorld.EventManager do
 
   defp do_start_wave(state, instance_id, wave_number) do
     event_state = Map.get(state.events, instance_id)
-    waves = event_state.event_def["waves"] || []
+    total_waves = Waves.total_waves(event_state.event_def)
 
-    if wave_number <= length(waves) do
-      wave_def = Enum.at(waves, wave_number - 1)
-      enemy_count = wave_def["enemy_count"] || 10
-
-      wave_state = %{
-        current_wave: wave_number,
-        total_waves: length(waves),
-        enemies_spawned: enemy_count,
-        enemies_killed: 0,
-        wave_timer: nil
-      }
+    if wave_number <= total_waves do
+      wave_def = Waves.get_wave_def(event_state.event_def, wave_number)
+      wave_state = Waves.create_wave_state(wave_number, wave_def, total_waves)
 
       wave_state =
         if wave_time = wave_def["time_limit_ms"] do
           timer_ref = Process.send_after(self(), {:wave_timeout, instance_id}, wave_time)
-          %{wave_state | wave_timer: timer_ref}
+          Waves.set_wave_timer(wave_state, timer_ref)
         else
           wave_state
         end
@@ -1371,19 +1307,7 @@ defmodule BezgelorWorld.EventManager do
     }
   end
 
-  defp parse_objectives(objectives) do
-    objectives
-    |> Enum.with_index()
-    |> Enum.map(fn {obj, index} ->
-      %{
-        index: index,
-        type: safe_objective_type(obj["type"]),
-        target: obj["target"] || 0,
-        target_id: obj["target_id"],
-        current: 0
-      }
-    end)
-  end
+  defp parse_objectives(objectives), do: Objectives.parse_objectives(objectives)
 
 
   defp maybe_start_time_limit(event_state, instance_id) do
@@ -1409,9 +1333,7 @@ defmodule BezgelorWorld.EventManager do
   end
 
   defp check_objectives_met(event_state) do
-    Enum.all?(event_state.objectives, fn obj ->
-      obj.current >= obj.target
-    end)
+    Objectives.check_objectives_met(event_state.objectives)
   end
 
   defp maybe_advance_phase(state, instance_id) do
@@ -1468,7 +1390,7 @@ defmodule BezgelorWorld.EventManager do
 
         # Distribute rewards
         if success do
-          distribute_event_rewards(event_state, state.participants)
+          Rewards.distribute_event_rewards(event_state, state.participants)
         end
 
         Logger.info(
@@ -1481,18 +1403,7 @@ defmodule BezgelorWorld.EventManager do
   end
 
   defp update_matching_objectives(objectives, type, target_id, amount \\ 1) do
-    {updated_objectives, any_updated} =
-      Enum.map_reduce(objectives, false, fn obj, updated ->
-        if obj.type == type and (obj.target_id == nil or obj.target_id == target_id) and
-             obj.current < obj.target do
-          new_current = min(obj.current + amount, obj.target)
-          {%{obj | current: new_current}, true}
-        else
-          {obj, updated}
-        end
-      end)
-
-    {updated_objectives, any_updated}
+    Objectives.update_matching_objectives(objectives, type, target_id, amount)
   end
 
   defp track_participant_contribution(state, character_id, amount) do
@@ -1511,49 +1422,19 @@ defmodule BezgelorWorld.EventManager do
   # World Boss Helpers
 
   defp check_boss_phase_transition(boss_state) do
-    phases = boss_state.boss_def["phases"] || []
-    health_percent = div(boss_state.health_current * 100, boss_state.health_max)
-
-    # Find the appropriate phase based on health
-    new_phase =
-      phases
-      |> Enum.with_index(1)
-      |> Enum.find_value(boss_state.phase, fn {phase_def, phase_num} ->
-        threshold = phase_def["health_threshold"] || 0
-
-        if health_percent <= threshold and phase_num > boss_state.phase do
-          phase_num
-        else
-          nil
-        end
-      end)
-
-    if new_phase != boss_state.phase do
-      Logger.info("World boss #{boss_state.boss_id} transitioned to phase #{new_phase}")
-      %{boss_state | phase: new_phase}
-    else
-      boss_state
-    end
+    WorldBoss.check_phase_transition(boss_state)
   end
 
   defp kill_world_boss(state, boss_id, boss_state) do
-    # Calculate kill time
-    kill_time_ms =
-      if boss_state.engaged_at do
-        DateTime.diff(DateTime.utc_now(), boss_state.engaged_at, :millisecond)
-      else
-        0
-      end
+    kill_time_ms = WorldBoss.calculate_kill_time(boss_state)
 
-    # Update DB
     PublicEvents.kill_boss(boss_id, 24)
 
     Logger.info(
       "World boss #{boss_id} killed in #{kill_time_ms}ms by #{MapSet.size(boss_state.participants)} participants"
     )
 
-    # Distribute rewards to all contributors
-    distribute_boss_rewards(boss_state)
+    Rewards.distribute_boss_rewards(boss_state)
 
     world_bosses = Map.delete(state.world_bosses, boss_id)
     %{state | world_bosses: world_bosses}
@@ -1561,32 +1442,9 @@ defmodule BezgelorWorld.EventManager do
 
   # Territory Control Helpers
 
-  @capture_tick_interval_ms 1_000
-  @capture_progress_per_tick 5
-  @capture_progress_max 100
-
   defp maybe_init_territory_state(%{territory_state: nil} = event_state) do
-    territories = event_state.event_def["territories"] || []
-
-    if length(territories) > 0 do
-      territory_points =
-        territories
-        |> Enum.with_index()
-        |> Enum.map(fn {territory_def, index} ->
-          %{
-            index: index,
-            name: territory_def["name"] || "Territory #{index + 1}",
-            capture_progress: 0,
-            players_in_zone: MapSet.new(),
-            captured: false
-          }
-        end)
-
-      territory_state = %{
-        territories: territory_points,
-        capture_tick_timer: nil
-      }
-
+    if Territory.has_territories?(event_state.event_def) do
+      territory_state = Territory.create_territory_state(event_state.event_def)
       %{event_state | territory_state: territory_state}
     else
       event_state
@@ -1595,27 +1453,8 @@ defmodule BezgelorWorld.EventManager do
 
   defp maybe_init_territory_state(event_state), do: event_state
 
-  defp get_territory_point(nil, _index), do: nil
-
-  defp get_territory_point(territory_state, index) do
-    Enum.find(territory_state.territories, &(&1.index == index))
-  end
-
-  defp update_territory_point(territory_state, index, updated_territory) do
-    territories =
-      Enum.map(territory_state.territories, fn territory ->
-        if territory.index == index do
-          updated_territory
-        else
-          territory
-        end
-      end)
-
-    %{territory_state | territories: territories}
-  end
-
   defp maybe_start_capture_tick(%{capture_tick_timer: nil} = territory_state, instance_id) do
-    if any_players_in_territories?(territory_state) do
+    if Territory.any_players_in_territories?(territory_state) do
       schedule_capture_tick(territory_state, instance_id)
     else
       territory_state
@@ -1629,66 +1468,18 @@ defmodule BezgelorWorld.EventManager do
       Process.send_after(
         self(),
         {:territory_capture_tick, instance_id},
-        @capture_tick_interval_ms
+        Territory.capture_tick_interval_ms()
       )
 
-    %{territory_state | capture_tick_timer: timer_ref}
-  end
-
-  defp process_territory_tick(territory_state) do
-    territories =
-      Enum.map(territory_state.territories, fn territory ->
-        player_count = MapSet.size(territory.players_in_zone)
-
-        if player_count > 0 and not territory.captured do
-          # Progress increases based on player count (diminishing returns)
-          progress_increase = @capture_progress_per_tick * min(player_count, 5)
-
-          new_progress =
-            min(territory.capture_progress + progress_increase, @capture_progress_max)
-
-          captured = new_progress >= @capture_progress_max
-
-          if captured do
-            Logger.info("Territory #{territory.index} (#{territory.name}) captured!")
-          end
-
-          %{territory | capture_progress: new_progress, captured: captured}
-        else
-          territory
-        end
-      end)
-
-    %{territory_state | territories: territories}
-  end
-
-  defp any_players_in_territories?(territory_state) do
-    Enum.any?(territory_state.territories, fn territory ->
-      MapSet.size(territory.players_in_zone) > 0
-    end)
-  end
-
-  defp all_territories_captured?(territory_state) do
-    Enum.all?(territory_state.territories, & &1.captured)
+    Territory.set_capture_tick_timer(territory_state, timer_ref)
   end
 
   defp update_territory_objectives(state, instance_id) do
     event_state = Map.get(state.events, instance_id)
 
     if event_state do
-      captured_count =
-        event_state.territory_state.territories
-        |> Enum.count(& &1.captured)
-
-      # Update territory-type objectives
-      objectives =
-        Enum.map(event_state.objectives, fn obj ->
-          if obj.type == :territory do
-            %{obj | current: captured_count}
-          else
-            obj
-          end
-        end)
+      captured_count = Territory.count_captured(event_state.territory_state)
+      objectives = Objectives.update_territory_progress(event_state.objectives, captured_count)
 
       event_state = %{event_state | objectives: objectives}
       events = Map.put(state.events, instance_id, event_state)
@@ -1696,154 +1487,5 @@ defmodule BezgelorWorld.EventManager do
     else
       state
     end
-  end
-
-  # Reward Distribution Helpers
-
-  @gold_tier_threshold 80
-  @silver_tier_threshold 50
-  @bronze_tier_threshold 20
-
-  @gold_multiplier 1.0
-  @silver_multiplier 0.75
-  @bronze_multiplier 0.5
-  @participation_multiplier 0.25
-
-  defp distribute_event_rewards(event_state, participants) do
-    rewards_def = event_state.event_def["rewards"] || %{}
-    participant_ids = MapSet.to_list(event_state.participants)
-
-    # Calculate duration
-    duration_ms = DateTime.diff(DateTime.utc_now(), event_state.started_at, :millisecond)
-
-    # Calculate total contribution for tier assignment
-    contributions =
-      Enum.map(participant_ids, fn char_id ->
-        participant = Map.get(participants, char_id)
-        {char_id, (participant && participant.contribution) || 0}
-      end)
-
-    total_contribution = Enum.reduce(contributions, 0, fn {_, c}, acc -> acc + c end)
-    max_contribution = Enum.max_by(contributions, fn {_, c} -> c end, fn -> {0, 0} end) |> elem(1)
-
-    # Assign reward tiers and distribute
-    Enum.each(contributions, fn {character_id, contribution} ->
-      tier = calculate_reward_tier(contribution, total_contribution, max_contribution)
-      multiplier = tier_multiplier(tier)
-
-      reward_data = calculate_participant_rewards(rewards_def, multiplier)
-
-      # Log the reward (actual distribution would call game systems)
-      Logger.debug(
-        "Event reward for #{character_id}: tier=#{tier}, rewards=#{inspect(reward_data)}"
-      )
-
-      # Record completion in DB (character_id, event_id, tier, contribution, duration_ms)
-      PublicEvents.record_completion(
-        character_id,
-        event_state.event_id,
-        tier_to_string(tier),
-        contribution,
-        duration_ms
-      )
-
-      # TODO: Actually grant rewards via Inventory/Currency/XP systems
-      # BezgelorWorld.Rewards.grant_event_rewards(character_id, reward_data)
-    end)
-  end
-
-  defp calculate_reward_tier(contribution, total_contribution, max_contribution) do
-    cond do
-      total_contribution == 0 ->
-        :participation
-
-      contribution == max_contribution and contribution > 0 ->
-        :gold
-
-      true ->
-        percent =
-          if total_contribution > 0, do: div(contribution * 100, total_contribution), else: 0
-
-        cond do
-          percent >= @gold_tier_threshold -> :gold
-          percent >= @silver_tier_threshold -> :silver
-          percent >= @bronze_tier_threshold -> :bronze
-          true -> :participation
-        end
-    end
-  end
-
-  defp tier_multiplier(:gold), do: @gold_multiplier
-  defp tier_multiplier(:silver), do: @silver_multiplier
-  defp tier_multiplier(:bronze), do: @bronze_multiplier
-  defp tier_multiplier(:participation), do: @participation_multiplier
-
-  defp tier_to_string(:gold), do: "gold"
-  defp tier_to_string(:silver), do: "silver"
-  defp tier_to_string(:bronze), do: "bronze"
-  defp tier_to_string(:participation), do: "participation"
-
-  defp calculate_participant_rewards(rewards_def, multiplier) do
-    %{
-      xp: round((rewards_def["xp"] || 0) * multiplier),
-      gold: round((rewards_def["gold"] || 0) * multiplier),
-      currency: scale_currency_rewards(rewards_def["currency"], multiplier),
-      reputation: scale_reputation_reward(rewards_def["reputation"], multiplier),
-      loot_table_id: rewards_def["loot_table_id"],
-      achievement_id: rewards_def["achievement_id"]
-    }
-  end
-
-  defp scale_currency_rewards(nil, _multiplier), do: %{}
-
-  defp scale_currency_rewards(currency_map, multiplier) when is_map(currency_map) do
-    Map.new(currency_map, fn {currency, amount} ->
-      {currency, round(amount * multiplier)}
-    end)
-  end
-
-  defp scale_reputation_reward(nil, _multiplier), do: nil
-
-  defp scale_reputation_reward(%{"faction_id" => faction_id, "amount" => amount}, multiplier) do
-    %{faction_id: faction_id, amount: round(amount * multiplier)}
-  end
-
-  defp scale_reputation_reward(_other, _multiplier), do: nil
-
-  # World Boss Reward Distribution
-
-  defp distribute_boss_rewards(boss_state) do
-    boss_def = boss_state.boss_def
-    rewards_def = boss_def["rewards"] || %{}
-    total_damage = boss_state.health_max
-
-    # Sort contributors by damage
-    sorted_contributors =
-      boss_state.contributions
-      |> Enum.sort_by(fn {_id, damage} -> damage end, :desc)
-
-    # Top contributor gets gold tier, rest scaled by damage percentage
-    Enum.each(sorted_contributors, fn {character_id, damage} ->
-      damage_percent = if total_damage > 0, do: div(damage * 100, total_damage), else: 0
-
-      tier =
-        cond do
-          damage_percent >= 10 -> :gold
-          damage_percent >= 5 -> :silver
-          damage_percent >= 1 -> :bronze
-          true -> :participation
-        end
-
-      multiplier = tier_multiplier(tier)
-      reward_data = calculate_participant_rewards(rewards_def, multiplier)
-
-      Logger.debug(
-        "Boss reward for #{character_id}: tier=#{tier}, damage=#{damage} (#{damage_percent}%), rewards=#{inspect(reward_data)}"
-      )
-
-      # TODO: Record in DB when boss kill tracking is added
-      # TODO: Actually grant rewards via BezgelorWorld.Rewards
-      _ = {boss_state.boss_id, reward_data}
-    end)
   end
 end
